@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
+import Link from 'next/link';
 
 interface HeaderProps {
   title?: string;
@@ -65,10 +66,19 @@ export default function Header({ title, subtitle }: HeaderProps) {
       }}>
         {/* Logo and App Name Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ 
+          <Link href="/" style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '0.75rem'
+            gap: '0.75rem',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.02)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
           }}>
             <div style={{ 
               padding: '0.5rem', 
@@ -91,7 +101,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 TestFlow
               </h1>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Actions Section */}
