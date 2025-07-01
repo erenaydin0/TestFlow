@@ -23,7 +23,9 @@ import {
   ZoomOut,
   RotateCcw as Reset,
   Move,
-  X
+  X,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { TestStep } from '@/types';
 
@@ -83,6 +85,7 @@ export default function TestBuilder() {
   const [dragPreview, setDragPreview] = useState<{x: number, y: number, type: string} | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
+  const [connectionType, setConnectionType] = useState<'normal' | 'true' | 'false'>('normal');
   const canvasRef = useRef<HTMLDivElement>(null);
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -235,6 +238,7 @@ export default function TestBuilder() {
       if (isConnecting) {
         setIsConnecting(false);
         setConnectionStart(null);
+        setConnectionType('normal');
       }
     }
     
@@ -300,35 +304,53 @@ export default function TestBuilder() {
   };
 
   // Connection handling
-  const startConnection = (stepId: string) => {
+  const startConnection = (stepId: string, type: 'normal' | 'true' | 'false' = 'normal') => {
     setIsConnecting(true);
     setConnectionStart(stepId);
+    setConnectionType(type);
   };
 
   const endConnection = (stepId: string) => {
     if (connectionStart && connectionStart !== stepId) {
-      // Add connection
-      setTestSteps(prev => prev.map(step => 
-        step.id === connectionStart 
-          ? { 
-              ...step, 
-              connections: step.connections 
-                ? [...step.connections.filter(id => id !== stepId), stepId]
-                : [stepId]
-            }
-          : step
-      ));
+      const sourceStep = testSteps.find(s => s.id === connectionStart);
+      
+      if (sourceStep?.type === 'if' && connectionType !== 'normal') {
+        // Handle If step connections
+        setTestSteps(prev => prev.map(step => 
+          step.id === connectionStart 
+            ? { 
+                ...step, 
+                [connectionType === 'true' ? 'trueConnection' : 'falseConnection']: stepId
+              }
+            : step
+        ));
+      } else {
+        // Handle normal connections
+        setTestSteps(prev => prev.map(step => 
+          step.id === connectionStart 
+            ? { 
+                ...step, 
+                connections: step.connections 
+                  ? [...step.connections.filter(id => id !== stepId), stepId]
+                  : [stepId]
+              }
+            : step
+        ));
+      }
     }
     setIsConnecting(false);
     setConnectionStart(null);
+    setConnectionType('normal');
   };
 
-  const removeConnection = (fromStepId: string, toStepId: string) => {
+  const removeConnection = (fromStepId: string, toStepId: string, type: 'normal' | 'true' | 'false' = 'normal') => {
     setTestSteps(prev => prev.map(step => 
       step.id === fromStepId 
         ? { 
             ...step, 
-            connections: step.connections?.filter(id => id !== toStepId) || []
+            ...(type === 'true' ? { trueConnection: undefined } : 
+                type === 'false' ? { falseConnection: undefined } : 
+                { connections: step.connections?.filter(id => id !== toStepId) || [] })
           }
         : step
     ));
@@ -349,7 +371,9 @@ export default function TestBuilder() {
     // Find steps with no incoming connections (start nodes)
     const startSteps = testSteps.filter(step => 
       !testSteps.some(otherStep => 
-        otherStep.connections?.includes(step.id)
+        otherStep.connections?.includes(step.id) ||
+        otherStep.trueConnection === step.id ||
+        otherStep.falseConnection === step.id
       )
     );
 
@@ -375,16 +399,28 @@ export default function TestBuilder() {
       };
 
       const step = testSteps.find(s => s.id === stepId);
-      if (!step?.connections || step.connections.length === 0) {
-        return column + 1;
-      }
+      if (!step) return column + 1;
 
       let nextColumn = column + 1;
-      step.connections.forEach(connectedId => {
-        if (!arranged.has(connectedId)) {
-          nextColumn = arrangeFromStep(connectedId, nextColumn);
-        }
-      });
+      
+      // Handle regular connections
+      if (step.connections && step.connections.length > 0) {
+        step.connections.forEach(connectedId => {
+          if (!arranged.has(connectedId)) {
+            nextColumn = arrangeFromStep(connectedId, nextColumn);
+          }
+        });
+      }
+      
+      // Handle If step true connection
+      if (step.trueConnection && !arranged.has(step.trueConnection)) {
+        nextColumn = arrangeFromStep(step.trueConnection, nextColumn);
+      }
+      
+      // Handle If step false connection
+      if (step.falseConnection && !arranged.has(step.falseConnection)) {
+        nextColumn = arrangeFromStep(step.falseConnection, nextColumn);
+      }
 
       return nextColumn;
     };
@@ -421,53 +457,94 @@ export default function TestBuilder() {
   const renderConnections = () => {
     const connections: React.ReactElement[] = [];
     
+    const renderConnection = (fromStep: TestStep, toStepId: string, connectionType: 'normal' | 'true' | 'false') => {
+      const toStep = testSteps.find(s => s.id === toStepId);
+      if (!toStep) return;
+      
+      const fromCenter = getStepCenter(fromStep);
+      const toCenter = getStepCenter(toStep);
+      
+      // Calculate arrow path
+      const dx = toCenter.x - fromCenter.x;
+      const dy = toCenter.y - fromCenter.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Adjust start and end points to step edges
+      const stepRadius = 60; // Approximate step radius
+      const adjustedStart = {
+        x: fromCenter.x + (dx / distance) * stepRadius,
+        y: fromCenter.y + (dy / distance) * stepRadius
+      };
+      const adjustedEnd = {
+        x: toCenter.x - (dx / distance) * stepRadius,
+        y: toCenter.y - (dy / distance) * stepRadius
+      };
+      
+      // Set colors based on connection type
+      const colors = {
+        normal: 'var(--border-primary)',
+        true: '#22c55e', // Green for true branch
+        false: '#ef4444' // Red for false branch
+      };
+      
+      const color = colors[connectionType];
+      
+      connections.push(
+        <g key={`${fromStep.id}-${toStep.id}-${connectionType}`}>
+          {/* Connection line */}
+          <line
+            x1={adjustedStart.x}
+            y1={adjustedStart.y}
+            x2={adjustedEnd.x}
+            y2={adjustedEnd.y}
+            stroke={color}
+            strokeWidth="2"
+            strokeDasharray={connectionType === 'normal' ? "5,5" : "none"}
+            opacity="0.8"
+          />
+          {/* Arrow head */}
+          <polygon
+            points={`${adjustedEnd.x},${adjustedEnd.y} ${adjustedEnd.x - 8 - (dx/distance)*8},${adjustedEnd.y - 4 - (dy/distance)*4} ${adjustedEnd.x - 8 - (dx/distance)*8},${adjustedEnd.y + 4 - (dy/distance)*4}`}
+            fill={color}
+            opacity="0.8"
+          />
+          {/* Connection type label for If branches */}
+          {connectionType !== 'normal' && (
+            <text
+              x={(adjustedStart.x + adjustedEnd.x) / 2}
+              y={(adjustedStart.y + adjustedEnd.y) / 2 - 10}
+              fill={color}
+              fontSize="12"
+              fontWeight="bold"
+              textAnchor="middle"
+              style={{ 
+                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+              }}
+            >
+              {connectionType === 'true' ? 'TRUE' : 'FALSE'}
+            </text>
+          )}
+        </g>
+      );
+    };
+    
     testSteps.forEach(fromStep => {
+      // Regular connections
       if (fromStep.connections) {
         fromStep.connections.forEach(toStepId => {
-          const toStep = testSteps.find(s => s.id === toStepId);
-          if (toStep) {
-            const fromCenter = getStepCenter(fromStep);
-            const toCenter = getStepCenter(toStep);
-            
-            // Calculate arrow path
-            const dx = toCenter.x - fromCenter.x;
-            const dy = toCenter.y - fromCenter.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Adjust start and end points to step edges
-            const stepRadius = 60; // Approximate step radius
-            const adjustedStart = {
-              x: fromCenter.x + (dx / distance) * stepRadius,
-              y: fromCenter.y + (dy / distance) * stepRadius
-            };
-            const adjustedEnd = {
-              x: toCenter.x - (dx / distance) * stepRadius,
-              y: toCenter.y - (dy / distance) * stepRadius
-            };
-            
-            connections.push(
-              <g key={`${fromStep.id}-${toStep.id}`}>
-                {/* Connection line */}
-                <line
-                  x1={adjustedStart.x}
-                  y1={adjustedStart.y}
-                  x2={adjustedEnd.x}
-                  y2={adjustedEnd.y}
-                  stroke="var(--border-primary)"
-                  strokeWidth="2"
-                  strokeDasharray="5,5"
-                  opacity="0.7"
-                />
-                {/* Arrow head */}
-                <polygon
-                  points={`${adjustedEnd.x},${adjustedEnd.y} ${adjustedEnd.x - 8 - (dx/distance)*8},${adjustedEnd.y - 4 - (dy/distance)*4} ${adjustedEnd.x - 8 - (dx/distance)*8},${adjustedEnd.y + 4 - (dy/distance)*4}`}
-                  fill="var(--border-primary)"
-                  opacity="0.7"
-                />
-              </g>
-            );
-          }
+          renderConnection(fromStep, toStepId, 'normal');
         });
+      }
+      
+      // If step true connection
+      if (fromStep.trueConnection) {
+        renderConnection(fromStep, fromStep.trueConnection, 'true');
+      }
+      
+      // If step false connection
+      if (fromStep.falseConnection) {
+        renderConnection(fromStep, fromStep.falseConnection, 'false');
       }
     });
     
@@ -651,7 +728,8 @@ export default function TestBuilder() {
             {isConnecting && (
               <div style={{
                 padding: '0.5rem 0.75rem',
-                backgroundColor: '#3b82f6',
+                backgroundColor: connectionType === 'true' ? '#22c55e' : 
+                                connectionType === 'false' ? '#ef4444' : '#3b82f6',
                 color: 'white',
                 borderRadius: '0.5rem',
                 fontSize: '0.75rem',
@@ -660,8 +738,12 @@ export default function TestBuilder() {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                <GitBranch size={14} />
-                Bağlantı Modu
+                {connectionType === 'true' ? <CheckCircle size={14} /> :
+                 connectionType === 'false' ? <XCircle size={14} /> :
+                 <GitBranch size={14} />}
+                {connectionType === 'true' ? 'TRUE Dalı' :
+                 connectionType === 'false' ? 'FALSE Dalı' :
+                 'Bağlantı Modu'}
               </div>
             )}
           </div>
@@ -903,7 +985,31 @@ export default function TestBuilder() {
                               {draggedStepData.type === 'input' && draggedStepData.value && `Input: ${draggedStepData.value}`}
                               {draggedStepData.type === 'wait' && `Süre: ${draggedStepData.duration || 1000}ms`}
                               {draggedStepData.type === 'refresh' && 'Sayfa yenileme'}
-                              {draggedStepData.type === 'if' && draggedStepData.condition && `Koşul: ${draggedStepData.condition}`}
+                              {draggedStepData.type === 'if' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                  {draggedStepData.condition && `Koşul: ${draggedStepData.condition}`}
+                                  <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.6rem' }}>
+                                    <span style={{ 
+                                      color: draggedStepData.trueConnection ? '#22c55e' : 'var(--text-tertiary)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}>
+                                      <CheckCircle size={8} />
+                                      TRUE: {draggedStepData.trueConnection ? '✓' : 'Bağlı değil'}
+                                    </span>
+                                    <span style={{ 
+                                      color: draggedStepData.falseConnection ? '#ef4444' : 'var(--text-tertiary)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}>
+                                      <XCircle size={8} />
+                                      FALSE: {draggedStepData.falseConnection ? '✓' : 'Bağlı değil'}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </>
@@ -994,55 +1100,157 @@ export default function TestBuilder() {
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        {/* Connection button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isConnecting && connectionStart === step.id) {
-                              // Cancel connection
-                              setIsConnecting(false);
-                              setConnectionStart(null);
-                            } else if (isConnecting && connectionStart !== step.id) {
-                              // End connection
-                              endConnection(step.id);
-                            } else {
-                              // Start connection
-                              startConnection(step.id);
-                            }
-                          }}
-                          style={{
-                            padding: '0.25rem',
-                            backgroundColor: isConnecting && connectionStart === step.id 
-                              ? '#3b82f6' 
-                              : 'transparent',
-                            border: 'none',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            color: isConnecting && connectionStart === step.id 
-                              ? 'white' 
-                              : 'var(--text-tertiary)',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!(isConnecting && connectionStart === step.id)) {
-                              e.currentTarget.style.backgroundColor = '#dbeafe';
-                              e.currentTarget.style.color = '#3b82f6';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!(isConnecting && connectionStart === step.id)) {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                              e.currentTarget.style.color = 'var(--text-tertiary)';
-                            }
-                          }}
-                          title={isConnecting && connectionStart === step.id 
-                            ? 'Bağlantıyı iptal et' 
-                            : isConnecting 
-                              ? 'Buraya bağla' 
-                              : 'Bağlantı başlat'}
-                        >
-                          <GitBranch size={12} />
-                        </button>
+                        {/* If step special connection buttons */}
+                        {step.type === 'if' ? (
+                          <>
+                            {/* True branch button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isConnecting && connectionStart === step.id && connectionType === 'true') {
+                                  setIsConnecting(false);
+                                  setConnectionStart(null);
+                                  setConnectionType('normal');
+                                } else if (isConnecting && connectionStart !== step.id) {
+                                  endConnection(step.id);
+                                } else {
+                                  startConnection(step.id, 'true');
+                                }
+                              }}
+                              style={{
+                                padding: '0.25rem',
+                                backgroundColor: isConnecting && connectionStart === step.id && connectionType === 'true'
+                                  ? '#22c55e' 
+                                  : 'transparent',
+                                border: 'none',
+                                borderRadius: '0.25rem',
+                                cursor: 'pointer',
+                                color: isConnecting && connectionStart === step.id && connectionType === 'true'
+                                  ? 'white' 
+                                  : '#22c55e',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!(isConnecting && connectionStart === step.id && connectionType === 'true')) {
+                                  e.currentTarget.style.backgroundColor = '#dcfce7';
+                                  e.currentTarget.style.color = '#16a34a';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!(isConnecting && connectionStart === step.id && connectionType === 'true')) {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = '#22c55e';
+                                }
+                              }}
+                              title={isConnecting && connectionStart === step.id && connectionType === 'true'
+                                ? 'TRUE bağlantısını iptal et' 
+                                : isConnecting 
+                                  ? 'TRUE dalına bağla' 
+                                  : 'TRUE dalı bağlantısı başlat'}
+                            >
+                              <CheckCircle size={12} />
+                            </button>
+                            
+                            {/* False branch button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isConnecting && connectionStart === step.id && connectionType === 'false') {
+                                  setIsConnecting(false);
+                                  setConnectionStart(null);
+                                  setConnectionType('normal');
+                                } else if (isConnecting && connectionStart !== step.id) {
+                                  endConnection(step.id);
+                                } else {
+                                  startConnection(step.id, 'false');
+                                }
+                              }}
+                              style={{
+                                padding: '0.25rem',
+                                backgroundColor: isConnecting && connectionStart === step.id && connectionType === 'false'
+                                  ? '#ef4444' 
+                                  : 'transparent',
+                                border: 'none',
+                                borderRadius: '0.25rem',
+                                cursor: 'pointer',
+                                color: isConnecting && connectionStart === step.id && connectionType === 'false'
+                                  ? 'white' 
+                                  : '#ef4444',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!(isConnecting && connectionStart === step.id && connectionType === 'false')) {
+                                  e.currentTarget.style.backgroundColor = '#fee2e2';
+                                  e.currentTarget.style.color = '#dc2626';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!(isConnecting && connectionStart === step.id && connectionType === 'false')) {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = '#ef4444';
+                                }
+                              }}
+                              title={isConnecting && connectionStart === step.id && connectionType === 'false'
+                                ? 'FALSE bağlantısını iptal et' 
+                                : isConnecting 
+                                  ? 'FALSE dalına bağla' 
+                                  : 'FALSE dalı bağlantısı başlat'}
+                            >
+                              <XCircle size={12} />
+                            </button>
+                          </>
+                        ) : (
+                          /* Regular connection button for non-if steps */
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isConnecting && connectionStart === step.id) {
+                                // Cancel connection
+                                setIsConnecting(false);
+                                setConnectionStart(null);
+                                setConnectionType('normal');
+                              } else if (isConnecting && connectionStart !== step.id) {
+                                // End connection
+                                endConnection(step.id);
+                              } else {
+                                // Start connection
+                                startConnection(step.id);
+                              }
+                            }}
+                            style={{
+                              padding: '0.25rem',
+                              backgroundColor: isConnecting && connectionStart === step.id 
+                                ? '#3b82f6' 
+                                : 'transparent',
+                              border: 'none',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer',
+                              color: isConnecting && connectionStart === step.id 
+                                ? 'white' 
+                                : 'var(--text-tertiary)',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!(isConnecting && connectionStart === step.id)) {
+                                e.currentTarget.style.backgroundColor = '#dbeafe';
+                                e.currentTarget.style.color = '#3b82f6';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!(isConnecting && connectionStart === step.id)) {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-tertiary)';
+                              }
+                            }}
+                            title={isConnecting && connectionStart === step.id 
+                              ? 'Bağlantıyı iptal et' 
+                              : isConnecting 
+                                ? 'Buraya bağla' 
+                                : 'Bağlantı başlat'}
+                          >
+                            <GitBranch size={12} />
+                          </button>
+                        )}
                         
                         {/* Delete button */}
                         <button
@@ -1110,7 +1318,29 @@ export default function TestBuilder() {
                            )}
                            {step.type === 'refresh' && 'Sayfa yenileme'}
                            {step.type === 'if' && (
-                             <span>Koşul: {step.condition || 'Belirtilmedi'}</span>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                               <span>Koşul: {step.condition || 'Belirtilmedi'}</span>
+                               <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem' }}>
+                                 <span style={{ 
+                                   color: step.trueConnection ? '#22c55e' : 'var(--text-tertiary)',
+                                   display: 'flex',
+                                   alignItems: 'center',
+                                   gap: '0.25rem'
+                                 }}>
+                                   <CheckCircle size={10} />
+                                   TRUE: {step.trueConnection ? '✓' : 'Bağlı değil'}
+                                 </span>
+                                 <span style={{ 
+                                   color: step.falseConnection ? '#ef4444' : 'var(--text-tertiary)',
+                                   display: 'flex',
+                                   alignItems: 'center',
+                                   gap: '0.25rem'
+                                 }}>
+                                   <XCircle size={10} />
+                                   FALSE: {step.falseConnection ? '✓' : 'Bağlı değil'}
+                                 </span>
+                               </div>
+                             </div>
                            )}
                          </>
                        )}

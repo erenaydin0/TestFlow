@@ -21,7 +21,9 @@ export interface TestStep {
   duration?: number;
   condition?: string;
   description?: string;
-  connections?: string[]; // Array of connected step IDs
+  connections?: string[]; // Array of connected step IDs (for regular steps)
+  trueConnection?: string; // If step true branch
+  falseConnection?: string; // If step false branch
 }
 
 export interface ScheduledTest {
