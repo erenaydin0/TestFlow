@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { 
@@ -15,18 +15,19 @@ import {
   Download,
   Upload,
   Trash2,
-  Settings,
-  Plus,
-  GripVertical,
-  TestTube,
   ZoomIn,
   ZoomOut,
-  RotateCcw as Reset,
+  RotateCcw,
   Move,
   X,
   CheckCircle,
   XCircle,
-  Magnet
+  Magnet,
+  Copy,
+  Clipboard,
+  Files,
+  Undo,
+  Redo
 } from 'lucide-react';
 import { TestStep } from '@/types';
 
@@ -95,9 +96,54 @@ export default function TestBuilder() {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [snapLines, setSnapLines] = useState<{x: number[], y: number[]}>({x: [], y: []});
+  const [copiedSteps, setCopiedSteps] = useState<TestStep[]>([]);
+  const [selectedSteps, setSelectedSteps] = useState<Set<string>>(new Set());
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
+  const [history, setHistory] = useState<TestStep[][]>([[]]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   // Generate unique ID
   const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  // History management
+  const saveToHistory = (newSteps: TestStep[]) => {
+    // Remove any future history if we're not at the end
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push([...newSteps]);
+    
+    // Limit history to 50 items
+    if (newHistory.length > 50) {
+      newHistory.shift();
+    } else {
+      setHistoryIndex(prev => prev + 1);
+    }
+    
+    setHistory(newHistory);
+  };
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setTestSteps([...history[newIndex]]);
+      setSelectedSteps(new Set());
+      setSelectedStep(null);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setTestSteps([...history[newIndex]]);
+      setSelectedSteps(new Set());
+      setSelectedStep(null);
+    }
+  };
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
   // Snap to grid and other steps
   const snapToPosition = (x: number, y: number, excludeStepId?: string) => {
@@ -225,12 +271,14 @@ export default function TestBuilder() {
           x: snapped.x,
           y: snapped.y
         };
-        setTestSteps(prev => [...prev, newStep]);
+        const newSteps = [...testSteps, newStep];
+        setTestSteps(newSteps);
+        saveToHistory(newSteps);
       }
     } else if (draggedStep) {
       // Move existing step with snap
       const snapped = snapToPosition(centeredX, centeredY, draggedStep);
-      setTestSteps(prev => prev.map(step => 
+      const newSteps = testSteps.map(step => 
         step.id === draggedStep 
           ? { 
               ...step, 
@@ -238,7 +286,9 @@ export default function TestBuilder() {
               y: snapped.y
             }
           : step
-      ));
+      );
+      setTestSteps(newSteps);
+      saveToHistory(newSteps);
     }
     
     // Always clear drag states after drop
@@ -327,11 +377,177 @@ export default function TestBuilder() {
 
   // Delete step
   const deleteStep = (stepId: string) => {
-    setTestSteps(prev => prev.filter(step => step.id !== stepId));
+    const newSteps = testSteps.filter(step => step.id !== stepId);
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
+    setSelectedSteps(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(stepId);
+      return newSet;
+    });
     if (selectedStep && selectedStep.id === stepId) {
       setSelectedStep(null);
     }
   };
+
+  // Copy/Paste functions
+  const copySteps = () => {
+    if (selectedSteps.size === 0) return;
+    
+    const stepsToCopy = testSteps.filter(step => selectedSteps.has(step.id));
+    setCopiedSteps(stepsToCopy);
+  };
+
+  const pasteSteps = () => {
+    if (copiedSteps.length === 0) return;
+
+    // Find the bounding box of copied steps
+    const minX = Math.min(...copiedSteps.map(step => step.x));
+    const minY = Math.min(...copiedSteps.map(step => step.y));
+
+    // Offset for pasted steps
+    const offsetX = 50;
+    const offsetY = 50;
+
+    const pastedSteps = copiedSteps.map(step => ({
+      ...step,
+      id: generateId(), // Generate new ID
+      x: step.x - minX + offsetX, // Relative positioning
+      y: step.y - minY + offsetY,
+      // Clear connections for pasted steps to avoid conflicts
+      connections: undefined,
+      trueConnection: undefined,
+      falseConnection: undefined
+    }));
+
+    const newSteps = [...testSteps, ...pastedSteps];
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
+    
+    // Select the newly pasted steps
+    const newStepIds = new Set(pastedSteps.map(step => step.id));
+    setSelectedSteps(newStepIds);
+  };
+
+  const duplicateSteps = () => {
+    if (selectedSteps.size === 0) return;
+    
+    const stepsToDuplicate = testSteps.filter(step => selectedSteps.has(step.id));
+    
+    const duplicatedSteps = stepsToDuplicate.map(step => ({
+      ...step,
+      id: generateId(),
+      x: step.x + 50, // Offset by 50px
+      y: step.y + 50,
+      // Clear connections for duplicated steps
+      connections: undefined,
+      trueConnection: undefined,
+      falseConnection: undefined
+    }));
+
+    const newSteps = [...testSteps, ...duplicatedSteps];
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
+    
+    // Select the newly duplicated steps
+    const newStepIds = new Set(duplicatedSteps.map(step => step.id));
+    setSelectedSteps(newStepIds);
+  };
+
+  const deleteSelectedSteps = () => {
+    if (selectedSteps.size === 0) return;
+    
+    const newSteps = testSteps.filter(step => !selectedSteps.has(step.id));
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
+    setSelectedSteps(new Set());
+    
+    if (selectedStep && selectedSteps.has(selectedStep.id)) {
+      setSelectedStep(null);
+    }
+  };
+
+  const selectAllSteps = () => {
+    const allStepIds = new Set(testSteps.map(step => step.id));
+    setSelectedSteps(allStepIds);
+  };
+
+  const clearSelection = () => {
+    setSelectedSteps(new Set());
+  };
+
+  const toggleStepSelection = (stepId: string, ctrlKey: boolean = false) => {
+    setSelectedSteps(prev => {
+      const newSet = new Set(prev);
+      
+      if (ctrlKey) {
+        // Multi-select with Ctrl
+        if (newSet.has(stepId)) {
+          newSet.delete(stepId);
+        } else {
+          newSet.add(stepId);
+        }
+      } else {
+        // Single select
+        newSet.clear();
+        newSet.add(stepId);
+      }
+      
+      return newSet;
+    });
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent shortcuts when modal is open or input is focused
+      if (isModalOpen || (e.target as HTMLElement).tagName === 'INPUT') return;
+
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'c':
+            e.preventDefault();
+            copySteps();
+            break;
+          case 'v':
+            e.preventDefault();
+            pasteSteps();
+            break;
+          case 'd':
+            e.preventDefault();
+            duplicateSteps();
+            break;
+          case 'a':
+            e.preventDefault();
+            selectAllSteps();
+            break;
+          case 'z':
+            e.preventDefault();
+            undo();
+            break;
+          case 'y':
+            e.preventDefault();
+            redo();
+            break;
+        }
+      } else {
+        switch (e.key) {
+          case 'Delete':
+          case 'Backspace':
+            e.preventDefault();
+            deleteSelectedSteps();
+            break;
+          case 'Escape':
+            e.preventDefault();
+            clearSelection();
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedSteps, copiedSteps, isModalOpen]);
 
   // Canvas pan and click handling
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -339,9 +555,13 @@ export default function TestBuilder() {
     const target = e.target as HTMLElement;
     const isClickingOnStep = target.closest('[data-step-id]');
     
-    // If clicking on canvas background (not on a step), deselect and cancel connections
+    // If clicking on canvas background (not on a step), handle selection/deselection
     if (e.target === e.currentTarget) {
-      setSelectedStep(null);
+      if (!e.ctrlKey && !e.metaKey) {
+        setSelectedStep(null);
+        setSelectedSteps(new Set());
+      }
+      
       if (isConnecting) {
         setIsConnecting(false);
         setConnectionStart(null);
@@ -349,18 +569,24 @@ export default function TestBuilder() {
       }
     }
     
-    // Don't start panning if we're clicking on a step or there's an active drag
+    // Don't start panning/selecting if we're clicking on a step or there's an active drag
     if (isClickingOnStep || draggedStep || draggedAction) {
       return;
     }
     
-    if (e.button !== 0) return; // Only left click for panning
+    if (e.button !== 0) return; // Only left click
     
     const startX = e.clientX;
     const startY = e.clientY;
     const startOffsetX = canvasOffset.x;
     const startOffsetY = canvasOffset.y;
     let hasMoved = false;
+    let isSelectionDrag = false;
+
+    // Calculate canvas position for selection box
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const canvasStartX = (startX - rect.left - canvasOffset.x) / zoom;
+    const canvasStartY = (startY - rect.top - canvasOffset.y) / zoom;
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - startX;
@@ -371,13 +597,55 @@ export default function TestBuilder() {
         hasMoved = true;
       }
       
-      setCanvasOffset({
-        x: startOffsetX + deltaX,
-        y: startOffsetY + deltaY
-      });
+      // Determine if this should be selection or panning
+      if (hasMoved && !isSelectionDrag) {
+        // If Shift is held, start selection; otherwise pan
+        isSelectionDrag = e.shiftKey;
+        if (isSelectionDrag) {
+          setIsSelecting(true);
+        }
+      }
+      
+      if (isSelectionDrag) {
+        // Update selection box
+        const currentCanvasX = (e.clientX - rect.left - canvasOffset.x) / zoom;
+        const currentCanvasY = (e.clientY - rect.top - canvasOffset.y) / zoom;
+        
+        setSelectionBox({
+          x: Math.min(canvasStartX, currentCanvasX),
+          y: Math.min(canvasStartY, currentCanvasY),
+          width: Math.abs(currentCanvasX - canvasStartX),
+          height: Math.abs(currentCanvasY - canvasStartY)
+        });
+        
+        // Select steps within selection box
+        const selectedIds = new Set<string>();
+        testSteps.forEach(step => {
+          const stepRight = step.x + 192; // 12rem
+          const stepBottom = step.y + 80; // approximate height
+          
+          if (selectionBox && 
+              step.x < selectionBox.x + selectionBox.width &&
+              stepRight > selectionBox.x &&
+              step.y < selectionBox.y + selectionBox.height &&
+              stepBottom > selectionBox.y) {
+            selectedIds.add(step.id);
+          }
+        });
+        setSelectedSteps(selectedIds);
+      } else {
+        // Pan canvas
+        setCanvasOffset({
+          x: startOffsetX + deltaX,
+          y: startOffsetY + deltaY
+        });
+      }
     };
 
     const handleMouseUp = (e: MouseEvent) => {
+      setIsSelecting(false);
+      setSelectionBox(null);
+      
       // Clean up event listeners
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -387,9 +655,15 @@ export default function TestBuilder() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleStepClick = (step: TestStep) => {
-    setSelectedStep(step);
-    setIsModalOpen(true);
+  const handleStepClick = (step: TestStep, ctrlKey: boolean = false) => {
+    // Handle multi-selection
+    toggleStepSelection(step.id, ctrlKey);
+    
+    // Open modal only for single selection
+    if (!ctrlKey) {
+      setSelectedStep(step);
+      setIsModalOpen(true);
+    }
   };
 
   const closeModal = () => {
@@ -404,6 +678,7 @@ export default function TestBuilder() {
         : step
     );
     setTestSteps(updatedSteps);
+    saveToHistory(updatedSteps);
     
     if (selectedStep && selectedStep.id === stepId) {
       setSelectedStep({ ...selectedStep, [property]: value });
@@ -423,17 +698,19 @@ export default function TestBuilder() {
       
       if (sourceStep?.type === 'if' && connectionType !== 'normal') {
         // Handle If step connections
-        setTestSteps(prev => prev.map(step => 
+        const newSteps = testSteps.map(step => 
           step.id === connectionStart 
             ? { 
                 ...step, 
                 [connectionType === 'true' ? 'trueConnection' : 'falseConnection']: stepId
               }
             : step
-        ));
+        );
+        setTestSteps(newSteps);
+        saveToHistory(newSteps);
       } else {
         // Handle normal connections
-        setTestSteps(prev => prev.map(step => 
+        const newSteps = testSteps.map(step => 
           step.id === connectionStart 
             ? { 
                 ...step, 
@@ -442,7 +719,9 @@ export default function TestBuilder() {
                   : [stepId]
               }
             : step
-        ));
+        );
+        setTestSteps(newSteps);
+        saveToHistory(newSteps);
       }
     }
     setIsConnecting(false);
@@ -451,7 +730,7 @@ export default function TestBuilder() {
   };
 
   const removeConnection = (fromStepId: string, toStepId: string, type: 'normal' | 'true' | 'false' = 'normal') => {
-    setTestSteps(prev => prev.map(step => 
+    const newSteps = testSteps.map(step => 
       step.id === fromStepId 
         ? { 
             ...step, 
@@ -460,7 +739,9 @@ export default function TestBuilder() {
                 { connections: step.connections?.filter(id => id !== toStepId) || [] })
           }
         : step
-    ));
+    );
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
   };
 
   // Get step center coordinates
@@ -549,11 +830,13 @@ export default function TestBuilder() {
     });
 
     // Update step positions
-    setTestSteps(prev => prev.map(step => ({
+    const newSteps = testSteps.map(step => ({
       ...step,
       x: newPositions[step.id]?.x ?? step.x,
       y: newPositions[step.id]?.y ?? step.y
-    })));
+    }));
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
 
     // Reset canvas position to show arranged steps
     setCanvasOffset({ x: 0, y: 0 });
@@ -732,7 +1015,7 @@ export default function TestBuilder() {
               className="canvas-control"
               title="Sıfırla"
             >
-              <Reset size={16} />
+              <RotateCcw size={16} />
             </button>
             
             <span style={{
@@ -796,6 +1079,39 @@ export default function TestBuilder() {
             }}></div>
             
             <button 
+              onClick={undo}
+              className="canvas-control"
+              title="Geri Al - Ctrl+Z"
+              disabled={!canUndo}
+              style={{
+                opacity: !canUndo ? 0.5 : 1,
+                cursor: !canUndo ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <Undo size={16} />
+            </button>
+            
+            <button 
+              onClick={redo}
+              className="canvas-control"
+              title="İleri Al - Ctrl+Y"
+              disabled={!canRedo}
+              style={{
+                opacity: !canRedo ? 0.5 : 1,
+                cursor: !canRedo ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <Redo size={16} />
+            </button>
+            
+            <div style={{
+              width: '1px',
+              height: '2rem',
+              backgroundColor: 'var(--border-primary)',
+              margin: '0 0.25rem'
+            }}></div>
+            
+            <button 
               onClick={autoArrangeSteps}
               className="canvas-control"
               title="Adımları Otomatik Hizala"
@@ -843,6 +1159,67 @@ export default function TestBuilder() {
               <Magnet size={16} />
             </button>
             
+            <div style={{
+              width: '1px',
+              height: '2rem',
+              backgroundColor: 'var(--border-primary)',
+              margin: '0 0.25rem'
+            }}></div>
+            
+            <button 
+              onClick={copySteps}
+              className="canvas-control"
+              title={`Kopyala (${selectedSteps.size} adım seçili) - Ctrl+C`}
+              disabled={selectedSteps.size === 0}
+              style={{
+                opacity: selectedSteps.size === 0 ? 0.5 : 1,
+                cursor: selectedSteps.size === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <Copy size={16} />
+            </button>
+            
+            <button 
+              onClick={pasteSteps}
+              className="canvas-control"
+              title={`Yapıştır (${copiedSteps.length} adım panoda) - Ctrl+V`}
+              disabled={copiedSteps.length === 0}
+              style={{
+                opacity: copiedSteps.length === 0 ? 0.5 : 1,
+                cursor: copiedSteps.length === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <Clipboard size={16} />
+            </button>
+            
+            <button 
+              onClick={duplicateSteps}
+              className="canvas-control"
+              title={`Çoğalt (${selectedSteps.size} adım seçili) - Ctrl+D`}
+              disabled={selectedSteps.size === 0}
+              style={{
+                opacity: selectedSteps.size === 0 ? 0.5 : 1,
+                cursor: selectedSteps.size === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <Files size={16} />
+            </button>
+            
+            <button 
+              onClick={deleteSelectedSteps}
+              className="canvas-control"
+              title={`Sil (${selectedSteps.size} adım seçili) - Delete`}
+              disabled={selectedSteps.size === 0}
+              style={{
+                opacity: selectedSteps.size === 0 ? 0.5 : 1,
+                cursor: selectedSteps.size === 0 ? 'not-allowed' : 'pointer',
+                color: selectedSteps.size > 0 ? '#dc2626' : 'var(--text-secondary)'
+              }}
+            >
+              <Trash2 size={16} />
+            </button>
+
+
             {/* Connection mode indicator */}
             {isConnecting && (
               <div style={{
@@ -1190,6 +1567,7 @@ export default function TestBuilder() {
                 
                 const Icon = action.icon;
                 const isSelected = selectedStep === step;
+                const isMultiSelected = selectedSteps.has(step.id);
                 
                 return (
                                                                               <div
@@ -1207,7 +1585,7 @@ export default function TestBuilder() {
                       onDragEnd={handleDragEnd}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleStepClick(step);
+                        handleStepClick(step, e.ctrlKey || e.metaKey);
                       }}
                       onMouseDown={(e) => {
                         // Prevent canvas panning when dragging steps
@@ -1219,11 +1597,11 @@ export default function TestBuilder() {
                         top: step.y,
                         width: '12rem',
                         padding: '0.75rem',
-                        backgroundColor: 'var(--bg-primary)',
-                        border: `2px solid ${isSelected ? action.color : 'var(--border-primary)'}`,
+                        backgroundColor: isMultiSelected ? `${action.color}10` : 'var(--bg-primary)',
+                        border: `2px solid ${isSelected ? action.color : isMultiSelected ? action.color : 'var(--border-primary)'}`,
                         borderRadius: '0.5rem',
                         cursor: draggedStep === step.id ? 'grabbing' : 'grab',
-                        boxShadow: isSelected 
+                        boxShadow: isSelected || isMultiSelected
                           ? `0 4px 12px ${action.color}30` 
                           : '0 2px 8px rgba(0,0,0,0.1)',
                         transition: draggedStep === step.id ? 'none' : 'all 0.2s ease',
@@ -1518,6 +1896,23 @@ export default function TestBuilder() {
                   </div>
                 );
               })}
+
+              {/* Selection Box */}
+              {selectionBox && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: selectionBox.x,
+                    top: selectionBox.y,
+                    width: selectionBox.width,
+                    height: selectionBox.height,
+                    border: '2px dashed #3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    pointerEvents: 'none',
+                    zIndex: 999
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -1848,7 +2243,9 @@ export default function TestBuilder() {
               }}>
                 <button
                   onClick={() => {
-                    setTestSteps(testSteps.filter(s => s.id !== selectedStep.id));
+                    const newSteps = testSteps.filter(s => s.id !== selectedStep.id);
+                    setTestSteps(newSteps);
+                    saveToHistory(newSteps);
                     closeModal();
                   }}
                   style={{
