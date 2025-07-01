@@ -867,22 +867,29 @@ export default function TestBuilder() {
                       }}>
                         <Icon size={18} color={action.color} />
                       </div>
-                      <div>
-                        <h3 style={{
-                          fontSize: '1.25rem',
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
-                          margin: 0
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.75rem' 
                         }}>
-                          {action.title}
-                        </h3>
-                        <p style={{
-                          fontSize: '0.875rem',
-                          color: 'var(--text-secondary)',
-                          margin: 0
-                        }}>
-                          Adım #{selectedStep.id.slice(-4)}
-                        </p>
+                          <h3 style={{
+                            fontSize: '1.25rem',
+                            fontWeight: 600,
+                            color: 'var(--text-primary)',
+                            margin: 0
+                          }}>
+                            {action.title}
+                          </h3>
+                          <span style={{
+                            fontSize: '0.875rem',
+                            fontWeight: 400,
+                            color: 'var(--text-tertiary)',
+                            opacity: 0.7
+                          }}>
+                            #{selectedStep.id.slice(-4)}
+                          </span>
+                        </div>
                       </div>
                     </>
                   );
