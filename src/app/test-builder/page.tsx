@@ -420,39 +420,73 @@ export default function TestBuilder() {
               right: '1rem',
               zIndex: 10,
               display: 'flex',
-              gap: '0.5rem'
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem',
+              backgroundColor: 'var(--bg-primary)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
             }}>
             <button 
               onClick={() => setZoom(Math.min(zoom + 0.1, 2))}
               className="canvas-control"
+              title="Yakınlaştır"
             >
               <ZoomIn size={16} />
             </button>
+            
             <span style={{ 
-              padding: '0.5rem 0.75rem',
-              backgroundColor: 'var(--bg-primary)',
+              padding: '0.25rem 0.5rem',
+              backgroundColor: 'var(--bg-secondary)',
               border: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem',
+              borderRadius: '0.25rem',
               fontSize: '0.75rem',
-              color: 'var(--text-secondary)'
+              color: 'var(--text-secondary)',
+              minWidth: '3rem',
+              textAlign: 'center',
+              fontWeight: 500
             }}>
               {Math.round(zoom * 100)}%
             </span>
+            
             <button 
               onClick={() => setZoom(Math.max(zoom - 0.1, 0.3))}
               className="canvas-control"
+              title="Uzaklaştır"
             >
-              <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>−</span>
+              <ZoomOut size={16} />
             </button>
+            
+            <div style={{
+              width: '1px',
+              height: '1.5rem',
+              backgroundColor: 'var(--border-primary)',
+              margin: '0 0.25rem'
+            }}></div>
+            
             <button 
               onClick={() => {
                 setZoom(1);
                 setCanvasOffset({ x: 0, y: 0 });
               }}
               className="canvas-control"
+              title="Sıfırla"
             >
               <Reset size={16} />
             </button>
+            
+            <span style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-tertiary)',
+              marginLeft: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}>
+              <Move size={12} />
+              {testSteps.length} Adım
+            </span>
           </div>
 
           {/* Floating Toolbar */}
@@ -531,24 +565,6 @@ export default function TestBuilder() {
               borderRadius: '0.75rem',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
             }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem',
-              paddingRight: '0.75rem',
-              borderRight: '1px solid var(--border-primary)'
-            }}>
-              <TestTube size={14} color="var(--text-secondary)" />
-              <span style={{ 
-                fontSize: '0.75rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Aksiyonlar
-              </span>
-            </div>
             
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {availableActions.map((action) => {
