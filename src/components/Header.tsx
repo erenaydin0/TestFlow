@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube } from 'lucide-react';
+import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
 
 interface HeaderProps {
@@ -32,8 +32,8 @@ export default function Header({ title, subtitle }: HeaderProps) {
   }, [isUserPanelOpen]);
 
   const themeOptions = [
-    { id: 'light', label: 'Açık Tema', icon: Sun },
-    { id: 'dark', label: 'Koyu Tema', icon: Moon },
+    { id: 'light', label: 'Açık', icon: Sun },
+    { id: 'dark', label: 'Koyu', icon: Moon },
   ];
 
   return (
@@ -257,69 +257,66 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 </div>
               </div>
 
-              {/* Theme Selection */}
+              {/* Appearance Settings */}
               <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-primary)' }}>
-                <p style={{ 
-                  fontSize: '0.75rem', 
-                  fontWeight: 600, 
-                  color: 'var(--text-secondary)', 
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  margin: '0 0 0.75rem 0'
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '0.75rem'
                 }}>
-                  Tema Seçimi
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  {themeOptions.map((option) => {
-                    const Icon = option.icon;
-                    const isActive = theme === option.id;
+                  <span style={{ 
+                    fontSize: '0.875rem', 
+                    fontWeight: 500, 
+                    color: 'var(--text-primary)'
+                  }}>
+                    Görünüm
+                  </span>
+                  
+                  {/* Compact Theme Dropdown */}
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      value={theme}
+                      onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
+                      style={{
+                        padding: '0.25rem 1.5rem 0.25rem 0.5rem',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        borderRadius: '0.25rem',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        transition: 'all 0.2s ease',
+                        minWidth: '5rem',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target as HTMLSelectElement).style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target as HTMLSelectElement).style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      {themeOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                     
-                    return (
-                      <button
-                        key={option.id}
-                        onClick={() => setTheme(option.id as 'light' | 'dark')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          padding: '0.5rem 0.75rem',
-                          backgroundColor: isActive ? 'var(--bg-tertiary)' : 'transparent',
-                          color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
-                          border: 'none',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                          transition: 'all 0.2s ease',
-                          width: '100%',
-                          textAlign: 'left'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                          }
-                        }}
-                      >
-                        <Icon size={14} />
-                        <span>{option.label}</span>
-                        {isActive && (
-                          <div style={{ 
-                            marginLeft: 'auto',
-                            width: '0.5rem',
-                            height: '0.5rem',
-                            backgroundColor: 'var(--primary)',
-                            borderRadius: '50%'
-                          }} />
-                        )}
-                      </button>
-                    );
-                  })}
+                    {/* Custom dropdown arrow */}
+                    <div style={{
+                      position: 'absolute',
+                      right: '0.375rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                      color: 'var(--text-tertiary)'
+                    }}>
+                      <ChevronDown size={12} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
