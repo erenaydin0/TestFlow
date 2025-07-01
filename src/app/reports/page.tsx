@@ -282,15 +282,6 @@ export default function ReportsPage() {
                 <option value="development">Development</option>
               </select>
             </div>
-            
-            <button className="btn-primary" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem' 
-            }}>
-              <Download size={16} />
-              Yeni Rapor Oluştur
-            </button>
           </div>
 
           <div style={{ 

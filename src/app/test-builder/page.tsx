@@ -342,6 +342,81 @@ export default function TestBuilder() {
     };
   };
 
+  // Auto-arrange steps
+  const autoArrangeSteps = () => {
+    if (testSteps.length === 0) return;
+
+    // Find steps with no incoming connections (start nodes)
+    const startSteps = testSteps.filter(step => 
+      !testSteps.some(otherStep => 
+        otherStep.connections?.includes(step.id)
+      )
+    );
+
+    // If no start steps found, use the first step
+    if (startSteps.length === 0) {
+      startSteps.push(testSteps[0]);
+    }
+
+    const arranged: Set<string> = new Set();
+    const newPositions: { [key: string]: { x: number, y: number } } = {};
+    const STEP_WIDTH = 250; // 12rem + margin
+    const START_Y = 100; // Fixed Y position for horizontal line
+    let currentColumn = 0;
+
+    // Recursive function to arrange connected steps horizontally
+    const arrangeFromStep = (stepId: string, column: number): number => {
+      if (arranged.has(stepId)) return column;
+
+      arranged.add(stepId);
+      newPositions[stepId] = {
+        x: column * STEP_WIDTH + 50, // 50px margin from left
+        y: START_Y // Fixed Y position - horizontal line
+      };
+
+      const step = testSteps.find(s => s.id === stepId);
+      if (!step?.connections || step.connections.length === 0) {
+        return column + 1;
+      }
+
+      let nextColumn = column + 1;
+      step.connections.forEach(connectedId => {
+        if (!arranged.has(connectedId)) {
+          nextColumn = arrangeFromStep(connectedId, nextColumn);
+        }
+      });
+
+      return nextColumn;
+    };
+
+    // Arrange the first start step horizontally
+    if (startSteps.length > 0) {
+      currentColumn = arrangeFromStep(startSteps[0].id, 0);
+    }
+
+    // Arrange any remaining unconnected steps in a horizontal line
+    testSteps.forEach(step => {
+      if (!arranged.has(step.id)) {
+        newPositions[step.id] = {
+          x: currentColumn * STEP_WIDTH + 50,
+          y: START_Y
+        };
+        currentColumn++;
+      }
+    });
+
+    // Update step positions
+    setTestSteps(prev => prev.map(step => ({
+      ...step,
+      x: newPositions[step.id]?.x ?? step.x,
+      y: newPositions[step.id]?.y ?? step.y
+    })));
+
+    // Reset canvas position to show arranged steps
+    setCanvasOffset({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
   // Render connection lines
   const renderConnections = () => {
     const connections: React.ReactElement[] = [];
@@ -527,6 +602,49 @@ export default function TestBuilder() {
               title="Yükle"
             >
               <Upload size={16} />
+            </button>
+            
+            <div style={{
+              width: '1px',
+              height: '2rem',
+              backgroundColor: 'var(--border-primary)',
+              margin: '0 0.25rem'
+            }}></div>
+            
+            <button 
+              onClick={autoArrangeSteps}
+              className="canvas-control"
+              title="Adımları Otomatik Hizala"
+              disabled={testSteps.length === 0}
+              style={{
+                opacity: testSteps.length === 0 ? 0.5 : 1,
+                cursor: testSteps.length === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 3px)',
+                  gridTemplateRows: 'repeat(3, 3px)',
+                  gap: '1px'
+                }}>
+                  {[...Array(9)].map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: '3px',
+                        height: '3px',
+                        backgroundColor: 'currentColor',
+                        borderRadius: '0.5px'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </button>
             
             {/* Connection mode indicator */}

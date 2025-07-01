@@ -22,7 +22,6 @@ const navigation = [
 
 const bottomNavigation = [
   { name: 'Ayarlar', href: '/settings', icon: Settings },
-  { name: 'Yardım', href: '/help', icon: HelpCircle },
 ];
 
 export default function Sidebar() {
