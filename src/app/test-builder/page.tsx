@@ -81,6 +81,8 @@ export default function TestBuilder() {
   const [draggedStep, setDraggedStep] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragPreview, setDragPreview] = useState<{x: number, y: number, type: string} | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStart, setConnectionStart] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -227,9 +229,13 @@ export default function TestBuilder() {
     const target = e.target as HTMLElement;
     const isClickingOnStep = target.closest('[data-step-id]');
     
-    // If clicking on canvas background (not on a step), deselect
+    // If clicking on canvas background (not on a step), deselect and cancel connections
     if (e.target === e.currentTarget) {
       setSelectedStep(null);
+      if (isConnecting) {
+        setIsConnecting(false);
+        setConnectionStart(null);
+      }
     }
     
     // Don't start panning if we're clicking on a step or there's an active drag
@@ -291,6 +297,106 @@ export default function TestBuilder() {
     if (selectedStep && selectedStep.id === stepId) {
       setSelectedStep({ ...selectedStep, [property]: value });
     }
+  };
+
+  // Connection handling
+  const startConnection = (stepId: string) => {
+    setIsConnecting(true);
+    setConnectionStart(stepId);
+  };
+
+  const endConnection = (stepId: string) => {
+    if (connectionStart && connectionStart !== stepId) {
+      // Add connection
+      setTestSteps(prev => prev.map(step => 
+        step.id === connectionStart 
+          ? { 
+              ...step, 
+              connections: step.connections 
+                ? [...step.connections.filter(id => id !== stepId), stepId]
+                : [stepId]
+            }
+          : step
+      ));
+    }
+    setIsConnecting(false);
+    setConnectionStart(null);
+  };
+
+  const removeConnection = (fromStepId: string, toStepId: string) => {
+    setTestSteps(prev => prev.map(step => 
+      step.id === fromStepId 
+        ? { 
+            ...step, 
+            connections: step.connections?.filter(id => id !== toStepId) || []
+          }
+        : step
+    ));
+  };
+
+  // Get step center coordinates
+  const getStepCenter = (step: TestStep) => {
+    return {
+      x: step.x + 96, // 12rem / 2 = 96px
+      y: step.y + 40  // Approximate center height
+    };
+  };
+
+  // Render connection lines
+  const renderConnections = () => {
+    const connections: React.ReactElement[] = [];
+    
+    testSteps.forEach(fromStep => {
+      if (fromStep.connections) {
+        fromStep.connections.forEach(toStepId => {
+          const toStep = testSteps.find(s => s.id === toStepId);
+          if (toStep) {
+            const fromCenter = getStepCenter(fromStep);
+            const toCenter = getStepCenter(toStep);
+            
+            // Calculate arrow path
+            const dx = toCenter.x - fromCenter.x;
+            const dy = toCenter.y - fromCenter.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Adjust start and end points to step edges
+            const stepRadius = 60; // Approximate step radius
+            const adjustedStart = {
+              x: fromCenter.x + (dx / distance) * stepRadius,
+              y: fromCenter.y + (dy / distance) * stepRadius
+            };
+            const adjustedEnd = {
+              x: toCenter.x - (dx / distance) * stepRadius,
+              y: toCenter.y - (dy / distance) * stepRadius
+            };
+            
+            connections.push(
+              <g key={`${fromStep.id}-${toStep.id}`}>
+                {/* Connection line */}
+                <line
+                  x1={adjustedStart.x}
+                  y1={adjustedStart.y}
+                  x2={adjustedEnd.x}
+                  y2={adjustedEnd.y}
+                  stroke="var(--border-primary)"
+                  strokeWidth="2"
+                  strokeDasharray="5,5"
+                  opacity="0.7"
+                />
+                {/* Arrow head */}
+                <polygon
+                  points={`${adjustedEnd.x},${adjustedEnd.y} ${adjustedEnd.x - 8 - (dx/distance)*8},${adjustedEnd.y - 4 - (dy/distance)*4} ${adjustedEnd.x - 8 - (dx/distance)*8},${adjustedEnd.y + 4 - (dy/distance)*4}`}
+                  fill="var(--border-primary)"
+                  opacity="0.7"
+                />
+              </g>
+            );
+          }
+        });
+      }
+    });
+    
+    return connections;
   };
 
   return (
@@ -388,6 +494,24 @@ export default function TestBuilder() {
             >
               <Upload size={16} />
             </button>
+            
+            {/* Connection mode indicator */}
+            {isConnecting && (
+              <div style={{
+                padding: '0.5rem 0.75rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                borderRadius: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <GitBranch size={14} />
+                Bağlantı Modu
+              </div>
+            )}
           </div>
 
           {/* Floating Actions Panel */}
@@ -522,6 +646,20 @@ export default function TestBuilder() {
               height: '100%',
               position: 'relative'
             }}>
+              {/* SVG Layer for connections */}
+              <svg
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }}
+              >
+                {renderConnections()}
+              </svg>
               {/* Render drag preview */}
               {dragPreview && (() => {
                 // Get the step being dragged or the action being added
@@ -721,31 +859,84 @@ export default function TestBuilder() {
                           {availableActions.find(a => a.type === step.type)?.title || step.type}
                         </span>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteStep(step.id);
-                        }}
-                        style={{
-                          padding: '0.25rem',
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          borderRadius: '0.25rem',
-                          cursor: 'pointer',
-                          color: 'var(--text-tertiary)',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#fee2e2';
-                          e.currentTarget.style.color = '#dc2626';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = 'var(--text-tertiary)';
-                        }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        {/* Connection button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isConnecting && connectionStart === step.id) {
+                              // Cancel connection
+                              setIsConnecting(false);
+                              setConnectionStart(null);
+                            } else if (isConnecting && connectionStart !== step.id) {
+                              // End connection
+                              endConnection(step.id);
+                            } else {
+                              // Start connection
+                              startConnection(step.id);
+                            }
+                          }}
+                          style={{
+                            padding: '0.25rem',
+                            backgroundColor: isConnecting && connectionStart === step.id 
+                              ? '#3b82f6' 
+                              : 'transparent',
+                            border: 'none',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            color: isConnecting && connectionStart === step.id 
+                              ? 'white' 
+                              : 'var(--text-tertiary)',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!(isConnecting && connectionStart === step.id)) {
+                              e.currentTarget.style.backgroundColor = '#dbeafe';
+                              e.currentTarget.style.color = '#3b82f6';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!(isConnecting && connectionStart === step.id)) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = 'var(--text-tertiary)';
+                            }
+                          }}
+                          title={isConnecting && connectionStart === step.id 
+                            ? 'Bağlantıyı iptal et' 
+                            : isConnecting 
+                              ? 'Buraya bağla' 
+                              : 'Bağlantı başlat'}
+                        >
+                          <GitBranch size={12} />
+                        </button>
+                        
+                        {/* Delete button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteStep(step.id);
+                          }}
+                          style={{
+                            padding: '0.25rem',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            color: 'var(--text-tertiary)',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fee2e2';
+                            e.currentTarget.style.color = '#dc2626';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-tertiary)';
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                     
                                          <div style={{ 

@@ -21,6 +21,7 @@ export interface TestStep {
   duration?: number;
   condition?: string;
   description?: string;
+  connections?: string[]; // Array of connected step IDs
 }
 
 export interface ScheduledTest {
