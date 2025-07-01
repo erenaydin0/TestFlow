@@ -80,6 +80,7 @@ export default function TestBuilder() {
   const [draggedAction, setDraggedAction] = useState<string | null>(null);
   const [draggedStep, setDraggedStep] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dragPreview, setDragPreview] = useState<{x: number, y: number, type: string} | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -142,6 +143,7 @@ export default function TestBuilder() {
     setDraggedAction(null);
     setDraggedStep(null);
     setIsDragOver(false);
+    setDragPreview(null);
   }, [draggedAction, draggedStep, canvasOffset, zoom]);
 
   // Handle canvas drag over
@@ -150,12 +152,44 @@ export default function TestBuilder() {
     // Allow drop
     e.dataTransfer.dropEffect = draggedAction ? 'copy' : 'move';
     setIsDragOver(true);
+    
+    // Update preview position
+    if (canvasRef.current && (draggedAction || draggedStep)) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left - canvasOffset.x) / zoom;
+      const y = (e.clientY - rect.top - canvasOffset.y) / zoom;
+      
+      const previewX = Math.max(0, x - 96);
+      const previewY = Math.max(0, y - 40);
+      
+      if (draggedAction) {
+        setDragPreview({ x: previewX, y: previewY, type: draggedAction });
+      } else if (draggedStep) {
+        setDragPreview({ x: previewX, y: previewY, type: 'step' });
+      }
+    }
   };
 
   // Handle drag enter
   const handleCanvasDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
+    
+    // Initialize preview on drag enter
+    if (canvasRef.current && (draggedAction || draggedStep)) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left - canvasOffset.x) / zoom;
+      const y = (e.clientY - rect.top - canvasOffset.y) / zoom;
+      
+      const previewX = Math.max(0, x - 96);
+      const previewY = Math.max(0, y - 40);
+      
+      if (draggedAction) {
+        setDragPreview({ x: previewX, y: previewY, type: draggedAction });
+      } else if (draggedStep) {
+        setDragPreview({ x: previewX, y: previewY, type: 'step' });
+      }
+    }
   };
 
   // Handle drag leave
@@ -164,6 +198,7 @@ export default function TestBuilder() {
     // Only set to false if we're leaving the canvas completely
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
+      setDragPreview(null);
     }
   };
 
@@ -173,6 +208,8 @@ export default function TestBuilder() {
     setTimeout(() => {
       setDraggedAction(null);
       setDraggedStep(null);
+      setDragPreview(null);
+      setIsDragOver(false);
     }, 100);
   };
 
@@ -485,6 +522,135 @@ export default function TestBuilder() {
               height: '100%',
               position: 'relative'
             }}>
+              {/* Render drag preview */}
+              {dragPreview && (() => {
+                // Get the step being dragged or the action being added
+                const draggedStepData = draggedStep ? testSteps.find(s => s.id === draggedStep) : null;
+                const action = draggedStepData 
+                  ? availableActions.find(a => a.type === draggedStepData.type)
+                  : availableActions.find(a => a.type === dragPreview.type);
+                
+                if (!action) return null;
+                const Icon = action.icon;
+                
+                return (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: dragPreview.x,
+                      top: dragPreview.y,
+                      width: '12rem',
+                      padding: '0.75rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      border: `2px dashed ${action.color}`,
+                      borderRadius: '0.5rem',
+                      opacity: 0.7,
+                      pointerEvents: 'none',
+                      zIndex: 999,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                    }}
+                  >
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{
+                          padding: '0.25rem',
+                          backgroundColor: `${action.color}15`,
+                          borderRadius: '0.25rem'
+                        }}>
+                          <Icon size={14} color={action.color} />
+                        </div>
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: 500, 
+                          color: 'var(--text-primary)'
+                        }}>
+                          {action.title}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: 'var(--text-secondary)',
+                      minHeight: '2rem',
+                      wordBreak: 'break-all'
+                    }}>
+                      {/* Show step content if it's a dragged step, otherwise show preview message */}
+                      {draggedStepData ? (
+                        <>
+                          {/* Step description or configuration preview */}
+                          {draggedStepData.description ? (
+                            <div style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--text-primary)',
+                              fontStyle: 'italic',
+                              marginBottom: '0.25rem',
+                              lineHeight: '1.3'
+                            }}>
+                              "{draggedStepData.description}"
+                            </div>
+                          ) : (
+                            <>
+                              {/* Step configuration preview */}
+                              {draggedStepData.type === 'navigate' && (
+                                <span>URL: {draggedStepData.url || 'Belirtilmedi'}</span>
+                              )}
+                              {draggedStepData.type === 'click' && (
+                                <span>Element: {draggedStepData.selector || 'Belirtilmedi'}</span>
+                              )}
+                              {draggedStepData.type === 'input' && (
+                                <span>
+                                  {draggedStepData.selector ? `${draggedStepData.selector}: ` : 'Input: '}
+                                  {draggedStepData.value || 'Belirtilmedi'}
+                                </span>
+                              )}
+                              {draggedStepData.type === 'wait' && (
+                                <span>Süre: {draggedStepData.duration || 1000}ms</span>
+                              )}
+                              {draggedStepData.type === 'refresh' && 'Sayfa yenileme'}
+                              {draggedStepData.type === 'if' && (
+                                <span>Koşul: {draggedStepData.condition || 'Belirtilmedi'}</span>
+                              )}
+                            </>
+                          )}
+                          
+                          {/* Show both description and config if description exists */}
+                          {draggedStepData.description && (
+                            <div style={{
+                              fontSize: '0.65rem',
+                              color: 'var(--text-tertiary)',
+                              marginTop: '0.25rem'
+                            }}>
+                              {draggedStepData.type === 'navigate' && draggedStepData.url && `URL: ${draggedStepData.url}`}
+                              {draggedStepData.type === 'click' && draggedStepData.selector && `Element: ${draggedStepData.selector}`}
+                              {draggedStepData.type === 'input' && draggedStepData.value && `Input: ${draggedStepData.value}`}
+                              {draggedStepData.type === 'wait' && `Süre: ${draggedStepData.duration || 1000}ms`}
+                              {draggedStepData.type === 'refresh' && 'Sayfa yenileme'}
+                              {draggedStepData.type === 'if' && draggedStepData.condition && `Koşul: ${draggedStepData.condition}`}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontStyle: 'italic',
+                          height: '2rem'
+                        }}>
+                          Buraya bırakılacak
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Render test steps */}
               {testSteps.map((step) => {
                 const action = availableActions.find(a => a.type === step.type);
