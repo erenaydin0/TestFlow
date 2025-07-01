@@ -79,6 +79,7 @@ export default function TestBuilder() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [draggedAction, setDraggedAction] = useState<string | null>(null);
   const [draggedStep, setDraggedStep] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -92,11 +93,13 @@ export default function TestBuilder() {
   // Handle drag start for actions
   const handleActionDragStart = (actionType: string) => {
     setDraggedAction(actionType);
+    setDraggedStep(null); // Clear any existing step drag
   };
 
   // Handle drag start for existing steps
   const handleStepDragStart = (stepId: string) => {
     setDraggedStep(stepId);
+    setDraggedAction(null); // Clear any existing action drag
   };
 
   // Handle drop on canvas
@@ -106,6 +109,7 @@ export default function TestBuilder() {
     if (!canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
+    // Calculate position considering canvas offset and zoom
     const x = (e.clientX - rect.left - canvasOffset.x) / zoom;
     const y = (e.clientY - rect.top - canvasOffset.y) / zoom;
 
@@ -116,26 +120,60 @@ export default function TestBuilder() {
         const newStep: TestStep = {
           id: generateId(),
           type: action.type as any,
-          x,
-          y
+          x: Math.max(0, x - 96), // Center the step (12rem = 192px, so 96px offset)
+          y: Math.max(0, y - 40)  // Center vertically
         };
         setTestSteps(prev => [...prev, newStep]);
       }
-      setDraggedAction(null);
     } else if (draggedStep) {
       // Move existing step
       setTestSteps(prev => prev.map(step => 
         step.id === draggedStep 
-          ? { ...step, x, y }
+          ? { 
+              ...step, 
+              x: Math.max(0, x - 96), // Center the step
+              y: Math.max(0, y - 40)  // Center vertically
+            }
           : step
       ));
-      setDraggedStep(null);
     }
+    
+    // Always clear drag states after drop
+    setDraggedAction(null);
+    setDraggedStep(null);
+    setIsDragOver(false);
   }, [draggedAction, draggedStep, canvasOffset, zoom]);
 
   // Handle canvas drag over
   const handleCanvasDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    // Allow drop
+    e.dataTransfer.dropEffect = draggedAction ? 'copy' : 'move';
+    setIsDragOver(true);
+  };
+
+  // Handle drag enter
+  const handleCanvasDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  // Handle drag leave
+  const handleCanvasDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    // Only set to false if we're leaving the canvas completely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  // Handle drag end (cleanup if drag is cancelled)
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Clean up drag states if drag was cancelled
+    setTimeout(() => {
+      setDraggedAction(null);
+      setDraggedStep(null);
+    }, 100);
   };
 
   // Delete step
@@ -148,9 +186,18 @@ export default function TestBuilder() {
 
   // Canvas pan and click handling
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    // Check if we're clicking on a step element
+    const target = e.target as HTMLElement;
+    const isClickingOnStep = target.closest('[data-step-id]');
+    
     // If clicking on canvas background (not on a step), deselect
     if (e.target === e.currentTarget) {
       setSelectedStep(null);
+    }
+    
+    // Don't start panning if we're clicking on a step or there's an active drag
+    if (isClickingOnStep || draggedStep || draggedAction) {
+      return;
     }
     
     if (e.button !== 0) return; // Only left click for panning
@@ -177,11 +224,7 @@ export default function TestBuilder() {
     };
 
     const handleMouseUp = (e: MouseEvent) => {
-      // If it was just a click (no drag), deselect step
-      if (!hasMoved && e.target === canvasRef.current) {
-        setSelectedStep(null);
-      }
-      
+      // Clean up event listeners
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -227,14 +270,15 @@ export default function TestBuilder() {
           overflow: 'hidden'
         }}>
           {/* Canvas Controls */}
-          <div style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            zIndex: 10,
-            display: 'flex',
-            gap: '0.5rem'
-          }}>
+          <div 
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              zIndex: 10,
+              display: 'flex',
+              gap: '0.5rem'
+            }}>
             <button 
               onClick={() => setZoom(Math.min(zoom + 0.1, 2))}
               className="canvas-control"
@@ -269,13 +313,14 @@ export default function TestBuilder() {
           </div>
 
           {/* Floating Toolbar */}
-          <div style={{
-            position: 'absolute',
-            top: '1rem',
-            left: '1rem',
-            zIndex: 10,
-            display: 'flex',
-            gap: '0.5rem',
+          <div 
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              zIndex: 10,
+              display: 'flex',
+              gap: '0.5rem',
             padding: '0.5rem',
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-primary)',
@@ -309,21 +354,22 @@ export default function TestBuilder() {
           </div>
 
           {/* Floating Actions Panel */}
-          <div style={{
-            position: 'absolute',
-            bottom: '1rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-primary)',
-            borderRadius: '0.75rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-          }}>
+          <div 
+            style={{
+              position: 'absolute',
+              bottom: '1rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1rem',
+              backgroundColor: 'var(--bg-primary)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: '0.75rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+            }}>
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -350,7 +396,31 @@ export default function TestBuilder() {
                   <div
                     key={action.type}
                     draggable
-                    onDragStart={() => handleActionDragStart(action.type)}
+                    onDragStart={(e) => {
+                      handleActionDragStart(action.type);
+                      // Set drag effect
+                      e.dataTransfer.effectAllowed = 'copy';
+                      // Create a custom drag image
+                      const dragImage = document.createElement('div');
+                      dragImage.style.width = '12rem';
+                      dragImage.style.height = '4rem';
+                      dragImage.style.backgroundColor = 'var(--bg-primary)';
+                      dragImage.style.border = `2px solid ${action.color}`;
+                      dragImage.style.borderRadius = '0.5rem';
+                      dragImage.style.display = 'flex';
+                      dragImage.style.alignItems = 'center';
+                      dragImage.style.justifyContent = 'center';
+                      dragImage.style.opacity = '0.8';
+                      dragImage.innerHTML = `<span style="color: ${action.color}">${action.title}</span>`;
+                      document.body.appendChild(dragImage);
+                      e.dataTransfer.setDragImage(dragImage, 96, 32);
+                      setTimeout(() => document.body.removeChild(dragImage), 0);
+                    }}
+                    onDragEnd={handleDragEnd}
+                    onMouseDown={(e) => {
+                      // Prevent canvas panning when dragging actions
+                      e.stopPropagation();
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -360,9 +430,10 @@ export default function TestBuilder() {
                       backgroundColor: `${action.color}10`,
                       border: `1px solid ${action.color}30`,
                       borderRadius: '0.5rem',
-                      cursor: 'grab',
+                      cursor: draggedAction === action.type ? 'grabbing' : 'grab',
                       transition: 'all 0.2s ease',
-                      position: 'relative'
+                      position: 'relative',
+                      opacity: draggedAction === action.type ? 0.5 : 1
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = `${action.color}20`;
@@ -386,8 +457,12 @@ export default function TestBuilder() {
           {/* Canvas */}
           <div
             ref={canvasRef}
+            className="canvas-background"
             onDrop={handleCanvasDrop}
             onDragOver={handleCanvasDragOver}
+            onDragEnter={handleCanvasDragEnter}
+            onDragLeave={handleCanvasDragLeave}
+            onDragEnd={handleDragEnd}
             onMouseDown={handleCanvasMouseDown}
             style={{
               width: '100%',
@@ -419,30 +494,45 @@ export default function TestBuilder() {
                 const isSelected = selectedStep === step;
                 
                 return (
-                  <div
-                    key={step.id}
-                    draggable
-                    onDragStart={() => handleStepDragStart(step.id)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStepClick(step);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      left: step.x,
-                      top: step.y,
-                      width: '12rem',
-                      padding: '0.75rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      border: `2px solid ${isSelected ? action.color : 'var(--border-primary)'}`,
-                      borderRadius: '0.5rem',
-                      cursor: 'grab',
-                      boxShadow: isSelected 
-                        ? `0 4px 12px ${action.color}30` 
-                        : '0 2px 8px rgba(0,0,0,0.1)',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
+                                                                              <div
+                      key={step.id}
+                      data-step-id={step.id}
+                      draggable
+                      onDragStart={(e) => {
+                        handleStepDragStart(step.id);
+                        // Make drag image more visible
+                        const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+                        dragImage.style.transform = 'scale(1.1)';
+                        dragImage.style.opacity = '0.8';
+                        e.dataTransfer.setDragImage(dragImage, 96, 40);
+                      }}
+                      onDragEnd={handleDragEnd}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStepClick(step);
+                      }}
+                      onMouseDown={(e) => {
+                        // Prevent canvas panning when dragging steps
+                        e.stopPropagation();
+                      }}
+                      style={{
+                        position: 'absolute',
+                        left: step.x,
+                        top: step.y,
+                        width: '12rem',
+                        padding: '0.75rem',
+                        backgroundColor: 'var(--bg-primary)',
+                        border: `2px solid ${isSelected ? action.color : 'var(--border-primary)'}`,
+                        borderRadius: '0.5rem',
+                        cursor: draggedStep === step.id ? 'grabbing' : 'grab',
+                        boxShadow: isSelected 
+                          ? `0 4px 12px ${action.color}30` 
+                          : '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: draggedStep === step.id ? 'none' : 'all 0.2s ease',
+                        opacity: draggedStep === step.id ? 0.5 : 1,
+                        zIndex: draggedStep === step.id ? 1000 : 5
+                      }}
+                    >
                     <div style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -556,53 +646,6 @@ export default function TestBuilder() {
             </div>
           </div>
         </div>
-
-        {/* Properties Panel */}
-        {selectedStep && (
-          <div style={{ 
-            width: '18rem', 
-            backgroundColor: 'var(--bg-primary)', 
-            borderLeft: '1px solid var(--border-primary)',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{ 
-              padding: '1rem', 
-              borderBottom: '1px solid var(--border-primary)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Settings size={16} color="var(--text-secondary)" />
-                <h3 style={{ 
-                  fontSize: '0.875rem', 
-                  fontWeight: 600, 
-                  color: 'var(--text-primary)',
-                  margin: 0
-                }}>
-                  Özellikler
-                </h3>
-              </div>
-              <p style={{ 
-                fontSize: '0.75rem', 
-                color: 'var(--text-secondary)',
-                margin: 0
-              }}>
-                Seçili adımı yapılandır
-              </p>
-            </div>
-            
-            <div style={{ flex: 1, padding: '1rem' }}>
-              {/* Properties form will be here */}
-              <p style={{ 
-                fontSize: '0.75rem', 
-                color: 'var(--text-secondary)',
-                textAlign: 'center',
-                margin: '2rem 0'
-              }}>
-                Adım özellikleri burada gösterilecek
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Modal Overlay */}
