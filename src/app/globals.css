@@ -162,6 +162,41 @@ body {
   color: #60a5fa;
 }
 
+/* Canvas control styles */
+.canvas-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.canvas-control:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.canvas-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.canvas-control:disabled:hover {
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+/* Canvas background grid */
+.canvas-background {
+  background-color: var(--bg-secondary);
+}
+
 /* Smooth transitions for all elements */
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;

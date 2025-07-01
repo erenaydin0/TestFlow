@@ -25,7 +25,8 @@ import {
   Move,
   X,
   CheckCircle,
-  XCircle
+  XCircle,
+  Magnet
 } from 'lucide-react';
 import { TestStep } from '@/types';
 
@@ -92,9 +93,99 @@ export default function TestBuilder() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [snapLines, setSnapLines] = useState<{x: number[], y: number[]}>({x: [], y: []});
 
   // Generate unique ID
   const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  // Snap to grid and other steps
+  const snapToPosition = (x: number, y: number, excludeStepId?: string) => {
+    if (!snapEnabled) return { x, y, snapLines: { x: [], y: [] } };
+
+    const SNAP_THRESHOLD = 15; // pixels
+    const GRID_SIZE = 20; // Grid snap size
+    let snappedX = x;
+    let snappedY = y;
+    const activeSnapLines = { x: [] as number[], y: [] as number[] };
+
+    // Snap to grid
+    const gridX = Math.round(x / GRID_SIZE) * GRID_SIZE;
+    const gridY = Math.round(y / GRID_SIZE) * GRID_SIZE;
+    
+    if (Math.abs(x - gridX) < SNAP_THRESHOLD) {
+      snappedX = gridX;
+    }
+    if (Math.abs(y - gridY) < SNAP_THRESHOLD) {
+      snappedY = gridY;
+    }
+
+    // Snap to other steps
+    const otherSteps = testSteps.filter(step => step.id !== excludeStepId);
+    
+    for (const step of otherSteps) {
+      const stepCenterX = step.x + 96; // Step width/2
+      const stepCenterY = step.y + 40; // Step height/2
+      const stepLeft = step.x;
+      const stepRight = step.x + 192; // Step width
+      const stepTop = step.y;
+      const stepBottom = step.y + 80; // Step height
+
+      // Horizontal alignment (Y-axis)
+      if (Math.abs(y - step.y) < SNAP_THRESHOLD) {
+        snappedY = step.y; // Top alignment
+        activeSnapLines.y.push(step.y);
+      } else if (Math.abs(y - stepCenterY) < SNAP_THRESHOLD) {
+        snappedY = stepCenterY - 40; // Center alignment
+        activeSnapLines.y.push(stepCenterY);
+      } else if (Math.abs(y - stepBottom) < SNAP_THRESHOLD) {
+        snappedY = stepBottom; // Bottom alignment
+        activeSnapLines.y.push(stepBottom);
+      }
+
+      // Vertical alignment (X-axis)  
+      if (Math.abs(x - step.x) < SNAP_THRESHOLD) {
+        snappedX = step.x; // Left alignment
+        activeSnapLines.x.push(step.x);
+      } else if (Math.abs(x - stepCenterX) < SNAP_THRESHOLD) {
+        snappedX = stepCenterX - 96; // Center alignment
+        activeSnapLines.x.push(stepCenterX);
+      } else if (Math.abs(x - stepRight) < SNAP_THRESHOLD) {
+        snappedX = stepRight; // Right alignment
+        activeSnapLines.x.push(stepRight);
+      }
+
+      // Spacing alignment (common distances)
+      const COMMON_SPACING = [50, 100, 150, 200, 250]; // Common spacing values
+      for (const spacing of COMMON_SPACING) {
+        // Horizontal spacing
+        if (Math.abs(x - (stepRight + spacing)) < SNAP_THRESHOLD) {
+          snappedX = stepRight + spacing;
+          activeSnapLines.x.push(stepRight + spacing);
+        }
+        if (Math.abs(x - (stepLeft - spacing - 192)) < SNAP_THRESHOLD) {
+          snappedX = stepLeft - spacing - 192;
+          activeSnapLines.x.push(stepLeft - spacing);
+        }
+
+        // Vertical spacing
+        if (Math.abs(y - (stepBottom + spacing)) < SNAP_THRESHOLD) {
+          snappedY = stepBottom + spacing;
+          activeSnapLines.y.push(stepBottom + spacing);
+        }
+        if (Math.abs(y - (stepTop - spacing - 80)) < SNAP_THRESHOLD) {
+          snappedY = stepTop - spacing - 80;
+          activeSnapLines.y.push(stepTop - spacing);
+        }
+      }
+    }
+
+    return { 
+      x: Math.max(0, snappedX), 
+      y: Math.max(0, snappedY), 
+      snapLines: activeSnapLines 
+    };
+  };
 
   // Handle drag start for actions
   const handleActionDragStart = (actionType: string) => {
@@ -116,29 +207,35 @@ export default function TestBuilder() {
     
     const rect = canvasRef.current.getBoundingClientRect();
     // Calculate position considering canvas offset and zoom
-    const x = (e.clientX - rect.left - canvasOffset.x) / zoom;
-    const y = (e.clientY - rect.top - canvasOffset.y) / zoom;
+    const rawX = (e.clientX - rect.left - canvasOffset.x) / zoom;
+    const rawY = (e.clientY - rect.top - canvasOffset.y) / zoom;
+
+    // Center the step first
+    const centeredX = rawX - 96; // Center the step (12rem = 192px, so 96px offset)
+    const centeredY = rawY - 40;  // Center vertically
 
     if (draggedAction) {
-      // Create new step
+      // Create new step with snap
       const action = availableActions.find(a => a.type === draggedAction);
       if (action) {
+        const snapped = snapToPosition(centeredX, centeredY);
         const newStep: TestStep = {
           id: generateId(),
           type: action.type as any,
-          x: Math.max(0, x - 96), // Center the step (12rem = 192px, so 96px offset)
-          y: Math.max(0, y - 40)  // Center vertically
+          x: snapped.x,
+          y: snapped.y
         };
         setTestSteps(prev => [...prev, newStep]);
       }
     } else if (draggedStep) {
-      // Move existing step
+      // Move existing step with snap
+      const snapped = snapToPosition(centeredX, centeredY, draggedStep);
       setTestSteps(prev => prev.map(step => 
         step.id === draggedStep 
           ? { 
               ...step, 
-              x: Math.max(0, x - 96), // Center the step
-              y: Math.max(0, y - 40)  // Center vertically
+              x: snapped.x,
+              y: snapped.y
             }
           : step
       ));
@@ -149,7 +246,8 @@ export default function TestBuilder() {
     setDraggedStep(null);
     setIsDragOver(false);
     setDragPreview(null);
-  }, [draggedAction, draggedStep, canvasOffset, zoom]);
+    setSnapLines({ x: [], y: [] }); // Clear snap lines
+  }, [draggedAction, draggedStep, canvasOffset, zoom, snapToPosition]);
 
   // Handle canvas drag over
   const handleCanvasDragOver = (e: React.DragEvent) => {
@@ -158,19 +256,23 @@ export default function TestBuilder() {
     e.dataTransfer.dropEffect = draggedAction ? 'copy' : 'move';
     setIsDragOver(true);
     
-    // Update preview position
+    // Update preview position with snap
     if (canvasRef.current && (draggedAction || draggedStep)) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left - canvasOffset.x) / zoom;
-      const y = (e.clientY - rect.top - canvasOffset.y) / zoom;
+      const rawX = (e.clientX - rect.left - canvasOffset.x) / zoom;
+      const rawY = (e.clientY - rect.top - canvasOffset.y) / zoom;
       
-      const previewX = Math.max(0, x - 96);
-      const previewY = Math.max(0, y - 40);
+      const centeredX = rawX - 96;
+      const centeredY = rawY - 40;
+      
+      const snapped = snapToPosition(centeredX, centeredY, draggedStep || undefined);
+      
+      setSnapLines(snapped.snapLines); // Update snap lines for visual feedback
       
       if (draggedAction) {
-        setDragPreview({ x: previewX, y: previewY, type: draggedAction });
+        setDragPreview({ x: snapped.x, y: snapped.y, type: draggedAction });
       } else if (draggedStep) {
-        setDragPreview({ x: previewX, y: previewY, type: 'step' });
+        setDragPreview({ x: snapped.x, y: snapped.y, type: 'step' });
       }
     }
   };
@@ -180,19 +282,23 @@ export default function TestBuilder() {
     e.preventDefault();
     setIsDragOver(true);
     
-    // Initialize preview on drag enter
+    // Initialize preview on drag enter with snap
     if (canvasRef.current && (draggedAction || draggedStep)) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left - canvasOffset.x) / zoom;
-      const y = (e.clientY - rect.top - canvasOffset.y) / zoom;
+      const rawX = (e.clientX - rect.left - canvasOffset.x) / zoom;
+      const rawY = (e.clientY - rect.top - canvasOffset.y) / zoom;
       
-      const previewX = Math.max(0, x - 96);
-      const previewY = Math.max(0, y - 40);
+      const centeredX = rawX - 96;
+      const centeredY = rawY - 40;
+      
+      const snapped = snapToPosition(centeredX, centeredY, draggedStep || undefined);
+      
+      setSnapLines(snapped.snapLines);
       
       if (draggedAction) {
-        setDragPreview({ x: previewX, y: previewY, type: draggedAction });
+        setDragPreview({ x: snapped.x, y: snapped.y, type: draggedAction });
       } else if (draggedStep) {
-        setDragPreview({ x: previewX, y: previewY, type: 'step' });
+        setDragPreview({ x: snapped.x, y: snapped.y, type: 'step' });
       }
     }
   };
@@ -204,6 +310,7 @@ export default function TestBuilder() {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
       setDragPreview(null);
+      setSnapLines({ x: [], y: [] }); // Clear snap lines
     }
   };
 
@@ -724,6 +831,18 @@ export default function TestBuilder() {
               </div>
             </button>
             
+            <button 
+              onClick={() => setSnapEnabled(!snapEnabled)}
+              className="canvas-control"
+              title={snapEnabled ? "Otomatik Sabitlemeyi Kapat" : "Otomatik Sabitlemeyi Aç"}
+              style={{
+                backgroundColor: snapEnabled ? '#3b82f620' : 'transparent',
+                color: snapEnabled ? '#3b82f6' : 'var(--text-secondary)'
+              }}
+            >
+              <Magnet size={16} />
+            </button>
+            
             {/* Connection mode indicator */}
             {isConnecting && (
               <div style={{
@@ -862,7 +981,7 @@ export default function TestBuilder() {
               height: '100%',
               position: 'relative'
             }}>
-              {/* SVG Layer for connections */}
+              {/* SVG Layer for connections and snap lines */}
               <svg
                 style={{
                   position: 'absolute',
@@ -875,6 +994,41 @@ export default function TestBuilder() {
                 }}
               >
                 {renderConnections()}
+                
+                {/* Snap lines */}
+                {snapEnabled && (
+                  <g>
+                    {/* Vertical snap lines */}
+                    {snapLines.x.map((x, index) => (
+                      <line
+                        key={`snap-x-${index}`}
+                        x1={x}
+                        y1={0}
+                        x2={x}
+                        y2="100%"
+                        stroke="#3b82f6"
+                        strokeWidth="1"
+                        strokeDasharray="4,4"
+                        opacity="0.6"
+                      />
+                    ))}
+                    
+                    {/* Horizontal snap lines */}
+                    {snapLines.y.map((y, index) => (
+                      <line
+                        key={`snap-y-${index}`}
+                        x1={0}
+                        y1={y}
+                        x2="100%"
+                        y2={y}
+                        stroke="#3b82f6"
+                        strokeWidth="1"
+                        strokeDasharray="4,4"
+                        opacity="0.6"
+                      />
+                    ))}
+                  </g>
+                )}
               </svg>
               {/* Render drag preview */}
               {dragPreview && (() => {
