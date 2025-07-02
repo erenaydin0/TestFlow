@@ -14,6 +14,7 @@ import FloatingToolbar from '@/components/test-builder/FloatingToolbar';
 import ActionsPanel from '@/components/test-builder/ActionsPanel';
 import CanvasControls from '@/components/test-builder/CanvasControls';
 import StepModal from '@/components/test-builder/StepModal';
+import ConnectionRenderer from '@/components/test-builder/ConnectionRenderer';
 import useTestSteps from '@/hooks/useTestSteps';
 import useCopyPaste from '@/hooks/useCopyPaste';
 import useSnapToGrid from '@/hooks/useSnapToGrid';
@@ -323,140 +324,7 @@ export default function TestBuilder() {
     }
   }, [selectionIsSelecting, isPanning, zoom, canvasOffset, panStart, testSteps]);
 
-  // Render connection lines with enhanced colors
-  const renderConnections = () => {
-    const connections: React.JSX.Element[] = [];
 
-    const renderConnection = (fromStep: TestStep, toStepId: string, connectionType: 'normal' | 'true' | 'false') => {
-      const toStep = testSteps.find(s => s.id === toStepId);
-      if (!toStep) return null;
-
-      const from = getStepCenter(fromStep);
-      const to = getStepCenter(toStep);
-
-      // Calculate control points for curved line
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Create a curved path
-      const midX = (from.x + to.x) / 2;
-      const midY = (from.y + to.y) / 2;
-      
-      // Offset the control point to create a curve
-      const controlOffset = Math.min(50, distance * 0.3);
-      const controlX = midX + (dy / distance) * controlOffset;
-      const controlY = midY - (dx / distance) * controlOffset;
-
-      const style = getConnectionStyle(connectionType);
-      const pathId = `connection-${fromStep.id}-${toStepId}-${connectionType}`;
-
-      return (
-        <g key={pathId}>
-          {/* Connection path */}
-          <path
-            d={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`}
-            fill="none"
-            stroke={style.color}
-            strokeWidth={style.strokeWidth}
-            opacity={style.opacity}
-            strokeLinecap="round"
-          />
-          
-          {/* Connection label for true/false connections */}
-          {style.label && (
-            <g>
-              {/* Label background */}
-              <rect
-                x={controlX - 18}
-                y={controlY - 8}
-                width="36"
-                height="16"
-                rx="8"
-                fill="var(--bg-primary)"
-                stroke={style.color}
-                strokeWidth="1.5"
-                opacity="0.95"
-              />
-              {/* Label text */}
-              <text
-                x={controlX}
-                y={controlY + 1}
-                fill={style.color}
-                fontSize="9"
-                fontWeight="600"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                opacity="0.9"
-              >
-                {style.label}
-              </text>
-            </g>
-          )}
-          
-          {/* Remove connection button */}
-          <circle
-            cx={controlX + (style.label ? 25 : 0)}
-            cy={controlY}
-            r="8"
-            fill="var(--bg-primary)"
-            stroke={style.color}
-            strokeWidth="1.5"
-            opacity="0.9"
-            style={{ cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              removeConnection(fromStep.id, toStepId, connectionType, testSteps, setTestSteps, saveToHistory);
-            }}
-          />
-          <text
-            x={controlX + (style.label ? 25 : 0)}
-            y={controlY + 1}
-            fill={style.color}
-            fontSize="10"
-            fontWeight="bold"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            style={{ cursor: 'pointer', pointerEvents: 'none' }}
-            opacity="0.8"
-          >
-            ×
-          </text>
-        </g>
-      );
-    };
-
-    // Render all connections
-    testSteps.forEach(step => {
-      // Regular connections
-      if (step.connections) {
-        step.connections.forEach(targetId => {
-          const connection = renderConnection(step, targetId, 'normal');
-          if (connection) {
-            connections.push(connection);
-          }
-        });
-      }
-
-      // True/False connections for IF steps
-      if (step.type === 'if') {
-        if (step.trueConnection) {
-          const connection = renderConnection(step, step.trueConnection, 'true');
-          if (connection) {
-            connections.push(connection);
-          }
-        }
-        if (step.falseConnection) {
-          const connection = renderConnection(step, step.falseConnection, 'false');
-          if (connection) {
-            connections.push(connection);
-          }
-        }
-      }
-    });
-
-    return connections;
-  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
@@ -566,7 +434,14 @@ export default function TestBuilder() {
                   zIndex: 1
                 }}
               >
-                {renderConnections()}
+                <ConnectionRenderer
+                  testSteps={testSteps}
+                  getStepCenter={getStepCenter}
+                  getConnectionStyle={getConnectionStyle}
+                  removeConnection={removeConnection}
+                  setTestSteps={setTestSteps}
+                  saveToHistory={saveToHistory}
+                />
                 
                 {/* Snap lines */}
                 {snapEnabled && (
