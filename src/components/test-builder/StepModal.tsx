@@ -34,6 +34,20 @@ const StepModal: React.FC<StepModalProps> = ({
   onClose,
   onUpdateProperty
 }) => {
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen || !step) return null;
 
   const action = getActionByType(step.type);
