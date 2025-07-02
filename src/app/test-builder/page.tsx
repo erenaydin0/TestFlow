@@ -13,6 +13,7 @@ import ConnectionRenderer from '@/components/test-builder/ConnectionRenderer';
 import TestStepCard from '@/components/test-builder/TestStepCard';
 import DragPreview from '@/components/test-builder/DragPreview';
 import SnapLines from '@/components/test-builder/SnapLines';
+import SelectionBox from '@/components/test-builder/SelectionBox';
 import useTestSteps from '@/hooks/useTestSteps';
 import useCopyPaste from '@/hooks/useCopyPaste';
 import useSnapToGrid from '@/hooks/useSnapToGrid';
@@ -20,20 +21,19 @@ import useCanvasInteraction from '@/hooks/useCanvasInteraction';
 import useConnections from '@/hooks/useConnections';
 import useSelection from '@/hooks/useSelection';
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
+import useCanvasStyles from '@/hooks/useCanvasStyles';
+import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
 
 export default function TestBuilder() {
   const {
     testSteps,
     setTestSteps,
-    history,
-    historyIndex,
     canUndo,
     canRedo,
     saveToHistory,
     undo,
     redo,
-    addStep,
     deleteStep,
     updateStepProperty,
     autoArrangeSteps,
@@ -46,10 +46,8 @@ export default function TestBuilder() {
     selectedStep,
     setSelectedStep,
     copiedSteps,
-    setCopiedSteps,
     selectAllSteps,
     clearSelection,
-    toggleStepSelection,
     copySteps,
     pasteSteps,
     duplicateSteps
@@ -57,7 +55,6 @@ export default function TestBuilder() {
 
   const {
     snapEnabled,
-    setSnapEnabled,
     snapLines,
     setSnapLines,
     snapToPosition,
@@ -70,7 +67,6 @@ export default function TestBuilder() {
     canvasOffset,
     setCanvasOffset,
     zoom,
-    setZoom,
     pan,
     setPan,
     isPanning,
@@ -81,7 +77,6 @@ export default function TestBuilder() {
     setDraggedAction,
     draggedStep,
     setDraggedStep,
-    isDragOver,
     setIsDragOver,
     dragPreview,
     setDragPreview,
@@ -112,19 +107,77 @@ export default function TestBuilder() {
 
   const {
     isSelecting: selectionIsSelecting,
-    setIsSelecting: setSelectionIsSelecting,
     selectionBox: selectionSelectionBox,
-    setSelectionBox: setSelectionSelectionBox,
-    selectionStart,
-    setSelectionStart,
     handleCanvasMouseDown: selectionHandleCanvasMouseDown,
     handleCanvasMouseMove: selectionHandleCanvasMouseMove,
     handleCanvasMouseUp: selectionHandleCanvasMouseUp,
-    getStepsInSelectionBox,
     handleStepClick: selectionHandleStepClick
   } = useSelection();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Canvas styles
+  const canvasStyles = useCanvasStyles({
+    zoom,
+    pan,
+    canvasOffset,
+    isPanning
+  });
+
+  // Custom mouse move handler that handles both selection and panning
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!canvasRef.current) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+
+    if (isPanning) {
+      // Handle panning
+      const deltaX = clientX - panStart.x;
+      const deltaY = clientY - panStart.y;
+      
+      // Update canvas offset
+      setCanvasOffset({ 
+        x: canvasOffset.x + deltaX, 
+        y: canvasOffset.y + deltaY 
+      });
+      
+      // Update pan start for next move
+      setPanStart({ x: clientX, y: clientY });
+    } else {
+      // Delegate to selection handler for selection box
+      selectionHandleCanvasMouseMove(
+        e,
+        canvasRef,
+        zoom,
+        canvasOffset,
+        isPanning,
+        panStart,
+        setPan,
+        setCanvasOffset,
+        testSteps,
+        setSelectedSteps
+      );
+    }
+  }, [isPanning, panStart, canvasOffset, zoom, testSteps, selectionHandleCanvasMouseMove]);
+
+  // Mouse events
+  useMouseEvents({
+    selectionIsSelecting,
+    isPanning,
+    canvasRef,
+    zoom,
+    canvasOffset,
+    panStart,
+    testSteps,
+    selectionHandleCanvasMouseMove: handleMouseMove,
+    selectionHandleCanvasMouseUp,
+    setPan,
+    setCanvasOffset,
+    setSelectedSteps,
+    setIsPanning
+  });
 
   // Handle drop on canvas
   const handleCanvasDrop = useCallback((e: React.DragEvent) => {
@@ -184,7 +237,6 @@ export default function TestBuilder() {
     if (selectedSteps.size === 0) return;
     
     // Delete all selected steps
-    const stepsToDelete = Array.from(selectedSteps);
     const newSteps = testSteps.filter(step => !selectedSteps.has(step.id));
     setTestSteps(newSteps);
     saveToHistory(newSteps);
@@ -217,8 +269,6 @@ export default function TestBuilder() {
     setSelectedStep
   });
 
-
-
   // Canvas mouse event handlers using selection hook
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     selectionHandleCanvasMouseDown(
@@ -249,40 +299,6 @@ export default function TestBuilder() {
     setIsModalOpen(false);
     setSelectedStep(null);
   };
-
-  // Mouse move and up handlers
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      selectionHandleCanvasMouseMove(
-        e,
-        canvasRef,
-        zoom,
-        canvasOffset,
-        isPanning,
-        panStart,
-        setPan,
-        setCanvasOffset,
-        testSteps,
-        setSelectedSteps
-      );
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
-      selectionHandleCanvasMouseUp(e, setIsPanning);
-    };
-
-    if (selectionIsSelecting || isPanning) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [selectionIsSelecting, isPanning, zoom, canvasOffset, panStart, testSteps]);
-
-
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
@@ -359,39 +375,11 @@ export default function TestBuilder() {
             onDragLeave={(e) => handleCanvasDragLeave(e, clearSnapLines)}
             onDragEnd={handleDragEnd}
             onMouseDown={handleCanvasMouseDown}
-            style={{
-              width: '100%',
-              height: '100%',
-              position: 'relative',
-              cursor: isPanning ? 'grabbing' : 'grab',
-              backgroundImage: `
-                radial-gradient(circle, var(--border-primary) 1px, transparent 1px)
-              `,
-              backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-              backgroundPosition: `${pan.x}px ${pan.y}px`,
-              transform: `scale(${zoom})`,
-              transformOrigin: 'center center'
-            }}
+            style={canvasStyles.canvasContainer}
           >
-            <div style={{
-              transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${zoom})`,
-              transformOrigin: '0 0',
-              width: '100%',
-              height: '100%',
-              position: 'relative'
-            }}>
+            <div style={canvasStyles.innerContainer}>
               {/* SVG Layer for connections and snap lines */}
-              <svg
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  pointerEvents: 'none',
-                  zIndex: 1
-                }}
-              >
+              <svg style={canvasStyles.svgLayer}>
                 <ConnectionRenderer
                   testSteps={testSteps}
                   getStepCenter={getStepCenter}
@@ -408,19 +396,7 @@ export default function TestBuilder() {
                 />
                 
                 {/* Selection box */}
-                {selectionSelectionBox && (
-                  <rect
-                    x={selectionSelectionBox.x}
-                    y={selectionSelectionBox.y}
-                    width={selectionSelectionBox.width}
-                    height={selectionSelectionBox.height}
-                    fill="rgba(59, 130, 246, 0.1)"
-                    stroke="#3b82f6"
-                    strokeWidth="1"
-                    strokeDasharray="4,4"
-                    opacity="0.8"
-                  />
-                )}
+                <SelectionBox selectionBox={selectionSelectionBox} />
               </svg>
               {/* Render drag preview */}
               {dragPreview && (
@@ -477,48 +453,6 @@ export default function TestBuilder() {
         onClose={closeModal}
         onUpdateProperty={updateStepProperty}
       />
-
-      <style jsx>{`
-        .toolbar-button {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0.75rem;
-          background-color: var(--bg-secondary);
-          border: 1px solid var(--border-primary);
-          border-radius: 0.375rem;
-          cursor: pointer;
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-          transition: all 0.2s ease;
-        }
-        
-        .toolbar-button:hover {
-          background-color: var(--bg-tertiary);
-          color: var(--text-primary);
-          border-color: var(--primary);
-        }
-        
-        .canvas-control {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 2rem;
-          height: 2rem;
-          background-color: var(--bg-primary);
-          border: 1px solid var(--border-primary);
-          border-radius: 0.375rem;
-          cursor: pointer;
-          color: var(--text-secondary);
-          transition: all 0.2s ease;
-        }
-        
-        .canvas-control:hover {
-          background-color: var(--bg-tertiary);
-          color: var(--text-primary);
-          border-color: var(--primary);
-        }
-      `}</style>
     </div>
   );
 }

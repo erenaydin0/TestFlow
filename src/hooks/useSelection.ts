@@ -111,13 +111,8 @@ const useSelection = (): UseSelectionReturn => {
     const clientY = e.clientY - rect.top;
 
     if (isPanning) {
-      // Handle panning
-      const deltaX = clientX - panStart.x;
-      const deltaY = clientY - panStart.y;
-      
-      // Update pan and canvas offset with current values
-      // Note: These should be called with current values from the main component
-      // The implementation will be adjusted in the main component
+      // Handle panning - delegate to useCanvasInteraction
+      // This will be handled by the main component
     } else if (isSelecting && selectionStart) {
       // Handle selection box
       const canvasX = (clientX - canvasOffset.x) / zoom;
