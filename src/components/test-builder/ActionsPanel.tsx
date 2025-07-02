@@ -1,25 +1,8 @@
 import React from 'react';
-import {
-  Navigation,
-  MousePointer,
-  Type,
-  Clock,
-  RotateCcw,
-  GitBranch
-} from 'lucide-react';
-
-
-// Available actions type
-interface ActionType {
-  type: string;
-  title: string;
-  icon: React.ComponentType<{ size?: number; color?: string }>;
-  color: string;
-}
+import { availableActions, ActionType } from '@/lib/actions';
 
 // Props interface
 interface ActionsPanelProps {
-  availableActions: ActionType[];
   draggedAction: string | null;
   onActionDragStart: (actionType: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
@@ -27,7 +10,6 @@ interface ActionsPanelProps {
 }
 
 const ActionsPanel: React.FC<ActionsPanelProps> = ({
-  availableActions,
   draggedAction,
   onActionDragStart,
   onDragEnd,

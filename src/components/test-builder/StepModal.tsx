@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Navigation,
   MousePointer,
@@ -6,9 +6,11 @@ import {
   Clock,
   RotateCcw,
   GitBranch,
-  X
+  X,
+  Save
 } from 'lucide-react';
 import { TestStep } from '@/types';
+import { availableActions, getActionByType } from '@/lib/actions';
 
 // Available actions type
 interface ActionType {
@@ -22,7 +24,6 @@ interface ActionType {
 interface StepModalProps {
   isOpen: boolean;
   step: TestStep | null;
-  availableActions: ActionType[];
   onClose: () => void;
   onUpdateProperty: (stepId: string, property: string, value: any) => void;
 }
@@ -30,13 +31,12 @@ interface StepModalProps {
 const StepModal: React.FC<StepModalProps> = ({
   isOpen,
   step,
-  availableActions,
   onClose,
   onUpdateProperty
 }) => {
   if (!isOpen || !step) return null;
 
-  const action = availableActions.find(a => a.type === step.type);
+  const action = getActionByType(step.type);
   if (!action) return null;
 
   const Icon = action.icon;

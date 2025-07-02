@@ -4,11 +4,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { 
-  MousePointer, 
-  Type, 
-  Navigation, 
-  Clock, 
-  RefreshCw, 
   GitBranch,
   Trash2,
   CheckCircle,
@@ -25,52 +20,7 @@ import useSnapToGrid from '@/hooks/useSnapToGrid';
 import useCanvasInteraction from '@/hooks/useCanvasInteraction';
 import useConnections from '@/hooks/useConnections';
 import useSelection from '@/hooks/useSelection';
-
-// Available actions
-const availableActions = [
-  {
-    type: 'navigate',
-    title: 'Sayfa Git',
-    icon: Navigation,
-    color: '#2563eb',
-    description: 'Belirtilen URL\'e git'
-  },
-  {
-    type: 'click',
-    title: 'Tıkla',
-    icon: MousePointer,
-    color: '#059669',
-    description: 'Element\'e tıkla'
-  },
-  {
-    type: 'input',
-    title: 'Metin Gir',
-    icon: Type,
-    color: '#dc2626',
-    description: 'Input alanına metin gir'
-  },
-  {
-    type: 'wait',
-    title: 'Bekle',
-    icon: Clock,
-    color: '#d97706',
-    description: 'Belirtilen süre bekle'
-  },
-  {
-    type: 'refresh',
-    title: 'Yenile',
-    icon: RefreshCw,
-    color: '#7c3aed',
-    description: 'Sayfayı yenile'
-  },
-  {
-    type: 'if',
-    title: 'Koşul',
-    icon: GitBranch,
-    color: '#db2777',
-    description: 'Koşullu işlem'
-  }
-];
+import { availableActions, getActionByType, getActionTitle } from '@/lib/actions';
 
 export default function TestBuilder() {
   const {
@@ -193,7 +143,7 @@ export default function TestBuilder() {
 
     if (draggedAction) {
       // Create new step with snap
-      const action = availableActions.find(a => a.type === draggedAction);
+      const action = getActionByType(draggedAction);
       if (action) {
         const snapped = snapToPosition(centeredX, centeredY, testSteps);
         const newStep: TestStep = {
@@ -564,7 +514,6 @@ export default function TestBuilder() {
 
           {/* Floating Actions Panel */}
           <ActionsPanel
-            availableActions={availableActions}
             draggedAction={draggedAction}
             onActionDragStart={handleActionDragStart}
             onDragEnd={handleDragEnd}
@@ -674,8 +623,8 @@ export default function TestBuilder() {
                 // Get the step being dragged or the action being added
                 const draggedStepData = draggedStep ? testSteps.find(s => s.id === draggedStep) : null;
                 const action = draggedStepData 
-                  ? availableActions.find(a => a.type === draggedStepData.type)
-                  : availableActions.find(a => a.type === dragPreview.type);
+                  ? getActionByType(draggedStepData.type)
+                  : getActionByType(dragPreview.type);
                 
                 if (!action) return null;
                 const Icon = action.icon;
@@ -824,7 +773,7 @@ export default function TestBuilder() {
 
               {/* Render test steps */}
               {testSteps.map((step) => {
-                const action = availableActions.find(a => a.type === step.type);
+                const action = getActionByType(step.type);
                 if (!action) return null;
                 
                 const Icon = action.icon;
@@ -890,7 +839,7 @@ export default function TestBuilder() {
                           fontWeight: 500, 
                           color: 'var(--text-primary)'
                         }}>
-                          {availableActions.find(a => a.type === step.type)?.title || step.type}
+                          {action.title}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
@@ -1174,7 +1123,6 @@ export default function TestBuilder() {
       <StepModal
         isOpen={isModalOpen}
         step={selectedStep}
-        availableActions={availableActions}
         onClose={closeModal}
         onUpdateProperty={updateStepProperty}
       />
