@@ -12,12 +12,14 @@ import StepModal from '@/components/test-builder/StepModal';
 import ConnectionRenderer from '@/components/test-builder/ConnectionRenderer';
 import TestStepCard from '@/components/test-builder/TestStepCard';
 import DragPreview from '@/components/test-builder/DragPreview';
+import SnapLines from '@/components/test-builder/SnapLines';
 import useTestSteps from '@/hooks/useTestSteps';
 import useCopyPaste from '@/hooks/useCopyPaste';
 import useSnapToGrid from '@/hooks/useSnapToGrid';
 import useCanvasInteraction from '@/hooks/useCanvasInteraction';
 import useConnections from '@/hooks/useConnections';
 import useSelection from '@/hooks/useSelection';
+import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
 import { getActionByType } from '@/lib/actions';
 
 export default function TestBuilder() {
@@ -195,68 +197,27 @@ export default function TestBuilder() {
   };
 
   // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent shortcuts when modal is open or input is focused
-      if (isModalOpen || (e.target as HTMLElement).tagName === 'INPUT') return;
+  useKeyboardShortcuts({
+    isModalOpen,
+    selectedSteps,
+    copiedSteps,
+    testSteps,
+    generateId,
+    copySteps,
+    pasteSteps,
+    duplicateSteps,
+    selectAllSteps,
+    deleteSelectedSteps,
+    clearSelection,
+    undo,
+    redo,
+    setTestSteps,
+    saveToHistory,
+    setSelectedSteps,
+    setSelectedStep
+  });
 
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key.toLowerCase()) {
-          case 'c':
-            e.preventDefault();
-            copySteps(testSteps);
-            break;
-          case 'v':
-            e.preventDefault();
-            pasteSteps(testSteps, generateId, (newSteps) => {
-              setTestSteps(newSteps);
-              saveToHistory(newSteps);
-            });
-            break;
-          case 'd':
-            e.preventDefault();
-            duplicateSteps(testSteps, generateId, (newSteps) => {
-              setTestSteps(newSteps);
-              saveToHistory(newSteps);
-            });
-            break;
-          case 'a':
-            e.preventDefault();
-            selectAllSteps(testSteps);
-            break;
-          case 'z':
-            e.preventDefault();
-            undo(() => {
-              setSelectedSteps(new Set());
-              setSelectedStep(null);
-            });
-            break;
-          case 'y':
-            e.preventDefault();
-            redo(() => {
-              setSelectedSteps(new Set());
-              setSelectedStep(null);
-            });
-            break;
-        }
-      } else {
-        switch (e.key) {
-          case 'Delete':
-          case 'Backspace':
-            e.preventDefault();
-            deleteSelectedSteps();
-            break;
-          case 'Escape':
-            e.preventDefault();
-            clearSelection();
-            break;
-        }
-      }
-    };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedSteps, copiedSteps, isModalOpen]);
 
   // Canvas mouse event handlers using selection hook
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -441,39 +402,10 @@ export default function TestBuilder() {
                 />
                 
                 {/* Snap lines */}
-                {snapEnabled && (
-                  <g>
-                    {/* Vertical snap lines */}
-                    {snapLines.x.map((x, index) => (
-                      <line
-                        key={`snap-x-${index}`}
-                        x1={x}
-                        y1={0}
-                        x2={x}
-                        y2="100%"
-                        stroke="#3b82f6"
-                        strokeWidth="1"
-                        strokeDasharray="4,4"
-                        opacity="0.6"
-                      />
-                    ))}
-                    
-                    {/* Horizontal snap lines */}
-                    {snapLines.y.map((y, index) => (
-                      <line
-                        key={`snap-y-${index}`}
-                        x1={0}
-                        y1={y}
-                        x2="100%"
-                        y2={y}
-                        stroke="#3b82f6"
-                        strokeWidth="1"
-                        strokeDasharray="4,4"
-                        opacity="0.6"
-                      />
-                    ))}
-                  </g>
-                )}
+                <SnapLines
+                  snapEnabled={snapEnabled}
+                  snapLines={snapLines}
+                />
                 
                 {/* Selection box */}
                 {selectionSelectionBox && (
