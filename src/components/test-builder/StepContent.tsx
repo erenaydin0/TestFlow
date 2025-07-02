@@ -1,0 +1,96 @@
+'use client';
+
+import React from 'react';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { TestStep } from '@/types';
+
+interface StepContentProps {
+  step: TestStep;
+}
+
+const StepContent: React.FC<StepContentProps> = ({ step }) => {
+  return (
+    <div style={{ 
+      fontSize: '0.75rem', 
+      color: 'var(--text-secondary)',
+      minHeight: '2rem',
+      wordBreak: 'break-all'
+    }}>
+      {/* Step description or configuration preview */}
+      {step.description ? (
+        <div style={{
+          fontSize: '0.75rem',
+          color: 'var(--text-primary)',
+          fontStyle: 'italic',
+          marginBottom: '0.25rem',
+          lineHeight: '1.3'
+        }}>
+          "{step.description}"
+        </div>
+      ) : (
+        <>
+          {/* Step configuration preview */}
+          {step.type === 'navigate' && (
+            <span>URL: {step.url || 'Belirtilmedi'}</span>
+          )}
+          {step.type === 'click' && (
+            <span>Element: {step.selector || 'Belirtilmedi'}</span>
+          )}
+          {step.type === 'input' && (
+            <span>
+              {step.selector ? `${step.selector}: ` : 'Input: '}
+              {step.value || 'Belirtilmedi'}
+            </span>
+          )}
+          {step.type === 'wait' && (
+            <span>Süre: {step.duration || 1000}ms</span>
+          )}
+          {step.type === 'refresh' && 'Sayfa yenileme'}
+          {step.type === 'if' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span>Koşul: {step.condition || 'Belirtilmedi'}</span>
+              <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem' }}>
+                <span style={{ 
+                  color: step.trueConnection ? '#22c55e' : 'var(--text-tertiary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  <CheckCircle size={10} />
+                  TRUE: {step.trueConnection ? '✓' : 'Bağlı değil'}
+                </span>
+                <span style={{ 
+                  color: step.falseConnection ? '#ef4444' : 'var(--text-tertiary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  <XCircle size={10} />
+                  FALSE: {step.falseConnection ? '✓' : 'Bağlı değil'}
+                </span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      
+      {/* Show both description and config if description exists */}
+      {step.description && (
+        <div style={{
+          fontSize: '0.65rem',
+          color: 'var(--text-tertiary)',
+          marginTop: '0.25rem'
+        }}>
+          {step.type === 'navigate' && step.url && `URL: ${step.url}`}
+          {step.type === 'click' && step.selector && `Element: ${step.selector}`}
+          {step.type === 'input' && step.value && `Input: ${step.value}`}
+          {step.type === 'wait' && `Süre: ${step.duration || 1000}ms`}
+          {step.type === 'refresh' && 'Sayfa yenileme'}
+          {step.type === 'if' && step.condition && `Koşul: ${step.condition}`}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default StepContent; 
