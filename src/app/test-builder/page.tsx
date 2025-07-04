@@ -396,11 +396,18 @@ export default function TestBuilder() {
         description: data.description,
         steps: testSteps,
         tags: data.tags,
-        suite: data.suite
+        suite: data.suite,
+        id: loadedWorkflowId || undefined // Düzenleme modunda mevcut ID'yi kullan
       });
       
       setIsSaveDialogOpen(false);
-      alert(`Workflow başarıyla kaydedildi: "${data.name}"`);
+      
+      if (loadedWorkflowId) {
+        alert(`Workflow başarıyla güncellendi: "${data.name}"`);
+      } else {
+        alert(`Workflow başarıyla kaydedildi: "${data.name}"`);
+        setLoadedWorkflowId(workflowId); // Yeni kaydedilen workflow'u track et
+      }
       
       // Optional: Clear current workspace or keep it
       // setTestSteps([]);
@@ -408,7 +415,7 @@ export default function TestBuilder() {
     } catch (error) {
       alert(`Kaydetme hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
     }
-  }, [testSteps]);
+  }, [testSteps, loadedWorkflowId]);
 
   // Handle run workflow - Updated to use backend API
   const [isRunning, setIsRunning] = useState(false);
@@ -639,6 +646,16 @@ export default function TestBuilder() {
         isOpen={isSaveDialogOpen}
         onClose={() => setIsSaveDialogOpen(false)}
         onSave={handleSaveFromDialog}
+        initialData={loadedWorkflowId ? (() => {
+          const workflow = getWorkflowById(loadedWorkflowId);
+          return workflow ? {
+            name: workflow.name,
+            description: workflow.description,
+            tags: workflow.tags,
+            suite: workflow.suite
+          } : undefined;
+        })() : undefined}
+        isUpdating={!!loadedWorkflowId}
       />
     </div>
   );

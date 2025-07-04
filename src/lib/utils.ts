@@ -202,12 +202,33 @@ export const saveWorkflowToStorage = (workflow: {
   steps: TestStep[];
   tags?: string[];
   suite?: string;
+  id?: string; // Düzenleme için mevcut ID
 }): string => {
   try {
     const savedWorkflows = getSavedWorkflows();
     
-    // Generate unique ID
-    const id = Math.random().toString(36).substr(2, 9);
+    // Eğer ID varsa güncelleme modu
+    if (workflow.id) {
+      const existingIndex = savedWorkflows.findIndex(w => w.id === workflow.id);
+      if (existingIndex !== -1) {
+        // Mevcut workflow'u güncelle
+        savedWorkflows[existingIndex] = {
+          ...savedWorkflows[existingIndex],
+          name: workflow.name,
+          description: workflow.description,
+          tags: workflow.tags || [],
+          suite: workflow.suite || 'Default',
+          workflow: workflow.steps,
+          updatedAt: new Date()
+        };
+        
+        localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(savedWorkflows));
+        return workflow.id;
+      }
+    }
+    
+    // Yeni workflow oluştur
+    const id = workflow.id || Math.random().toString(36).substr(2, 9);
     
     const newWorkflow: Test = {
       id,
@@ -223,8 +244,9 @@ export const saveWorkflowToStorage = (workflow: {
       isExecutable: true
     };
     
-    // Check for duplicate names
-    if (savedWorkflows.some(w => w.name === workflow.name)) {
+    // Check for duplicate names (mevcut workflow'un kendisi hariç)
+    const duplicateWorkflow = savedWorkflows.find(w => w.name === workflow.name && w.id !== id);
+    if (duplicateWorkflow) {
       throw new Error(`"${workflow.name}" adında bir workflow zaten mevcut`);
     }
     
