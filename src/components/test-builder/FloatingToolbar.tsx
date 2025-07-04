@@ -44,6 +44,12 @@ interface FloatingToolbarProps {
   // Connection mode
   isConnecting: boolean;
   connectionType: 'normal' | 'true' | 'false';
+  
+  // Import/Export
+  onExport: () => void;
+  onImport: (file: File) => void;
+  onSave?: () => void;
+  onRun?: () => void;
 }
 
 export default function FloatingToolbar({
@@ -62,8 +68,25 @@ export default function FloatingToolbar({
   selectedStepsCount,
   copiedStepsCount,
   isConnecting,
-  connectionType
+  connectionType,
+  onExport,
+  onImport,
+  onSave,
+  onRun
 }: FloatingToolbarProps) {
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        onImport(file);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div 
       style={{
@@ -81,26 +104,46 @@ export default function FloatingToolbar({
       }}
     >
       <button 
+        onClick={onRun}
         className="canvas-control"
-        title="Çalıştır"
+        title="Testi Çalıştır"
+        disabled={testStepsCount === 0}
+        style={{
+          opacity: testStepsCount === 0 ? 0.5 : 1,
+          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer',
+          color: testStepsCount > 0 ? '#059669' : 'var(--text-secondary)'
+        }}
       >
         <Play size={16} />
       </button>
       <button 
+        onClick={onSave}
         className="canvas-control"
-        title="Kaydet"
+        title="Workflow'u Kaydet"
+        disabled={testStepsCount === 0}
+        style={{
+          opacity: testStepsCount === 0 ? 0.5 : 1,
+          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer'
+        }}
       >
         <Save size={16} />
       </button>
       <button 
+        onClick={onExport}
         className="canvas-control"
-        title="İndir"
+        title="Workflow'u Dışa Aktar (.json)"
+        disabled={testStepsCount === 0}
+        style={{
+          opacity: testStepsCount === 0 ? 0.5 : 1,
+          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer'
+        }}
       >
         <Download size={16} />
       </button>
       <button 
+        onClick={handleImportClick}
         className="canvas-control"
-        title="Yükle"
+        title="Workflow'u İçe Aktar (.json)"
       >
         <Upload size={16} />
       </button>

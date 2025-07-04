@@ -10,7 +10,7 @@ import {
   Save
 } from 'lucide-react';
 import { TestStep } from '@/types';
-import { availableActions, getActionByType } from '@/lib/actions';
+import { availableActions, getActionByType, ActionField } from '@/lib/actions';
 
 // Available actions type
 interface ActionType {
@@ -18,6 +18,10 @@ interface ActionType {
   title: string;
   icon: React.ComponentType<{ size?: number; color?: string }>;
   color: string;
+  description: string;
+  category: string;
+  fields: ActionField[];
+  isAdvanced?: boolean;
 }
 
 // Props interface
@@ -64,6 +68,145 @@ const StepModal: React.FC<StepModalProps> = ({
   const handleLocalUpdate = (property: string, value: any) => {
     if (localStep) {
       setLocalStep(prev => prev ? { ...prev, [property]: value } : null);
+    }
+  };
+
+  // Render field based on its configuration
+  const renderField = (field: ActionField) => {
+    if (!localStep) return null;
+
+    const value = localStep[field.key as keyof TestStep] || '';
+    const fieldId = `field-${field.key}`;
+
+    const baseStyle = {
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid var(--border-primary)',
+      borderRadius: '0.5rem',
+      backgroundColor: 'var(--bg-secondary)',
+      color: 'var(--text-primary)',
+      fontSize: '0.875rem',
+      outline: 'none',
+      boxSizing: 'border-box' as const
+    };
+
+    const focusHandlers = {
+      onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        e.currentTarget.style.borderColor = action?.color || '#3b82f6';
+        e.currentTarget.style.boxShadow = `0 0 0 3px ${action?.color || '#3b82f6'}20`;
+      },
+      onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        e.currentTarget.style.borderColor = 'var(--border-primary)';
+        e.currentTarget.style.boxShadow = 'none';
+      }
+    };
+
+    switch (field.type) {
+      case 'text':
+      case 'url':
+        return (
+          <input
+            key={fieldId}
+            id={fieldId}
+            type={field.type}
+            value={value as string}
+            onChange={(e) => handleLocalUpdate(field.key, e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            style={baseStyle}
+            {...focusHandlers}
+          />
+        );
+
+      case 'number':
+        return (
+          <input
+            key={fieldId}
+            id={fieldId}
+            type="number"
+            value={value as number || ''}
+            onChange={(e) => handleLocalUpdate(field.key, parseInt(e.target.value) || (field.min || 0))}
+            placeholder={field.placeholder}
+            required={field.required}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            style={baseStyle}
+            {...focusHandlers}
+          />
+        );
+
+      case 'textarea':
+        return (
+          <textarea
+            key={fieldId}
+            id={fieldId}
+            value={value as string}
+            onChange={(e) => handleLocalUpdate(field.key, e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            rows={3}
+            style={{
+              ...baseStyle,
+              resize: 'vertical' as const,
+              fontFamily: 'inherit'
+            }}
+            {...focusHandlers}
+          />
+        );
+
+      case 'select':
+        return (
+          <select
+            key={fieldId}
+            id={fieldId}
+            value={value as string}
+            onChange={(e) => handleLocalUpdate(field.key, e.target.value)}
+            required={field.required}
+            style={baseStyle}
+            {...focusHandlers}
+          >
+            <option value="">Seçiniz...</option>
+            {field.options?.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'checkbox':
+        return (
+          <label
+            key={fieldId}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={(e) => handleLocalUpdate(field.key, e.target.checked)}
+              style={{
+                width: '1rem',
+                height: '1rem',
+                cursor: 'pointer'
+              }}
+            />
+            <span style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-primary)'
+            }}>
+              {field.label}
+            </span>
+          </label>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -167,6 +310,13 @@ const StepModal: React.FC<StepModalProps> = ({
                   #{step.id.slice(-4)}
                 </span>
               </div>
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                margin: '0.25rem 0 0 0'
+              }}>
+                {action.description}
+              </p>
             </div>
           </div>
           <button
@@ -236,242 +386,37 @@ const StepModal: React.FC<StepModalProps> = ({
             />
           </div>
 
-          {/* Type-specific fields */}
-          {step.type === 'navigate' && (
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginBottom: '0.5rem'
-              }}>
-                URL
-              </label>
-              <input
-                type="url"
-                value={localStep.url || ''}
-                onChange={(e) => handleLocalUpdate('url', e.target.value)}
-                placeholder="https://example.com"
+          {/* Dynamic fields based on action configuration */}
+          {action.fields.map((field) => (
+            <div key={field.key}>
+              <label 
+                htmlFor={`field-${field.key}`}
                 style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = action.color;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-          )}
-
-          {step.type === 'click' && (
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginBottom: '0.5rem'
-              }}>
-                Seçici (Selector)
-              </label>
-              <input
-                type="text"
-                value={localStep.selector || ''}
-                onChange={(e) => handleLocalUpdate('selector', e.target.value)}
-                placeholder="#button, .class, [data-testid='submit']"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = action.color;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-          )}
-
-          {step.type === 'input' && (
-            <>
-              <div>
-                <label style={{
                   display: 'block',
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   color: 'var(--text-primary)',
                   marginBottom: '0.5rem'
-                }}>
-                  Seçici (Selector)
-                </label>
-                <input
-                  type="text"
-                  value={localStep.selector || ''}
-                  onChange={(e) => handleLocalUpdate('selector', e.target.value)}
-                  placeholder="#input, .form-field, [name='username']"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.5rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = action.color;
-                    e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-primary)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  marginBottom: '0.5rem'
-                }}>
-                  Değer
-                </label>
-                <input
-                  type="text"
-                  value={localStep.value || ''}
-                  onChange={(e) => handleLocalUpdate('value', e.target.value)}
-                  placeholder="Girilecek metin"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.5rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = action.color;
-                    e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-primary)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-            </>
-          )}
-
-          {step.type === 'wait' && (
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginBottom: '0.5rem'
-              }}>
-                Bekleme Süresi (milisaniye)
+                }}
+              >
+                {field.label}
+                {field.required && (
+                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>*</span>
+                )}
               </label>
-              <input
-                type="number"
-                value={localStep.duration || 1000}
-                onChange={(e) => handleLocalUpdate('duration', parseInt(e.target.value) || 1000)}
-                placeholder="1000"
-                min="100"
-                max="30000"
-                step="100"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = action.color;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
+              {renderField(field)}
+              {field.description && (
+                <p style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  margin: '0.25rem 0 0 0',
+                  opacity: 0.8
+                }}>
+                  {field.description}
+                </p>
+              )}
             </div>
-          )}
-
-          {step.type === 'if' && (
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginBottom: '0.5rem'
-              }}>
-                Koşul Seçicisi
-              </label>
-              <input
-                type="text"
-                value={localStep.condition || ''}
-                onChange={(e) => handleLocalUpdate('condition', e.target.value)}
-                placeholder="#element, .exists, [data-visible='true']"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = action.color;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-          )}
+          ))}
         </div>
       </div>
     </div>

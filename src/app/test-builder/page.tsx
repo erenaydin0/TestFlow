@@ -24,6 +24,7 @@ import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
 import useCanvasStyles from '@/hooks/useCanvasStyles';
 import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
+import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/lib/utils';
 
 export default function TestBuilder() {
   const {
@@ -300,6 +301,92 @@ export default function TestBuilder() {
     setSelectedStep(null);
   };
 
+  // Handle export workflow
+  const handleExport = useCallback(() => {
+    if (testSteps.length === 0) {
+      alert('Dışa aktarılacak test adımı bulunamadı.');
+      return;
+    }
+
+    try {
+      const workflowName = `test-workflow-${new Date().toISOString().split('T')[0]}`;
+      exportTestWorkflow(testSteps, workflowName);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Workflow dışa aktarılırken bir hata oluştu.');
+    }
+  }, [testSteps]);
+
+  // Handle import workflow
+  const handleImport = useCallback(async (file: File) => {
+    try {
+      const { steps, name } = await importTestWorkflow(file);
+      
+      // Validate imported workflow
+      const validation = validateWorkflow(steps);
+      if (!validation.isValid) {
+        alert(`Workflow doğrulama hatası:\n${validation.errors.join('\n')}`);
+        return;
+      }
+
+      // Generate new IDs to avoid conflicts
+      const newSteps = steps.map(step => ({
+        ...step,
+        id: generateId(),
+        // Offset position to avoid overlap
+        x: step.x + 50,
+        y: step.y + 50
+      }));
+
+      // Update connections with new IDs
+      const idMapping: { [oldId: string]: string } = {};
+      steps.forEach((step, index) => {
+        idMapping[step.id] = newSteps[index].id;
+      });
+
+      newSteps.forEach(step => {
+        if (step.connections) {
+          step.connections = step.connections.map(id => idMapping[id]).filter(Boolean);
+        }
+        if (step.trueConnection && idMapping[step.trueConnection]) {
+          step.trueConnection = idMapping[step.trueConnection];
+        }
+        if (step.falseConnection && idMapping[step.falseConnection]) {
+          step.falseConnection = idMapping[step.falseConnection];
+        }
+      });
+
+      // Add imported steps to current workflow
+      const updatedSteps = [...testSteps, ...newSteps];
+      setTestSteps(updatedSteps);
+      saveToHistory(updatedSteps);
+
+      alert(`Workflow başarıyla içe aktarıldı: ${name}\n${newSteps.length} adım eklendi.`);
+    } catch (error) {
+      console.error('Import error:', error);
+      alert(`Workflow içe aktarılırken bir hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+    }
+  }, [testSteps, setTestSteps, saveToHistory, generateId]);
+
+  // Handle save workflow (placeholder)
+  const handleSave = useCallback(() => {
+    // This would typically save to a backend or local storage
+    console.log('Saving workflow...', testSteps);
+    alert('Workflow kaydedildi! (Bu özellik henüz backend ile entegre değil)');
+  }, [testSteps]);
+
+  // Handle run workflow (placeholder)
+  const handleRun = useCallback(() => {
+    if (testSteps.length === 0) {
+      alert('Çalıştırılacak test adımı bulunamadı.');
+      return;
+    }
+    
+    // This would typically execute the test workflow
+    console.log('Running workflow...', testSteps);
+    alert(`Test workflow çalıştırılıyor...\n${testSteps.length} adım bulundu.\n(Bu özellik henüz test runner ile entegre değil)`);
+  }, [testSteps]);
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
@@ -352,6 +439,10 @@ export default function TestBuilder() {
             copiedStepsCount={copiedSteps.length}
             isConnecting={isConnecting}
             connectionType={connectionType}
+            onExport={handleExport}
+            onImport={handleImport}
+            onSave={handleSave}
+            onRun={handleRun}
           />
 
           {/* Floating Actions Panel */}

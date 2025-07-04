@@ -12,18 +12,48 @@ export interface Test {
 
 export interface TestStep {
   id: string;
-  type: 'navigate' | 'click' | 'input' | 'wait' | 'refresh' | 'if';
+  type: string; // Made flexible to support any action type
   x: number;
   y: number;
-  url?: string;
-  selector?: string;
-  value?: string;
-  duration?: number;
-  condition?: string;
+  
+  // Common properties
   description?: string;
+  
+  // Navigation properties
+  url?: string;
+  
+  // Interaction properties
+  selector?: string;
+  
+  // Input properties
+  value?: string;
+  
+  // Timing properties
+  duration?: number;
+  
+  // Condition properties
+  condition?: string;
+  
+  // Validation properties
+  expectedValue?: string;
+  
+  // Scroll properties
+  direction?: 'top' | 'bottom' | 'left' | 'right';
+  amount?: number;
+  
+  // Screenshot properties
+  filename?: string;
+  
+  // Key press properties
+  key?: string;
+  
+  // Connection properties
   connections?: string[]; // Array of connected step IDs (for regular steps)
   trueConnection?: string; // If step true branch
   falseConnection?: string; // If step false branch
+  
+  // Extensible properties for custom actions
+  [key: string]: any;
 }
 
 export interface ScheduledTest {
@@ -67,4 +97,18 @@ export interface NavigationItem {
   href: string;
   icon: string;
   active?: boolean;
+}
+
+// Workflow export/import interfaces
+export interface WorkflowExport {
+  version: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  steps: TestStep[];
+  metadata?: {
+    author?: string;
+    tags?: string[];
+    category?: string;
+  };
 } 
