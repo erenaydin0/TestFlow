@@ -6,6 +6,11 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
+  // Boş status için hiçbir şey render etme
+  if (!status || status.trim() === '') {
+    return null;
+  }
+
   const colorClasses = getStatusColor(status);
   const text = getStatusText(status);
   const sizeClasses = size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm';

@@ -213,7 +213,7 @@ export const saveWorkflowToStorage = (workflow: {
       id,
       name: workflow.name,
       description: workflow.description,
-      status: 'saved',
+      status: '' as any, // Boş status - kaydedilen workflow'lar için durum yok
       duration: 0, // Will be set when executed
       createdAt: new Date(),
       updatedAt: new Date(),

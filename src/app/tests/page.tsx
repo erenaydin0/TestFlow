@@ -17,10 +17,13 @@ import {
   Clock,
   Copy,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Upload
 } from 'lucide-react';
-import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow } from '@/lib/utils';
 import { Test } from '@/types';
+import ImportDialog from '@/components/test-builder/ImportDialog';
 
 export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
@@ -28,6 +31,8 @@ export default function TestsPage() {
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [suiteFilter, setSuiteFilter] = useState<string>('');
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const router = useRouter();
 
   // Load saved workflows
@@ -163,6 +168,83 @@ export default function TestsPage() {
     router.push('/test-builder');
   };
 
+  // Handle single test export
+  const handleExportTest = (testId: string) => {
+    const test = tests.find(t => t.id === testId);
+    if (test && test.workflow) {
+      try {
+        exportTestWorkflow(test.workflow, `${test.name}.json`);
+        alert(`"${test.name}" başarıyla export edildi!`);
+      } catch (error) {
+        alert('Export işlemi sırasında hata oluştu.');
+      }
+    }
+  };
+
+  // Handle bulk export (selected tests)
+  const handleBulkExport = () => {
+    if (selectedTests.size === 0) {
+      alert('Export edilecek test seçin.');
+      return;
+    }
+
+    const selectedTestsData = tests.filter(test => selectedTests.has(test.id));
+    
+    if (selectedTestsData.length === 1) {
+      // Single test export
+      const test = selectedTestsData[0];
+      if (test.workflow) {
+        exportTestWorkflow(test.workflow, `${test.name}.json`);
+        alert(`"${test.name}" başarıyla export edildi!`);
+      }
+    } else {
+      // Multiple tests export
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        exportType: 'multiple-workflows',
+        workflows: selectedTestsData.map(test => ({
+          name: test.name,
+          description: test.description,
+          steps: test.workflow || [],
+          tags: test.tags,
+          suite: test.suite,
+          metadata: {
+            createdAt: test.createdAt,
+            updatedAt: test.updatedAt,
+            originalId: test.id
+          }
+        }))
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileName = `testflow-workflows-${selectedTestsData.length}-tests-${new Date().toISOString().split('T')[0]}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileName);
+      linkElement.click();
+
+      alert(`${selectedTestsData.length} test başarıyla export edildi!`);
+    }
+  };
+
+  // Handle import
+  const handleImport = () => {
+    setIsImportDialogOpen(true);
+  };
+
+  // Handle import success
+  const handleImportSuccess = (importedCount: number) => {
+    // Reload tests after successful import
+    const updatedTests = getSavedWorkflows();
+    setTests(updatedTests);
+    setIsImportDialogOpen(false);
+    alert(`${importedCount} workflow başarıyla import edildi!`);
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
@@ -204,14 +286,14 @@ export default function TestsPage() {
               color: 'var(--text-primary)',
               margin: '0 0 0.5rem 0'
             }}>
-              Test Workflow'ları
+              Testler
             </h1>
             <p style={{ 
               fontSize: '0.875rem', 
               color: 'var(--text-secondary)',
               margin: 0
             }}>
-              Toplam {tests.length} test workflow'u • {filteredTests.length} gösteriliyor
+              Toplam {tests.length} test bulunuyor • {filteredTests.length} gösteriliyor
             </p>
           </div>
 
@@ -237,7 +319,6 @@ export default function TestsPage() {
                 }}
               >
                 <option value="">Tüm Durumlar</option>
-                <option value="saved">Kaydedilmiş</option>
                 <option value="passed">Başarılı</option>
                 <option value="failed">Başarısız</option>
                 <option value="pending">Beklemede</option>
@@ -265,6 +346,63 @@ export default function TestsPage() {
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Import/Export Buttons */}
+              <button 
+                onClick={handleImport}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: '0.5rem',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                }}
+              >
+                <Upload size={16} />
+                Import
+              </button>
+
+              {selectedTests.size > 0 && (
+                <button 
+                  onClick={handleBulkExport}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #2563eb',
+                    borderRadius: '0.5rem',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                  }}
+                >
+                  <Download size={16} />
+                  Export ({selectedTests.size})
+                </button>
+              )}
+
               {selectedTests.size > 0 && (
                 <>
                   <button 
@@ -614,6 +752,30 @@ export default function TestsPage() {
                             </button>
                             
                             <button 
+                              onClick={() => handleExportTest(test.id)}
+                              style={{ 
+                                padding: '0.25rem', 
+                                color: 'var(--text-secondary)', 
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '0.25rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                              }}
+                              title="Testi Dışa Aktar"
+                            >
+                              <Download size={16} />
+                            </button>
+                            
+                            <button 
                               onClick={() => handleDuplicateTest(test.id)}
                               style={{ 
                                 padding: '0.25rem', 
@@ -669,6 +831,13 @@ export default function TestsPage() {
           )}
         </main>
       </div>
+
+      {/* Import Dialog */}
+      <ImportDialog
+        isOpen={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
+        onImportSuccess={handleImportSuccess}
+      />
     </div>
   );
 } 

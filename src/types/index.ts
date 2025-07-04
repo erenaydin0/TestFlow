@@ -2,7 +2,7 @@ export interface Test {
   id: string;
   name: string;
   description: string;
-  status: 'passed' | 'failed' | 'pending' | 'running' | 'saved';
+  status: 'passed' | 'failed' | 'pending' | 'running';
   duration: number;
   createdAt: Date;
   updatedAt: Date;
