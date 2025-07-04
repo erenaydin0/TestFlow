@@ -34,6 +34,39 @@ const StepModal: React.FC<StepModalProps> = ({
   onClose,
   onUpdateProperty
 }) => {
+  // Local state for form inputs
+  const [localStep, setLocalStep] = useState<TestStep | null>(null);
+
+  // Initialize local state when step changes
+  useEffect(() => {
+    if (step) {
+      setLocalStep({ ...step });
+    }
+  }, [step]);
+
+  // Debounced update to parent state
+  useEffect(() => {
+    if (!localStep || !step) return;
+
+    const timeoutId = setTimeout(() => {
+      // Update only changed properties
+      Object.keys(localStep).forEach(key => {
+        if (localStep[key as keyof TestStep] !== step[key as keyof TestStep]) {
+          onUpdateProperty(step.id, key, localStep[key as keyof TestStep]);
+        }
+      });
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [localStep, step, onUpdateProperty]);
+
+  // Handle local state updates
+  const handleLocalUpdate = (property: string, value: any) => {
+    if (localStep) {
+      setLocalStep(prev => prev ? { ...prev, [property]: value } : null);
+    }
+  };
+
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
@@ -48,7 +81,7 @@ const StepModal: React.FC<StepModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !step) return null;
+  if (!isOpen || !step || !localStep) return null;
 
   const action = getActionByType(step.type);
   if (!action) return null;
@@ -176,8 +209,8 @@ const StepModal: React.FC<StepModalProps> = ({
             </label>
             <input
               type="text"
-              value={step.description || ''}
-              onChange={(e) => onUpdateProperty(step.id, 'description', e.target.value)}
+              value={localStep.description || ''}
+              onChange={(e) => handleLocalUpdate('description', e.target.value)}
               placeholder="Bu adımın ne yaptığını açıklayın..."
               style={{
                 width: '100%',
@@ -217,8 +250,8 @@ const StepModal: React.FC<StepModalProps> = ({
               </label>
               <input
                 type="url"
-                value={step.url || ''}
-                onChange={(e) => onUpdateProperty(step.id, 'url', e.target.value)}
+                value={localStep.url || ''}
+                onChange={(e) => handleLocalUpdate('url', e.target.value)}
                 placeholder="https://example.com"
                 style={{
                   width: '100%',
@@ -256,8 +289,8 @@ const StepModal: React.FC<StepModalProps> = ({
               </label>
               <input
                 type="text"
-                value={step.selector || ''}
-                onChange={(e) => onUpdateProperty(step.id, 'selector', e.target.value)}
+                value={localStep.selector || ''}
+                onChange={(e) => handleLocalUpdate('selector', e.target.value)}
                 placeholder="#button, .class, [data-testid='submit']"
                 style={{
                   width: '100%',
@@ -296,8 +329,8 @@ const StepModal: React.FC<StepModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={step.selector || ''}
-                  onChange={(e) => onUpdateProperty(step.id, 'selector', e.target.value)}
+                  value={localStep.selector || ''}
+                  onChange={(e) => handleLocalUpdate('selector', e.target.value)}
                   placeholder="#input, .form-field, [name='username']"
                   style={{
                     width: '100%',
@@ -332,8 +365,8 @@ const StepModal: React.FC<StepModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={step.value || ''}
-                  onChange={(e) => onUpdateProperty(step.id, 'value', e.target.value)}
+                  value={localStep.value || ''}
+                  onChange={(e) => handleLocalUpdate('value', e.target.value)}
                   placeholder="Girilecek metin"
                   style={{
                     width: '100%',
@@ -372,8 +405,8 @@ const StepModal: React.FC<StepModalProps> = ({
               </label>
               <input
                 type="number"
-                value={step.duration || 1000}
-                onChange={(e) => onUpdateProperty(step.id, 'duration', parseInt(e.target.value) || 1000)}
+                value={localStep.duration || 1000}
+                onChange={(e) => handleLocalUpdate('duration', parseInt(e.target.value) || 1000)}
                 placeholder="1000"
                 min="100"
                 max="30000"
@@ -414,8 +447,8 @@ const StepModal: React.FC<StepModalProps> = ({
               </label>
               <input
                 type="text"
-                value={step.condition || ''}
-                onChange={(e) => onUpdateProperty(step.id, 'condition', e.target.value)}
+                value={localStep.condition || ''}
+                onChange={(e) => handleLocalUpdate('condition', e.target.value)}
                 placeholder="#element, .exists, [data-visible='true']"
                 style={{
                   width: '100%',
