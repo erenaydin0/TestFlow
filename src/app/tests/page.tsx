@@ -81,12 +81,37 @@ export default function TestsPage() {
     }
   };
 
-  // Handle run test
-  const handleRunTest = (testId: string) => {
-    // For now, just show an alert. In a real app, this would trigger test execution
+  // Handle run test - Updated to use backend API
+  const handleRunTest = async (testId: string) => {
     const test = tests.find(t => t.id === testId);
-    if (test) {
-      alert(`"${test.name}" testi çalıştırılıyor...`);
+    if (!test || !test.workflow || test.workflow.length === 0) {
+      alert('Test workflow\'u bulunamadı veya boş.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workflowId: test.id,
+          workflowName: test.name,
+          steps: test.workflow
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      alert(`"${test.name}" testi çalıştırılmaya başlandı!\nExecution ID: ${data.executionId}\n\nTest ${test.workflow.length} adımdan oluşuyor.`);
+      
+    } catch (error) {
+      console.error('Test execution error:', error);
+      alert(`Test çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}\n\nBackend server'ın çalıştığından emin olun.`);
     }
   };
 
@@ -157,10 +182,48 @@ export default function TestsPage() {
     }
   };
 
-  // Handle bulk run
-  const handleBulkRun = () => {
+  // Handle bulk run - Updated to use backend API
+  const handleBulkRun = async () => {
     if (selectedTests.size === 0) return;
-    alert(`${selectedTests.size} test çalıştırılıyor...`);
+    
+    const selectedTestsData = tests.filter(test => selectedTests.has(test.id));
+    const validTests = selectedTestsData.filter(test => test.workflow && test.workflow.length > 0);
+    
+    if (validTests.length === 0) {
+      alert('Seçilen testlerde çalıştırılabilir workflow bulunamadı.');
+      return;
+    }
+
+    try {
+      const executionPromises = validTests.map(async (test) => {
+        const response = await fetch('http://localhost:3001/api/execute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            workflowId: test.id,
+            workflowName: test.name,
+            steps: test.workflow
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`${test.name}: HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+      });
+
+      const results = await Promise.all(executionPromises);
+      const executionIds = results.map(r => r.executionId).join('\n');
+      
+      alert(`${validTests.length} test başarıyla çalıştırılmaya başlandı!\n\nExecution IDs:\n${executionIds}`);
+      
+    } catch (error) {
+      console.error('Bulk test execution error:', error);
+      alert(`Testler çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}\n\nBackend server'ın çalıştığından emin olun.`);
+    }
   };
 
   // Navigate to test builder

@@ -410,16 +410,51 @@ export default function TestBuilder() {
     }
   }, [testSteps]);
 
-  // Handle run workflow (placeholder)
-  const handleRun = useCallback(() => {
+  // Handle run workflow - Updated to use backend API
+  const [isRunning, setIsRunning] = useState(false);
+  
+  const handleRun = useCallback(async () => {
     if (testSteps.length === 0) {
       alert('Çalıştırılacak test adımı bulunamadı.');
       return;
     }
-    
-    // This would typically execute the test workflow
-    console.log('Running workflow...', testSteps);
-    alert(`Test workflow çalıştırılıyor...\n${testSteps.length} adım bulundu.\n(Bu özellik henüz test runner ile entegre değil)`);
+
+    setIsRunning(true);
+    console.log('Test çalıştırılıyor...', { testSteps });
+
+    try {
+      console.log('Backend API çağrısı yapılıyor...');
+      const response = await fetch('http://localhost:3001/api/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workflowId: 'test-builder',
+          workflowName: 'Test Builder Workflow',
+          steps: testSteps
+        })
+      });
+
+      console.log('Backend yanıtı:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Backend yanıt verisi:', data);
+      alert(`Test çalıştırılmaya başlandı!\nExecution ID: ${data.executionId}\n\nSonuçları görmek için Tests sayfasını ziyaret edin.`);
+      
+      // Optional: Navigate to tests page to see results
+      // router.push('/tests');
+      
+    } catch (error) {
+      console.error('Test execution error:', error);
+      alert(`Test çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}\n\nBackend server'ın çalıştığından emin olun.`);
+    } finally {
+      setIsRunning(false);
+    }
   }, [testSteps]);
 
   // Load workflow from URL parameter
@@ -497,6 +532,7 @@ export default function TestBuilder() {
             onImport={handleImport}
             onSave={handleSave}
             onRun={handleRun}
+            isRunning={isRunning}
           />
 
           {/* Floating Actions Panel */}

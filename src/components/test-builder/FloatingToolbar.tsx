@@ -50,6 +50,7 @@ interface FloatingToolbarProps {
   onImport: (file: File) => void;
   onSave?: () => void;
   onRun?: () => void;
+  isRunning?: boolean;
 }
 
 export default function FloatingToolbar({
@@ -72,7 +73,8 @@ export default function FloatingToolbar({
   onExport,
   onImport,
   onSave,
-  onRun
+  onRun,
+  isRunning = false
 }: FloatingToolbarProps) {
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -106,15 +108,16 @@ export default function FloatingToolbar({
       <button 
         onClick={onRun}
         className="canvas-control"
-        title="Testi Çalıştır"
-        disabled={testStepsCount === 0}
+        title={isRunning ? "Test Çalışıyor..." : "Testi Çalıştır"}
+        disabled={testStepsCount === 0 || isRunning}
         style={{
-          opacity: testStepsCount === 0 ? 0.5 : 1,
-          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer',
+          opacity: testStepsCount === 0 || isRunning ? 0.5 : 1,
+          cursor: testStepsCount === 0 || isRunning ? 'not-allowed' : 'pointer',
           color: testStepsCount > 0 ? '#059669' : 'var(--text-secondary)'
         }}
       >
         <Play size={16} />
+        {isRunning && <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}>...</span>}
       </button>
       <button 
         onClick={onSave}
