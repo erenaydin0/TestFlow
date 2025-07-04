@@ -2,12 +2,16 @@ export interface Test {
   id: string;
   name: string;
   description: string;
-  status: 'passed' | 'failed' | 'pending' | 'running';
+  status: 'passed' | 'failed' | 'pending' | 'running' | 'saved';
   duration: number;
   createdAt: Date;
   updatedAt: Date;
   tags: string[];
   suite: string;
+  
+  // Kaydedilen workflow'lar için ek alanlar
+  workflow?: TestStep[]; // Saved workflow'lar için test adımları
+  isExecutable?: boolean; // Bu workflow çalıştırılabilir mi?
 }
 
 export interface TestStep {

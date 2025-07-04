@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { useSearchParams } from 'next/navigation';
 
 import { TestStep } from '@/types';
 import FloatingToolbar from '@/components/test-builder/FloatingToolbar';
@@ -24,7 +25,8 @@ import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
 import useCanvasStyles from '@/hooks/useCanvasStyles';
 import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
-import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/lib/utils';
+import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
+import SaveDialog from '@/components/test-builder/SaveDialog';
 
 export default function TestBuilder() {
   const {
@@ -116,6 +118,9 @@ export default function TestBuilder() {
   } = useSelection();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [loadedWorkflowId, setLoadedWorkflowId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   // Canvas styles
   const canvasStyles = useCanvasStyles({
@@ -368,11 +373,41 @@ export default function TestBuilder() {
     }
   }, [testSteps, setTestSteps, saveToHistory, generateId]);
 
-  // Handle save workflow (placeholder)
+  // Handle save workflow - Updated to show save dialog
   const handleSave = useCallback(() => {
-    // This would typically save to a backend or local storage
-    console.log('Saving workflow...', testSteps);
-    alert('Workflow kaydedildi! (Bu özellik henüz backend ile entegre değil)');
+    if (testSteps.length === 0) {
+      alert('Kaydedilecek test adımı bulunamadı.');
+      return;
+    }
+    
+    setIsSaveDialogOpen(true);
+  }, [testSteps]);
+
+  // Handle save from dialog
+  const handleSaveFromDialog = useCallback((data: {
+    name: string;
+    description: string;
+    tags: string[];
+    suite: string;
+  }) => {
+    try {
+      const workflowId = saveWorkflowToStorage({
+        name: data.name,
+        description: data.description,
+        steps: testSteps,
+        tags: data.tags,
+        suite: data.suite
+      });
+      
+      setIsSaveDialogOpen(false);
+      alert(`Workflow başarıyla kaydedildi: "${data.name}"`);
+      
+      // Optional: Clear current workspace or keep it
+      // setTestSteps([]);
+      // clearSelection();
+    } catch (error) {
+      alert(`Kaydetme hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+    }
   }, [testSteps]);
 
   // Handle run workflow (placeholder)
@@ -386,6 +421,25 @@ export default function TestBuilder() {
     console.log('Running workflow...', testSteps);
     alert(`Test workflow çalıştırılıyor...\n${testSteps.length} adım bulundu.\n(Bu özellik henüz test runner ile entegre değil)`);
   }, [testSteps]);
+
+  // Load workflow from URL parameter
+  useEffect(() => {
+    const loadWorkflowId = searchParams.get('load');
+    if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
+      const workflow = getWorkflowById(loadWorkflowId);
+      if (workflow && workflow.workflow) {
+        setTestSteps(workflow.workflow);
+        setLoadedWorkflowId(loadWorkflowId);
+        
+        // Show success message
+        setTimeout(() => {
+          alert(`"${workflow.name}" workflow'u yüklendi!`);
+        }, 100);
+      } else {
+        alert('Workflow bulunamadı veya geçersiz!');
+      }
+    }
+  }, [searchParams, loadedWorkflowId]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
@@ -537,12 +591,18 @@ export default function TestBuilder() {
         </div>
       </div>
 
-      {/* Step Modal */}
+      {/* Modals */}
       <StepModal
         isOpen={isModalOpen}
         step={selectedStep}
         onClose={closeModal}
         onUpdateProperty={updateStepProperty}
+      />
+
+      <SaveDialog
+        isOpen={isSaveDialogOpen}
+        onClose={() => setIsSaveDialogOpen(false)}
+        onSave={handleSaveFromDialog}
       />
     </div>
   );

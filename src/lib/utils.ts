@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
-import { TestStep } from '@/types';
+import { TestStep, Test } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -191,4 +191,236 @@ export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors:
     isValid: errors.length === 0,
     errors
   };
+};
+
+// Workflow storage utilities
+const WORKFLOWS_STORAGE_KEY = 'testflow_saved_workflows';
+
+export const saveWorkflowToStorage = (workflow: {
+  name: string;
+  description: string;
+  steps: TestStep[];
+  tags?: string[];
+  suite?: string;
+}): string => {
+  try {
+    const savedWorkflows = getSavedWorkflows();
+    
+    // Generate unique ID
+    const id = Math.random().toString(36).substr(2, 9);
+    
+    const newWorkflow: Test = {
+      id,
+      name: workflow.name,
+      description: workflow.description,
+      status: 'saved',
+      duration: 0, // Will be set when executed
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      tags: workflow.tags || [],
+      suite: workflow.suite || 'Default',
+      workflow: workflow.steps,
+      isExecutable: true
+    };
+    
+    // Check for duplicate names
+    if (savedWorkflows.some(w => w.name === workflow.name)) {
+      throw new Error(`"${workflow.name}" adında bir workflow zaten mevcut`);
+    }
+    
+    savedWorkflows.push(newWorkflow);
+    localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(savedWorkflows));
+    
+    return id;
+  } catch (error) {
+    throw new Error(`Workflow kaydedilemedi: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+  }
+};
+
+export const getSavedWorkflows = (): Test[] => {
+  try {
+    const stored = localStorage.getItem(WORKFLOWS_STORAGE_KEY);
+    if (!stored) return [];
+    
+    const workflows = JSON.parse(stored);
+    
+    // Convert date strings back to Date objects
+    return workflows.map((workflow: any) => ({
+      ...workflow,
+      createdAt: new Date(workflow.createdAt),
+      updatedAt: new Date(workflow.updatedAt)
+    }));
+  } catch (error) {
+    console.error('Error loading saved workflows:', error);
+    return [];
+  }
+};
+
+export const getWorkflowById = (id: string): Test | null => {
+  const workflows = getSavedWorkflows();
+  return workflows.find(w => w.id === id) || null;
+};
+
+export const updateWorkflow = (id: string, updates: Partial<Test>): boolean => {
+  try {
+    const workflows = getSavedWorkflows();
+    const index = workflows.findIndex(w => w.id === id);
+    
+    if (index === -1) {
+      throw new Error('Workflow bulunamadı');
+    }
+    
+    workflows[index] = {
+      ...workflows[index],
+      ...updates,
+      updatedAt: new Date()
+    };
+    
+    localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(workflows));
+    return true;
+  } catch (error) {
+    console.error('Error updating workflow:', error);
+    return false;
+  }
+};
+
+export const deleteWorkflow = (id: string): boolean => {
+  try {
+    const workflows = getSavedWorkflows();
+    const filteredWorkflows = workflows.filter(w => w.id !== id);
+    
+    if (workflows.length === filteredWorkflows.length) {
+      throw new Error('Workflow bulunamadı');
+    }
+    
+    localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(filteredWorkflows));
+    return true;
+  } catch (error) {
+    console.error('Error deleting workflow:', error);
+    return false;
+  }
+};
+
+export const duplicateWorkflow = (id: string, newName?: string): string | null => {
+  try {
+    const workflow = getWorkflowById(id);
+    if (!workflow) {
+      throw new Error('Workflow bulunamadı');
+    }
+    
+    const duplicatedWorkflow = {
+      name: newName || `${workflow.name} (Kopya)`,
+      description: workflow.description,
+      steps: workflow.workflow || [],
+      tags: workflow.tags,
+      suite: workflow.suite
+    };
+    
+    return saveWorkflowToStorage(duplicatedWorkflow);
+  } catch (error) {
+    console.error('Error duplicating workflow:', error);
+    return null;
+  }
+};
+
+// Workflow validation for saved workflows
+export const validateSavedWorkflow = (workflow: Test): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  if (!workflow.name || workflow.name.trim().length === 0) {
+    errors.push('Workflow adı gereklidir');
+  }
+  
+  if (workflow.name && workflow.name.length > 100) {
+    errors.push('Workflow adı 100 karakterden uzun olamaz');
+  }
+  
+  if (!workflow.workflow || workflow.workflow.length === 0) {
+    errors.push('Workflow en az bir test adımı içermelidir');
+  }
+  
+  if (workflow.workflow) {
+    const stepValidation = validateWorkflow(workflow.workflow);
+    if (!stepValidation.isValid) {
+      errors.push(...stepValidation.errors);
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+// Export workflows for backup
+export const exportAllWorkflows = (): void => {
+  const workflows = getSavedWorkflows();
+  const exportData = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    workflows: workflows
+  };
+  
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  
+  const exportFileDefaultName = `testflow-workflows-backup-${new Date().toISOString().split('T')[0]}.json`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+};
+
+// Import workflows from backup
+export const importWorkflowsFromBackup = (file: File): Promise<{ imported: number; skipped: number }> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const backupData = JSON.parse(content);
+        
+        if (!backupData.workflows || !Array.isArray(backupData.workflows)) {
+          throw new Error('Geçersiz backup dosyası');
+        }
+        
+        const existingWorkflows = getSavedWorkflows();
+        const existingNames = new Set(existingWorkflows.map(w => w.name));
+        
+        let imported = 0;
+        let skipped = 0;
+        
+        backupData.workflows.forEach((workflow: any) => {
+          if (!existingNames.has(workflow.name)) {
+            try {
+              saveWorkflowToStorage({
+                name: workflow.name,
+                description: workflow.description,
+                steps: workflow.workflow || [],
+                tags: workflow.tags,
+                suite: workflow.suite
+              });
+              imported++;
+            } catch (error) {
+              skipped++;
+            }
+          } else {
+            skipped++;
+          }
+        });
+        
+        resolve({ imported, skipped });
+      } catch (error) {
+        reject(new Error(`Backup dosyası okuma hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`));
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Dosya okuma hatası'));
+    };
+    
+    reader.readAsText(file);
+  });
 }; 
