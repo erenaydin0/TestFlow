@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
@@ -12,100 +13,78 @@ import {
   TrendingDown,
   BarChart3,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Play,
+  Eye,
+  Image,
+  Video,
+  RefreshCw
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
-
-// Mock data
-const REPORTS = [
-  {
-    id: '1',
-    name: 'Günlük Test Raporu - 15 Ocak 2024',
-    type: 'daily',
-    generatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    testsRun: 45,
-    passed: 42,
-    failed: 3,
-    duration: 12340,
-    environment: 'production',
-    fileSize: '2.4 MB'
-  },
-  {
-    id: '2',
-    name: 'Haftalık Performans Raporu - 2. Hafta',
-    type: 'weekly',
-    generatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    testsRun: 156,
-    passed: 142,
-    failed: 14,
-    duration: 45600,
-    environment: 'staging',
-    fileSize: '5.8 MB'
-  },
-  {
-    id: '3',
-    name: 'API Test Detay Raporu',
-    type: 'detailed',
-    generatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    testsRun: 28,
-    passed: 26,
-    failed: 2,
-    duration: 8920,
-    environment: 'production',
-    fileSize: '1.2 MB'
-  },
-  {
-    id: '4',
-    name: 'Aylık Özet Raporu - Aralık 2023',
-    type: 'monthly',
-    generatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    testsRun: 892,
-    passed: 824,
-    failed: 68,
-    duration: 234560,
-    environment: 'production',
-    fileSize: '12.7 MB'
-  }
-];
-
-const DAILY_STATS = [
-  { date: '10 Oca', tests: 42, passed: 39, failed: 3 },
-  { date: '11 Oca', tests: 45, passed: 43, failed: 2 },
-  { date: '12 Oca', tests: 38, passed: 35, failed: 3 },
-  { date: '13 Oca', tests: 51, passed: 48, failed: 3 },
-  { date: '14 Oca', tests: 47, passed: 44, failed: 3 },
-  { date: '15 Oca', tests: 45, passed: 42, failed: 3 },
-  { date: '16 Oca', tests: 49, passed: 47, failed: 2 }
-];
-
-const TEST_SUITE_PERFORMANCE = [
-  { suite: 'Authentication', avgDuration: 2340, successRate: 98.5, totalRuns: 156 },
-  { suite: 'E-commerce', avgDuration: 5670, successRate: 94.2, totalRuns: 124 },
-  { suite: 'API Tests', avgDuration: 1200, successRate: 99.1, totalRuns: 89 },
-  { suite: 'UI/UX', avgDuration: 3450, successRate: 91.7, totalRuns: 67 }
-];
-
-function getReportTypeLabel(type: string): string {
-  const typeMap: { [key: string]: string } = {
-    'daily': 'Günlük',
-    'weekly': 'Haftalık',
-    'monthly': 'Aylık',
-    'detailed': 'Detaylı'
-  };
-  return typeMap[type] || type;
-}
-
-function getReportTypeColor(type: string): string {
-  const colorMap: { [key: string]: string } = {
-    'daily': '#2563eb',
-    'weekly': '#059669',
-    'monthly': '#dc2626',
-    'detailed': '#d97706'
-  };
-  return colorMap[type] || '#6b7280';
-}
+import { ExecutionResult } from '@/types';
 
 export default function ReportsPage() {
+  const [executions, setExecutions] = useState<ExecutionResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedExecution, setSelectedExecution] = useState<ExecutionResult | null>(null);
+
+  // Fetch executions from backend
+  const fetchExecutions = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/executions');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setExecutions(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching executions:', err);
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExecutions();
+  }, []);
+
+  // Calculate stats
+  const stats = {
+    totalExecutions: executions.length,
+    completedExecutions: executions.filter(e => e.status === 'completed').length,
+    failedExecutions: executions.filter(e => e.status === 'failed').length,
+    avgDuration: executions.length > 0 ? 
+      Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / executions.filter(e => e.duration).length) : 0,
+    successRate: executions.length > 0 ? 
+      Math.round((executions.filter(e => e.status === 'completed').length / executions.length) * 100) : 0
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return '#059669';
+      case 'failed': return '#dc2626';
+      case 'running': return '#d97706';
+      case 'queued': return '#6b7280';
+      case 'cancelled': return '#9ca3af';
+      default: return '#6b7280';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Tamamlandı';
+      case 'failed': return 'Başarısız';
+      case 'running': return 'Çalışıyor';
+      case 'queued': return 'Sırada';
+      case 'cancelled': return 'İptal Edildi';
+      default: return status;
+    }
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
@@ -113,15 +92,60 @@ export default function ReportsPage() {
       <div style={{ 
         flex: 1, 
         marginLeft: '16rem',
-        paddingTop: '4rem' // Header height
+        paddingTop: '4rem'
       }}>
         <Header />
         
         <main style={{ padding: '1.5rem' }}>
+          {/* Header */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '2rem' 
+          }}>
+            <div>
+              <h1 style={{ 
+                fontSize: '1.875rem', 
+                fontWeight: 'bold', 
+                color: 'var(--text-primary)', 
+                margin: 0 
+              }}>
+                Test Raporları
+              </h1>
+              <p style={{ 
+                color: 'var(--text-secondary)', 
+                margin: '0.5rem 0 0 0' 
+              }}>
+                Çalıştırılan testlerin detaylı sonuçları
+              </p>
+            </div>
+            
+            <button
+              onClick={fetchExecutions}
+              disabled={loading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1
+              }}
+            >
+              <RefreshCw size={16} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+              Yenile
+            </button>
+          </div>
+
           {/* Stats Overview */}
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(4, 1fr)', 
+            gridTemplateColumns: 'repeat(5, 1fr)', 
             gap: '1.5rem', 
             marginBottom: '2rem' 
           }}>
@@ -129,15 +153,11 @@ export default function ReportsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Bugün Çalışan
+                    Toplam Test
                   </p>
                   <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>
-                    45
+                    {stats.totalExecutions}
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
-                    <TrendingUp size={12} color="#059669" />
-                    <span style={{ fontSize: '0.75rem', color: '#059669' }}>+8%</span>
-                  </div>
                 </div>
                 <div style={{ 
                   padding: '0.75rem', 
@@ -153,15 +173,11 @@ export default function ReportsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Başarı Oranı
+                    Başarılı
                   </p>
                   <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-                    93.3%
+                    {stats.completedExecutions}
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
-                    <TrendingUp size={12} color="#059669" />
-                    <span style={{ fontSize: '0.75rem', color: '#059669' }}>+2.1%</span>
-                  </div>
                 </div>
                 <div style={{ 
                   padding: '0.75rem', 
@@ -177,15 +193,31 @@ export default function ReportsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Başarısız
+                  </p>
+                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#dc2626', margin: 0 }}>
+                    {stats.failedExecutions}
+                  </p>
+                </div>
+                <div style={{ 
+                  padding: '0.75rem', 
+                  backgroundColor: '#fef2f2', 
+                  borderRadius: '0.5rem' 
+                }}>
+                  <TrendingDown size={20} color="#dc2626" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
                     Ortalama Süre
                   </p>
                   <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>
-                    4.2s
+                    {formatDuration(stats.avgDuration)}
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
-                    <TrendingDown size={12} color="#dc2626" />
-                    <span style={{ fontSize: '0.75rem', color: '#dc2626' }}>+0.3s</span>
-                  </div>
                 </div>
                 <div style={{ 
                   padding: '0.75rem', 
@@ -201,329 +233,391 @@ export default function ReportsPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Toplam Rapor
+                    Başarı Oranı
                   </p>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>
-                    {REPORTS.length}
+                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#059669', margin: 0 }}>
+                    {stats.successRate}%
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bu ay</span>
-                  </div>
                 </div>
                 <div style={{ 
                   padding: '0.75rem', 
-                  backgroundColor: '#f3f4f6', 
+                  backgroundColor: '#f0fdf4', 
                   borderRadius: '0.5rem' 
                 }}>
-                  <FileText size={20} color="#6b7280" />
+                  <TrendingUp size={20} color="#059669" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Filters and Actions */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            marginBottom: '1.5rem' 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem', 
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-              }}>
-                <Filter size={16} />
-                <span>Filtrele</span>
-              </button>
-              
-              <select style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-              }}>
-                <option value="">Tüm Rapor Türleri</option>
-                <option value="daily">Günlük</option>
-                <option value="weekly">Haftalık</option>
-                <option value="monthly">Aylık</option>
-                <option value="detailed">Detaylı</option>
-              </select>
-              
-              <select style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-              }}>
-                <option value="">Tüm Ortamlar</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '2fr 1fr', 
-            gap: '1.5rem' 
-          }}>
-            {/* Reports List */}
-            <div className="card">
-              <h3 style={{ 
-                fontSize: '1.125rem', 
+          {/* Executions List */}
+          <div className="card">
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '1.5rem',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid var(--border-primary)'
+            }}>
+              <h2 style={{ 
+                fontSize: '1.25rem', 
                 fontWeight: 600, 
                 color: 'var(--text-primary)', 
-                margin: '0 0 1rem 0'
+                margin: 0 
               }}>
-                Son Raporlar
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {REPORTS.map((report) => (
-                  <div 
-                    key={report.id}
-                    style={{ 
-                      padding: '1rem',
-                      backgroundColor: 'var(--bg-secondary)',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border-primary)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'var(--shadow)';
-                    }}
-                  >
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'flex-start', 
-                      justifyContent: 'space-between',
-                      marginBottom: '0.75rem'
-                    }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                          <h4 style={{ 
-                            fontSize: '1rem', 
-                            fontWeight: 600, 
-                            color: 'var(--text-primary)',
-                            margin: 0
-                          }}>
-                            {report.name}
-                          </h4>
-                          <span style={{
-                            padding: '0.125rem 0.5rem',
-                            backgroundColor: getReportTypeColor(report.type) + '20',
-                            color: getReportTypeColor(report.type),
-                            fontSize: '0.75rem',
-                            borderRadius: '0.375rem',
-                            fontWeight: 500
-                          }}>
-                            {getReportTypeLabel(report.type)}
-                          </span>
-                        </div>
-                        
-                        <div style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: 'repeat(3, 1fr)', 
-                          gap: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
+                Test Execution Geçmişi
+              </h2>
+            </div>
+
+            {loading ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                padding: '2rem' 
+              }}>
+                <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite' }} />
+                <span style={{ marginLeft: '0.5rem' }}>Yükleniyor...</span>
+              </div>
+            ) : error ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                padding: '2rem',
+                color: '#dc2626'
+              }}>
+                <AlertCircle size={24} />
+                <span style={{ marginLeft: '0.5rem' }}>Hata: {error}</span>
+              </div>
+            ) : executions.length === 0 ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                padding: '2rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <FileText size={24} />
+                <span style={{ marginLeft: '0.5rem' }}>Henüz test çalıştırılmamış</span>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Test Adı
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Durum
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Başlangıç
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Süre
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Adım Sayısı
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Başarı Oranı
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        Özellikler
+                      </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        İşlemler
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {executions.map((execution) => (
+                      <tr key={execution.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                        <td style={{ padding: '0.75rem' }}>
                           <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem' }}>
-                              Toplam Test
-                            </div>
-                            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                              {report.testsRun}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem' }}>
-                              Başarı Oranı
+                            <div style={{ 
+                              fontWeight: 500, 
+                              color: 'var(--text-primary)',
+                              marginBottom: '0.25rem'
+                            }}>
+                              {execution.workflowName}
                             </div>
                             <div style={{ 
-                              fontSize: '0.875rem', 
-                              fontWeight: 600, 
-                              color: (report.passed / report.testsRun) >= 0.95 ? '#059669' : '#d97706'
+                              fontSize: '0.75rem', 
+                              color: 'var(--text-secondary)' 
                             }}>
-                              {((report.passed / report.testsRun) * 100).toFixed(1)}%
+                              ID: {execution.id.slice(0, 8)}...
                             </div>
                           </div>
-                          
-                          <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem' }}>
-                              Toplam Süre
-                            </div>
-                            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                              {formatDuration(report.duration)}
-                            </div>
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            backgroundColor: `${getStatusColor(execution.status)}20`,
+                            color: getStatusColor(execution.status)
+                          }}>
+                            {getStatusLabel(execution.status)}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {formatRelativeTime(new Date(execution.startTime))}
+                        </td>
+                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {execution.duration ? formatDuration(execution.duration) : '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {execution.steps.length}
+                        </td>
+                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {execution.successRate !== undefined ? `${execution.successRate}%` : '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <div style={{ display: 'flex', gap: '0.25rem' }}>
+                            {execution.options.enableScreenshots && (
+                              <span style={{ 
+                                padding: '0.125rem 0.25rem',
+                                backgroundColor: '#8b5cf620',
+                                color: '#8b5cf6',
+                                borderRadius: '0.25rem',
+                                fontSize: '0.625rem'
+                              }}>
+                                📸
+                              </span>
+                            )}
+                            {execution.options.enableRecording && (
+                              <span style={{ 
+                                padding: '0.125rem 0.25rem',
+                                backgroundColor: '#ef444420',
+                                color: '#ef4444',
+                                borderRadius: '0.25rem',
+                                fontSize: '0.625rem'
+                              }}>
+                                🎥
+                              </span>
+                            )}
+                            {execution.options.headlessMode && (
+                              <span style={{ 
+                                padding: '0.125rem 0.25rem',
+                                backgroundColor: '#22c55e20',
+                                color: '#22c55e',
+                                borderRadius: '0.25rem',
+                                fontSize: '0.625rem'
+                              }}>
+                                👁️
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      </div>
-                      
-                      <button style={{ 
-                        padding: '0.5rem', 
-                        color: '#2563eb', 
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                      }}>
-                        <Download size={18} />
-                      </button>
-                    </div>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      paddingTop: '0.75rem',
-                      borderTop: '1px solid var(--border-primary)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Calendar size={14} color="var(--text-tertiary)" />
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            {formatRelativeTime(report.generatedAt)}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ 
-                            width: '0.75rem', 
-                            height: '0.75rem', 
-                            backgroundColor: report.environment === 'production' ? '#059669' : '#d97706',
-                            borderRadius: '50%',
-                            display: 'inline-block'
-                          }}></span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            {report.environment}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                        {report.fileSize}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <button
+                            onClick={() => setSelectedExecution(execution)}
+                            style={{
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: '#2563eb',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            <Eye size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-
-            {/* Test Suite Performance */}
-            <div className="card">
-              <h3 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)', 
-                margin: '0 0 1rem 0'
-              }}>
-                Test Grubu Performansı
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {TEST_SUITE_PERFORMANCE.map((suite, index) => (
-                  <div 
-                    key={index}
-                    style={{ 
-                      padding: '0.75rem',
-                      backgroundColor: 'var(--bg-secondary)',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border-primary)'
-                    }}
-                  >
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      marginBottom: '0.5rem'
-                    }}>
-                      <h4 style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 600, 
-                        color: 'var(--text-primary)',
-                        margin: 0
-                      }}>
-                        {suite.suite}
-                      </h4>
-                      <span style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 600,
-                        color: suite.successRate >= 95 ? '#059669' : suite.successRate >= 85 ? '#d97706' : '#dc2626'
-                      }}>
-                        {suite.successRate}%
-                      </span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          Ortalama Süre
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {formatDuration(suite.avgDuration)}
-                        </span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          Toplam Çalışma
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {suite.totalRuns}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div style={{ 
-                marginTop: '1rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid var(--border-primary)'
-              }}>
-                <button className="btn-secondary" style={{ width: '100%' }}>
-                  Detaylı Analiz Görüntüle
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         </main>
       </div>
+
+      {/* Execution Details Modal */}
+      {selectedExecution && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--border-primary)',
+            borderRadius: '1rem',
+            padding: '1.5rem',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1rem'
+            }}>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>
+                {selectedExecution.workflowName} - Detaylar
+              </h3>
+              <button
+                onClick={() => setSelectedExecution(null)}
+                style={{
+                  padding: '0.5rem',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Execution info */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p><strong>ID:</strong> {selectedExecution.id}</p>
+              <p><strong>Durum:</strong> {getStatusLabel(selectedExecution.status)}</p>
+              <p><strong>Başlangıç:</strong> {new Date(selectedExecution.startTime).toLocaleString('tr-TR')}</p>
+              {selectedExecution.endTime && (
+                <p><strong>Bitiş:</strong> {new Date(selectedExecution.endTime).toLocaleString('tr-TR')}</p>
+              )}
+              {selectedExecution.duration && (
+                <p><strong>Süre:</strong> {formatDuration(selectedExecution.duration)}</p>
+              )}
+              {selectedExecution.successRate !== undefined && (
+                <p><strong>Başarı Oranı:</strong> {selectedExecution.successRate}%</p>
+              )}
+            </div>
+
+            {/* Steps */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Test Adımları</h4>
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {selectedExecution.steps.map((step, index) => (
+                  <div key={step.stepId} style={{
+                    padding: '0.5rem',
+                    marginBottom: '0.5rem',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '0.5rem',
+                    borderLeft: `4px solid ${getStatusColor(step.status)}`
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 500 }}>
+                        {index + 1}. {step.type}
+                      </span>
+                      <span style={{
+                        padding: '0.125rem 0.25rem',
+                        borderRadius: '0.25rem',
+                        fontSize: '0.75rem',
+                        backgroundColor: `${getStatusColor(step.status)}20`,
+                        color: getStatusColor(step.status)
+                      }}>
+                        {getStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    {step.error && (
+                      <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                        {step.error}
+                      </p>
+                    )}
+                    {step.duration && (
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                        Süre: {formatDuration(step.duration)}
+                      </p>
+                    )}
+                    {step.screenshot && (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <a 
+                          href={`http://localhost:3001${step.screenshot}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            color: '#2563eb',
+                            textDecoration: 'none',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          <Image size={12} />
+                          Ekran Görüntüsü
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Screenshots and Video */}
+            {(selectedExecution.screenshots.length > 0 || selectedExecution.videoPath) && (
+              <div>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Medya Dosyaları</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {selectedExecution.screenshots.map((screenshot, index) => (
+                    <a 
+                      key={index}
+                      href={`http://localhost:3001${screenshot}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: '#8b5cf620',
+                        color: '#8b5cf6',
+                        borderRadius: '0.25rem',
+                        textDecoration: 'none',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <Image size={12} />
+                      Screenshot {index + 1}
+                    </a>
+                  ))}
+                  {selectedExecution.videoPath && (
+                    <a 
+                      href={`http://localhost:3001${selectedExecution.videoPath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: '#ef444420',
+                        color: '#ef4444',
+                        borderRadius: '0.25rem',
+                        textDecoration: 'none',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <Video size={12} />
+                      Video Kaydı
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

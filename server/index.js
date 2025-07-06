@@ -156,6 +156,34 @@ app.get('/api/results/:id', async (req, res) => {
   }
 });
 
+// Get all execution results
+app.get('/api/executions', async (req, res) => {
+  try {
+    const files = await fs.readdir(EXECUTIONS_DIR);
+    const executions = [];
+    
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const executionPath = path.join(EXECUTIONS_DIR, file);
+          const execution = await fs.readJson(executionPath);
+          executions.push(execution);
+        } catch (error) {
+          console.error(`Error reading execution file ${file}:`, error);
+        }
+      }
+    }
+    
+    // Sort by startTime (newest first)
+    executions.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    
+    res.json(executions);
+  } catch (error) {
+    console.error('Error getting executions:', error);
+    res.status(500).json({ error: 'Failed to get executions' });
+  }
+});
+
 // Cancel execution
 app.delete('/api/execution/:id', async (req, res) => {
   try {

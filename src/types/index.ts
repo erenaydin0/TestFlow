@@ -89,6 +89,41 @@ export interface TestReport {
   logs: string[];
 }
 
+// Yeni execution result interface'leri
+export interface ExecutionResult {
+  id: string;
+  workflowId: string;
+  workflowName: string;
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  startTime: Date;
+  endTime?: Date;
+  duration?: number;
+  progress: number;
+  options: {
+    enableScreenshots: boolean;
+    enableRecording: boolean;
+    headlessMode: boolean;
+  };
+  steps: ExecutionStepResult[];
+  screenshots: string[];
+  logs: string[];
+  videoPath?: string;
+  successRate?: number;
+  error?: string;
+}
+
+export interface ExecutionStepResult {
+  stepId: string;
+  type: string;
+  status: 'pending' | 'running' | 'passed' | 'failed';
+  startTime?: Date;
+  endTime?: Date;
+  duration?: number;
+  config: any;
+  error?: string;
+  screenshot?: string;
+}
+
 export interface DashboardStats {
   totalTests: number;
   passedTests: number;
