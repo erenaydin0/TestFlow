@@ -20,10 +20,12 @@ app.use(express.json());
 // Storage paths
 const EXECUTIONS_DIR = path.join(__dirname, 'executions');
 const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
+const VIDEOS_DIR = path.join(__dirname, 'videos');
 
 // Ensure directories exist
 fs.ensureDirSync(EXECUTIONS_DIR);
 fs.ensureDirSync(SCREENSHOTS_DIR);
+fs.ensureDirSync(VIDEOS_DIR);
 
 // In-memory storage for active executions
 const activeExecutions = new Map();
@@ -56,7 +58,11 @@ function broadcast(data) {
 // Execute test workflow
 app.post('/api/execute', async (req, res) => {
   try {
-    const { workflowId, workflowName, steps } = req.body;
+    const { workflowId, workflowName, steps, options = {} } = req.body;
+    
+    console.log('Received options:', options);
+    console.log('Screenshot enabled:', options.enableScreenshots);
+    console.log('Recording enabled:', options.enableRecording);
     
     if (!steps || !Array.isArray(steps) || steps.length === 0) {
       return res.status(400).json({ error: 'Invalid or empty steps provided' });
@@ -69,12 +75,23 @@ app.post('/api/execute', async (req, res) => {
       workflowName: workflowName || 'Manual Test',
       status: 'queued',
       startTime: new Date(),
-      steps: steps.map(step => ({
-        stepId: step.id,
-        type: step.type,
-        status: 'pending',
-        config: step.config
-      })),
+      options: {
+        enableScreenshots: options.enableScreenshots || false,
+        enableRecording: options.enableRecording || false
+      },
+      steps: steps.map(step => {
+        console.log('Processing step:', JSON.stringify(step, null, 2));
+        
+        const mappedStep = {
+          stepId: step.id,
+          type: step.type,
+          status: 'pending',
+          config: step.config
+        };
+        
+        console.log('Mapped step:', JSON.stringify(mappedStep, null, 2));
+        return mappedStep;
+      }),
       screenshots: [],
       logs: [],
       progress: 0
@@ -169,8 +186,9 @@ app.delete('/api/execution/:id', async (req, res) => {
   }
 });
 
-// Serve screenshots
+// Serve screenshots and videos
 app.use('/screenshots', express.static(SCREENSHOTS_DIR));
+app.use('/videos', express.static(path.join(__dirname, 'videos')));
 
 // Test execution function
 async function executeTestWorkflow(executionId, execution) {
@@ -192,6 +210,14 @@ async function executeTestWorkflow(executionId, execution) {
     // Execute with Playwright
     const testRunner = new TestRunner();
     
+    // Initialize browser with recording options if needed
+    if (execution.options.enableRecording) {
+      await testRunner.initializeBrowser({ 
+        enableRecording: true, 
+        executionId: executionId 
+      });
+    }
+    
     for (let i = 0; i < execution.steps.length; i++) {
       const step = execution.steps[i];
       
@@ -211,8 +237,8 @@ async function executeTestWorkflow(executionId, execution) {
       });
       
       try {
-        // Execute step
-        const result = await testRunner.executeStep(step, executionId);
+        // Execute step with options
+        const result = await testRunner.executeStep(step, executionId, execution.options);
         
         step.status = result.success ? 'passed' : 'failed';
         step.endTime = new Date();
@@ -286,6 +312,14 @@ async function executeTestWorkflow(executionId, execution) {
     
     // Save final execution state
     await fs.writeJson(path.join(EXECUTIONS_DIR, `${executionId}.json`), execution);
+    
+    // Close browser and save video
+    await testRunner.closeBrowser();
+    
+    // Add video path if recording was enabled
+    if (execution.options.enableRecording) {
+      execution.videoPath = `/videos/${executionId}.webm`;
+    }
     
     // Clean up from active executions
     activeExecutions.delete(executionId);

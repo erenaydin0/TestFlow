@@ -120,6 +120,13 @@ export default function TestBuilder() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [loadedWorkflowId, setLoadedWorkflowId] = useState<string | null>(null);
+  const [enableScreenshots, setEnableScreenshots] = useState(false);
+  const [enableRecording, setEnableRecording] = useState(false);
+  
+  // Debug: Log initial state
+  useEffect(() => {
+    console.log('Initial state - Screenshots:', enableScreenshots, 'Recording:', enableRecording);
+  }, [enableScreenshots, enableRecording]);
   const searchParams = useSearchParams();
 
   // Canvas styles
@@ -397,7 +404,9 @@ export default function TestBuilder() {
         steps: testSteps,
         tags: data.tags,
         suite: data.suite,
-        id: loadedWorkflowId || undefined // Düzenleme modunda mevcut ID'yi kullan
+        id: loadedWorkflowId || undefined, // Düzenleme modunda mevcut ID'yi kullan
+        enableScreenshots,
+        enableRecording
       });
       
       setIsSaveDialogOpen(false);
@@ -431,6 +440,32 @@ export default function TestBuilder() {
 
     try {
       console.log('Backend API çağrısı yapılıyor...');
+      
+      // Convert frontend steps to backend format
+      const backendSteps = testSteps.map(step => ({
+        id: step.id,
+        type: step.type,
+        config: {
+          url: step.url,
+          selector: step.selector,
+          value: step.value,
+          text: step.value, // For type actions
+          target: step.selector, // Alternative selector name
+          duration: step.duration,
+          condition: step.condition,
+          expectedValue: step.expectedValue,
+          direction: step.direction,
+          amount: step.amount,
+          filename: step.filename,
+          key: step.key
+        }
+      }));
+      
+      console.log('Frontend steps:', testSteps);
+      console.log('Backend steps:', backendSteps);
+      console.log('Screenshot enabled:', enableScreenshots);
+      console.log('Recording enabled:', enableRecording);
+      
       const response = await fetch('http://localhost:3001/api/execute', {
         method: 'POST',
         headers: {
@@ -439,7 +474,11 @@ export default function TestBuilder() {
         body: JSON.stringify({
           workflowId: 'test-builder',
           workflowName: 'Test Builder Workflow',
-          steps: testSteps
+          steps: backendSteps,
+          options: {
+            enableScreenshots,
+            enableRecording
+          }
         })
       });
 
@@ -462,7 +501,7 @@ export default function TestBuilder() {
     } finally {
       setIsRunning(false);
     }
-  }, [testSteps]);
+  }, [testSteps, enableScreenshots, enableRecording]);
 
   // Load workflow from URL parameter
   useEffect(() => {
@@ -472,6 +511,10 @@ export default function TestBuilder() {
       if (workflow && workflow.workflow) {
         setTestSteps(workflow.workflow);
         setLoadedWorkflowId(loadWorkflowId);
+        
+        // Load screenshot and recording settings
+        setEnableScreenshots(workflow.enableScreenshots || false);
+        setEnableRecording(workflow.enableRecording || false);
         
         // Show success message
         setTimeout(() => {
@@ -540,6 +583,18 @@ export default function TestBuilder() {
             onSave={handleSave}
             onRun={handleRun}
             isRunning={isRunning}
+            enableScreenshots={enableScreenshots}
+            enableRecording={enableRecording}
+            onToggleScreenshots={() => {
+              console.log('Screenshot toggle clicked, current:', enableScreenshots);
+              setEnableScreenshots(!enableScreenshots);
+              console.log('Screenshot toggle new value:', !enableScreenshots);
+            }}
+            onToggleRecording={() => {
+              console.log('Recording toggle clicked, current:', enableRecording);
+              setEnableRecording(!enableRecording);
+              console.log('Recording toggle new value:', !enableRecording);
+            }}
           />
 
           {/* Floating Actions Panel */}

@@ -17,7 +17,9 @@ class TestRunner {
     const {
       headless = false,
       viewport = { width: 1280, height: 720 },
-      timeout = 30000
+      timeout = 30000,
+      enableRecording = false,
+      executionId = null
     } = options;
 
     this.browser = await chromium.launch({ 
@@ -25,11 +27,20 @@ class TestRunner {
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
-    this.context = await this.browser.newContext({
-      viewport,
-      recordVideo: { dir: path.join(__dirname, 'videos') }
-    });
+    const contextOptions = {
+      viewport
+    };
     
+    // Only enable video recording if explicitly requested
+    if (enableRecording) {
+      contextOptions.recordVideo = { 
+        dir: path.join(__dirname, 'videos'),
+        size: viewport
+      };
+      console.log('Video recording enabled for execution:', executionId);
+    }
+    
+    this.context = await this.browser.newContext(contextOptions);
     this.page = await this.context.newPage();
     this.page.setDefaultTimeout(timeout);
     
@@ -46,6 +57,12 @@ class TestRunner {
 
   async closeBrowser() {
     try {
+      if (this.context) {
+        // Close context first to save video
+        await this.context.close();
+        console.log('Browser context closed, video saved if recording was enabled');
+      }
+      
       if (this.browser) {
         await this.browser.close();
         this.browser = null;
@@ -57,7 +74,7 @@ class TestRunner {
     }
   }
 
-  async executeStep(step, executionId) {
+  async executeStep(step, executionId, options = {}) {
     const stepResult = {
       success: false,
       startTime: new Date(),
@@ -85,12 +102,17 @@ class TestRunner {
           await this.executeClick(step.config);
           break;
           
-        case 'type':
+        case 'input':  // Frontend sends 'input'
+        case 'type':   // Keep backward compatibility
           await this.executeType(step.config);
           break;
           
         case 'wait':
           await this.executeWait(step.config);
+          break;
+          
+        case 'refresh':
+          await this.executeRefresh(step.config);
           break;
           
         case 'screenshot':
@@ -113,8 +135,24 @@ class TestRunner {
           await this.executeKey(step.config);
           break;
           
+        case 'if':
+          await this.executeIf(step.config);
+          break;
+          
         default:
           throw new Error(`Unknown step type: ${step.type}`);
+      }
+
+      // Take automatic screenshot if enabled
+      if (options.enableScreenshots && step.type !== 'screenshot') {
+        console.log('Taking automatic screenshot for step:', step.stepId);
+        try {
+          stepResult.screenshot = await this.executeScreenshot({}, executionId, `${step.stepId}-auto`);
+          stepResult.logs.push('Automatic screenshot taken');
+          console.log('Automatic screenshot saved:', stepResult.screenshot);
+        } catch (screenshotError) {
+          console.error('Failed to take automatic screenshot:', screenshotError);
+        }
       }
 
       stepResult.success = true;
@@ -140,48 +178,124 @@ class TestRunner {
   }
 
   async executeNavigate(config) {
+    console.log('executeNavigate called with config:', JSON.stringify(config, null, 2));
+    
     let url = config.url || config.value || '';
+    console.log('Extracted URL:', url);
+    
     if (!url) {
+      console.error('No URL found in config:', config);
       throw new Error('Navigate action requires a URL');
     }
     
     // Yalın URL'leri destekle (örn: google.com -> https://google.com)
     if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
+      console.log('URL normalized to:', url);
     }
     
     console.log(`Navigating to: ${url}`);
-    await this.page.goto(url, { waitUntil: 'networkidle' });
+    
+    try {
+      await this.page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+      console.log('Navigation completed successfully');
+    } catch (error) {
+      console.error('Navigation failed:', error.message);
+      throw error;
+    }
   }
 
   async executeClick(config) {
+    console.log('executeClick called with config:', JSON.stringify(config, null, 2));
+    
     const selector = config.selector || config.target || '';
     if (!selector) {
+      console.error('No selector found in config:', config);
       throw new Error('Click action requires a selector');
     }
     
     console.log(`Clicking element: ${selector}`);
     
-    // Wait for element to be visible and clickable
-    await this.page.waitForSelector(selector, { state: 'visible' });
-    await this.page.click(selector);
+    try {
+      // Check if element exists first
+      const elementExists = await this.elementExists(selector);
+      console.log(`Element exists: ${elementExists}`);
+      
+      if (!elementExists) {
+        // Try to find similar elements for debugging
+        const allElements = await this.page.$$('*');
+        console.log(`Total elements on page: ${allElements.length}`);
+        
+        throw new Error(`Element not found: ${selector}`);
+      }
+      
+      // Wait for element to be visible and clickable
+      console.log('Waiting for element to be visible...');
+      await this.page.waitForSelector(selector, { state: 'visible', timeout: 10000 });
+      
+      console.log('Element is visible, clicking...');
+      await this.page.click(selector);
+      console.log('Click completed successfully');
+      
+    } catch (error) {
+      console.error('Click action failed:', error.message);
+      
+      // Take a screenshot for debugging
+      try {
+        await this.page.screenshot({ path: `debug-click-error-${Date.now()}.png` });
+        console.log('Debug screenshot taken');
+      } catch (screenshotError) {
+        console.error('Failed to take debug screenshot:', screenshotError);
+      }
+      
+      throw error;
+    }
   }
 
   async executeType(config) {
+    console.log('executeType called with config:', JSON.stringify(config, null, 2));
+    
     const selector = config.selector || config.target || '';
     const text = config.text || config.value || '';
     
     if (!selector) {
+      console.error('No selector found in config:', config);
       throw new Error('Type action requires a selector');
     }
     
-    console.log(`Typing into element: ${selector}`);
+    console.log(`Typing into element: ${selector}, text: "${text}"`);
     
-    // Wait for element to be visible
-    await this.page.waitForSelector(selector, { state: 'visible' });
-    
-    // Clear existing text and type new text
-    await this.page.fill(selector, text);
+    try {
+      // Check if element exists first
+      const elementExists = await this.elementExists(selector);
+      console.log(`Element exists: ${elementExists}`);
+      
+      if (!elementExists) {
+        throw new Error(`Element not found: ${selector}`);
+      }
+      
+      // Wait for element to be visible
+      console.log('Waiting for element to be visible...');
+      await this.page.waitForSelector(selector, { state: 'visible', timeout: 10000 });
+      
+      // Clear existing text and type new text
+      console.log('Clearing and filling text...');
+      await this.page.fill(selector, text);
+      console.log('Type completed successfully');
+      
+    } catch (error) {
+      console.error('Type action failed:', error.message);
+      
+      // Take a screenshot for debugging
+      try {
+        await this.page.screenshot({ path: `debug-type-error-${Date.now()}.png` });
+        console.log('Debug screenshot taken');
+      } catch (screenshotError) {
+        console.error('Failed to take debug screenshot:', screenshotError);
+      }
+      
+      throw error;
+    }
   }
 
   async executeWait(config) {
@@ -297,6 +411,30 @@ class TestRunner {
     
     console.log(`Pressing key: ${key}`);
     await this.page.keyboard.press(key);
+  }
+
+  async executeRefresh(config) {
+    console.log('Refreshing page');
+    await this.page.reload({ waitUntil: 'networkidle' });
+  }
+
+  async executeIf(config) {
+    const condition = config.condition || config.selector || '';
+    if (!condition) {
+      throw new Error('If action requires a condition selector');
+    }
+    
+    console.log(`Checking condition: ${condition}`);
+    
+    try {
+      // Check if element exists and is visible
+      await this.page.waitForSelector(condition, { state: 'visible', timeout: 5000 });
+      console.log('Condition is TRUE - element found and visible');
+      return true;
+    } catch (error) {
+      console.log('Condition is FALSE - element not found or not visible');
+      return false;
+    }
   }
 
   async takeErrorScreenshot(executionId, stepId) {

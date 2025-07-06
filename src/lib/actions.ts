@@ -232,30 +232,7 @@ const extendedActions: ActionType[] = [
       }
     ]
   },
-  {
-    type: 'screenshot',
-    title: 'Ekran Görüntüsü',
-    icon: Camera,
-    color: '#9333ea',
-    description: 'Ekran görüntüsü al',
-    category: 'utility',
-    fields: [
-      {
-        key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#element, .container (boş bırakılırsa tam sayfa)',
-        description: 'Görüntüsü alınacak elementin CSS seçicisi'
-      },
-      {
-        key: 'filename',
-        label: 'Dosya Adı',
-        type: 'text',
-        placeholder: 'screenshot',
-        description: 'Kaydedilecek dosyanın adı (timestamp otomatik eklenir)'
-      }
-    ]
-  },
+
   {
     type: 'hover',
     title: 'Üzerine Gel',

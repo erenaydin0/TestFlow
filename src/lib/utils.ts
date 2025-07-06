@@ -90,7 +90,7 @@ export function getStatusText(status: string): string {
     default:
       return status;
   }
-}
+} 
 
 // Test workflow import/export functions
 export const exportTestWorkflow = (testSteps: TestStep[], fileName?: string) => {
@@ -203,6 +203,8 @@ export const saveWorkflowToStorage = (workflow: {
   tags?: string[];
   suite?: string;
   id?: string; // Düzenleme için mevcut ID
+  enableScreenshots?: boolean;
+  enableRecording?: boolean;
 }): string => {
   try {
     const savedWorkflows = getSavedWorkflows();
@@ -219,6 +221,8 @@ export const saveWorkflowToStorage = (workflow: {
           tags: workflow.tags || [],
           suite: workflow.suite || 'Default',
           workflow: workflow.steps,
+          enableScreenshots: workflow.enableScreenshots || false,
+          enableRecording: workflow.enableRecording || false,
           updatedAt: new Date()
         };
         
@@ -241,7 +245,9 @@ export const saveWorkflowToStorage = (workflow: {
       tags: workflow.tags || [],
       suite: workflow.suite || 'Default',
       workflow: workflow.steps,
-      isExecutable: true
+      isExecutable: true,
+      enableScreenshots: workflow.enableScreenshots || false,
+      enableRecording: workflow.enableRecording || false
     };
     
     // Check for duplicate names (mevcut workflow'un kendisi hariç)

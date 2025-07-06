@@ -90,6 +90,26 @@ export default function TestsPage() {
     }
 
     try {
+      // Convert frontend steps to backend format
+      const backendSteps = test.workflow.map(step => ({
+        id: step.id,
+        type: step.type,
+        config: {
+          url: step.url,
+          selector: step.selector,
+          value: step.value,
+          text: step.value, // For type actions
+          target: step.selector, // Alternative selector name
+          duration: step.duration,
+          condition: step.condition,
+          expectedValue: step.expectedValue,
+          direction: step.direction,
+          amount: step.amount,
+          filename: step.filename,
+          key: step.key
+        }
+      }));
+      
       const response = await fetch('http://localhost:3001/api/execute', {
         method: 'POST',
         headers: {
@@ -98,7 +118,11 @@ export default function TestsPage() {
         body: JSON.stringify({
           workflowId: test.id,
           workflowName: test.name,
-          steps: test.workflow
+          steps: backendSteps,
+          options: {
+            enableScreenshots: test.enableScreenshots || false,
+            enableRecording: test.enableRecording || false
+          }
         })
       });
 
@@ -196,6 +220,26 @@ export default function TestsPage() {
 
     try {
       const executionPromises = validTests.map(async (test) => {
+        // Convert frontend steps to backend format
+        const backendSteps = test.workflow!.map(step => ({
+          id: step.id,
+          type: step.type,
+          config: {
+            url: step.url,
+            selector: step.selector,
+            value: step.value,
+            text: step.value, // For type actions
+            target: step.selector, // Alternative selector name
+            duration: step.duration,
+            condition: step.condition,
+            expectedValue: step.expectedValue,
+            direction: step.direction,
+            amount: step.amount,
+            filename: step.filename,
+            key: step.key
+          }
+        }));
+        
         const response = await fetch('http://localhost:3001/api/execute', {
           method: 'POST',
           headers: {
@@ -204,7 +248,11 @@ export default function TestsPage() {
           body: JSON.stringify({
             workflowId: test.id,
             workflowName: test.name,
-            steps: test.workflow
+            steps: backendSteps,
+            options: {
+              enableScreenshots: test.enableScreenshots || false,
+              enableRecording: test.enableRecording || false
+            }
           })
         });
 
@@ -372,13 +420,13 @@ export default function TestsPage() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 style={{
-                  padding: '0.5rem 1rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  cursor: 'pointer'
+                padding: '0.5rem 1rem',
+                border: '1px solid var(--border-primary)',
+                borderRadius: '0.5rem',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                cursor: 'pointer'
                 }}
               >
                 <option value="">Tüm Durumlar</option>
@@ -392,13 +440,13 @@ export default function TestsPage() {
                 value={suiteFilter}
                 onChange={(e) => setSuiteFilter(e.target.value)}
                 style={{
-                  padding: '0.5rem 1rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  cursor: 'pointer'
+                padding: '0.5rem 1rem',
+                border: '1px solid var(--border-primary)',
+                borderRadius: '0.5rem',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                cursor: 'pointer'
                 }}
               >
                 <option value="">Tüm Test Grupları</option>
@@ -506,9 +554,9 @@ export default function TestsPage() {
                 onClick={handleCreateNewTest}
                 className="btn-primary" 
                 style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem' 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem' 
                 }}
               >
                 <Plus size={16} />
@@ -565,297 +613,297 @@ export default function TestsPage() {
               </button>
             </div>
           ) : (
-            <div className="card">
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        <input 
-                          type="checkbox" 
+          <div className="card">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      <input 
+                        type="checkbox" 
                           checked={selectedTests.size === filteredTests.length && filteredTests.length > 0}
                           onChange={(e) => handleSelectAll(e.target.checked)}
+                        style={{ 
+                          borderRadius: '0.25rem', 
+                          border: '1px solid var(--border-primary)' 
+                        }} 
+                      />
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      Test Adı
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      Test Grubu
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      Durum
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                        Adım Sayısı
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                        Oluşturulma
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      Etiketler
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                    {filteredTests.map((test) => (
+                    <tr 
+                      key={test.id} 
+                      style={{ 
+                        borderBottom: '1px solid var(--border-primary)',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <td style={{ padding: '1rem' }}>
+                        <input 
+                          type="checkbox" 
+                            checked={selectedTests.has(test.id)}
+                            onChange={(e) => handleTestSelection(test.id, e.target.checked)}
                           style={{ 
                             borderRadius: '0.25rem', 
                             border: '1px solid var(--border-primary)' 
                           }} 
                         />
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        Test Adı
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        Test Grubu
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        Durum
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        Adım Sayısı
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        Oluşturulma
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        Etiketler
-                      </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '1rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.875rem'
-                      }}>
-                        İşlemler
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTests.map((test) => (
-                      <tr 
-                        key={test.id} 
-                        style={{ 
-                          borderBottom: '1px solid var(--border-primary)',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <td style={{ padding: '1rem' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={selectedTests.has(test.id)}
-                            onChange={(e) => handleTestSelection(test.id, e.target.checked)}
-                            style={{ 
-                              borderRadius: '0.25rem', 
-                              border: '1px solid var(--border-primary)' 
-                            }} 
-                          />
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <div>
-                            <h3 style={{ 
-                              fontWeight: 500, 
-                              color: 'var(--text-primary)',
-                              margin: 0,
-                              fontSize: '0.875rem'
-                            }}>
-                              {test.name}
-                            </h3>
-                            <p style={{ 
-                              fontSize: '0.75rem', 
-                              color: 'var(--text-secondary)', 
-                              margin: '0.25rem 0 0 0'
-                            }}>
-                              {test.description}
-                            </p>
-                          </div>
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <span style={{ 
-                            fontSize: '0.875rem', 
-                            color: 'var(--text-secondary)' 
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <div>
+                          <h3 style={{ 
+                            fontWeight: 500, 
+                            color: 'var(--text-primary)',
+                            margin: 0,
+                            fontSize: '0.875rem'
                           }}>
-                            {test.suite}
-                          </span>
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <StatusBadge status={test.status} />
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.25rem', 
-                            fontSize: '0.875rem', 
-                            color: 'var(--text-secondary)' 
-                          }}>
+                            {test.name}
+                          </h3>
+                                                     <p style={{ 
+                             fontSize: '0.75rem', 
+                             color: 'var(--text-secondary)', 
+                             margin: '0.25rem 0 0 0'
+                           }}>
+                            {test.description}
+                          </p>
+                        </div>
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <span style={{ 
+                          fontSize: '0.875rem', 
+                          color: 'var(--text-secondary)' 
+                        }}>
+                          {test.suite}
+                        </span>
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <StatusBadge status={test.status} />
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '0.25rem', 
+                          fontSize: '0.875rem', 
+                          color: 'var(--text-secondary)' 
+                        }}>
                             <FileText size={16} />
                             <span>{test.workflow?.length || 0} adım</span>
-                          </div>
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <span style={{ 
-                            fontSize: '0.875rem', 
-                            color: 'var(--text-secondary)' 
-                          }}>
+                        </div>
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <span style={{ 
+                          fontSize: '0.875rem', 
+                          color: 'var(--text-secondary)' 
+                        }}>
                             {formatRelativeTime(test.createdAt)}
-                          </span>
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                            {test.tags.slice(0, 2).map((tag) => (
-                              <span
-                                key={tag}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.25rem',
-                                  padding: '0.125rem 0.5rem',
-                                  backgroundColor: 'var(--bg-tertiary)',
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '0.75rem',
-                                  borderRadius: '0.375rem',
-                                  border: '1px solid var(--border-primary)'
-                                }}
-                              >
-                                <Tag size={12} />
-                                {tag}
-                              </span>
-                            ))}
-                            {test.tags.length > 2 && (
-                              <span style={{ 
-                                fontSize: '0.75rem', 
-                                color: 'var(--text-tertiary)' 
-                              }}>
-                                +{test.tags.length - 2}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        </span>
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                          {test.tags.slice(0, 2).map((tag) => (
+                            <span
+                              key={tag}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                padding: '0.125rem 0.5rem',
+                                backgroundColor: 'var(--bg-tertiary)',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.75rem',
+                                borderRadius: '0.375rem',
+                                border: '1px solid var(--border-primary)'
+                              }}
+                            >
+                              <Tag size={12} />
+                              {tag}
+                            </span>
+                          ))}
+                          {test.tags.length > 2 && (
+                            <span style={{ 
+                              fontSize: '0.75rem', 
+                              color: 'var(--text-tertiary)' 
+                            }}>
+                              +{test.tags.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <button 
                               onClick={() => handleRunTest(test.id)}
                               style={{ 
-                                padding: '0.25rem', 
-                                color: '#059669', 
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(5, 150, 105, 0.1)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
+                              padding: '0.25rem', 
+                              color: '#059669', 
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(5, 150, 105, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
                               }}
                               title="Testi Çalıştır"
                             >
                               <Play size={16} />
                             </button>
-                            
+                          
                             <button 
                               onClick={() => handleEditTest(test.id)}
                               style={{ 
-                                padding: '0.25rem', 
-                                color: 'var(--text-secondary)', 
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            padding: '0.25rem', 
+                            color: 'var(--text-secondary)', 
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
                               }}
                               title="Testi Düzenle"
                             >
-                              <Edit size={16} />
-                            </button>
-                            
+                            <Edit size={16} />
+                          </button>
+                          
                             <button 
                               onClick={() => handleExportTest(test.id)}
                               style={{ 
-                                padding: '0.25rem', 
+                            padding: '0.25rem', 
                                 color: 'var(--text-secondary)', 
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
                                 e.currentTarget.style.color = 'var(--text-primary)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
                                 e.currentTarget.style.color = 'var(--text-secondary)';
                               }}
                               title="Testi Dışa Aktar"
                             >
                               <Download size={16} />
-                            </button>
-                            
+                          </button>
+                          
                             <button 
                               onClick={() => handleDuplicateTest(test.id)}
                               style={{ 
-                                padding: '0.25rem', 
-                                color: 'var(--text-secondary)', 
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            padding: '0.25rem', 
+                            color: 'var(--text-secondary)', 
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
                               }}
                               title="Testi Kopyala"
                             >
@@ -882,15 +930,15 @@ export default function TestsPage() {
                               title="Testi Sil"
                             >
                               <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
           )}
         </main>
       </div>

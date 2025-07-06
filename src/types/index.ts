@@ -12,6 +12,10 @@ export interface Test {
   // Kaydedilen workflow'lar için ek alanlar
   workflow?: TestStep[]; // Saved workflow'lar için test adımları
   isExecutable?: boolean; // Bu workflow çalıştırılabilir mi?
+  
+  // Yeni seçenekler
+  enableScreenshots?: boolean; // Ekran görüntüsü alma durumu
+  enableRecording?: boolean; // Ekran kaydı alma durumu
 }
 
 export interface TestStep {

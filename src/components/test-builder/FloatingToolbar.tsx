@@ -14,7 +14,9 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
-  GitBranch
+  GitBranch,
+  Camera,
+  Video
 } from 'lucide-react';
 import { TestStep } from '@/types';
 
@@ -51,6 +53,12 @@ interface FloatingToolbarProps {
   onSave?: () => void;
   onRun?: () => void;
   isRunning?: boolean;
+  
+  // Screenshot and Recording options
+  enableScreenshots?: boolean;
+  enableRecording?: boolean;
+  onToggleScreenshots?: () => void;
+  onToggleRecording?: () => void;
 }
 
 export default function FloatingToolbar({
@@ -74,7 +82,11 @@ export default function FloatingToolbar({
   onImport,
   onSave,
   onRun,
-  isRunning = false
+  isRunning = false,
+  enableScreenshots = false,
+  enableRecording = false,
+  onToggleScreenshots,
+  onToggleRecording
 }: FloatingToolbarProps) {
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -237,6 +249,36 @@ export default function FloatingToolbar({
         }}
       >
         <Magnet size={16} />
+      </button>
+      
+      <button 
+        onClick={() => {
+          console.log('FloatingToolbar: Screenshot button clicked');
+          onToggleScreenshots?.();
+        }}
+        className="canvas-control"
+        title={enableScreenshots ? "Ekran Görüntüsü Almayı Kapat" : "Ekran Görüntüsü Almayı Aç"}
+        style={{
+          backgroundColor: enableScreenshots ? '#9333ea20' : 'transparent',
+          color: enableScreenshots ? '#9333ea' : 'var(--text-secondary)'
+        }}
+      >
+        <Camera size={16} />
+      </button>
+      
+      <button 
+        onClick={() => {
+          console.log('FloatingToolbar: Recording button clicked');
+          onToggleRecording?.();
+        }}
+        className="canvas-control"
+        title={enableRecording ? "Ekran Kaydını Kapat" : "Ekran Kaydını Aç"}
+        style={{
+          backgroundColor: enableRecording ? '#dc262620' : 'transparent',
+          color: enableRecording ? '#dc2626' : 'var(--text-secondary)'
+        }}
+      >
+        <Video size={16} />
       </button>
       
       <div style={{
