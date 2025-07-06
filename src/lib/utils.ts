@@ -205,6 +205,7 @@ export const saveWorkflowToStorage = (workflow: {
   id?: string; // Düzenleme için mevcut ID
   enableScreenshots?: boolean;
   enableRecording?: boolean;
+  headlessMode?: boolean;
 }): string => {
   try {
     const savedWorkflows = getSavedWorkflows();
@@ -223,6 +224,7 @@ export const saveWorkflowToStorage = (workflow: {
           workflow: workflow.steps,
           enableScreenshots: workflow.enableScreenshots || false,
           enableRecording: workflow.enableRecording || false,
+          headlessMode: workflow.headlessMode || false,
           updatedAt: new Date()
         };
         
@@ -247,7 +249,8 @@ export const saveWorkflowToStorage = (workflow: {
       workflow: workflow.steps,
       isExecutable: true,
       enableScreenshots: workflow.enableScreenshots || false,
-      enableRecording: workflow.enableRecording || false
+      enableRecording: workflow.enableRecording || false,
+      headlessMode: workflow.headlessMode || false
     };
     
     // Check for duplicate names (mevcut workflow'un kendisi hariç)

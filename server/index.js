@@ -63,6 +63,7 @@ app.post('/api/execute', async (req, res) => {
     console.log('Received options:', options);
     console.log('Screenshot enabled:', options.enableScreenshots);
     console.log('Recording enabled:', options.enableRecording);
+    console.log('Headless mode:', options.headlessMode);
     
     if (!steps || !Array.isArray(steps) || steps.length === 0) {
       return res.status(400).json({ error: 'Invalid or empty steps provided' });
@@ -77,7 +78,8 @@ app.post('/api/execute', async (req, res) => {
       startTime: new Date(),
       options: {
         enableScreenshots: options.enableScreenshots || false,
-        enableRecording: options.enableRecording || false
+        enableRecording: options.enableRecording || false,
+        headlessMode: options.headlessMode || false
       },
       steps: steps.map(step => {
         console.log('Processing step:', JSON.stringify(step, null, 2));
@@ -210,13 +212,12 @@ async function executeTestWorkflow(executionId, execution) {
     // Execute with Playwright
     const testRunner = new TestRunner();
     
-    // Initialize browser with recording options if needed
-    if (execution.options.enableRecording) {
-      await testRunner.initializeBrowser({ 
-        enableRecording: true, 
-        executionId: executionId 
-      });
-    }
+    // Initialize browser with options
+    await testRunner.initializeBrowser({ 
+      enableRecording: execution.options.enableRecording, 
+      executionId: executionId,
+      headless: execution.options.headlessMode
+    });
     
     for (let i = 0; i < execution.steps.length; i++) {
       const step = execution.steps[i];

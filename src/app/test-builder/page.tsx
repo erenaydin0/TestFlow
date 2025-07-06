@@ -122,11 +122,12 @@ export default function TestBuilder() {
   const [loadedWorkflowId, setLoadedWorkflowId] = useState<string | null>(null);
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
+  const [headlessMode, setHeadlessMode] = useState(false);
   
   // Debug: Log initial state
   useEffect(() => {
-    console.log('Initial state - Screenshots:', enableScreenshots, 'Recording:', enableRecording);
-  }, [enableScreenshots, enableRecording]);
+    console.log('Initial state - Screenshots:', enableScreenshots, 'Recording:', enableRecording, 'Headless:', headlessMode);
+  }, [enableScreenshots, enableRecording, headlessMode]);
   const searchParams = useSearchParams();
 
   // Canvas styles
@@ -406,7 +407,8 @@ export default function TestBuilder() {
         suite: data.suite,
         id: loadedWorkflowId || undefined, // Düzenleme modunda mevcut ID'yi kullan
         enableScreenshots,
-        enableRecording
+        enableRecording,
+        headlessMode
       });
       
       setIsSaveDialogOpen(false);
@@ -465,6 +467,7 @@ export default function TestBuilder() {
       console.log('Backend steps:', backendSteps);
       console.log('Screenshot enabled:', enableScreenshots);
       console.log('Recording enabled:', enableRecording);
+      console.log('Headless enabled:', headlessMode);
       
       const response = await fetch('http://localhost:3001/api/execute', {
         method: 'POST',
@@ -477,7 +480,8 @@ export default function TestBuilder() {
           steps: backendSteps,
           options: {
             enableScreenshots,
-            enableRecording
+            enableRecording,
+            headlessMode
           }
         })
       });
@@ -501,7 +505,7 @@ export default function TestBuilder() {
     } finally {
       setIsRunning(false);
     }
-  }, [testSteps, enableScreenshots, enableRecording]);
+  }, [testSteps, enableScreenshots, enableRecording, headlessMode]);
 
   // Load workflow from URL parameter
   useEffect(() => {
@@ -515,6 +519,7 @@ export default function TestBuilder() {
         // Load screenshot and recording settings
         setEnableScreenshots(workflow.enableScreenshots || false);
         setEnableRecording(workflow.enableRecording || false);
+        setHeadlessMode(workflow.headlessMode || false);
         
         // Show success message
         setTimeout(() => {
@@ -585,6 +590,7 @@ export default function TestBuilder() {
             isRunning={isRunning}
             enableScreenshots={enableScreenshots}
             enableRecording={enableRecording}
+            headlessMode={headlessMode}
             onToggleScreenshots={() => {
               console.log('Screenshot toggle clicked, current:', enableScreenshots);
               setEnableScreenshots(!enableScreenshots);
@@ -594,6 +600,11 @@ export default function TestBuilder() {
               console.log('Recording toggle clicked, current:', enableRecording);
               setEnableRecording(!enableRecording);
               console.log('Recording toggle new value:', !enableRecording);
+            }}
+            onToggleHeadless={() => {
+              console.log('Headless toggle clicked, current:', headlessMode);
+              setHeadlessMode(!headlessMode);
+              console.log('Headless toggle new value:', !headlessMode);
             }}
           />
 

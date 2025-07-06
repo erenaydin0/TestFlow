@@ -16,6 +16,7 @@ export interface Test {
   // Yeni seçenekler
   enableScreenshots?: boolean; // Ekran görüntüsü alma durumu
   enableRecording?: boolean; // Ekran kaydı alma durumu
+  headlessMode?: boolean; // Headless mod durumu
 }
 
 export interface TestStep {

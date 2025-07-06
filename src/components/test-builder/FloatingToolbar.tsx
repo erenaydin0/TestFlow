@@ -16,7 +16,9 @@ import {
   XCircle,
   GitBranch,
   Camera,
-  Video
+  Video,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { TestStep } from '@/types';
 
@@ -59,6 +61,10 @@ interface FloatingToolbarProps {
   enableRecording?: boolean;
   onToggleScreenshots?: () => void;
   onToggleRecording?: () => void;
+  
+  // Headless mode option
+  headlessMode?: boolean;
+  onToggleHeadless?: () => void;
 }
 
 export default function FloatingToolbar({
@@ -86,7 +92,9 @@ export default function FloatingToolbar({
   enableScreenshots = false,
   enableRecording = false,
   onToggleScreenshots,
-  onToggleRecording
+  onToggleRecording,
+  headlessMode = false,
+  onToggleHeadless
 }: FloatingToolbarProps) {
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -279,6 +287,21 @@ export default function FloatingToolbar({
         }}
       >
         <Video size={16} />
+      </button>
+      
+      <button 
+        onClick={() => {
+          console.log('FloatingToolbar: Headless button clicked');
+          onToggleHeadless?.();
+        }}
+        className="canvas-control"
+        title={headlessMode ? "Görünür Mod (Browser Açık)" : "Gizli Mod (Headless)"}
+        style={{
+          backgroundColor: headlessMode ? '#059669' : 'transparent',
+          color: headlessMode ? '#ffffff' : 'var(--text-secondary)'
+        }}
+      >
+        <EyeOff size={16} />
       </button>
       
       <div style={{

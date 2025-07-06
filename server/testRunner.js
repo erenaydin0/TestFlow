@@ -22,6 +22,7 @@ class TestRunner {
       executionId = null
     } = options;
 
+    console.log('Launching browser in headless mode:', headless);
     this.browser = await chromium.launch({ 
       headless,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -86,7 +87,10 @@ class TestRunner {
     try {
       // Initialize browser if not already done
       if (!this.browser) {
-        await this.initializeBrowser();
+        await this.initializeBrowser({
+          headless: options.headlessMode || false,
+          enableRecording: options.enableRecording || false
+        });
       }
 
       console.log(`Executing step: ${step.type}`);

@@ -121,7 +121,8 @@ export default function TestsPage() {
           steps: backendSteps,
           options: {
             enableScreenshots: test.enableScreenshots || false,
-            enableRecording: test.enableRecording || false
+            enableRecording: test.enableRecording || false,
+            headlessMode: test.headlessMode || false
           }
         })
       });
@@ -251,7 +252,8 @@ export default function TestsPage() {
             steps: backendSteps,
             options: {
               enableScreenshots: test.enableScreenshots || false,
-              enableRecording: test.enableRecording || false
+              enableRecording: test.enableRecording || false,
+              headlessMode: test.headlessMode || false
             }
           })
         });
