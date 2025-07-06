@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
@@ -18,16 +18,47 @@ import {
   Eye,
   Image,
   Video,
-  RefreshCw
+  RefreshCw,
+  Search,
+  ChevronDown,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  X
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
+
+type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate';
+type SortOrder = 'asc' | 'desc';
+
+interface FilterState {
+  status: string;
+  dateRange: string;
+  workflowName: string;
+  hasScreenshots: boolean | null;
+  hasRecording: boolean | null;
+  headlessMode: boolean | null;
+}
 
 export default function ReportsPage() {
   const [executions, setExecutions] = useState<ExecutionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionResult | null>(null);
+  
+  // Filtering and sorting state
+  const [sortField, setSortField] = useState<SortField>('startTime');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [filters, setFilters] = useState<FilterState>({
+    status: '',
+    dateRange: '',
+    workflowName: '',
+    hasScreenshots: null,
+    hasRecording: null,
+    headlessMode: null
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   // Fetch executions from backend
   const fetchExecutions = async () => {
@@ -52,16 +83,142 @@ export default function ReportsPage() {
     fetchExecutions();
   }, []);
 
-  // Calculate stats
-  const stats = {
-    totalExecutions: executions.length,
-    completedExecutions: executions.filter(e => e.status === 'completed').length,
-    failedExecutions: executions.filter(e => e.status === 'failed').length,
-    avgDuration: executions.length > 0 ? 
-      Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / executions.filter(e => e.duration).length) : 0,
-    successRate: executions.length > 0 ? 
-      Math.round((executions.filter(e => e.status === 'completed').length / executions.length) * 100) : 0
+  // Filter and sort executions
+  const filteredAndSortedExecutions = useMemo(() => {
+    let filtered = executions.filter(execution => {
+      // Status filter
+      if (filters.status && execution.status !== filters.status) {
+        return false;
+      }
+
+      // Date range filter
+      if (filters.dateRange) {
+        const executionDate = new Date(execution.startTime);
+        const now = new Date();
+        const dayInMs = 24 * 60 * 60 * 1000;
+        
+        switch (filters.dateRange) {
+          case 'today':
+            if (executionDate.toDateString() !== now.toDateString()) return false;
+            break;
+          case 'yesterday':
+            const yesterday = new Date(now.getTime() - dayInMs);
+            if (executionDate.toDateString() !== yesterday.toDateString()) return false;
+            break;
+          case 'last7days':
+            if (executionDate.getTime() < now.getTime() - 7 * dayInMs) return false;
+            break;
+          case 'last30days':
+            if (executionDate.getTime() < now.getTime() - 30 * dayInMs) return false;
+            break;
+        }
+      }
+
+      // Workflow name filter
+      if (filters.workflowName && !execution.workflowName.toLowerCase().includes(filters.workflowName.toLowerCase())) {
+        return false;
+      }
+
+      // Screenshots filter
+      if (filters.hasScreenshots !== null && execution.options.enableScreenshots !== filters.hasScreenshots) {
+        return false;
+      }
+
+      // Recording filter
+      if (filters.hasRecording !== null && execution.options.enableRecording !== filters.hasRecording) {
+        return false;
+      }
+
+      // Headless mode filter
+      if (filters.headlessMode !== null && execution.options.headlessMode !== filters.headlessMode) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'startTime':
+          aValue = new Date(a.startTime).getTime();
+          bValue = new Date(b.startTime).getTime();
+          break;
+        case 'duration':
+          aValue = a.duration || 0;
+          bValue = b.duration || 0;
+          break;
+        case 'workflowName':
+          aValue = a.workflowName.toLowerCase();
+          bValue = b.workflowName.toLowerCase();
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case 'successRate':
+          aValue = a.successRate || 0;
+          bValue = b.successRate || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [executions, filters, sortField, sortOrder]);
+
+  // Calculate stats based on filtered results
+  const stats = useMemo(() => {
+    const filtered = filteredAndSortedExecutions;
+    return {
+      totalExecutions: filtered.length,
+      completedExecutions: filtered.filter(e => e.status === 'completed').length,
+      failedExecutions: filtered.filter(e => e.status === 'failed').length,
+      avgDuration: filtered.length > 0 ? 
+        Math.round(filtered.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / filtered.filter(e => e.duration).length) : 0,
+      successRate: filtered.length > 0 ? 
+        Math.round((filtered.filter(e => e.status === 'completed').length / filtered.length) * 100) : 0
+    };
+  }, [filteredAndSortedExecutions]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
   };
+
+  const handleFilterChange = (key: keyof FilterState, value: any) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      status: '',
+      dateRange: '',
+      workflowName: '',
+      hasScreenshots: null,
+      hasRecording: null,
+      headlessMode: null
+    });
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => 
+    value !== '' && value !== null
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -83,6 +240,11 @@ export default function ReportsPage() {
       case 'cancelled': return 'İptal Edildi';
       default: return status;
     }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown size={12} />;
+    return sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
   };
 
   return (
@@ -118,29 +280,272 @@ export default function ReportsPage() {
                 margin: '0.5rem 0 0 0' 
               }}>
                 Çalıştırılan testlerin detaylı sonuçları
+                {hasActiveFilters && (
+                  <span style={{ color: '#2563eb', marginLeft: '0.5rem' }}>
+                    ({filteredAndSortedExecutions.length} / {executions.length} sonuç)
+                  </span>
+                )}
               </p>
             </div>
             
-            <button
-              onClick={fetchExecutions}
-              disabled={loading}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1rem',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
-              }}
-            >
-              <RefreshCw size={16} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-              Yenile
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: showFilters ? '#2563eb' : 'var(--bg-primary)',
+                  color: showFilters ? 'white' : 'var(--text-primary)',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <Filter size={16} />
+                Filtrele
+                {hasActiveFilters && (
+                  <span style={{
+                    backgroundColor: showFilters ? 'rgba(255,255,255,0.2)' : '#ef4444',
+                    color: showFilters ? 'white' : 'white',
+                    borderRadius: '50%',
+                    width: '1rem',
+                    height: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.625rem',
+                    fontWeight: 'bold'
+                  }}>
+                    {Object.values(filters).filter(v => v !== '' && v !== null).length}
+                  </span>
+                )}
+              </button>
+              
+              <button
+                onClick={fetchExecutions}
+                disabled={loading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1
+                }}
+              >
+                <RefreshCw size={16} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+                Yenile
+              </button>
+            </div>
           </div>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="card" style={{ marginBottom: '2rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem'
+              }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Filtreler</h3>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.25rem',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <X size={12} />
+                    Temizle
+                  </button>
+                )}
+              </div>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1rem'
+              }}>
+                {/* Workflow Name Search */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Test Adı
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={16} style={{ 
+                      position: 'absolute', 
+                      left: '0.75rem', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      color: 'var(--text-secondary)' 
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Test adı ara..."
+                      value={filters.workflowName}
+                      onChange={(e) => handleFilterChange('workflowName', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem 0.5rem 2.5rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.5rem',
+                        backgroundColor: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.875rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Durum
+                  </label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.5rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">Tüm Durumlar</option>
+                    <option value="completed">Tamamlandı</option>
+                    <option value="failed">Başarısız</option>
+                    <option value="running">Çalışıyor</option>
+                    <option value="queued">Sırada</option>
+                    <option value="cancelled">İptal Edildi</option>
+                  </select>
+                </div>
+
+                {/* Date Range Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Tarih Aralığı
+                  </label>
+                  <select
+                    value={filters.dateRange}
+                    onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.5rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">Tüm Zamanlar</option>
+                    <option value="today">Bugün</option>
+                    <option value="yesterday">Dün</option>
+                    <option value="last7days">Son 7 Gün</option>
+                    <option value="last30days">Son 30 Gün</option>
+                  </select>
+                </div>
+
+                {/* Screenshots Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Ekran Görüntüsü
+                  </label>
+                  <select
+                    value={filters.hasScreenshots === null ? '' : filters.hasScreenshots.toString()}
+                    onChange={(e) => handleFilterChange('hasScreenshots', e.target.value === '' ? null : e.target.value === 'true')}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.5rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">Tümü</option>
+                    <option value="true">Etkin</option>
+                    <option value="false">Devre Dışı</option>
+                  </select>
+                </div>
+
+                {/* Recording Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Video Kaydı
+                  </label>
+                  <select
+                    value={filters.hasRecording === null ? '' : filters.hasRecording.toString()}
+                    onChange={(e) => handleFilterChange('hasRecording', e.target.value === '' ? null : e.target.value === 'true')}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.5rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">Tümü</option>
+                    <option value="true">Etkin</option>
+                    <option value="false">Devre Dışı</option>
+                  </select>
+                </div>
+
+                {/* Headless Mode Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Headless Mod
+                  </label>
+                  <select
+                    value={filters.headlessMode === null ? '' : filters.headlessMode.toString()}
+                    onChange={(e) => handleFilterChange('headlessMode', e.target.value === '' ? null : e.target.value === 'true')}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.5rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">Tümü</option>
+                    <option value="true">Etkin</option>
+                    <option value="false">Devre Dışı</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Stats Overview */}
           <div style={{ 
@@ -252,10 +657,10 @@ export default function ReportsPage() {
 
           {/* Executions List */}
           <div className="card">
-            <div style={{ 
-              display: 'flex', 
+          <div style={{ 
+            display: 'flex', 
               justifyContent: 'space-between', 
-              alignItems: 'center',
+            alignItems: 'center', 
               marginBottom: '1.5rem',
               paddingBottom: '1rem',
               borderBottom: '1px solid var(--border-primary)'
@@ -290,9 +695,9 @@ export default function ReportsPage() {
               }}>
                 <AlertCircle size={24} />
                 <span style={{ marginLeft: '0.5rem' }}>Hata: {error}</span>
-              </div>
-            ) : executions.length === 0 ? (
-              <div style={{ 
+            </div>
+            ) : filteredAndSortedExecutions.length === 0 ? (
+          <div style={{ 
                 display: 'flex', 
                 justifyContent: 'center', 
                 alignItems: 'center', 
@@ -300,30 +705,97 @@ export default function ReportsPage() {
                 color: 'var(--text-secondary)'
               }}>
                 <FileText size={24} />
-                <span style={{ marginLeft: '0.5rem' }}>Henüz test çalıştırılmamış</span>
+                <span style={{ marginLeft: '0.5rem' }}>
+                  {hasActiveFilters ? 'Filtre kriterlerine uygun sonuç bulunamadı' : 'Henüz test çalıştırılmamış'}
+                </span>
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Test Adı
+                      <th 
+                    style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('workflowName')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Test Adı
+                          {getSortIcon('workflowName')}
+                        </div>
                       </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Durum
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('status')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Durum
+                          {getSortIcon('status')}
+                        </div>
                       </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Başlangıç
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('startTime')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Başlangıç
+                          {getSortIcon('startTime')}
+                        </div>
                       </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Süre
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('duration')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Süre
+                          {getSortIcon('duration')}
+                            </div>
                       </th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                         Adım Sayısı
                       </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Başarı Oranı
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('successRate')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Başarı Oranı
+                          {getSortIcon('successRate')}
+                            </div>
                       </th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                         Özellikler
@@ -334,7 +806,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {executions.map((execution) => (
+                    {filteredAndSortedExecutions.map((execution) => (
                       <tr key={execution.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
                         <td style={{ padding: '0.75rem' }}>
                           <div>
@@ -436,10 +908,10 @@ export default function ReportsPage() {
                 </table>
               </div>
             )}
-          </div>
+                        </div>
         </main>
-      </div>
-
+                      </div>
+                      
       {/* Execution Details Modal */}
       {selectedExecution && (
         <div style={{
@@ -476,17 +948,17 @@ export default function ReportsPage() {
               <button
                 onClick={() => setSelectedExecution(null)}
                 style={{
-                  padding: '0.5rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
+                        padding: '0.5rem', 
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
                   color: 'var(--text-secondary)'
                 }}
               >
                 ✕
-              </button>
-            </div>
-            
+                      </button>
+                    </div>
+                    
             {/* Execution info */}
             <div style={{ marginBottom: '1.5rem' }}>
               <p><strong>ID:</strong> {selectedExecution.id}</p>
@@ -511,15 +983,15 @@ export default function ReportsPage() {
                   <div key={step.stepId} style={{
                     padding: '0.5rem',
                     marginBottom: '0.5rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderRadius: '0.5rem',
+                      backgroundColor: 'var(--bg-secondary)',
+                      borderRadius: '0.5rem',
                     borderLeft: `4px solid ${getStatusColor(step.status)}`
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 500 }}>
                         {index + 1}. {step.type}
                       </span>
-                      <span style={{
+                      <span style={{ 
                         padding: '0.125rem 0.25rem',
                         borderRadius: '0.25rem',
                         fontSize: '0.75rem',
@@ -562,8 +1034,8 @@ export default function ReportsPage() {
                   </div>
                 ))}
               </div>
-            </div>
-
+              </div>
+              
             {/* Screenshots and Video */}
             {(selectedExecution.screenshots.length > 0 || selectedExecution.videoPath) && (
               <div>
@@ -616,7 +1088,7 @@ export default function ReportsPage() {
               </div>
             )}
           </div>
-        </div>
+      </div>
       )}
     </div>
   );
