@@ -77,19 +77,22 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
   };
 
   const handleSave = () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     const tagsArray = tags
       .split(',')
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0);
 
-    onSave({
+    const saveData = {
       name: name.trim(),
       description: description.trim(),
       tags: tagsArray,
       suite: suite.trim()
-    });
+    };
+    onSave(saveData);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -126,7 +126,6 @@ export default function TestBuilder() {
   
   // Debug: Log initial state
   useEffect(() => {
-    console.log('Initial state - Screenshots:', enableScreenshots, 'Recording:', enableRecording, 'Headless:', headlessMode);
   }, [enableScreenshots, enableRecording, headlessMode]);
   const searchParams = useSearchParams();
 
@@ -426,7 +425,7 @@ export default function TestBuilder() {
     } catch (error) {
       alert(`Kaydetme hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
     }
-  }, [testSteps, loadedWorkflowId]);
+  }, [testSteps, loadedWorkflowId, enableScreenshots, enableRecording, headlessMode]);
 
   // Handle run workflow - Updated to use backend API
   const [isRunning, setIsRunning] = useState(false);
@@ -438,10 +437,8 @@ export default function TestBuilder() {
     }
 
     setIsRunning(true);
-    console.log('Test çalıştırılıyor...', { testSteps });
 
     try {
-      console.log('Backend API çağrısı yapılıyor...');
       
       // Convert frontend steps to backend format
       const backendSteps = testSteps.map(step => ({
@@ -462,13 +459,6 @@ export default function TestBuilder() {
           key: step.key
         }
       }));
-      
-      console.log('Frontend steps:', testSteps);
-      console.log('Backend steps:', backendSteps);
-      console.log('Screenshot enabled:', enableScreenshots);
-      console.log('Recording enabled:', enableRecording);
-      console.log('Headless enabled:', headlessMode);
-      
       const response = await fetch('http://localhost:3001/api/execute', {
         method: 'POST',
         headers: {
@@ -486,14 +476,12 @@ export default function TestBuilder() {
         })
       });
 
-      console.log('Backend yanıtı:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Backend yanıt verisi:', data);
       alert(`Test çalıştırılmaya başlandı!\nExecution ID: ${data.executionId}\n\nSonuçları görmek için Tests sayfasını ziyaret edin.`);
       
       // Optional: Navigate to tests page to see results
@@ -592,19 +580,13 @@ export default function TestBuilder() {
             enableRecording={enableRecording}
             headlessMode={headlessMode}
             onToggleScreenshots={() => {
-              console.log('Screenshot toggle clicked, current:', enableScreenshots);
               setEnableScreenshots(!enableScreenshots);
-              console.log('Screenshot toggle new value:', !enableScreenshots);
             }}
             onToggleRecording={() => {
-              console.log('Recording toggle clicked, current:', enableRecording);
               setEnableRecording(!enableRecording);
-              console.log('Recording toggle new value:', !enableRecording);
             }}
             onToggleHeadless={() => {
-              console.log('Headless toggle clicked, current:', headlessMode);
               setHeadlessMode(!headlessMode);
-              console.log('Headless toggle new value:', !headlessMode);
             }}
           />
 

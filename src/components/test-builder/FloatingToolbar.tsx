@@ -261,7 +261,6 @@ export default function FloatingToolbar({
       
       <button 
         onClick={() => {
-          console.log('FloatingToolbar: Screenshot button clicked');
           onToggleScreenshots?.();
         }}
         className="canvas-control"
@@ -276,7 +275,6 @@ export default function FloatingToolbar({
       
       <button 
         onClick={() => {
-          console.log('FloatingToolbar: Recording button clicked');
           onToggleRecording?.();
         }}
         className="canvas-control"
@@ -291,7 +289,6 @@ export default function FloatingToolbar({
       
       <button 
         onClick={() => {
-          console.log('FloatingToolbar: Headless button clicked');
           onToggleHeadless?.();
         }}
         className="canvas-control"
