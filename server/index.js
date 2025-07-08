@@ -218,6 +218,54 @@ app.delete('/api/execution/:id', async (req, res) => {
   }
 });
 
+// Delete execution record
+app.delete('/api/executions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Remove from active executions if exists
+    if (activeExecutions.has(id)) {
+      activeExecutions.delete(id);
+    }
+    
+    // Delete execution file
+    const executionPath = path.join(EXECUTIONS_DIR, `${id}.json`);
+    if (await fs.pathExists(executionPath)) {
+      await fs.remove(executionPath);
+      
+      // Also try to delete associated media files
+      try {
+        // Delete screenshots directory for this execution
+        const screenshotDir = path.join(SCREENSHOTS_DIR, id);
+        if (await fs.pathExists(screenshotDir)) {
+          await fs.remove(screenshotDir);
+        }
+        
+        // Delete video file for this execution
+        const videoPath = path.join(VIDEOS_DIR, `${id}.webm`);
+        if (await fs.pathExists(videoPath)) {
+          await fs.remove(videoPath);
+        }
+      } catch (mediaError) {
+        console.error('Error deleting media files:', mediaError);
+        // Continue even if media deletion fails
+      }
+      
+      broadcast({
+        type: 'execution:deleted',
+        executionId: id
+      });
+      
+      res.json({ message: 'Execution deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Execution not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting execution:', error);
+    res.status(500).json({ error: 'Failed to delete execution' });
+  }
+});
+
 // Serve screenshots and videos
 app.use('/screenshots', express.static(SCREENSHOTS_DIR));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));

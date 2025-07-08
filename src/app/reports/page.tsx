@@ -25,7 +25,8 @@ import {
   ArrowUp,
   ArrowDown,
   X,
-  Tag
+  Tag,
+  Trash2
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
@@ -37,9 +38,6 @@ interface FilterState {
   status: string;
   dateRange: string;
   workflowName: string;
-  hasScreenshots: boolean | null;
-  hasRecording: boolean | null;
-  headlessMode: boolean | null;
   suite: string;
   tags: string;
 }
@@ -57,13 +55,11 @@ export default function ReportsPage() {
     status: '',
     dateRange: '',
     workflowName: '',
-    hasScreenshots: null,
-    hasRecording: null,
-    headlessMode: null,
     suite: '',
     tags: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
 
   // Fetch executions from backend
   const fetchExecutions = async () => {
@@ -124,20 +120,7 @@ export default function ReportsPage() {
         return false;
       }
 
-      // Screenshots filter
-      if (filters.hasScreenshots !== null && execution.options.enableScreenshots !== filters.hasScreenshots) {
-        return false;
-      }
 
-      // Recording filter
-      if (filters.hasRecording !== null && execution.options.enableRecording !== filters.hasRecording) {
-        return false;
-      }
-
-      // Headless mode filter
-      if (filters.headlessMode !== null && execution.options.headlessMode !== filters.headlessMode) {
-        return false;
-      }
 
       // Suite filter
       if (filters.suite && (!execution.suite || !execution.suite.toLowerCase().includes(filters.suite.toLowerCase()))) {
@@ -233,9 +216,6 @@ export default function ReportsPage() {
       status: '',
       dateRange: '',
       workflowName: '',
-      hasScreenshots: null,
-      hasRecording: null,
-      headlessMode: null,
       suite: '',
       tags: ''
     });
@@ -305,6 +285,65 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Selection functions
+  const handleTestSelection = (testId: string, checked: boolean) => {
+    const newSelection = new Set(selectedTests);
+    if (checked) {
+      newSelection.add(testId);
+    } else {
+      newSelection.delete(testId);
+    }
+    setSelectedTests(newSelection);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTests(new Set(filteredAndSortedExecutions.map(e => e.id)));
+    } else {
+      setSelectedTests(new Set());
+    }
+  };
+
+  const downloadSelectedTests = () => {
+    const selectedExecutions = filteredAndSortedExecutions.filter(e => selectedTests.has(e.id));
+    selectedExecutions.forEach(execution => {
+      downloadSingleExecution(execution);
+    });
+    setSelectedTests(new Set());
+  };
+
+  const deleteSelectedTests = async () => {
+    if (selectedTests.size === 0) return;
+    
+    const confirmMessage = `${selectedTests.size} test kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const deletePromises = Array.from(selectedTests).map(async (testId) => {
+        const response = await fetch(`http://localhost:3001/api/executions/${testId}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) {
+          throw new Error(`Test ${testId} silinirken hata oluştu`);
+        }
+        return testId;
+      });
+
+      await Promise.all(deletePromises);
+      
+      // Refresh executions list
+      await fetchExecutions();
+      
+      // Clear selection
+      setSelectedTests(new Set());
+      
+      alert(`${selectedTests.size} test kaydı başarıyla silindi.`);
+    } catch (error) {
+      console.error('Error deleting tests:', error);
+      alert('Testler silinirken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+    }
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
@@ -348,40 +387,6 @@ export default function ReportsPage() {
             
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
-                onClick={() => setShowFilters(!showFilters)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  backgroundColor: showFilters ? '#2563eb' : 'var(--bg-primary)',
-                  color: showFilters ? 'white' : 'var(--text-primary)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <Filter size={16} />
-                Filtrele
-                {hasActiveFilters && (
-                  <span style={{
-                    backgroundColor: showFilters ? 'rgba(255,255,255,0.2)' : '#ef4444',
-                    color: showFilters ? 'white' : 'white',
-                    borderRadius: '50%',
-                    width: '1rem',
-                    height: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.625rem',
-                    fontWeight: 'bold'
-                  }}>
-                    {Object.values(filters).filter(v => v !== '' && v !== null).length}
-                  </span>
-                )}
-              </button>
-              
-              <button
                 onClick={fetchExecutions}
                 disabled={loading}
                 style={{
@@ -403,271 +408,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Filters Panel */}
-          {showFilters && (
-            <div className="card" style={{ marginBottom: '2rem' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem'
-              }}>
-                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Filtreler</h3>
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.25rem 0.5rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.25rem',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    <X size={12} />
-                    Temizle
-                  </button>
-                )}
-              </div>
-              
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1rem'
-              }}>
-                {/* Workflow Name Search */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Test Adı
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Search size={16} style={{ 
-                      position: 'absolute', 
-                      left: '0.75rem', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      color: 'var(--text-secondary)' 
-                    }} />
-                    <input
-                      type="text"
-                      placeholder="Test adı ara..."
-                      value={filters.workflowName}
-                      onChange={(e) => handleFilterChange('workflowName', e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem 0.75rem 0.5rem 2.5rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.5rem',
-                        backgroundColor: 'var(--bg-primary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.875rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
 
-                {/* Status Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Durum
-                  </label>
-                  <select
-                    value={filters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="">Tüm Durumlar</option>
-                    <option value="completed">Tamamlandı</option>
-                    <option value="failed">Başarısız</option>
-                    <option value="running">Çalışıyor</option>
-                    <option value="queued">Sırada</option>
-                    <option value="cancelled">İptal Edildi</option>
-                  </select>
-                </div>
-
-                {/* Date Range Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Tarih Aralığı
-                  </label>
-                  <select
-                    value={filters.dateRange}
-                    onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="">Tüm Zamanlar</option>
-                    <option value="today">Bugün</option>
-                    <option value="yesterday">Dün</option>
-                    <option value="last7days">Son 7 Gün</option>
-                    <option value="last30days">Son 30 Gün</option>
-                  </select>
-                </div>
-
-                {/* Screenshots Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Ekran Görüntüsü
-                  </label>
-                  <select
-                    value={filters.hasScreenshots === null ? '' : filters.hasScreenshots.toString()}
-                    onChange={(e) => handleFilterChange('hasScreenshots', e.target.value === '' ? null : e.target.value === 'true')}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="">Tümü</option>
-                    <option value="true">Etkin</option>
-                    <option value="false">Devre Dışı</option>
-                  </select>
-                </div>
-
-                {/* Recording Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Video Kaydı
-                  </label>
-                  <select
-                    value={filters.hasRecording === null ? '' : filters.hasRecording.toString()}
-                    onChange={(e) => handleFilterChange('hasRecording', e.target.value === '' ? null : e.target.value === 'true')}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="">Tümü</option>
-                    <option value="true">Etkin</option>
-                    <option value="false">Devre Dışı</option>
-                  </select>
-                </div>
-
-                {/* Headless Mode Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Headless Mod
-                  </label>
-                  <select
-                    value={filters.headlessMode === null ? '' : filters.headlessMode.toString()}
-                    onChange={(e) => handleFilterChange('headlessMode', e.target.value === '' ? null : e.target.value === 'true')}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.875rem',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="">Tümü</option>
-                    <option value="true">Etkin</option>
-                    <option value="false">Devre Dışı</option>
-                  </select>
-                </div>
-
-                {/* Suite Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Test Grubu
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Search size={16} style={{ 
-                      position: 'absolute', 
-                      left: '0.75rem', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      color: 'var(--text-secondary)' 
-                    }} />
-                    <input
-                      type="text"
-                      placeholder="Test grubu ara..."
-                      value={filters.suite}
-                      onChange={(e) => handleFilterChange('suite', e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem 0.75rem 0.5rem 2.5rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.5rem',
-                        backgroundColor: 'var(--bg-primary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.875rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Tags Filter */}
-                <div>
-                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                    Etiketler
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Search size={16} style={{ 
-                      position: 'absolute', 
-                      left: '0.75rem', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      color: 'var(--text-secondary)' 
-                    }} />
-                    <input
-                      type="text"
-                      placeholder="Etiket ara..."
-                      value={filters.tags}
-                      onChange={(e) => handleFilterChange('tags', e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem 0.75rem 0.5rem 2.5rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.5rem',
-                        backgroundColor: 'var(--bg-primary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.875rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Stats Overview */}
           <div style={{ 
@@ -787,14 +528,80 @@ export default function ReportsPage() {
               paddingBottom: '1rem',
               borderBottom: '1px solid var(--border-primary)'
             }}>
-              <h2 style={{ 
-                fontSize: '1.25rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)', 
-                margin: 0 
-              }}>
-                Test Geçmişi
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <h2 style={{ 
+                  fontSize: '1.25rem', 
+                  fontWeight: 600, 
+                  color: 'var(--text-primary)', 
+                  margin: 0 
+                }}>
+                  Test Geçmişi
+                </h2>
+                {selectedTests.size > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ 
+                      fontSize: '0.875rem', 
+                      color: 'var(--text-secondary)' 
+                    }}>
+                      {selectedTests.size} test seçili
+                    </span>
+                    <button
+                      onClick={downloadSelectedTests}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.375rem 0.75rem',
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <Download size={12} />
+                      Seçilenleri İndir
+                    </button>
+                    <button
+                      onClick={deleteSelectedTests}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.375rem 0.75rem',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <Trash2 size={12} />
+                      Sil
+                    </button>
+                    <button
+                      onClick={() => setSelectedTests(new Set())}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.375rem 0.75rem',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <X size={12} />
+                      Seçimi Temizle
+                    </button>
+                  </div>
+                )}
+              </div>
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
@@ -825,6 +632,146 @@ export default function ReportsPage() {
                 </button>
               </div>
             </div>
+
+            {/* Compact Filters Panel */}
+            {showFilters && (
+              <div style={{
+                display: 'flex',
+                gap: '0.75rem',
+                alignItems: 'center',
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--border-primary)',
+                flexWrap: 'wrap'
+              }}>
+                {/* Test Name Search */}
+                <div style={{ position: 'relative', minWidth: '150px' }}>
+                  <Search size={14} style={{ 
+                    position: 'absolute', 
+                    left: '0.5rem', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)', 
+                    color: 'var(--text-secondary)' 
+                  }} />
+                  <input
+                    type="text"
+                    placeholder="Test adı..."
+                    value={filters.workflowName}
+                    onChange={(e) => handleFilterChange('workflowName', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.5rem 0.375rem 2rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.75rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                {/* Status Filter */}
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                >
+                  <option value="">Tüm Durumlar</option>
+                  <option value="completed">Tamamlandı</option>
+                  <option value="failed">Başarısız</option>
+                  <option value="running">Çalışıyor</option>
+                  <option value="queued">Sırada</option>
+                </select>
+
+                {/* Date Range Filter */}
+                <select
+                  value={filters.dateRange}
+                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                >
+                  <option value="">Tüm Zamanlar</option>
+                  <option value="today">Bugün</option>
+                  <option value="yesterday">Dün</option>
+                  <option value="last7days">Son 7 Gün</option>
+                  <option value="last30days">Son 30 Gün</option>
+                </select>
+
+                {/* Suite Filter */}
+                <input
+                  type="text"
+                  placeholder="Test grubu..."
+                  value={filters.suite}
+                  onChange={(e) => handleFilterChange('suite', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                />
+
+                {/* Tags Filter */}
+                <input
+                  type="text"
+                  placeholder="Etiket..."
+                  value={filters.tags}
+                  onChange={(e) => handleFilterChange('tags', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                />
+
+                {/* Clear Filters Button */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.375rem 0.5rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.375rem',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <X size={12} />
+                    Temizle
+                  </button>
+                )}
+              </div>
+            )}
 
             {loading ? (
               <div style={{ 
@@ -865,6 +812,14 @@ export default function ReportsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', width: '40px' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedTests.size === filteredAndSortedExecutions.length && filteredAndSortedExecutions.length > 0}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </th>
                       <th 
                     style={{ 
                           padding: '0.75rem', 
@@ -986,6 +941,14 @@ export default function ReportsPage() {
                   <tbody>
                     {filteredAndSortedExecutions.map((execution) => (
                       <tr key={execution.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                        <td style={{ padding: '0.75rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.has(execution.id)}
+                            onChange={(e) => handleTestSelection(execution.id, e.target.checked)}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </td>
                         <td style={{ padding: '0.75rem' }}>
                           <div>
                             <div style={{ 
