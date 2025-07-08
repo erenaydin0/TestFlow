@@ -227,6 +227,8 @@ export default function ReportsPage() {
       case 'running': return '#d97706';
       case 'queued': return '#6b7280';
       case 'cancelled': return '#9ca3af';
+      case 'passed': return '#059669';
+      case 'pending': return '#6b7280';
       default: return '#6b7280';
     }
   };
@@ -238,6 +240,8 @@ export default function ReportsPage() {
       case 'running': return 'Çalışıyor';
       case 'queued': return 'Sırada';
       case 'cancelled': return 'İptal Edildi';
+      case 'passed': return 'Başarılı';
+      case 'pending': return 'Bekliyor';
       default: return status;
     }
   };
@@ -671,7 +675,7 @@ export default function ReportsPage() {
                 color: 'var(--text-primary)', 
                 margin: 0 
               }}>
-                Test Execution Geçmişi
+                Test Geçmişi
               </h2>
             </div>
 
@@ -778,9 +782,7 @@ export default function ReportsPage() {
                           {getSortIcon('duration')}
                             </div>
                       </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Adım Sayısı
-                      </th>
+
                       <th 
                         style={{ 
                           padding: '0.75rem', 
@@ -797,9 +799,7 @@ export default function ReportsPage() {
                           {getSortIcon('successRate')}
                             </div>
                       </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Özellikler
-                      </th>
+
                       <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                         İşlemler
                       </th>
@@ -844,47 +844,12 @@ export default function ReportsPage() {
                           {execution.duration ? formatDuration(execution.duration) : '-'}
                         </td>
                         <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {execution.steps.length}
-                        </td>
-                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {execution.successRate !== undefined ? `${execution.successRate}%` : '-'}
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <div style={{ display: 'flex', gap: '0.25rem' }}>
-                            {execution.options.enableScreenshots && (
-                              <span style={{ 
-                                padding: '0.125rem 0.25rem',
-                                backgroundColor: '#8b5cf620',
-                                color: '#8b5cf6',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.625rem'
-                              }}>
-                                📸
-                              </span>
-                            )}
-                            {execution.options.enableRecording && (
-                              <span style={{ 
-                                padding: '0.125rem 0.25rem',
-                                backgroundColor: '#ef444420',
-                                color: '#ef4444',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.625rem'
-                              }}>
-                                🎥
-                              </span>
-                            )}
-                            {execution.options.headlessMode && (
-                              <span style={{ 
-                                padding: '0.125rem 0.25rem',
-                                backgroundColor: '#22c55e20',
-                                color: '#22c55e',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.625rem'
-                              }}>
-                                👁️
-                              </span>
-                            )}
-                          </div>
+                          {(() => {
+                            const totalSteps = execution.steps.length;
+                            const completedSteps = execution.steps.filter(step => step.status === 'passed').length;
+                            const successRate = execution.successRate !== undefined ? execution.successRate : 0;
+                            return `${completedSteps}/${totalSteps} %${successRate}`;
+                          })()}
                         </td>
                         <td style={{ padding: '0.75rem' }}>
                           <button
