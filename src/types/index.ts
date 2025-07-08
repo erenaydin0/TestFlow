@@ -110,6 +110,8 @@ export interface ExecutionResult {
   videoPath?: string;
   successRate?: number;
   error?: string;
+  suite?: string; // Test grubu
+  tags?: string[]; // Etiketler
 }
 
 export interface ExecutionStepResult {

@@ -24,12 +24,13 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  X
+  X,
+  Tag
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
 
-type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate';
+type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags';
 type SortOrder = 'asc' | 'desc';
 
 interface FilterState {
@@ -39,6 +40,8 @@ interface FilterState {
   hasScreenshots: boolean | null;
   hasRecording: boolean | null;
   headlessMode: boolean | null;
+  suite: string;
+  tags: string;
 }
 
 export default function ReportsPage() {
@@ -56,7 +59,9 @@ export default function ReportsPage() {
     workflowName: '',
     hasScreenshots: null,
     hasRecording: null,
-    headlessMode: null
+    headlessMode: null,
+    suite: '',
+    tags: ''
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -134,6 +139,16 @@ export default function ReportsPage() {
         return false;
       }
 
+      // Suite filter
+      if (filters.suite && (!execution.suite || !execution.suite.toLowerCase().includes(filters.suite.toLowerCase()))) {
+        return false;
+      }
+
+      // Tags filter
+      if (filters.tags && (!execution.tags || !execution.tags.some(tag => tag.toLowerCase().includes(filters.tags.toLowerCase())))) {
+        return false;
+      }
+
       return true;
     });
 
@@ -162,6 +177,14 @@ export default function ReportsPage() {
         case 'successRate':
           aValue = a.successRate || 0;
           bValue = b.successRate || 0;
+          break;
+        case 'suite':
+          aValue = (a.suite || '').toLowerCase();
+          bValue = (b.suite || '').toLowerCase();
+          break;
+        case 'tags':
+          aValue = (a.tags || []).length;
+          bValue = (b.tags || []).length;
           break;
         default:
           return 0;
@@ -212,7 +235,9 @@ export default function ReportsPage() {
       workflowName: '',
       hasScreenshots: null,
       hasRecording: null,
-      headlessMode: null
+      headlessMode: null,
+      suite: '',
+      tags: ''
     });
   };
 
@@ -547,6 +572,70 @@ export default function ReportsPage() {
                     <option value="false">Devre Dışı</option>
                   </select>
                 </div>
+
+                {/* Suite Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Test Grubu
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={16} style={{ 
+                      position: 'absolute', 
+                      left: '0.75rem', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      color: 'var(--text-secondary)' 
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Test grubu ara..."
+                      value={filters.suite}
+                      onChange={(e) => handleFilterChange('suite', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem 0.5rem 2.5rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.5rem',
+                        backgroundColor: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.875rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tags Filter */}
+                <div>
+                  <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
+                    Etiketler
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={16} style={{ 
+                      position: 'absolute', 
+                      left: '0.75rem', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      color: 'var(--text-secondary)' 
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Etiket ara..."
+                      value={filters.tags}
+                      onChange={(e) => handleFilterChange('tags', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem 0.5rem 2.5rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.5rem',
+                        backgroundColor: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.875rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -677,6 +766,35 @@ export default function ReportsPage() {
               }}>
                 Test Geçmişi
               </h2>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem',
+                    backgroundColor: showFilters ? 'var(--bg-tertiary)' : 'transparent',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!showFilters) {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!showFilters) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <Filter size={16} />
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -794,15 +912,46 @@ export default function ReportsPage() {
                         }}
                         onClick={() => handleSort('successRate')}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                           Başarı Oranı
                           {getSortIcon('successRate')}
                             </div>
                       </th>
-
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        İşlemler
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('suite')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Test Grubu
+                          {getSortIcon('suite')}
+                        </div>
                       </th>
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                        onClick={() => handleSort('tags')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          Etiketler
+                          {getSortIcon('tags')}
+                        </div>
+                      </th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          İşlemler
+                        </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -850,6 +999,44 @@ export default function ReportsPage() {
                             const successRate = execution.successRate !== undefined ? execution.successRate : 0;
                             return `${completedSteps}/${totalSteps} %${successRate}`;
                           })()}
+                        </td>
+                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {execution.suite || '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          {execution.tags && execution.tags.length > 0 ? (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                              {execution.tags.slice(0, 2).map((tag, index) => (
+                                <span
+                                  key={index}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    padding: '0.125rem 0.5rem',
+                                    backgroundColor: 'var(--bg-tertiary)',
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '0.75rem',
+                                    borderRadius: '0.375rem',
+                                    border: '1px solid var(--border-primary)'
+                                  }}
+                                >
+                                  <Tag size={12} />
+                                  {tag}
+                                </span>
+                              ))}
+                              {execution.tags.length > 2 && (
+                                <span style={{ 
+                                  fontSize: '0.75rem', 
+                                  color: 'var(--text-tertiary)' 
+                                }}>
+                                  +{execution.tags.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
+                          )}
                         </td>
                         <td style={{ padding: '0.75rem' }}>
                           <button

@@ -119,6 +119,8 @@ export default function TestsPage() {
           workflowId: test.id,
           workflowName: test.name,
           steps: backendSteps,
+          suite: test.suite,
+          tags: test.tags,
           options: {
             enableScreenshots: test.enableScreenshots || false,
             enableRecording: test.enableRecording || false,
@@ -250,6 +252,8 @@ export default function TestsPage() {
             workflowId: test.id,
             workflowName: test.name,
             steps: backendSteps,
+            suite: test.suite,
+            tags: test.tags,
             options: {
               enableScreenshots: test.enableScreenshots || false,
               enableRecording: test.enableRecording || false,

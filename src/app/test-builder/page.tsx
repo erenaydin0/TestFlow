@@ -468,6 +468,8 @@ export default function TestBuilder() {
           workflowId: 'test-builder',
           workflowName: 'Test Builder Workflow',
           steps: backendSteps,
+          suite: 'Test Builder',
+          tags: ['manual', 'builder'],
           options: {
             enableScreenshots,
             enableRecording,

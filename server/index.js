@@ -58,7 +58,7 @@ function broadcast(data) {
 // Execute test workflow
 app.post('/api/execute', async (req, res) => {
   try {
-    const { workflowId, workflowName, steps, options = {} } = req.body;
+    const { workflowId, workflowName, steps, suite, tags, options = {} } = req.body;
     
     console.log('Received options:', options);
     console.log('Screenshot enabled:', options.enableScreenshots);
@@ -76,6 +76,8 @@ app.post('/api/execute', async (req, res) => {
       workflowName: workflowName || 'Manual Test',
       status: 'queued',
       startTime: new Date(),
+      suite: suite || 'Default',
+      tags: tags || [],
       options: {
         enableScreenshots: options.enableScreenshots || false,
         enableRecording: options.enableRecording || false,
