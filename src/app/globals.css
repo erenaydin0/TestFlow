@@ -14,6 +14,14 @@
   --border-secondary: #d1d5db;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  
+  /* Chart colors */
+  --chart-primary: #2563eb;
+  --chart-success: #059669;
+  --chart-error: #dc2626;
+  --chart-warning: #d97706;
+  --chart-info: #0891b2;
+  --chart-purple: #7c3aed;
 }
 
 /* Dark theme */
@@ -28,6 +36,14 @@
   --border-secondary: #4b5563;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  
+  /* Chart colors - same as light theme */
+  --chart-primary: #3b82f6;
+  --chart-success: #10b981;
+  --chart-error: #ef4444;
+  --chart-warning: #f59e0b;
+  --chart-info: #06b6d4;
+  --chart-purple: #8b5cf6;
 }
 
 /* Base styles */
