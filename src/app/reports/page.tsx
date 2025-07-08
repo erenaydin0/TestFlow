@@ -276,6 +276,35 @@ export default function ReportsPage() {
     return sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
   };
 
+  // Simple download function
+  const downloadSingleExecution = (execution: ExecutionResult) => {
+    const data = {
+      id: execution.id,
+      workflowName: execution.workflowName,
+      status: execution.status,
+      startTime: execution.startTime,
+      endTime: execution.endTime,
+      duration: execution.duration,
+      successRate: execution.successRate,
+      suite: execution.suite,
+      tags: execution.tags,
+      steps: execution.steps,
+      screenshots: execution.screenshots,
+      videoPath: execution.videoPath,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${execution.workflowName}_${execution.id.slice(0, 8)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
@@ -1039,20 +1068,37 @@ export default function ReportsPage() {
                           )}
                         </td>
                         <td style={{ padding: '0.75rem' }}>
-                          <button
-                            onClick={() => setSelectedExecution(execution)}
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              backgroundColor: '#2563eb',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '0.25rem',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            <Eye size={12} />
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                              onClick={() => setSelectedExecution(execution)}
+                              style={{
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor: '#2563eb',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '0.25rem',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              <Eye size={12} />
+                            </button>
+                            
+                            <button
+                              onClick={() => downloadSingleExecution(execution)}
+                              style={{
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor: '#059669',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '0.25rem',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              <Download size={12} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
