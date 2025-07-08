@@ -257,32 +257,152 @@ export default function ReportsPage() {
   };
 
   // Simple download function
-  const downloadSingleExecution = (execution: ExecutionResult) => {
-    const data = {
-      id: execution.id,
-      workflowName: execution.workflowName,
-      status: execution.status,
-      startTime: execution.startTime,
-      endTime: execution.endTime,
-      duration: execution.duration,
-      successRate: execution.successRate,
-      suite: execution.suite,
-      tags: execution.tags,
-      steps: execution.steps,
-      screenshots: execution.screenshots,
-      videoPath: execution.videoPath,
-      exportedAt: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${execution.workflowName}_${execution.id.slice(0, 8)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const downloadSingleExecution = async (execution: ExecutionResult) => {
+    try {
+      // Import JSZip dynamically
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      
+      // Add execution data as JSON
+      const executionData = {
+        id: execution.id,
+        workflowName: execution.workflowName,
+        status: execution.status,
+        startTime: execution.startTime,
+        endTime: execution.endTime,
+        duration: execution.duration,
+        successRate: execution.successRate,
+        suite: execution.suite,
+        tags: execution.tags,
+        steps: execution.steps,
+        screenshots: execution.screenshots,
+        videoPath: execution.videoPath,
+        exportedAt: new Date().toISOString()
+      };
+      
+      zip.file('execution_data.json', JSON.stringify(executionData, null, 2));
+      
+      // Create CSV report
+      const csvHeaders = [
+        'Test Adı',
+        'Execution ID',
+        'Durum',
+        'Başlangıç Zamanı',
+        'Bitiş Zamanı',
+        'Toplam Süre (ms)',
+        'Başarı Oranı (%)',
+        'Test Grubu',
+        'Etiketler',
+        'Toplam Adım',
+        'Başarılı Adım',
+        'Başarısız Adım'
+      ];
+      
+      const csvRow = [
+        execution.workflowName,
+        execution.id,
+        execution.status === 'completed' ? 'Tamamlandı' : 
+        execution.status === 'failed' ? 'Başarısız' : 
+        execution.status === 'running' ? 'Çalışıyor' : 
+        execution.status === 'queued' ? 'Sırada' : 'İptal Edildi',
+        execution.startTime ? new Date(execution.startTime).toLocaleString('tr-TR') : '',
+        execution.endTime ? new Date(execution.endTime).toLocaleString('tr-TR') : '',
+        execution.duration || '',
+        execution.successRate || '',
+        execution.suite || '',
+        (execution.tags || []).join(', '),
+        execution.steps.length,
+        execution.steps.filter(s => s.status === 'passed').length,
+        execution.steps.filter(s => s.status === 'failed').length
+      ];
+      
+      const csvContent = [csvHeaders.join(','), csvRow.join(',')].join('\n');
+      zip.file('test_raporu.csv', '\uFEFF' + csvContent); // BOM for Turkish characters
+      
+      // Add step details CSV
+      const stepHeaders = [
+        'Adım No',
+        'Adım Türü',
+        'Durum',
+        'Başlangıç',
+        'Bitiş',
+        'Süre (ms)',
+        'Hata Mesajı',
+        'Ekran Görüntüsü'
+      ];
+      
+      const stepRows = execution.steps.map((step, index) => [
+        index + 1,
+        step.type === 'navigate' ? 'Sayfa Geçişi' :
+        step.type === 'click' ? 'Tıklama' :
+        step.type === 'input' ? 'Metin Girişi' :
+        step.type === 'wait' ? 'Bekleme' :
+        step.type === 'screenshot' ? 'Ekran Görüntüsü' :
+        step.type === 'verify' ? 'Doğrulama' :
+        step.type === 'scroll' ? 'Kaydırma' :
+        step.type === 'hover' ? 'Üzerine Gelme' :
+        step.type === 'key' ? 'Tuş Basma' :
+        step.type === 'refresh' ? 'Sayfa Yenileme' :
+        step.type === 'if' ? 'Koşul Kontrolü' : step.type,
+        step.status === 'passed' ? 'Başarılı' :
+        step.status === 'failed' ? 'Başarısız' :
+        step.status === 'running' ? 'Çalışıyor' : 'Bekliyor',
+        step.startTime ? new Date(step.startTime).toLocaleString('tr-TR') : '',
+        step.endTime ? new Date(step.endTime).toLocaleString('tr-TR') : '',
+        step.duration || '',
+        step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
+        step.screenshot ? 'Var' : 'Yok'
+      ]);
+      
+      const stepCsv = [stepHeaders.join(','), ...stepRows.map(row => row.join(','))].join('\n');
+      zip.file('adim_detaylari.csv', '\uFEFF' + stepCsv);
+      
+      // Add screenshots
+      const screenshotsFolder = zip.folder('screenshots');
+      for (let i = 0; i < execution.steps.length; i++) {
+        const step = execution.steps[i];
+        if (step.screenshot) {
+          try {
+            const response = await fetch(`http://localhost:3001${step.screenshot}`);
+            if (response.ok) {
+              const blob = await response.blob();
+              const filename = `step_${i + 1}_${step.type}_${step.stepId?.slice(0, 8) || 'unknown'}.png`;
+              screenshotsFolder?.file(filename, blob);
+            }
+          } catch (error) {
+            console.error('Error downloading screenshot:', error);
+          }
+        }
+      }
+      
+      // Add video if exists
+      if (execution.videoPath) {
+        try {
+          const response = await fetch(`http://localhost:3001${execution.videoPath}`);
+          if (response.ok) {
+            const blob = await response.blob();
+            zip.file('test_video.webm', blob);
+          }
+        } catch (error) {
+          console.error('Error downloading video:', error);
+        }
+      }
+      
+      // Generate and download ZIP
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${execution.workflowName}_${execution.id.slice(0, 8)}_complete.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error creating download package:', error);
+      alert('İndirme paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+    }
   };
 
   // Selection functions
@@ -304,12 +424,182 @@ export default function ReportsPage() {
     }
   };
 
-  const downloadSelectedTests = () => {
-    const selectedExecutions = filteredAndSortedExecutions.filter(e => selectedTests.has(e.id));
-    selectedExecutions.forEach(execution => {
-      downloadSingleExecution(execution);
-    });
-    setSelectedTests(new Set());
+  const downloadSelectedTests = async () => {
+    if (selectedTests.size === 0) return;
+    
+    try {
+      // Import JSZip dynamically
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      
+      const selectedExecutions = filteredAndSortedExecutions.filter(e => selectedTests.has(e.id));
+      
+      // Add summary report
+      const summaryData = {
+        exportedAt: new Date().toISOString(),
+        exportType: 'bulk',
+        totalExecutions: selectedExecutions.length,
+        completedExecutions: selectedExecutions.filter(e => e.status === 'completed').length,
+        failedExecutions: selectedExecutions.filter(e => e.status === 'failed').length,
+        avgDuration: selectedExecutions.length > 0 ? 
+          Math.round(selectedExecutions.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / selectedExecutions.filter(e => e.duration).length) : 0,
+        successRate: selectedExecutions.length > 0 ? 
+          Math.round((selectedExecutions.filter(e => e.status === 'completed').length / selectedExecutions.length) * 100) : 0,
+        executionsList: selectedExecutions.map(e => ({
+          id: e.id,
+          workflowName: e.workflowName,
+          status: e.status,
+          startTime: e.startTime,
+          endTime: e.endTime,
+          duration: e.duration,
+          successRate: e.successRate,
+          suite: e.suite,
+          tags: e.tags,
+          stepCount: e.steps.length,
+          hasVideo: !!e.videoPath,
+          screenshotCount: e.steps.filter(s => s.screenshot).length
+        }))
+      };
+      
+      zip.file('summary_report.json', JSON.stringify(summaryData, null, 2));
+      
+      // Create bulk summary CSV
+      const bulkSummaryHeaders = [
+        'Test Adı',
+        'Execution ID',
+        'Durum',
+        'Başlangıç Zamanı',
+        'Bitiş Zamanı',
+        'Toplam Süre (ms)',
+        'Başarı Oranı (%)',
+        'Test Grubu',
+        'Etiketler',
+        'Toplam Adım',
+        'Başarılı Adım',
+        'Başarısız Adım',
+        'Video Var mı',
+        'Ekran Görüntüsü Sayısı'
+      ];
+      
+      const bulkSummaryRows = selectedExecutions.map(execution => [
+        execution.workflowName,
+        execution.id,
+        execution.status === 'completed' ? 'Tamamlandı' : 
+        execution.status === 'failed' ? 'Başarısız' : 
+        execution.status === 'running' ? 'Çalışıyor' : 
+        execution.status === 'queued' ? 'Sırada' : 'İptal Edildi',
+        execution.startTime ? new Date(execution.startTime).toLocaleString('tr-TR') : '',
+        execution.endTime ? new Date(execution.endTime).toLocaleString('tr-TR') : '',
+        execution.duration || '',
+        execution.successRate || '',
+        execution.suite || '',
+        (execution.tags || []).join(', '),
+        execution.steps.length,
+        execution.steps.filter(s => s.status === 'passed').length,
+        execution.steps.filter(s => s.status === 'failed').length,
+        execution.videoPath ? 'Evet' : 'Hayır',
+        execution.steps.filter(s => s.screenshot).length
+      ]);
+      
+      const bulkSummaryCSV = [bulkSummaryHeaders.join(','), ...bulkSummaryRows.map(row => row.join(','))].join('\n');
+      zip.file('toplu_rapor_ozeti.csv', '\uFEFF' + bulkSummaryCSV);
+      
+      // Add individual execution data and media
+      for (let execIndex = 0; execIndex < selectedExecutions.length; execIndex++) {
+        const execution = selectedExecutions[execIndex];
+        const executionFolder = zip.folder(`${execIndex + 1}_${execution.workflowName.replace(/[^a-zA-Z0-9]/g, '_')}_${execution.id.slice(0, 8)}`);
+        
+        // Add execution JSON
+        executionFolder?.file('execution_data.json', JSON.stringify(execution, null, 2));
+        
+        // Add step details CSV for this execution
+        const stepHeaders = [
+          'Adım No',
+          'Adım Türü',
+          'Durum',
+          'Başlangıç',
+          'Bitiş',
+          'Süre (ms)',
+          'Hata Mesajı',
+          'Ekran Görüntüsü'
+        ];
+        
+        const stepRows = execution.steps.map((step, index) => [
+          index + 1,
+          step.type === 'navigate' ? 'Sayfa Geçişi' :
+          step.type === 'click' ? 'Tıklama' :
+          step.type === 'input' ? 'Metin Girişi' :
+          step.type === 'wait' ? 'Bekleme' :
+          step.type === 'screenshot' ? 'Ekran Görüntüsü' :
+          step.type === 'verify' ? 'Doğrulama' :
+          step.type === 'scroll' ? 'Kaydırma' :
+          step.type === 'hover' ? 'Üzerine Gelme' :
+          step.type === 'key' ? 'Tuş Basma' :
+          step.type === 'refresh' ? 'Sayfa Yenileme' :
+          step.type === 'if' ? 'Koşul Kontrolü' : step.type,
+          step.status === 'passed' ? 'Başarılı' :
+          step.status === 'failed' ? 'Başarısız' :
+          step.status === 'running' ? 'Çalışıyor' : 'Bekliyor',
+          step.startTime ? new Date(step.startTime).toLocaleString('tr-TR') : '',
+          step.endTime ? new Date(step.endTime).toLocaleString('tr-TR') : '',
+          step.duration || '',
+          step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
+          step.screenshot ? 'Var' : 'Yok'
+        ]);
+        
+        const stepCSV = [stepHeaders.join(','), ...stepRows.map(row => row.join(','))].join('\n');
+        executionFolder?.file('adim_detaylari.csv', '\uFEFF' + stepCSV);
+        
+        // Add screenshots for this execution
+        const screenshotsFolder = executionFolder?.folder('screenshots');
+        for (let i = 0; i < execution.steps.length; i++) {
+          const step = execution.steps[i];
+          if (step.screenshot) {
+            try {
+              const response = await fetch(`http://localhost:3001${step.screenshot}`);
+              if (response.ok) {
+                const blob = await response.blob();
+                const filename = `step_${i + 1}_${step.type}_${step.stepId?.slice(0, 8) || 'unknown'}.png`;
+                screenshotsFolder?.file(filename, blob);
+              }
+            } catch (error) {
+              console.error('Error downloading screenshot:', error);
+            }
+          }
+        }
+        
+        // Add video for this execution
+        if (execution.videoPath) {
+          try {
+            const response = await fetch(`http://localhost:3001${execution.videoPath}`);
+            if (response.ok) {
+              const blob = await response.blob();
+              executionFolder?.file('test_video.webm', blob);
+            }
+          } catch (error) {
+            console.error('Error downloading video:', error);
+          }
+        }
+      }
+      
+      // Generate and download ZIP
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TestFlow_BulkReport_${new Date().toISOString().split('T')[0]}_${selectedTests.size}tests.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Clear selection
+      setSelectedTests(new Set());
+      
+    } catch (error) {
+      console.error('Error creating bulk download package:', error);
+      alert('Toplu indirme paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+    }
   };
 
   const deleteSelectedTests = async () => {
@@ -529,14 +819,14 @@ export default function ReportsPage() {
               borderBottom: '1px solid var(--border-primary)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <h2 style={{ 
-                  fontSize: '1.25rem', 
-                  fontWeight: 600, 
-                  color: 'var(--text-primary)', 
-                  margin: 0 
-                }}>
+              <h2 style={{ 
+                fontSize: '1.25rem', 
+                fontWeight: 600, 
+                color: 'var(--text-primary)', 
+                margin: 0 
+              }}>
                   Test Geçmişi
-                </h2>
+              </h2>
                 {selectedTests.size > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ 
@@ -809,7 +1099,7 @@ export default function ReportsPage() {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
                       <th style={{ padding: '0.75rem', textAlign: 'left', width: '40px' }}>
@@ -821,7 +1111,7 @@ export default function ReportsPage() {
                         />
                       </th>
                       <th 
-                    style={{ 
+                        style={{ 
                           padding: '0.75rem', 
                           textAlign: 'left', 
                           color: 'var(--text-secondary)', 
@@ -896,7 +1186,7 @@ export default function ReportsPage() {
                         }}
                         onClick={() => handleSort('successRate')}
                       >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                           Başarı Oranı
                           {getSortIcon('successRate')}
                             </div>
@@ -933,9 +1223,9 @@ export default function ReportsPage() {
                           {getSortIcon('tags')}
                         </div>
                       </th>
-                        <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          İşlemler
-                        </th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        İşlemler
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1015,17 +1305,17 @@ export default function ReportsPage() {
                                 >
                                   <Tag size={12} />
                                   {tag}
-                                </span>
+                              </span>
                               ))}
                               {execution.tags.length > 2 && (
-                                <span style={{ 
+                              <span style={{ 
                                   fontSize: '0.75rem', 
                                   color: 'var(--text-tertiary)' 
                                 }}>
                                   +{execution.tags.length - 2}
-                                </span>
-                              )}
-                            </div>
+                              </span>
+                            )}
+                          </div>
                           ) : (
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
                           )}
@@ -1097,7 +1387,7 @@ export default function ReportsPage() {
             maxHeight: '80vh',
             overflow: 'auto'
           }}>
-            <div style={{
+                        <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -1106,19 +1396,19 @@ export default function ReportsPage() {
               <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>
                 {selectedExecution.workflowName} - Detaylar
               </h3>
-              <button
-                onClick={() => setSelectedExecution(null)}
-                style={{
-                        padding: '0.5rem', 
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                  color: 'var(--text-secondary)'
-                }}
-              >
-                ✕
-                      </button>
-                    </div>
+                <button
+                  onClick={() => setSelectedExecution(null)}
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)'
+                  }}
+                >
+                  ✕
+                </button>
+            </div>
                     
             {/* Execution info */}
             <div style={{ marginBottom: '1.5rem' }}>
