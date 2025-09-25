@@ -1,0 +1,143 @@
+'use client';
+
+import { useState } from 'react';
+import { Bell, X, CheckCircle, XCircle, AlertCircle, Info, Trash2 } from 'lucide-react';
+import { useNotifications } from '@/lib/notification-context';
+import { formatDistanceToNow } from 'date-fns';
+import { tr } from 'date-fns/locale';
+
+const iconMap = {
+  success: CheckCircle,
+  error: XCircle,
+  warning: AlertCircle,
+  info: Info,
+};
+
+const colorMap = {
+  success: 'text-green-500',
+  error: 'text-red-500',
+  warning: 'text-yellow-500',
+  info: 'text-blue-500',
+};
+
+export function NotificationPanel() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { notifications, removeNotification, clearAllNotifications } = useNotifications();
+
+  const unreadCount = notifications.length;
+
+  return (
+    <div className="relative">
+      {/* Bell Icon */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+      >
+        <Bell className="h-6 w-6" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Notification Panel */}
+      {isOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Panel */}
+          <div className="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Bildirimler
+              </h3>
+              <div className="flex items-center space-x-2">
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Tümünü Temizle
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Notifications List */}
+            <div className="max-h-80 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p>Henüz bildirim yok</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {notifications.map((notification) => {
+                    const Icon = iconMap[notification.type];
+                    return (
+                      <div
+                        key={notification.id}
+                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${colorMap[notification.type]}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {notification.title}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                              {formatDistanceToNow(notification.timestamp, { 
+                                addSuffix: true,
+                                locale: tr
+                              })}
+                            </p>
+                            {(notification.testId || notification.executionId) && (
+                              <div className="flex items-center mt-2 space-x-2">
+                                {notification.testId && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    Test ID: {notification.testId.slice(0, 8)}...
+                                  </span>
+                                )}
+                                {notification.executionId && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    Exec ID: {notification.executionId.slice(0, 8)}...
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => removeNotification(notification.id)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
