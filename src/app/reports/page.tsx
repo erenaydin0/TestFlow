@@ -1099,7 +1099,7 @@ export default function ReportsPage() {
                         </div>
                       </th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        İşlemler
+                        Rapor
                       </th>
                     </tr>
                   </thead>
@@ -1210,43 +1210,28 @@ export default function ReportsPage() {
                           )}
                         </td>
                         <td style={{ padding: '0.75rem' }}>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedExecution(execution);
-                              }}
-                              style={{
-                                padding: '0.25rem 0.5rem',
-                                backgroundColor: '#2563eb',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                fontSize: '0.75rem'
-                              }}
-                            >
-                              <Eye size={12} />
-                            </button>
-                            
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                downloadSingleExecution(execution);
-                              }}
-                              style={{
-                                padding: '0.25rem 0.5rem',
-                                backgroundColor: '#059669',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                fontSize: '0.75rem'
-                              }}
-                            >
-                              <Download size={12} />
-                            </button>
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadSingleExecution(execution);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              padding: '0.5rem 0.75rem',
+                              backgroundColor: '#059669',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              fontWeight: 500
+                            }}
+                          >
+                            <Download size={14} />
+                            İndir
+                          </button>
                         </td>
                       </tr>
                     ))}
