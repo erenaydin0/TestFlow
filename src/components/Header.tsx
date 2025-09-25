@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown } from 'lucide-react';
+import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown, FileText, BarChart3, Tag } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 
 interface HeaderProps {
   title?: string;
@@ -13,9 +15,30 @@ interface HeaderProps {
 export default function Header({ title, subtitle }: HeaderProps) {
   const [isUserPanelOpen, setIsUserPanelOpen] = useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{
+    tests: SearchResult[];
+    reports: SearchResult[];
+    total: number;
+    totalTests: number;
+    totalReports: number;
+  }>({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const userPanelRef = useRef<HTMLDivElement>(null);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
+  const searchPanelRef = useRef<HTMLDivElement>(null);
+
+  // Initialize search query from URL params
+  useEffect(() => {
+    const query = searchParams.get('search');
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   // Panel dışına tıklandığında kapat
   useEffect(() => {
@@ -26,21 +49,62 @@ export default function Header({ title, subtitle }: HeaderProps) {
       if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target as Node)) {
         setIsNotificationPanelOpen(false);
       }
+      if (searchPanelRef.current && !searchPanelRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
     }
 
-    if (isUserPanelOpen || isNotificationPanelOpen) {
+    if (isUserPanelOpen || isNotificationPanelOpen || showSearchResults) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isUserPanelOpen, isNotificationPanelOpen]);
+  }, [isUserPanelOpen, isNotificationPanelOpen, showSearchResults]);
 
   const themeOptions = [
     { id: 'light', label: 'Açık', icon: Sun },
     { id: 'dark', label: 'Koyu', icon: Moon },
   ];
+
+  // Handle search input changes
+  const handleSearchChange = async (query: string) => {
+    setSearchQuery(query);
+    
+    if (query.trim().length >= 2) {
+      setIsSearching(true);
+      setShowSearchResults(true);
+      
+      try {
+        const results = await performGlobalSearch(query.trim());
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
+      } finally {
+        setIsSearching(false);
+      }
+      } else {
+        setShowSearchResults(false);
+        setSearchResults({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
+      }
+  };
+
+  // Handle search result click
+  const handleResultClick = (result: SearchResult) => {
+    setShowSearchResults(false);
+    router.push(result.url);
+  };
+
+  // Handle Enter key press for search
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      setShowSearchResults(false);
+      // Navigate to reports page with search
+      router.push(`/reports?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header style={{ 
@@ -107,7 +171,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
         {/* Actions Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Search */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative' }} ref={searchPanelRef}>
             <Search style={{ 
               position: 'absolute', 
               left: '0.75rem', 
@@ -119,7 +183,15 @@ export default function Header({ title, subtitle }: HeaderProps) {
             }} />
             <input
               type="text"
-              placeholder="Test ara..."
+              placeholder="Testler ve raporlarda ara..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
+              onFocus={() => {
+                if (searchQuery.trim().length >= 2) {
+                  setShowSearchResults(true);
+                }
+              }}
               style={{
                 paddingLeft: '2.5rem',
                 paddingRight: '1rem',
@@ -128,21 +200,239 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 border: '1px solid var(--border-primary)',
                 borderRadius: '0.5rem',
                 outline: 'none',
-                width: '16rem',
+                width: '20rem',
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
                 transition: 'all 0.2s ease'
               }}
-              onFocus={(e) => {
+              onFocusCapture={(e) => {
                 e.target.style.borderColor = '#2563eb';
                 e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
               }}
-              onBlur={(e) => {
+              onBlurCapture={(e) => {
+                setTimeout(() => {
                 e.target.style.borderColor = 'var(--border-primary)';
                 e.target.style.boxShadow = 'none';
+                }, 200);
               }}
             />
+
+            {/* Search Results Dropdown */}
+            {showSearchResults && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 0.5rem)',
+                left: 0,
+                right: 0,
+                backgroundColor: 'var(--bg-primary)',
+                border: '1px solid var(--border-primary)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                zIndex: 100,
+                maxHeight: '28rem',
+                overflowY: 'auto'
+              }}>
+                {isSearching ? (
+                  <div style={{
+                    padding: '1rem',
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Aranıyor...
+                  </div>
+                ) : searchResults.total === 0 ? (
+                  <div style={{
+                    padding: '1rem',
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    "{searchQuery}" için sonuç bulunamadı
+                  </div>
+                ) : (
+                  <>
+                    {/* Tests Section */}
+                    {searchResults.tests.length > 0 && (
+                      <div>
+                        <div style={{
+                          padding: '0.75rem 1rem',
+                          borderBottom: '1px solid var(--border-primary)',
+                          backgroundColor: 'var(--bg-tertiary)',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          <FileText size={16} />
+                          Testler ({searchResults.tests.length})
+                        </div>
+                        {searchResults.tests.map((result) => (
+                          <div
+                            key={result.id}
+                            onClick={() => handleResultClick(result)}
+                            style={{
+                              padding: '0.75rem 1rem',
+                              borderBottom: '1px solid var(--border-primary)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <div style={{
+                              fontWeight: 500,
+                              color: 'var(--text-primary)',
+                              marginBottom: '0.25rem',
+                              fontSize: '0.875rem'
+                            }}>
+                              {result.title}
+                            </div>
+                            <div style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--text-secondary)',
+                              marginBottom: '0.25rem'
+                            }}>
+                              {result.description}
+                            </div>
+                            {result.matchedIn && result.matchedIn.length > 0 && (
+                              <div style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--text-tertiary)'
+                              }}>
+                                Eşleşen: {result.matchedIn.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {searchResults.totalTests > searchResults.tests.length && (
+                          <div 
+                            onClick={() => {
+                              setShowSearchResults(false);
+                              router.push(`/tests?search=${encodeURIComponent(searchQuery.trim())}`);
+                            }}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              textAlign: 'center',
+                              color: '#2563eb',
+                              fontSize: '0.75rem',
+                              borderTop: '1px solid var(--border-primary)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                              e.currentTarget.style.color = '#1d4ed8';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = '#2563eb';
+                            }}
+                          >
+                            +{searchResults.totalTests - searchResults.tests.length} test daha → Testler sayfasında gör
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Reports Section */}
+                    {searchResults.reports.length > 0 && (
+                      <div>
+                        <div style={{
+                          padding: '0.75rem 1rem',
+                          borderBottom: '1px solid var(--border-primary)',
+                          backgroundColor: 'var(--bg-tertiary)',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          <BarChart3 size={16} />
+                          Raporlar ({searchResults.reports.length})
+                        </div>
+                        {searchResults.reports.map((result) => (
+                          <div
+                            key={result.id}
+                            onClick={() => handleResultClick(result)}
+                            style={{
+                              padding: '0.75rem 1rem',
+                              borderBottom: '1px solid var(--border-primary)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <div style={{
+                              fontWeight: 500,
+                              color: 'var(--text-primary)',
+                              marginBottom: '0.25rem',
+                              fontSize: '0.875rem'
+                            }}>
+                              {result.title}
+                            </div>
+                            <div style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--text-secondary)',
+                              marginBottom: '0.25rem'
+                            }}>
+                              {result.description}
+                            </div>
+                            {result.matchedIn && result.matchedIn.length > 0 && (
+                              <div style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--text-tertiary)'
+                              }}>
+                                Eşleşen: {result.matchedIn.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {searchResults.totalReports > searchResults.reports.length && (
+                          <div 
+                            onClick={() => {
+                              setShowSearchResults(false);
+                              router.push(`/reports?search=${encodeURIComponent(searchQuery.trim())}`);
+                            }}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              textAlign: 'center',
+                              color: '#2563eb',
+                              fontSize: '0.75rem',
+                              borderTop: '1px solid var(--border-primary)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                              e.currentTarget.style.color = '#1d4ed8';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = '#2563eb';
+                            }}
+                          >
+                            +{searchResults.totalReports - searchResults.reports.length} rapor daha → Raporlar sayfasında gör
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Notifications */}
