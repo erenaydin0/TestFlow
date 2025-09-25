@@ -30,9 +30,19 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
-export function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date | string | null | undefined): string {
+  if (!date) {
+    return 'Bilinmiyor';
+  }
+
+  const parsedDate = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(parsedDate.getTime())) {
+    return 'Geçersiz tarih';
+  }
+
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
+  const diffInMs = now.getTime() - parsedDate.getTime();
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
   const diffInHours = Math.floor(diffInMinutes / 60);
   const diffInDays = Math.floor(diffInHours / 24);
@@ -46,7 +56,7 @@ export function formatRelativeTime(date: Date): string {
   } else if (diffInDays < 7) {
     return `${diffInDays} gün önce`;
   } else {
-    return formatDate(date);
+    return formatDate(parsedDate);
   }
 }
 
