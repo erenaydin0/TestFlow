@@ -396,6 +396,54 @@ export default function ReportsPage() {
     
     return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
   };
+
+  // Create consolidated steps CSV for multiple executions
+  const createBulkStepsCSVReport = (executions: ExecutionResult[]) => {
+    const csvHeaders = [
+      'Test Adı',
+      'Execution ID',
+      'Adım No',
+      'Adım ID',
+      'Adım Türü',
+      'Durum',
+      'Başlangıç Zamanı',
+      'Bitiş Zamanı',
+      'Süre (ms)',
+      'URL',
+      'Selector',
+      'Girilen Değer',
+      'Beklenen Değer',
+      'Hata Mesajı',
+      'Ekran Görüntüsü Var'
+    ];
+    
+    const csvRows: any[] = [];
+    
+    executions.forEach(execution => {
+      execution.steps.forEach((step, index) => {
+        csvRows.push([
+          execution.workflowName,
+          execution.id,
+          index + 1,
+          step.stepId || '',
+          getStepTypeText(step.type),
+          getStatusText(step.status),
+          step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
+          step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
+          step.duration || '',
+          step.config?.url || '',
+          step.config?.selector || '',
+          step.config?.value || step.config?.text || '',
+          step.config?.expectedValue || '',
+          step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
+          step.screenshot ? 'Evet' : 'Hayır'
+        ]);
+      });
+    });
+    
+    return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+  };
+
   const getStepTypeText = (type: string) => {
     switch (type) {
       case 'navigate': return 'Sayfa Geçişi';
@@ -508,10 +556,18 @@ export default function ReportsPage() {
       const csvContent = createTestCSVReport(selectedExecutions);
       zip.file('toplu_test_raporu.csv', '\uFEFF' + csvContent);
       
+      // Create consolidated steps CSV
+      const allStepsCSV = createBulkStepsCSVReport(selectedExecutions);
+      zip.file('tum_adim_detaylari.csv', '\uFEFF' + allStepsCSV);
+      
       // Add screenshots and videos for each execution
       for (let execIndex = 0; execIndex < selectedExecutions.length; execIndex++) {
         const execution = selectedExecutions[execIndex];
         const executionFolder = zip.folder(`${execIndex + 1}_${execution.workflowName.replace(/[^a-zA-Z0-9]/g, '_')}_${execution.id.slice(0, 8)}`);
+        
+        // Add individual execution reports
+        const stepsCSV = createStepsCSVReport(execution);
+        executionFolder?.file('adim_detaylari.csv', '\uFEFF' + stepsCSV);
         
         // Add screenshots for this execution
         const screenshotsFolder = executionFolder?.folder('screenshots');
