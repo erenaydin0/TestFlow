@@ -25,6 +25,7 @@ import {
 import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow } from '@/lib/utils';
 import { Test } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
+import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
@@ -36,6 +37,8 @@ export default function TestsPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useTestNotifications();
 
   // Load saved workflows
   useEffect(() => {
@@ -98,7 +101,7 @@ export default function TestsPage() {
   const handleRunTest = async (testId: string) => {
     const test = tests.find(t => t.id === testId);
     if (!test || !test.workflow || test.workflow.length === 0) {
-      alert('Test workflow\'u bulunamadı veya boş.');
+      notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test workflow\'u bulunamadı veya boş.');
       return;
     }
 
@@ -147,11 +150,11 @@ export default function TestsPage() {
       }
 
       const data = await response.json();
-      alert(`"${test.name}" testi çalıştırılmaya başlandı!\nExecution ID: ${data.executionId}\n\nTest ${test.workflow.length} adımdan oluşuyor.`);
+      notifyTestStart(test.name, data.executionId);
       
     } catch (error) {
       console.error('Test execution error:', error);
-      alert(`Test çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}\n\nBackend server'ın çalıştığından emin olun.`);
+      notifyTestFailure(test.name, testId, error instanceof Error ? error.message : 'Bilinmeyen hata');
     }
   };
 
@@ -164,15 +167,17 @@ export default function TestsPage() {
   // Handle duplicate test
   const handleDuplicateTest = async (testId: string) => {
     try {
+      const test = tests.find(t => t.id === testId);
       const duplicatedId = duplicateWorkflow(testId);
-      if (duplicatedId) {
+      if (duplicatedId && test) {
         // Reload tests
         const updatedTests = getSavedWorkflows();
         setTests(updatedTests);
-        alert('Test başarıyla kopyalandı!');
+        notifyTestDuplicated(test.name, duplicatedId);
       }
     } catch (error) {
-      alert('Test kopyalanırken hata oluştu.');
+      const test = tests.find(t => t.id === testId);
+      notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test kopyalanırken hata oluştu.');
     }
   };
 
@@ -190,10 +195,10 @@ export default function TestsPage() {
             newSelection.delete(testId);
             return newSelection;
           });
-          alert('Test başarıyla silindi!');
+          notifyTestDeleted(test.name, testId);
         }
       } catch (error) {
-        alert('Test silinirken hata oluştu.');
+        notifyTestFailure(test.name, testId, 'Test silinirken hata oluştu.');
       }
     }
   };
@@ -372,7 +377,7 @@ export default function TestsPage() {
     const updatedTests = getSavedWorkflows();
     setTests(updatedTests);
     setIsImportDialogOpen(false);
-    alert(`${importedCount} workflow başarıyla import edildi!`);
+    notifyTestImported(`${importedCount} workflow`, '');
   };
 
   if (loading) {
