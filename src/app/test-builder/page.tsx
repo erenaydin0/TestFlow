@@ -27,6 +27,7 @@ import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
 import SaveDialog from '@/components/test-builder/SaveDialog';
+import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestBuilder() {
   const {
@@ -42,6 +43,8 @@ export default function TestBuilder() {
     autoArrangeSteps,
     generateId
   } = useTestSteps();
+  
+  const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart } = useTestNotifications();
 
   const {
     selectedSteps,
@@ -337,7 +340,7 @@ export default function TestBuilder() {
       // Validate imported workflow
       const validation = validateWorkflow(steps);
       if (!validation.isValid) {
-        alert(`Workflow doğrulama hatası:\n${validation.errors.join('\n')}`);
+        notifyTestFailure(`${name} - Doğrulama Hatası`, '', validation.errors.join(', '));
         return;
       }
 
@@ -373,17 +376,17 @@ export default function TestBuilder() {
       setTestSteps(updatedSteps);
       saveToHistory(updatedSteps);
 
-      alert(`Workflow başarıyla içe aktarıldı: ${name}\n${newSteps.length} adım eklendi.`);
+      notifyTestImported(`${name} (${newSteps.length} adım)`, '');
     } catch (error) {
       console.error('Import error:', error);
-      alert(`Workflow içe aktarılırken bir hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+      notifyTestFailure('Workflow İçe Aktarma', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
     }
   }, [testSteps, setTestSteps, saveToHistory, generateId]);
 
   // Handle save workflow - Updated to show save dialog
   const handleSave = useCallback(() => {
     if (testSteps.length === 0) {
-      alert('Kaydedilecek test adımı bulunamadı.');
+      notifyTestFailure('Test Kaydetme', '', 'Kaydedilecek test adımı bulunamadı.');
       return;
     }
     
@@ -413,9 +416,9 @@ export default function TestBuilder() {
       setIsSaveDialogOpen(false);
       
       if (loadedWorkflowId) {
-        alert(`Workflow başarıyla güncellendi: "${data.name}"`);
+        notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
       } else {
-        alert(`Workflow başarıyla kaydedildi: "${data.name}"`);
+        notifyTestSaved(data.name, workflowId);
         setLoadedWorkflowId(workflowId); // Yeni kaydedilen workflow'u track et
       }
       
@@ -423,7 +426,7 @@ export default function TestBuilder() {
       // setTestSteps([]);
       // clearSelection();
     } catch (error) {
-      alert(`Kaydetme hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+      notifyTestFailure('Test Kaydetme', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
     }
   }, [testSteps, loadedWorkflowId, enableScreenshots, enableRecording, headlessMode]);
 
@@ -432,7 +435,7 @@ export default function TestBuilder() {
   
   const handleRun = useCallback(async () => {
     if (testSteps.length === 0) {
-      alert('Çalıştırılacak test adımı bulunamadı.');
+      notifyTestFailure('Test Builder', '', 'Çalıştırılacak test adımı bulunamadı.');
       return;
     }
 
@@ -484,14 +487,14 @@ export default function TestBuilder() {
       }
 
       const data = await response.json();
-      alert(`Test çalıştırılmaya başlandı!\nExecution ID: ${data.executionId}\n\nSonuçları görmek için Tests sayfasını ziyaret edin.`);
+      notifyTestStart('Test Builder Workflow', data.executionId);
       
       // Optional: Navigate to tests page to see results
       // router.push('/tests');
       
     } catch (error) {
       console.error('Test execution error:', error);
-      alert(`Test çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}\n\nBackend server'ın çalıştığından emin olun.`);
+      notifyTestFailure('Test Builder Workflow', 'failed', error instanceof Error ? error.message : 'Bilinmeyen hata');
     } finally {
       setIsRunning(false);
     }
