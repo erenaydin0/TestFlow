@@ -27,6 +27,7 @@ import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, 
 import { Test } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import MultiSelect from '@/components/MultiSelect';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestsPage() {
@@ -34,8 +35,9 @@ export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
-  const [suiteFilter, setSuiteFilter] = useState<string>('');
+  const [suiteFilter, setSuiteFilter] = useState<string[]>([]);
   const [searchFilter, setSearchFilter] = useState<string>('');
+  const [tagsFilter, setTagsFilter] = useState<string[]>([]);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [highlightedTestId, setHighlightedTestId] = useState<string | null>(null);
@@ -97,18 +99,21 @@ export default function TestsPage() {
     }
   }, [searchParams, tests]);
 
-  // Filter tests based on search and suite
+  // Filter tests based on search, suite and tags
   const filteredTests = tests.filter(test => {
     const matchesSearch = !searchFilter || 
       test.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
       test.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
       test.tags.some(tag => tag.toLowerCase().includes(searchFilter.toLowerCase()));
-    const matchesSuite = !suiteFilter || test.suite === suiteFilter;
-    return matchesSearch && matchesSuite;
+    const matchesSuite = suiteFilter.length === 0 || suiteFilter.includes(test.suite);
+    const matchesTags = tagsFilter.length === 0 || 
+      tagsFilter.some(filterTag => test.tags.includes(filterTag));
+    return matchesSearch && matchesSuite && matchesTags;
   });
 
-  // Get unique suites for filter dropdown
+  // Get unique suites and tags for filter dropdowns
   const uniqueSuites = Array.from(new Set(tests.map(test => test.suite)));
+  const uniqueTags = Array.from(new Set(tests.flatMap(test => test.tags)));
 
   // Handle test selection
   const handleTestSelection = (testId: string, checked: boolean) => {
@@ -515,31 +520,30 @@ export default function TestsPage() {
                 </div>
 
                 {/* Suite Filter */}
-                <select
-                  value={suiteFilter}
-                  onChange={(e) => setSuiteFilter(e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '100px'
-                  }}
-                >
-                  <option value="">Tüm Test Grupları</option>
-                  {uniqueSuites.map(suite => (
-                    <option key={suite} value={suite}>{suite}</option>
-                  ))}
-                </select>
+                <MultiSelect
+                  options={uniqueSuites}
+                  selectedValues={suiteFilter}
+                  onChange={setSuiteFilter}
+                  placeholder="Tüm Test Grupları"
+                  className="min-w-[120px]"
+                />
+
+                {/* Tags Filter */}
+                <MultiSelect
+                  options={uniqueTags}
+                  selectedValues={tagsFilter}
+                  onChange={setTagsFilter}
+                  placeholder="Tüm Etiketler"
+                  className="min-w-[120px]"
+                />
 
                 {/* Clear Filters Button */}
-                {(searchFilter || suiteFilter) && (
+                {(searchFilter || suiteFilter.length > 0 || tagsFilter.length > 0) && (
                   <button
                     onClick={() => {
                       setSearchFilter('');
-                      setSuiteFilter('');
+                      setSuiteFilter([]);
+                      setTagsFilter([]);
                     }}
                     style={{
                       display: 'flex',
