@@ -212,17 +212,18 @@ class TestRunner {
   async executeClick(config) {
     console.log('executeClick called with config:', JSON.stringify(config, null, 2));
     
-    const selector = config.selector || config.target || '';
-    if (!selector) {
+    const rawSelector = config.selector || config.target || '';
+    if (!rawSelector) {
       console.error('No selector found in config:', config);
       throw new Error('Click action requires a selector');
     }
     
-    console.log(`Clicking element: ${selector}`);
+    const selector = this.normalizeSelector(rawSelector);
+    console.log(`Clicking element: ${rawSelector} -> normalized: ${selector}`);
     
     try {
       // Check if element exists first
-      const elementExists = await this.elementExists(selector);
+      const elementExists = await this.elementExists(rawSelector);
       console.log(`Element exists: ${elementExists}`);
       
       if (!elementExists) {
@@ -230,7 +231,7 @@ class TestRunner {
         const allElements = await this.page.$$('*');
         console.log(`Total elements on page: ${allElements.length}`);
         
-        throw new Error(`Element not found: ${selector}`);
+        throw new Error(`Element not found: ${rawSelector}`);
       }
       
       // Wait for element to be visible and clickable
@@ -259,23 +260,24 @@ class TestRunner {
   async executeType(config) {
     console.log('executeType called with config:', JSON.stringify(config, null, 2));
     
-    const selector = config.selector || config.target || '';
+    const rawSelector = config.selector || config.target || '';
     const text = config.text || config.value || '';
     
-    if (!selector) {
+    if (!rawSelector) {
       console.error('No selector found in config:', config);
       throw new Error('Type action requires a selector');
     }
     
-    console.log(`Typing into element: ${selector}, text: "${text}"`);
+    const selector = this.normalizeSelector(rawSelector);
+    console.log(`Typing into element: ${rawSelector} -> normalized: ${selector}, text: "${text}"`);
     
     try {
       // Check if element exists first
-      const elementExists = await this.elementExists(selector);
+      const elementExists = await this.elementExists(rawSelector);
       console.log(`Element exists: ${elementExists}`);
       
       if (!elementExists) {
-        throw new Error(`Element not found: ${selector}`);
+        throw new Error(`Element not found: ${rawSelector}`);
       }
       
       // Wait for element to be visible
@@ -322,15 +324,16 @@ class TestRunner {
   }
 
   async executeVerify(config) {
-    const selector = config.selector || config.target || '';
+    const rawSelector = config.selector || config.target || '';
     const expectedValue = config.expectedValue || config.text || '';
     const verificationType = config.verificationType || 'text';
     
-    if (!selector) {
+    if (!rawSelector) {
       throw new Error('Verify action requires a selector');
     }
 
-    console.log(`Verifying element: ${selector} (${verificationType})`);
+    const selector = this.normalizeSelector(rawSelector);
+    console.log(`Verifying element: ${rawSelector} -> normalized: ${selector} (${verificationType})`);
 
     const locator = this.page.locator(selector);
 
@@ -395,12 +398,13 @@ class TestRunner {
   }
 
   async executeHover(config) {
-    const selector = config.selector || config.target || '';
-    if (!selector) {
+    const rawSelector = config.selector || config.target || '';
+    if (!rawSelector) {
       throw new Error('Hover action requires a selector');
     }
     
-    console.log(`Hovering over element: ${selector}`);
+    const selector = this.normalizeSelector(rawSelector);
+    console.log(`Hovering over element: ${rawSelector} -> normalized: ${selector}`);
     
     // Wait for element to be visible
     await this.page.waitForSelector(selector, { state: 'visible' });
@@ -423,12 +427,13 @@ class TestRunner {
   }
 
   async executeIf(config) {
-    const condition = config.condition || config.selector || '';
-    if (!condition) {
+    const rawCondition = config.condition || config.selector || '';
+    if (!rawCondition) {
       throw new Error('If action requires a condition selector');
     }
     
-    console.log(`Checking condition: ${condition}`);
+    const condition = this.normalizeSelector(rawCondition);
+    console.log(`Checking condition: ${rawCondition} -> normalized: ${condition}`);
     
     try {
       // Check if element exists and is visible
@@ -459,10 +464,52 @@ class TestRunner {
     return null;
   }
 
+  // Normalize selector to support different types (CSS, XPath, ID, Class)
+  normalizeSelector(selector) {
+    if (!selector) return selector;
+    
+    // If already an XPath selector in Playwright format, return as is
+    if (selector.startsWith('xpath=')) {
+      return selector;
+    }
+    
+    // If it's an XPath expression (starts with // or /html), add xpath= prefix
+    if (selector.startsWith('//') || selector.startsWith('/html') || selector.startsWith('//*')) {
+      return `xpath=${selector}`;
+    }
+    
+    // Convert ID selector (#id) to proper format
+    if (selector.startsWith('#')) {
+      return selector; // CSS ID selector works fine
+    }
+    
+    // Convert class selector (.class) to proper format  
+    if (selector.startsWith('.')) {
+      return selector; // CSS class selector works fine
+    }
+    
+    // CSS attribute selectors and complex selectors
+    if (selector.includes('[') || selector.includes(' ') || selector.includes('>') || 
+        selector.includes(':') || selector.includes(',')) {
+      return selector; // Keep CSS selector as is
+    }
+    
+    // If it's a plain string without special characters, try as ID first
+    if (!selector.includes('.') && !selector.includes('#') && !selector.includes('//') && 
+        !selector.includes('[') && selector.length > 0) {
+      // Could be a plain ID, try as ID first
+      return `#${selector}`;
+    }
+    
+    // Return as is for other selectors
+    return selector;
+  }
+
   // Utility method to check if element exists
   async elementExists(selector) {
     try {
-      const element = await this.page.$(selector);
+      const normalizedSelector = this.normalizeSelector(selector);
+      const element = await this.page.$(normalizedSelector);
       return element !== null;
     } catch (error) {
       return false;
@@ -470,15 +517,16 @@ class TestRunner {
   }
 
   // Utility method to wait for element with custom timeout
-  async waitForElement(selector, timeout = 5000) {
+  async waitForElement(rawSelector, timeout = 5000) {
     try {
+      const selector = this.normalizeSelector(rawSelector);
       await this.page.waitForSelector(selector, { 
         state: 'visible', 
         timeout 
       });
       return true;
     } catch (error) {
-      console.error(`Element not found: ${selector}`);
+      console.error(`Element not found: ${rawSelector}`);
       return false;
     }
   }

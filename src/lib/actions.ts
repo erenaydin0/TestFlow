@@ -82,9 +82,9 @@ const baseActions: ActionType[] = [
         key: 'selector',
         label: 'Seçici (Selector)',
         type: 'text',
-        placeholder: '#button, .class, [data-testid=\'submit\']',
+        placeholder: '#button, .class, //button[text()=\'Submit\'], [data-testid=\'submit\']',
         required: true,
-        description: 'Tıklanacak elementin CSS seçicisi'
+        description: 'CSS seçici, XPath veya ID kullanarak tıklanacak element'
       }
     ]
   },
@@ -100,9 +100,9 @@ const baseActions: ActionType[] = [
         key: 'selector',
         label: 'Seçici (Selector)',
         type: 'text',
-        placeholder: '#input, .form-field, [name=\'username\']',
+        placeholder: '#input, .form-field, //input[@name=\'username\'], [name=\'username\']',
         required: true,
-        description: 'Metin girilecek input alanının CSS seçicisi'
+        description: 'CSS seçici, XPath veya ID kullanarak metin girilecek input alanı'
       },
       {
         key: 'value',
@@ -157,9 +157,9 @@ const baseActions: ActionType[] = [
         key: 'condition',
         label: 'Koşul',
         type: 'text',
-        placeholder: '#element, .exists, [data-visible=\'true\']',
+        placeholder: '#element, .exists, //div[@class=\'visible\'], [data-visible=\'true\']',
         required: true,
-        description: 'Kontrol edilecek koşulun CSS seçicisi'
+        description: 'CSS seçici, XPath veya ID kullanarak kontrol edilecek koşul'
       }
     ]
   }
@@ -179,9 +179,9 @@ const extendedActions: ActionType[] = [
         key: 'selector',
         label: 'Seçici (Selector)',
         type: 'text',
-        placeholder: '#element, .class, [data-testid=\'result\']',
+        placeholder: '#element, .class, //div[@data-testid=\'result\'], [data-testid=\'result\']',
         required: true,
-        description: 'Doğrulanacak elementin CSS seçicisi'
+        description: 'CSS seçici, XPath veya ID kullanarak doğrulanacak element'
       },
       {
         key: 'expectedValue',
@@ -204,8 +204,8 @@ const extendedActions: ActionType[] = [
         key: 'selector',
         label: 'Seçici (Selector)',
         type: 'text',
-        placeholder: '#element, .container (boş bırakılırsa sayfa kaydırılır)',
-        description: 'Kaydırılacak elementin CSS seçicisi'
+        placeholder: '#element, .container, //div[@class=\'scroll\'] (boş bırakılırsa sayfa kaydırılır)',
+        description: 'CSS seçici, XPath veya ID kullanarak kaydırılacak element'
       },
       {
         key: 'direction',
@@ -245,9 +245,9 @@ const extendedActions: ActionType[] = [
         key: 'selector',
         label: 'Seçici (Selector)',
         type: 'text',
-        placeholder: '#element, .hover-target',
+        placeholder: '#element, .hover-target, //button[@title=\'Hover me\']',
         required: true,
-        description: 'Üzerine gelinecek elementin CSS seçicisi'
+        description: 'CSS seçici, XPath veya ID kullanarak üzerine gelinecek element'
       }
     ]
   },
@@ -282,8 +282,8 @@ const extendedActions: ActionType[] = [
         key: 'selector',
         label: 'Seçici (Selector)',
         type: 'text',
-        placeholder: '#element, .input-field (boş bırakılırsa genel tuş basımı)',
-        description: 'Tuş basımının yapılacağı elementin CSS seçicisi'
+        placeholder: '#element, .input-field, //input[@type=\'text\'] (boş bırakılırsa genel tuş basımı)',
+        description: 'CSS seçici, XPath veya ID kullanarak tuş basımının yapılacağı element'
       }
     ]
   }
