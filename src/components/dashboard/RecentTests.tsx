@@ -1,8 +1,10 @@
+import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/StatusBadge';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 
 interface RecentTest {
   id: number;
+  executionId?: string;
   name: string;
   status: 'passed' | 'failed' | 'running';
   duration: number;
@@ -15,6 +17,14 @@ interface RecentTestsProps {
 }
 
 export default function RecentTests({ data }: RecentTestsProps) {
+  const router = useRouter();
+
+  const handleTestClick = (test: RecentTest) => {
+    if (test.executionId) {
+      router.push(`/reports?executionId=${test.executionId}`);
+    }
+  };
+
   return (
     <div className="card">
       <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
@@ -24,11 +34,12 @@ export default function RecentTests({ data }: RecentTestsProps) {
         {data.map((test) => (
           <div 
             key={test.id} 
-            className="flex items-center justify-between p-3 rounded-lg border"
+            className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-opacity-80 transition-all duration-200"
             style={{ 
               backgroundColor: 'var(--bg-secondary)', 
               borderColor: 'var(--border-primary)' 
             }}
+            onClick={() => handleTestClick(test)}
           >
             <div className="flex items-center gap-3">
               <StatusBadge status={test.status} />

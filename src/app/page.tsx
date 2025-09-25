@@ -98,6 +98,7 @@ export default function Dashboard() {
       .slice(0, 5)
       .map((execution, index) => ({
         id: index,
+        executionId: execution.id,
         name: execution.workflowName,
         status: execution.status === 'completed' ? 'passed' as const : 
                 execution.status === 'failed' ? 'failed' as const : 'running' as const,

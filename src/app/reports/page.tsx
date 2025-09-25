@@ -99,6 +99,17 @@ export default function ReportsPage() {
     }
   }, [searchParams]);
 
+  // Handle execution ID parameter to open details modal
+  useEffect(() => {
+    const executionId = searchParams.get('executionId');
+    if (executionId && executions.length > 0) {
+      const execution = executions.find(e => e.id === executionId);
+      if (execution) {
+        setSelectedExecution(execution);
+      }
+    }
+  }, [searchParams, executions]);
+
   // Filter and sort executions
   const filteredAndSortedExecutions = useMemo(() => {
     let filtered = executions.filter(execution => {
