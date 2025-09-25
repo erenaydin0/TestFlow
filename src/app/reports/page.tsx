@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
+import StatsCards from '@/components/StatsCards';
 import { 
   Download, 
   Filter,
@@ -58,7 +59,6 @@ export default function ReportsPage() {
     suite: '',
     tags: ''
   });
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
 
   // Fetch executions from backend
@@ -701,112 +701,7 @@ export default function ReportsPage() {
 
 
           {/* Stats Overview */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(5, 1fr)', 
-            gap: '1.5rem', 
-            marginBottom: '2rem' 
-          }}>
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Toplam Test
-                  </p>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>
-                    {stats.totalExecutions}
-                  </p>
-                </div>
-                <div style={{ 
-                  padding: '0.75rem', 
-                  backgroundColor: '#eff6ff', 
-                  borderRadius: '0.5rem' 
-                }}>
-                  <BarChart3 size={20} color="#2563eb" />
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Başarılı
-                  </p>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-                    {stats.completedExecutions}
-                  </p>
-                </div>
-                <div style={{ 
-                  padding: '0.75rem', 
-                  backgroundColor: '#f0fdf4', 
-                  borderRadius: '0.5rem' 
-                }}>
-                  <TrendingUp size={20} color="#059669" />
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Başarısız
-                  </p>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#dc2626', margin: 0 }}>
-                    {stats.failedExecutions}
-                  </p>
-                </div>
-                <div style={{ 
-                  padding: '0.75rem', 
-                  backgroundColor: '#fef2f2', 
-                  borderRadius: '0.5rem' 
-                }}>
-                  <TrendingDown size={20} color="#dc2626" />
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Ortalama Süre
-                  </p>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>
-                    {formatDuration(stats.avgDuration)}
-                  </p>
-                </div>
-                <div style={{ 
-                  padding: '0.75rem', 
-                  backgroundColor: '#fef3c7', 
-                  borderRadius: '0.5rem' 
-                }}>
-                  <Clock size={20} color="#d97706" />
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-                    Başarı Oranı
-                  </p>
-                  <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#059669', margin: 0 }}>
-                    {stats.successRate}%
-                  </p>
-                </div>
-                <div style={{ 
-                  padding: '0.75rem', 
-                  backgroundColor: '#f0fdf4', 
-                  borderRadius: '0.5rem' 
-                }}>
-                  <TrendingUp size={20} color="#059669" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <StatsCards stats={stats} loading={loading} />
 
           {/* Executions List */}
           <div className="card">
@@ -818,15 +713,139 @@ export default function ReportsPage() {
               paddingBottom: '1rem',
               borderBottom: '1px solid var(--border-primary)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <h2 style={{ 
-                fontSize: '1.25rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)', 
-                margin: 0 
+              <div style={{ 
+                display: 'flex', 
+                gap: '0.75rem',
+                alignItems: 'center',
+                flexWrap: 'wrap'
               }}>
-                  Test Geçmişi
-              </h2>
+                {/* Test Name Search */}
+                <div style={{ position: 'relative', minWidth: '150px' }}>
+                  <Search size={14} style={{ 
+                    position: 'absolute', 
+                    left: '0.5rem', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)', 
+                    color: 'var(--text-secondary)' 
+                  }} />
+                  <input
+                    type="text"
+                    placeholder="Test adı..."
+                    value={filters.workflowName}
+                    onChange={(e) => handleFilterChange('workflowName', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.5rem 0.375rem 2rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.75rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                {/* Status Filter */}
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                >
+                  <option value="">Tüm Durumlar</option>
+                  <option value="completed">Tamamlandı</option>
+                  <option value="failed">Başarısız</option>
+                  <option value="running">Çalışıyor</option>
+                  <option value="queued">Sırada</option>
+                </select>
+
+                {/* Date Range Filter */}
+                <select
+                  value={filters.dateRange}
+                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                >
+                  <option value="">Tüm Zamanlar</option>
+                  <option value="today">Bugün</option>
+                  <option value="yesterday">Dün</option>
+                  <option value="last7days">Son 7 Gün</option>
+                  <option value="last30days">Son 30 Gün</option>
+                </select>
+
+                {/* Suite Filter */}
+                <input
+                  type="text"
+                  placeholder="Test grubu..."
+                  value={filters.suite}
+                  onChange={(e) => handleFilterChange('suite', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                />
+
+                {/* Tags Filter */}
+                <input
+                  type="text"
+                  placeholder="Etiket..."
+                  value={filters.tags}
+                  onChange={(e) => handleFilterChange('tags', e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                />
+
+                {/* Clear Filters Button */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.375rem 0.5rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.375rem',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <X size={12} />
+                    Temizle
+                  </button>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {selectedTests.size > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ 
@@ -892,39 +911,10 @@ export default function ReportsPage() {
                   </div>
                 )}
               </div>
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem',
-                    backgroundColor: showFilters ? 'var(--bg-tertiary)' : 'transparent',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    color: 'var(--text-secondary)',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!showFilters) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!showFilters) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                  }}
-                >
-                  <Filter size={16} />
-                </button>
-              </div>
             </div>
 
-            {/* Compact Filters Panel */}
-            {showFilters && (
+            {/* Keep old filters section hidden */}
+            {false && (
               <div style={{
                 display: 'flex',
                 gap: '0.75rem',
