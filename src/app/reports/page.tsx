@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { useSidebar } from '@/lib/sidebar-context';
 import StatusBadge from '@/components/StatusBadge';
 import StatsCards from '@/components/StatsCards';
 import { 
@@ -45,6 +46,7 @@ interface FilterState {
 }
 
 export default function ReportsPage() {
+  const { isCollapsed } = useSidebar();
   const [executions, setExecutions] = useState<ExecutionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -537,7 +539,8 @@ export default function ReportsPage() {
       
       <div style={{ 
         flex: 1, 
-        marginLeft: '16rem',
+        marginLeft: isCollapsed ? '4rem' : '16rem',
+        transition: 'margin-left 0.3s ease',
         paddingTop: '4rem'
       }}>
         <Header />

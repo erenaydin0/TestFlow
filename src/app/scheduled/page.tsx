@@ -2,6 +2,7 @@
 
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { useSidebar } from '@/lib/sidebar-context';
 import StatusBadge from '@/components/StatusBadge';
 import { 
   Play, 
@@ -107,14 +108,17 @@ function getScheduleDescription(schedule: string): string {
 }
 
 export default function ScheduledPage() {
+  const { isCollapsed } = useSidebar();
+  
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
       
       <div style={{ 
         flex: 1, 
-        marginLeft: '16rem',
-        paddingTop: '4rem' // Header height
+        marginLeft: isCollapsed ? '4rem' : '16rem',
+        paddingTop: '4rem', // Header height
+        transition: 'margin-left 0.3s ease'
       }}>
         <Header />
         <main style={{ padding: '1.5rem' }}>

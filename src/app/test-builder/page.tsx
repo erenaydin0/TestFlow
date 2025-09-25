@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useSearchParams } from 'next/navigation';
+import { useSidebar } from '@/lib/sidebar-context';
 
 import { TestStep } from '@/types';
 import FloatingToolbar from '@/components/test-builder/FloatingToolbar';
@@ -30,6 +31,7 @@ import SaveDialog from '@/components/test-builder/SaveDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestBuilder() {
+  const { isCollapsed } = useSidebar();
   const {
     testSteps,
     setTestSteps,
@@ -528,7 +530,12 @@ export default function TestBuilder() {
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
       
-      <div style={{ flex: 1, marginLeft: '16rem', paddingTop: '4rem' }}>
+      <div style={{ 
+        flex: 1, 
+        marginLeft: isCollapsed ? '4rem' : '16rem', 
+        paddingTop: '4rem',
+        transition: 'margin-left 0.3s ease'
+      }}>
         <Header />
         
         <div style={{ 

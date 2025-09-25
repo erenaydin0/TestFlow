@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/lib/theme-context';
 import { NotificationProvider } from '@/lib/notification-context';
+import { SidebarProvider } from '@/lib/sidebar-context';
 import { ToastContainer } from '@/components/notifications/ToastContainer';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -22,8 +23,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <NotificationProvider>
-            {children}
-            <ToastContainer />
+            <SidebarProvider>
+              {children}
+              <ToastContainer />
+            </SidebarProvider>
           </NotificationProvider>
         </ThemeProvider>
       </body>

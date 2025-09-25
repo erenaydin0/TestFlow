@@ -10,11 +10,13 @@ import {
   RecentTests 
 } from '@/components/dashboard';
 import { ExecutionResult } from '@/types';
+import { useSidebar } from '@/lib/sidebar-context';
 
 export default function Dashboard() {
   const [executions, setExecutions] = useState<ExecutionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isCollapsed } = useSidebar();
 
   // Fetch executions from backend
   const fetchExecutions = async () => {
@@ -115,7 +117,13 @@ export default function Dashboard() {
     <div className="flex min-h-screen" style={{ backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar />
       
-      <div className="flex-1 ml-64 pt-16">
+      <div 
+        className="flex-1 pt-16" 
+        style={{ 
+          marginLeft: isCollapsed ? '4rem' : '16rem',
+          transition: 'margin-left 0.3s ease'
+        }}
+      >
         <Header />
         
         <main className="p-6">

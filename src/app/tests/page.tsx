@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { useSidebar } from '@/lib/sidebar-context';
 import { 
   Play, 
   Pause, 
@@ -28,6 +29,7 @@ import ImportDialog from '@/components/test-builder/ImportDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestsPage() {
+  const { isCollapsed } = useSidebar();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
@@ -407,7 +409,8 @@ export default function TestsPage() {
       
       <div style={{ 
         flex: 1, 
-        marginLeft: '16rem',
+        marginLeft: isCollapsed ? '4rem' : '16rem',
+        transition: 'margin-left 0.3s ease',
         paddingTop: '4rem'
       }}>
         <Header />
