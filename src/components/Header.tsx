@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown, FileText, BarChart3, Tag } from 'lucide-react';
+import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown, FileText, BarChart3, Tag, X } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,6 +9,7 @@ import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 import { ConnectionStatus } from '@/components/notifications/ConnectionStatus';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import StatusBadge, { getStatusText } from '@/components/StatusBadge';
 
 interface HeaderProps {
   title?: string;
@@ -90,6 +91,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
         setShowSearchResults(false);
         setSearchResults({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
       }
+  };
+
+  // Handle clear search
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setSearchResults({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
   };
 
   // Handle search result click
@@ -195,7 +203,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
               }}
               style={{
                 paddingLeft: '2.5rem',
-                paddingRight: '1rem',
+                paddingRight: searchQuery ? '2.5rem' : '1rem',
                 paddingTop: '0.5rem',
                 paddingBottom: '0.5rem',
                 border: '1px solid var(--border-primary)',
@@ -218,6 +226,34 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 }, 200);
               }}
             />
+            {searchQuery && (
+              <button
+                onClick={handleClearSearch}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  borderRadius: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <X size={14} color="var(--text-tertiary)" />
+              </button>
+            )}
 
             {/* Search Results Dropdown */}
             {showSearchResults && (
@@ -297,9 +333,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
                             <div style={{
                               fontSize: '0.75rem',
                               color: 'var(--text-secondary)',
-                              marginBottom: '0.25rem'
+                              marginBottom: '0.25rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
                             }}>
-                              {result.description}
+                              {result.status && <StatusBadge status={result.status} size="sm" />}
+                              <span>{result.description}</span>
                             </div>
                             {result.matchedIn && result.matchedIn.length > 0 && (
                               <div style={{
@@ -386,9 +426,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
                             <div style={{
                               fontSize: '0.75rem',
                               color: 'var(--text-secondary)',
-                              marginBottom: '0.25rem'
+                              marginBottom: '0.25rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
                             }}>
-                              {result.description}
+                              {result.status && <StatusBadge status={result.status} size="sm" />}
+                              <span>{result.description}</span>
                             </div>
                             {result.matchedIn && result.matchedIn.length > 0 && (
                               <div style={{

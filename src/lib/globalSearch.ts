@@ -119,7 +119,7 @@ export const searchInReports = async (query: string): Promise<SearchResult[]> =>
         results.push({
           id: execution.id,
           title: execution.workflowName,
-          description: `${execution.status} • ${new Date(execution.startTime).toLocaleDateString('tr-TR')}`,
+          description: new Date(execution.startTime).toLocaleDateString('tr-TR'),
           type: 'report',
           url: `/reports?search=${encodeURIComponent(query)}`,
           status: execution.status,
