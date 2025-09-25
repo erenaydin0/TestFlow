@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
@@ -48,6 +49,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionResult | null>(null);
+  const searchParams = useSearchParams();
   
   // Filtering and sorting state
   const [sortField, setSortField] = useState<SortField>('startTime');
@@ -83,6 +85,17 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchExecutions();
   }, []);
+
+  // Handle URL search parameter
+  useEffect(() => {
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      setFilters(prev => ({
+        ...prev,
+        workflowName: searchQuery
+      }));
+    }
+  }, [searchParams]);
 
   // Filter and sort executions
   const filteredAndSortedExecutions = useMemo(() => {
