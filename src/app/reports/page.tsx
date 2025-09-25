@@ -1105,13 +1105,36 @@ export default function ReportsPage() {
                   </thead>
                   <tbody>
                     {filteredAndSortedExecutions.map((execution) => (
-                      <tr key={execution.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                      <tr 
+                        key={execution.id} 
+                        style={{ 
+                          borderBottom: '1px solid var(--border-primary)',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                        onClick={(e) => {
+                          // Checkbox ve butonlara tıklanınca modal açılmasın
+                          if (e.target instanceof HTMLInputElement || 
+                              e.target instanceof HTMLButtonElement ||
+                              (e.target as HTMLElement).closest('button')) {
+                            return;
+                          }
+                          setSelectedExecution(execution);
+                        }}
+                      >
                         <td style={{ padding: '0.75rem' }}>
                           <input
                             type="checkbox"
                             checked={selectedTests.has(execution.id)}
                             onChange={(e) => handleTestSelection(execution.id, e.target.checked)}
                             style={{ cursor: 'pointer' }}
+                            onClick={(e) => e.stopPropagation()}
                           />
                         </td>
                         <td style={{ padding: '0.75rem' }}>
@@ -1189,7 +1212,10 @@ export default function ReportsPage() {
                         <td style={{ padding: '0.75rem' }}>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button
-                              onClick={() => setSelectedExecution(execution)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedExecution(execution);
+                              }}
                               style={{
                                 padding: '0.25rem 0.5rem',
                                 backgroundColor: '#2563eb',
@@ -1204,7 +1230,10 @@ export default function ReportsPage() {
                             </button>
                             
                             <button
-                              onClick={() => downloadSingleExecution(execution)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadSingleExecution(execution);
+                              }}
                               style={{
                                 padding: '0.25rem 0.5rem',
                                 backgroundColor: '#059669',
