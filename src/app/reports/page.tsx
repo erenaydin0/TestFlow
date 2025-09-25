@@ -117,6 +117,23 @@ export default function ReportsPage() {
     }
   }, [searchParams, executions]);
 
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && selectedExecution) {
+        setSelectedExecution(null);
+      }
+    };
+
+    if (selectedExecution) {
+      document.addEventListener('keydown', handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [selectedExecution]);
+
   // Filter and sort executions
   const filteredAndSortedExecutions = useMemo(() => {
     let filtered = executions.filter(execution => {
@@ -695,28 +712,6 @@ export default function ReportsPage() {
                   </span>
                 )}
               </p>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={fetchExecutions}
-                disabled={loading}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.6 : 1
-                }}
-              >
-                <RefreshCw size={16} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-                Yenile
-              </button>
             </div>
           </div>
 
@@ -1351,19 +1346,23 @@ export default function ReportsPage() {
                       
       {/* Execution Details Modal */}
       {selectedExecution && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setSelectedExecution(null)}
+        >
+          <div 
+            style={{
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-primary)',
             borderRadius: '1rem',
@@ -1372,16 +1371,102 @@ export default function ReportsPage() {
             maxWidth: '1000px',
             maxHeight: '90vh',
             overflow: 'auto'
-          }}>
-                        <div style={{
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
+                        {/* Header */}
+            <div style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem'
+              alignItems: 'flex-start',
+              marginBottom: '1.5rem'
             }}>
-              <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>
-                {selectedExecution.workflowName} - Detaylar
-              </h3>
+              <div style={{ flex: 1 }}>
+                {/* Test Adı, StatusBadge, Başarı Oranı */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginBottom: '0.75rem'
+                }}>
+                  <h3 style={{ 
+                    margin: 0, 
+                    color: 'var(--text-primary)',
+                    fontSize: '1.25rem',
+                    fontWeight: 600
+                  }}>
+                    {selectedExecution.workflowName}
+                  </h3>
+                  <StatusBadge status={selectedExecution.status} size="md" />
+                  {selectedExecution.successRate !== undefined && (
+                    <span style={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: selectedExecution.successRate >= 80 ? '#059669' : selectedExecution.successRate >= 50 ? '#f59e0b' : '#dc2626'
+                    }}>
+                      {selectedExecution.successRate}%
+                    </span>
+                  )}
+                </div>
+                
+                {/* ID */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <span style={{ 
+                    fontSize: '0.875rem', 
+                    color: 'var(--text-secondary)',
+                    fontFamily: 'monospace'
+                  }}>
+                    ID: {selectedExecution.id}
+                  </span>
+                </div>
+                
+                {/* Başlangıç, Bitiş, Süre */}
+                <div style={{
+                  display: 'flex',
+                  gap: '2rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  <div>
+                    <strong>Başlangıç:</strong> {new Date(selectedExecution.startTime).toLocaleString('tr-TR')}
+                  </div>
+                  {selectedExecution.endTime && (
+                    <div>
+                      <strong>Bitiş:</strong> {new Date(selectedExecution.endTime).toLocaleString('tr-TR')}
+                    </div>
+                  )}
+                  {selectedExecution.duration && (
+                    <div>
+                      <strong>Süre:</strong> {formatDuration(selectedExecution.duration)}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => downloadSingleExecution(selectedExecution)}
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    borderRadius: '0.375rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                    e.currentTarget.style.color = '#059669';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                  title="Raporu İndir"
+                >
+                  <Download size={18} />
+                </button>
                 <button
                   onClick={() => setSelectedExecution(null)}
                   style={{
@@ -1389,30 +1474,24 @@ export default function ReportsPage() {
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    color: 'var(--text-secondary)'
+                    color: 'var(--text-secondary)',
+                    fontSize: '1.25rem',
+                    borderRadius: '0.375rem',
+                    transition: 'all 0.2s ease'
                   }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                    e.currentTarget.style.color = '#dc2626';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
+                  title="Kapat"
                 >
                   ✕
                 </button>
-            </div>
-                    
-            {/* Execution info */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <p><strong>ID:</strong> {selectedExecution.id}</p>
-              <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <strong>Durum:</strong> 
-                <StatusBadge status={selectedExecution.status} size="md" />
-              </p>
-              <p><strong>Başlangıç:</strong> {new Date(selectedExecution.startTime).toLocaleString('tr-TR')}</p>
-              {selectedExecution.endTime && (
-                <p><strong>Bitiş:</strong> {new Date(selectedExecution.endTime).toLocaleString('tr-TR')}</p>
-              )}
-              {selectedExecution.duration && (
-                <p><strong>Süre:</strong> {formatDuration(selectedExecution.duration)}</p>
-              )}
-              {selectedExecution.successRate !== undefined && (
-                <p><strong>Başarı Oranı:</strong> {selectedExecution.successRate}%</p>
-              )}
+              </div>
             </div>
 
             {/* Steps */}
