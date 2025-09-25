@@ -358,6 +358,44 @@ export default function ReportsPage() {
     return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
   };
 
+  // Create detailed steps CSV report
+  const createStepsCSVReport = (execution: ExecutionResult) => {
+    const csvHeaders = [
+      'Adım No',
+      'Adım ID',
+      'Adım Türü',
+      'Durum',
+      'Başlangıç Zamanı',
+      'Bitiş Zamanı',
+      'Süre (ms)',
+      'URL',
+      'Selector',
+      'Girilen Değer',
+      'Beklenen Değer',
+      'Hata Mesajı',
+      'Ekran Görüntüsü Var'
+    ];
+    
+    const csvRows = execution.steps.map((step, index) => {
+      return [
+        index + 1,
+        step.stepId || '',
+        getStepTypeText(step.type),
+        getStatusText(step.status),
+        step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
+        step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
+        step.duration || '',
+        step.config?.url || '',
+        step.config?.selector || '',
+        step.config?.value || step.config?.text || '',
+        step.config?.expectedValue || '',
+        step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
+        step.screenshot ? 'Evet' : 'Hayır'
+      ];
+    });
+    
+    return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+  };
   const getStepTypeText = (type: string) => {
     switch (type) {
       case 'navigate': return 'Sayfa Geçişi';
@@ -382,9 +420,12 @@ export default function ReportsPage() {
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
       
-      // Create CSV report
+      // Create CSV reports
       const csvContent = createTestCSVReport([execution]);
+      const stepsCSVContent = createStepsCSVReport(execution);
+      
       zip.file('test_raporu.csv', '\uFEFF' + csvContent);
+      zip.file('adim_detaylari.csv', '\uFEFF' + stepsCSVContent);
       
       // Add screenshots
       const screenshotsFolder = zip.folder('screenshots');
@@ -1271,9 +1312,9 @@ export default function ReportsPage() {
             border: '1px solid var(--border-primary)',
             borderRadius: '1rem',
             padding: '1.5rem',
-            width: '90%',
-            maxWidth: '800px',
-            maxHeight: '80vh',
+            width: '95%',
+            maxWidth: '1000px',
+            maxHeight: '90vh',
             overflow: 'auto'
           }}>
                         <div style={{
@@ -1321,31 +1362,127 @@ export default function ReportsPage() {
             {/* Steps */}
             <div style={{ marginBottom: '1.5rem' }}>
               <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Test Adımları</h4>
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
                 {selectedExecution.steps.map((step, index) => (
                   <div key={step.stepId} style={{
-                    padding: '0.5rem',
-                    marginBottom: '0.5rem',
-                      backgroundColor: 'var(--bg-secondary)',
-                      borderRadius: '0.5rem',
-                    borderLeft: `4px solid ${getStatusColor(step.status)}`
+                    padding: '1rem',
+                    marginBottom: '0.75rem',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '0.75rem',
+                    borderLeft: `4px solid ${getStatusColor(step.status)}`,
+                    border: step.status === 'failed' ? '1px solid #dc2626' : '1px solid var(--border-primary)'
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 500 }}>
-                        {index + 1}. {step.type}
-                      </span>
+                    {/* Step Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ 
+                          fontWeight: 600, 
+                          fontSize: '0.875rem',
+                          backgroundColor: getStatusColor(step.status) + '20',
+                          color: getStatusColor(step.status),
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          minWidth: '2rem',
+                          textAlign: 'center'
+                        }}>
+                          {index + 1}
+                        </span>
+                        <span style={{ fontWeight: 500, fontSize: '1rem', textTransform: 'capitalize' }}>
+                          {step.type}
+                        </span>
+                      </div>
                       <StatusBadge status={step.status} size="md" />
                     </div>
+
+                    {/* Step Config Details */}
+                    {step.config && (
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem', alignItems: 'start' }}>
+                          {step.config.url && (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>URL:</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                {step.config.url}
+                              </span>
+                            </>
+                          )}
+                          {step.config.selector && (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Selector:</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                                {step.config.selector}
+                              </span>
+                            </>
+                          )}
+                          {step.config.value && (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Değer:</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>
+                                {step.config.value}
+                              </span>
+                            </>
+                          )}
+                          {step.config.text && step.config.text !== step.config.value && (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Metin:</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>
+                                {step.config.text}
+                              </span>
+                            </>
+                          )}
+                          {step.config.expectedValue && (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Beklenen:</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>
+                                {step.config.expectedValue}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step Timing */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                      {step.startTime && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                          Başlangıç: {new Date(step.startTime).toLocaleTimeString('tr-TR')}
+                        </span>
+                      )}
+                      {step.endTime && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                          Bitiş: {new Date(step.endTime).toLocaleTimeString('tr-TR')}
+                        </span>
+                      )}
+                      {step.duration && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                          Süre: {formatDuration(step.duration)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Error Message */}
                     {step.error && (
-                      <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
-                        {step.error}
-                      </p>
+                      <div style={{ 
+                        padding: '0.75rem',
+                        backgroundColor: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: '0.5rem',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                          <AlertCircle size={14} color="#dc2626" />
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#dc2626' }}>
+                            Hata Detayı
+                          </span>
+                        </div>
+                        <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>
+                          {step.error}
+                        </p>
+                      </div>
                     )}
-                    {step.duration && (
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
-                        Süre: {formatDuration(step.duration)}
-                      </p>
-                    )}
+
+                    {/* Screenshot Link */}
                     {step.screenshot && (
                       <div style={{ marginTop: '0.5rem' }}>
                         <a 
@@ -1355,14 +1492,19 @@ export default function ReportsPage() {
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.25rem',
+                            gap: '0.5rem',
+                            padding: '0.5rem 0.75rem',
+                            backgroundColor: '#eff6ff',
                             color: '#2563eb',
                             textDecoration: 'none',
-                            fontSize: '0.75rem'
+                            fontSize: '0.75rem',
+                            borderRadius: '0.375rem',
+                            border: '1px solid #bfdbfe',
+                            fontWeight: 500
                           }}
                         >
-                          <Image size={12} />
-                          Ekran Görüntüsü
+                          <Image size={14} />
+                          Ekran Görüntüsünü Aç
                         </a>
                       </div>
                     )}
