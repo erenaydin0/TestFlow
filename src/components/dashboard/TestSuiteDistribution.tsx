@@ -11,6 +11,28 @@ interface TestSuiteDistributionProps {
 }
 
 export default function TestSuiteDistribution({ data }: TestSuiteDistributionProps) {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div 
+          style={{ 
+            backgroundColor: 'var(--bg-primary)', 
+            border: '1px solid var(--border-primary)',
+            borderRadius: '0.5rem',
+            padding: '8px 12px',
+            color: 'var(--text-primary)',
+            fontSize: '14px'
+          }}
+        >
+          <p style={{ margin: 0, color: 'var(--text-primary)' }}>
+            {`${payload[0].name}: ${payload[0].value}`}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="card">
       <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
@@ -32,14 +54,7 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'var(--bg-primary)', 
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                color: 'var(--text-primary)'
-              }} 
-            />
+            <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
       </div>
