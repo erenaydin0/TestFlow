@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
+import { getStatusColor, getStatusText } from '@/components/StatusBadge';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags';
 type SortOrder = 'asc' | 'desc';
@@ -251,31 +252,7 @@ export default function ReportsPage() {
     value !== '' && value !== null
   );
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return '#059669';
-      case 'failed': return '#dc2626';
-      case 'running': return '#d97706';
-      case 'queued': return '#6b7280';
-      case 'cancelled': return '#9ca3af';
-      case 'passed': return '#059669';
-      case 'pending': return '#6b7280';
-      default: return '#6b7280';
-    }
-  };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'completed': return 'Tamamlandı';
-      case 'failed': return 'Başarısız';
-      case 'running': return 'Çalışıyor';
-      case 'queued': return 'Sırada';
-      case 'cancelled': return 'İptal Edildi';
-      case 'passed': return 'Başarılı';
-      case 'pending': return 'Bekliyor';
-      default: return status;
-    }
-  };
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown size={12} />;
@@ -318,10 +295,7 @@ export default function ReportsPage() {
       return [
         execution.workflowName,
         execution.id,
-        execution.status === 'completed' ? 'Tamamlandı' : 
-        execution.status === 'failed' ? 'Başarısız' : 
-        execution.status === 'running' ? 'Çalışıyor' : 
-        execution.status === 'queued' ? 'Sırada' : 'İptal Edildi',
+        getStatusText(execution.status),
         execution.startTime ? new Date(execution.startTime).toLocaleString('tr-TR') : '',
         execution.endTime ? new Date(execution.endTime).toLocaleString('tr-TR') : '',
         execution.duration || '',
@@ -672,7 +646,7 @@ export default function ReportsPage() {
                   }}
                 >
                   <option value="">Tüm Durumlar</option>
-                  <option value="completed">Tamamlandı</option>
+                  <option value="completed">Başarılı</option>
                   <option value="failed">Başarısız</option>
                   <option value="running">Çalışıyor</option>
                   <option value="queued">Sırada</option>
@@ -1158,16 +1132,7 @@ export default function ReportsPage() {
                           </div>
                         </td>
                         <td style={{ padding: '0.75rem' }}>
-                          <span style={{
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '0.25rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            backgroundColor: `${getStatusColor(execution.status)}20`,
-                            color: getStatusColor(execution.status)
-                          }}>
-                            {getStatusLabel(execution.status)}
-                          </span>
+                          <StatusBadge status={execution.status} size="md" />
                         </td>
                         <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                           {formatRelativeTime(new Date(execution.startTime))}
@@ -1314,7 +1279,10 @@ export default function ReportsPage() {
             {/* Execution info */}
             <div style={{ marginBottom: '1.5rem' }}>
               <p><strong>ID:</strong> {selectedExecution.id}</p>
-              <p><strong>Durum:</strong> {getStatusLabel(selectedExecution.status)}</p>
+              <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <strong>Durum:</strong> 
+                <StatusBadge status={selectedExecution.status} size="md" />
+              </p>
               <p><strong>Başlangıç:</strong> {new Date(selectedExecution.startTime).toLocaleString('tr-TR')}</p>
               {selectedExecution.endTime && (
                 <p><strong>Bitiş:</strong> {new Date(selectedExecution.endTime).toLocaleString('tr-TR')}</p>
@@ -1343,15 +1311,7 @@ export default function ReportsPage() {
                       <span style={{ fontWeight: 500 }}>
                         {index + 1}. {step.type}
                       </span>
-                      <span style={{ 
-                        padding: '0.125rem 0.25rem',
-                        borderRadius: '0.25rem',
-                        fontSize: '0.75rem',
-                        backgroundColor: `${getStatusColor(step.status)}20`,
-                        color: getStatusColor(step.status)
-                      }}>
-                        {getStatusLabel(step.status)}
-                      </span>
+                      <StatusBadge status={step.status} size="md" />
                     </div>
                     {step.error && (
                       <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>

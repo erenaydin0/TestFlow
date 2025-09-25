@@ -60,47 +60,6 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
   }
 }
 
-export function getStatusColor(status: string): string {
-  switch (status) {
-    case 'passed':
-      return 'text-success-600 bg-success-50';
-    case 'failed':
-      return 'text-error-600 bg-error-50';
-    case 'pending':
-      return 'text-warning-600 bg-warning-50';
-    case 'running':
-      return 'text-primary-600 bg-primary-50';
-    case 'active':
-      return 'text-success-600 bg-success-50';
-    case 'paused':
-      return 'text-warning-600 bg-warning-50';
-    case 'disabled':
-      return 'text-gray-600 bg-gray-50';
-    default:
-      return 'text-gray-600 bg-gray-50';
-  }
-}
-
-export function getStatusText(status: string): string {
-  switch (status) {
-    case 'passed':
-      return 'Başarılı';
-    case 'failed':
-      return 'Başarısız';
-    case 'pending':
-      return 'Beklemede';
-    case 'running':
-      return 'Çalışıyor';
-    case 'active':
-      return 'Aktif';
-    case 'paused':
-      return 'Duraklatıldı';
-    case 'disabled':
-      return 'Devre Dışı';
-    default:
-      return status;
-  }
-} 
 
 // Test workflow import/export functions
 export const exportTestWorkflow = (testSteps: TestStep[], fileName?: string) => {
