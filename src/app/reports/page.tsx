@@ -252,6 +252,35 @@ export default function ReportsPage() {
     value !== '' && value !== null
   );
 
+  // Benzersiz suite ve tag değerlerini toplama
+  const { uniqueSuites, uniqueTags, uniqueStatuses } = useMemo(() => {
+    const suites = new Set<string>();
+    const tags = new Set<string>();
+    const statuses = new Set<string>();
+
+    executions.forEach(execution => {
+      if (execution.suite && execution.suite.trim()) {
+        suites.add(execution.suite);
+      }
+      if (execution.tags && execution.tags.length > 0) {
+        execution.tags.forEach(tag => {
+          if (tag.trim()) {
+            tags.add(tag);
+          }
+        });
+      }
+      if (execution.status) {
+        statuses.add(execution.status);
+      }
+    });
+
+    return {
+      uniqueSuites: Array.from(suites).sort(),
+      uniqueTags: Array.from(tags).sort(),
+      uniqueStatuses: Array.from(statuses).sort()
+    };
+  }, [executions]);
+
 
 
   const getSortIcon = (field: SortField) => {
@@ -642,14 +671,15 @@ export default function ReportsPage() {
                     backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: '0.75rem',
-                    minWidth: '100px'
+                    minWidth: '120px'
                   }}
                 >
                   <option value="">Tüm Durumlar</option>
-                  <option value="completed">Başarılı</option>
-                  <option value="failed">Başarısız</option>
-                  <option value="running">Çalışıyor</option>
-                  <option value="queued">Sırada</option>
+                  {uniqueStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {getStatusText(status)}
+                    </option>
+                  ))}
                 </select>
 
                 {/* Date Range Filter */}
@@ -674,9 +704,7 @@ export default function ReportsPage() {
                 </select>
 
                 {/* Suite Filter */}
-                <input
-                  type="text"
-                  placeholder="Test grubu..."
+                <select
                   value={filters.suite}
                   onChange={(e) => handleFilterChange('suite', e.target.value)}
                   style={{
@@ -686,14 +714,19 @@ export default function ReportsPage() {
                     backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: '0.75rem',
-                    minWidth: '100px'
+                    minWidth: '120px'
                   }}
-                />
+                >
+                  <option value="">Tüm Test Grupları</option>
+                  {uniqueSuites.map((suite) => (
+                    <option key={suite} value={suite}>
+                      {suite}
+                    </option>
+                  ))}
+                </select>
 
                 {/* Tags Filter */}
-                <input
-                  type="text"
-                  placeholder="Etiket..."
+                <select
                   value={filters.tags}
                   onChange={(e) => handleFilterChange('tags', e.target.value)}
                   style={{
@@ -703,9 +736,16 @@ export default function ReportsPage() {
                     backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: '0.75rem',
-                    minWidth: '100px'
+                    minWidth: '120px'
                   }}
-                />
+                >
+                  <option value="">Tüm Etiketler</option>
+                  {uniqueTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
 
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (
@@ -881,9 +921,7 @@ export default function ReportsPage() {
                 </select>
 
                 {/* Suite Filter */}
-                <input
-                  type="text"
-                  placeholder="Test grubu..."
+                <select
                   value={filters.suite}
                   onChange={(e) => handleFilterChange('suite', e.target.value)}
                   style={{
@@ -893,14 +931,19 @@ export default function ReportsPage() {
                     backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: '0.75rem',
-                    minWidth: '100px'
+                    minWidth: '120px'
                   }}
-                />
+                >
+                  <option value="">Tüm Test Grupları</option>
+                  {uniqueSuites.map((suite) => (
+                    <option key={suite} value={suite}>
+                      {suite}
+                    </option>
+                  ))}
+                </select>
 
                 {/* Tags Filter */}
-                <input
-                  type="text"
-                  placeholder="Etiket..."
+                <select
                   value={filters.tags}
                   onChange={(e) => handleFilterChange('tags', e.target.value)}
                   style={{
@@ -910,9 +953,16 @@ export default function ReportsPage() {
                     backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
                     fontSize: '0.75rem',
-                    minWidth: '100px'
+                    minWidth: '120px'
                   }}
-                />
+                >
+                  <option value="">Tüm Etiketler</option>
+                  {uniqueTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
 
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (
