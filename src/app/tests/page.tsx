@@ -488,7 +488,7 @@ export default function TestsPage() {
                 }}
               >
                 <Upload size={16} />
-                Import
+                İçe Aktar
               </button>
 
               {selectedTests.size > 0 && (
