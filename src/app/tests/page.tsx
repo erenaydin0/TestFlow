@@ -37,6 +37,7 @@ export default function TestsPage() {
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [highlightedTestId, setHighlightedTestId] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -65,6 +66,26 @@ export default function TestsPage() {
       setSearchFilter(searchQuery);
     }
   }, [searchParams]);
+
+  // Handle testId parameter to highlight specific test
+  useEffect(() => {
+    const testId = searchParams.get('testId');
+    if (testId && tests.length > 0) {
+      setHighlightedTestId(testId);
+      // Auto-scroll to the highlighted test after a short delay
+      setTimeout(() => {
+        const testElement = document.getElementById(`test-${testId}`);
+        if (testElement) {
+          testElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        setHighlightedTestId(null);
+      }, 3000);
+    }
+  }, [searchParams, tests]);
 
   // Filter tests based on search and suite
   const filteredTests = tests.filter(test => {
@@ -781,16 +802,22 @@ export default function TestsPage() {
                 <tbody>
                     {filteredTests.map((test) => (
                     <tr 
-                      key={test.id} 
+                      key={test.id}
+                      id={`test-${test.id}`}
                       style={{ 
                         borderBottom: '1px solid var(--border-primary)',
-                        transition: 'background-color 0.2s'
+                        transition: 'all 0.3s ease',
+                        backgroundColor: highlightedTestId === test.id ? 'var(--bg-tertiary)' : 'transparent',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                        if (highlightedTestId !== test.id) {
+                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        if (highlightedTestId !== test.id) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
                       }}
                     >
                       <td style={{ padding: '1rem' }}>
