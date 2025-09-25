@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import { useSidebar } from '@/lib/sidebar-context';
 import StatusBadge from '@/components/StatusBadge';
 import StatsCards from '@/components/StatsCards';
+import MultiSelect from '@/components/MultiSelect';
 import { 
   Download, 
   Filter,
@@ -42,8 +43,8 @@ interface FilterState {
   status: string;
   dateRange: string;
   workflowName: string;
-  suite: string;
-  tags: string;
+  suite: string[];
+  tags: string[];
 }
 
 export default function ReportsPage() {
@@ -61,8 +62,8 @@ export default function ReportsPage() {
     status: '',
     dateRange: '',
     workflowName: '',
-    suite: '',
-    tags: ''
+    suite: [],
+    tags: []
   });
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
 
@@ -150,12 +151,12 @@ export default function ReportsPage() {
 
 
       // Suite filter
-      if (filters.suite && (!execution.suite || !execution.suite.toLowerCase().includes(filters.suite.toLowerCase()))) {
+      if (filters.suite.length > 0 && (!execution.suite || !filters.suite.includes(execution.suite))) {
         return false;
       }
 
       // Tags filter
-      if (filters.tags && (!execution.tags || !execution.tags.some(tag => tag.toLowerCase().includes(filters.tags.toLowerCase())))) {
+      if (filters.tags.length > 0 && (!execution.tags || !execution.tags.some(tag => filters.tags.includes(tag)))) {
         return false;
       }
 
@@ -243,14 +244,17 @@ export default function ReportsPage() {
       status: '',
       dateRange: '',
       workflowName: '',
-      suite: '',
-      tags: ''
+      suite: [],
+      tags: []
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value !== '' && value !== null
-  );
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return value !== '' && value !== null;
+  });
 
   // Benzersiz suite ve tag değerlerini toplama
   const { uniqueSuites, uniqueTags, uniqueStatuses } = useMemo(() => {
@@ -704,48 +708,22 @@ export default function ReportsPage() {
                 </select>
 
                 {/* Suite Filter */}
-                <select
-                  value={filters.suite}
-                  onChange={(e) => handleFilterChange('suite', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="">Tüm Test Grupları</option>
-                  {uniqueSuites.map((suite) => (
-                    <option key={suite} value={suite}>
-                      {suite}
-                    </option>
-                  ))}
-                </select>
+                <MultiSelect
+                  options={uniqueSuites}
+                  selectedValues={filters.suite}
+                  onChange={(values) => handleFilterChange('suite', values)}
+                  placeholder="Tüm Test Grupları"
+                  className="min-w-[120px]"
+                />
 
                 {/* Tags Filter */}
-                <select
-                  value={filters.tags}
-                  onChange={(e) => handleFilterChange('tags', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="">Tüm Etiketler</option>
-                  {uniqueTags.map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
+                <MultiSelect
+                  options={uniqueTags}
+                  selectedValues={filters.tags}
+                  onChange={(values) => handleFilterChange('tags', values)}
+                  placeholder="Tüm Etiketler"
+                  className="min-w-[120px]"
+                />
 
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (
@@ -921,48 +899,22 @@ export default function ReportsPage() {
                 </select>
 
                 {/* Suite Filter */}
-                <select
-                  value={filters.suite}
-                  onChange={(e) => handleFilterChange('suite', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="">Tüm Test Grupları</option>
-                  {uniqueSuites.map((suite) => (
-                    <option key={suite} value={suite}>
-                      {suite}
-                    </option>
-                  ))}
-                </select>
+                <MultiSelect
+                  options={uniqueSuites}
+                  selectedValues={filters.suite}
+                  onChange={(values) => handleFilterChange('suite', values)}
+                  placeholder="Tüm Test Grupları"
+                  className="min-w-[120px]"
+                />
 
                 {/* Tags Filter */}
-                <select
-                  value={filters.tags}
-                  onChange={(e) => handleFilterChange('tags', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="">Tüm Etiketler</option>
-                  {uniqueTags.map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
+                <MultiSelect
+                  options={uniqueTags}
+                  selectedValues={filters.tags}
+                  onChange={(values) => handleFilterChange('tags', values)}
+                  placeholder="Tüm Etiketler"
+                  className="min-w-[120px]"
+                />
 
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (
