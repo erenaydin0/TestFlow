@@ -39,8 +39,13 @@ export function useRealtimeNotifications() {
   const { isConnected, isConnecting, lastMessage, connect } = useWebSocket(wsUrl, {
     autoConnect: typeof window !== 'undefined',
     reconnectAttempts: 5,
-    reconnectInterval: 2000
+    reconnectInterval: 3000 // 3 saniye bekle
   });
+
+  // Connection durumunu logla
+  useEffect(() => {
+    console.log('WebSocket connection status:', { isConnected, isConnecting });
+  }, [isConnected, isConnecting]);
 
   // Processed message IDs to prevent duplicates
   const processedMessageIds = useRef(new Set<string>());

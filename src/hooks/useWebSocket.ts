@@ -43,9 +43,17 @@ export function useWebSocket(url: string, options?: {
     }
 
     if (ws.current?.readyState === WebSocket.OPEN) {
+      console.log('WebSocket: Already connected');
       return;
     }
 
+    // Önceki bağlantıyı temizle
+    if (ws.current) {
+      ws.current.close();
+      ws.current = null;
+    }
+
+    console.log(`WebSocket: Attempting connection ${reconnectCount.current + 1}/${reconnectAttempts + 1} to ${url}`);
     setIsConnecting(true);
 
     try {
@@ -107,7 +115,20 @@ export function useWebSocket(url: string, options?: {
         console.error('WebSocket error:', error);
         console.error('WebSocket URL:', url);
         console.error('WebSocket readyState:', ws.current?.readyState);
+        
+        // Error event objesinden detayları al
+        if (error instanceof Event && error.target) {
+          const ws = error.target as WebSocket;
+          console.error('WebSocket error details:', {
+            readyState: ws.readyState,
+            url: ws.url,
+            protocol: ws.protocol,
+            extensions: ws.extensions
+          });
+        }
+        
         setIsConnecting(false);
+        setIsConnected(false);
       };
 
     } catch (error) {
@@ -117,12 +138,20 @@ export function useWebSocket(url: string, options?: {
   }, [url, reconnectAttempts, reconnectInterval]);
 
   const disconnect = useCallback(() => {
+    console.log('WebSocket: Manual disconnect requested');
+    
     if (reconnectTimeoutId.current) {
       clearTimeout(reconnectTimeoutId.current);
       reconnectTimeoutId.current = null;
     }
 
     if (ws.current) {
+      // Avoid calling onerror/onclose during manual disconnect
+      ws.current.onopen = null;
+      ws.current.onmessage = null;
+      ws.current.onclose = null;
+      ws.current.onerror = null;
+      
       ws.current.close();
       ws.current = null;
     }

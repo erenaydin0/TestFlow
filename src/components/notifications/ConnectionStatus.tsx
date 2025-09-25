@@ -26,9 +26,18 @@ export function ConnectionStatus({ isConnected, isConnecting, onReconnect }: Con
     return isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />;
   };
 
+  const getTooltip = () => {
+    if (isConnecting) return 'WebSocket sunucusuna bağlanıyor...';
+    if (isConnected) return 'WebSocket bağlantısı aktif - Anlık test sonuçları alıyorsunuz';
+    return 'WebSocket bağlantısı yok - Anlık bildirimler çalışmıyor. Backend server\'ın çalıştığından emin olun.';
+  };
+
   return (
     <div className="flex items-center space-x-2 text-xs">
-      <div className={`flex items-center space-x-1 ${getStatusColor()}`}>
+      <div 
+        className={`flex items-center space-x-1 ${getStatusColor()}`}
+        title={getTooltip()}
+      >
         {getIcon()}
         <span className="hidden sm:inline">{getStatusText()}</span>
       </div>
@@ -37,7 +46,7 @@ export function ConnectionStatus({ isConnected, isConnecting, onReconnect }: Con
         <button
           onClick={onReconnect}
           className="text-xs text-blue-500 hover:text-blue-600 underline"
-          title="Yeniden Bağlan"
+          title="WebSocket bağlantısını yeniden dene"
         >
           Yeniden Bağlan
         </button>
