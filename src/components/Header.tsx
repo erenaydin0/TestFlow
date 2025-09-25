@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { NotificationPanel } from '@/components/notifications/NotificationPanel';
-import { ConnectionStatus } from '@/components/notifications/ConnectionStatus';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import StatusBadge, { getStatusText } from '@/components/StatusBadge';
 
@@ -131,14 +130,15 @@ export default function Header({ title, subtitle }: HeaderProps) {
       alignItems: 'center'
     }}>
       <div style={{ 
-        display: 'flex', 
+        display: 'grid', 
+        gridTemplateColumns: '200px 1fr 200px',
         alignItems: 'center', 
-        justifyContent: 'space-between',
         width: '100%',
-        maxWidth: '100%'
+        maxWidth: '100%',
+        gap: '1rem'
       }}>
         {/* Logo and App Name Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ justifySelf: 'start' }}>
           <Link href="/" style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -177,9 +177,12 @@ export default function Header({ title, subtitle }: HeaderProps) {
           </Link>
         </div>
 
-        {/* Actions Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Search */}
+        {/* Centered Search Section */}
+        <div style={{ 
+          justifySelf: 'center',
+          width: '100%',
+          maxWidth: '500px'
+        }}>
           <div style={{ position: 'relative' }} ref={searchPanelRef}>
             <Search style={{ 
               position: 'absolute', 
@@ -209,7 +212,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 border: '1px solid var(--border-primary)',
                 borderRadius: '0.5rem',
                 outline: 'none',
-                width: '20rem',
+                width: '100%',
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
@@ -509,17 +512,17 @@ export default function Header({ title, subtitle }: HeaderProps) {
               </div>
             )}
           </div>
+        </div>
 
-          {/* Connection Status */}
-          <ConnectionStatus 
-            isConnected={isConnected} 
-            isConnecting={isConnecting} 
-            onReconnect={reconnect}
-          />
-
+        {/* Right Actions Section */}
+        <div style={{ 
+          justifySelf: 'end',
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '1rem' 
+        }}>
           {/* Notifications */}
           <NotificationPanel />
-
 
           {/* User Profile */}
           <div style={{ position: 'relative' }} ref={userPanelRef}>
@@ -545,23 +548,6 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ 
-                  fontSize: '0.875rem', 
-                  fontWeight: 500, 
-                  color: 'var(--text-primary)',
-                  margin: 0
-                }}>
-                  Test Kullanıcısı
-                </p>
-                <p style={{ 
-                  fontSize: '0.75rem', 
-                  color: 'var(--text-secondary)',
-                  margin: 0
-                }}>
-                  Admin
-                </p>
-              </div>
               <div style={{ 
                 width: '2rem', 
                 height: '2rem', 
@@ -742,7 +728,6 @@ export default function Header({ title, subtitle }: HeaderProps) {
       <style jsx>{`
         .user-panel {
           position: absolute;
-          top: calc(100% + 0.5rem);
           right: 0;
           width: 16rem;
           background-color: var(--bg-primary);
