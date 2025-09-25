@@ -6,6 +6,9 @@ import { useTheme } from '@/lib/theme-context';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
+import { NotificationPanel } from '@/components/notifications/NotificationPanel';
+import { ConnectionStatus } from '@/components/notifications/ConnectionStatus';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 interface HeaderProps {
   title?: string;
@@ -14,7 +17,6 @@ interface HeaderProps {
 
 export default function Header({ title, subtitle }: HeaderProps) {
   const [isUserPanelOpen, setIsUserPanelOpen] = useState(false);
-  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{
     tests: SearchResult[];
@@ -29,8 +31,10 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userPanelRef = useRef<HTMLDivElement>(null);
-  const notificationPanelRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useRef<HTMLDivElement>(null);
+  
+  // Real-time notifications hook
+  const { isConnected, isConnecting, reconnect } = useRealtimeNotifications();
 
   // Initialize search query from URL params
   useEffect(() => {
@@ -46,22 +50,19 @@ export default function Header({ title, subtitle }: HeaderProps) {
       if (userPanelRef.current && !userPanelRef.current.contains(event.target as Node)) {
         setIsUserPanelOpen(false);
       }
-      if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target as Node)) {
-        setIsNotificationPanelOpen(false);
-      }
       if (searchPanelRef.current && !searchPanelRef.current.contains(event.target as Node)) {
         setShowSearchResults(false);
       }
     }
 
-    if (isUserPanelOpen || isNotificationPanelOpen || showSearchResults) {
+    if (isUserPanelOpen || showSearchResults) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isUserPanelOpen, isNotificationPanelOpen, showSearchResults]);
+  }, [isUserPanelOpen, showSearchResults]);
 
   const themeOptions = [
     { id: 'light', label: 'Açık', icon: Sun },
@@ -435,250 +436,16 @@ export default function Header({ title, subtitle }: HeaderProps) {
             )}
           </div>
 
+          {/* Connection Status */}
+          <ConnectionStatus 
+            isConnected={isConnected} 
+            isConnecting={isConnecting} 
+            onReconnect={reconnect}
+          />
+
           {/* Notifications */}
-          <div style={{ position: 'relative' }} ref={notificationPanelRef}>
-            <button 
-              onClick={() => setIsNotificationPanelOpen(!isNotificationPanelOpen)}
-              style={{ 
-                position: 'relative', 
-                padding: '0.5rem', 
-                color: 'var(--text-secondary)', 
-                background: 'none', 
-                border: 'none', 
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-primary)';
-                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <Bell size={20} />
-              <span style={{ 
-                position: 'absolute', 
-                top: '0.25rem', 
-                right: '0.25rem', 
-                width: '0.5rem', 
-                height: '0.5rem', 
-                backgroundColor: '#ef4444', 
-                borderRadius: '50%' 
-              }}></span>
-            </button>
+          <NotificationPanel />
 
-            {/* Notification Panel */}
-            <div className={`notification-panel ${isNotificationPanelOpen ? 'open' : ''}`}>
-              {/* Panel Header */}
-              <div style={{ 
-                padding: '1rem 1rem 0.5rem 1rem',
-                borderBottom: '1px solid var(--border-primary)'
-              }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between' 
-                }}>
-                  <h3 style={{ 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    color: 'var(--text-primary)',
-                    margin: 0
-                  }}>
-                    Bildirimler
-                  </h3>
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    padding: '0.125rem 0.375rem',
-                    borderRadius: '0.75rem',
-                    fontWeight: 500
-                  }}>
-                    3
-                  </span>
-                </div>
-              </div>
-
-              {/* Notifications List */}
-              <div style={{ maxHeight: '20rem', overflowY: 'auto' }}>
-                {/* Sample Notifications */}
-                <div style={{ 
-                  padding: '0.75rem 1rem',
-                  borderBottom: '1px solid var(--border-primary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}>
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <div style={{ 
-                      width: '0.5rem', 
-                      height: '0.5rem', 
-                      backgroundColor: '#22c55e', 
-                      borderRadius: '50%',
-                      marginTop: '0.375rem',
-                      flexShrink: 0
-                    }}></div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-primary)',
-                        margin: '0 0 0.25rem 0'
-                      }}>
-                        Test başarıyla tamamlandı
-                      </p>
-                      <p style={{ 
-                        fontSize: '0.75rem', 
-                        color: 'var(--text-secondary)',
-                        margin: '0 0 0.25rem 0'
-                      }}>
-                        "Kullanıcı Kayıt Testi" 2 dakika önce tamamlandı.
-                      </p>
-                      <p style={{ 
-                        fontSize: '0.7rem', 
-                        color: 'var(--text-tertiary)',
-                        margin: 0
-                      }}>
-                        2 dakika önce
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ 
-                  padding: '0.75rem 1rem',
-                  borderBottom: '1px solid var(--border-primary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}>
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <div style={{ 
-                      width: '0.5rem', 
-                      height: '0.5rem', 
-                      backgroundColor: '#ef4444', 
-                      borderRadius: '50%',
-                      marginTop: '0.375rem',
-                      flexShrink: 0
-                    }}></div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-primary)',
-                        margin: '0 0 0.25rem 0'
-                      }}>
-                        Test başarısız oldu
-                      </p>
-                      <p style={{ 
-                        fontSize: '0.75rem', 
-                        color: 'var(--text-secondary)',
-                        margin: '0 0 0.25rem 0'
-                      }}>
-                        "Login Testi" element bulunamadı hatası aldı.
-                      </p>
-                      <p style={{ 
-                        fontSize: '0.7rem', 
-                        color: 'var(--text-tertiary)',
-                        margin: 0
-                      }}>
-                        5 dakika önce
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ 
-                  padding: '0.75rem 1rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}>
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <div style={{ 
-                      width: '0.5rem', 
-                      height: '0.5rem', 
-                      backgroundColor: '#f59e0b', 
-                      borderRadius: '50%',
-                      marginTop: '0.375rem',
-                      flexShrink: 0
-                    }}></div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 500, 
-                        color: 'var(--text-primary)',
-                        margin: '0 0 0.25rem 0'
-                      }}>
-                        Zamanlanmış test başladı
-                      </p>
-                      <p style={{ 
-                        fontSize: '0.75rem', 
-                        color: 'var(--text-secondary)',
-                        margin: '0 0 0.25rem 0'
-                      }}>
-                        "Günlük Regresyon Testi" çalışmaya başladı.
-                      </p>
-                      <p style={{ 
-                        fontSize: '0.7rem', 
-                        color: 'var(--text-tertiary)',
-                        margin: 0
-                      }}>
-                        10 dakika önce
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Panel Footer */}
-              <div style={{ 
-                padding: '0.75rem 1rem',
-                borderTop: '1px solid var(--border-primary)'
-              }}>
-                <button style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  backgroundColor: 'transparent',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.375rem',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }}>
-                  Tümünü Gör
-                </button>
-              </div>
-            </div>
-          </div>
 
           {/* User Profile */}
           <div style={{ position: 'relative' }} ref={userPanelRef}>
@@ -921,27 +688,6 @@ export default function Header({ title, subtitle }: HeaderProps) {
           transform: translateY(0);
         }
 
-        .notification-panel {
-          position: absolute;
-          top: calc(100% + 0.5rem);
-          right: 0;
-          width: 20rem;
-          background-color: var(--bg-primary);
-          border: 1px solid var(--border-primary);
-          border-radius: 0.5rem;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(-0.5rem);
-          transition: all 0.2s ease;
-          z-index: 50;
-        }
-
-        .notification-panel.open {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
-        }
       `}</style>
     </header>
   );
