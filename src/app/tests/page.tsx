@@ -562,33 +562,6 @@ export default function TestsPage() {
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {/* Import/Export Buttons */}
-                <button 
-                  onClick={handleImport}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                  }}
-                >
-                  <Upload size={12} />
-                  İçe Aktar
-                </button>
-
                 {selectedTests.size > 0 && (
                   <>
                     <span style={{ 
@@ -597,31 +570,24 @@ export default function TestsPage() {
                     }}>
                       {selectedTests.size} test seçili
                     </span>
-                    <button 
-                      onClick={handleBulkExport}
+                    
+                    <button
+                      onClick={() => setSelectedTests(new Set())}
                       style={{
-                        padding: '0.375rem 0.75rem',
-                        border: '1px solid #2563eb',
-                        borderRadius: '0.375rem',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        color: '#2563eb',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                        gap: '0.25rem',
+                        padding: '0.375rem 0.5rem',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
                       }}
                     >
-                      <Download size={12} />
-                      Dışa Aktar
+                      <X size={12} />
+                      Temizle
                     </button>
                     <button 
                       onClick={handleBulkRun}
@@ -655,27 +621,61 @@ export default function TestsPage() {
                     >
                       Sil
                     </button>
-                    <button
-                      onClick={() => setSelectedTests(new Set())}
+                    <button 
+                      onClick={handleBulkExport}
                       style={{
+                        padding: '0.375rem 0.75rem',
+                        border: '1px solid #2563eb',
+                        borderRadius: '0.375rem',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        color: '#2563eb',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.375rem 0.5rem',
-                        backgroundColor: '#6b7280',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
+                        gap: '0.25rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
                       }}
                     >
-                      <X size={12} />
-                      Temizle
+                      <Download size={12} />
+                      Dışa Aktar
                     </button>
                   </>
                 )}
-                
+
+                <button 
+                  onClick={handleImport}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }}
+                >
+                  <Upload size={12} />
+                  İçe Aktar
+                </button>
                 <button 
                   onClick={handleCreateNewTest}
                   className="btn-primary" 
@@ -692,8 +692,14 @@ export default function TestsPage() {
                 </button>
               </div>
             </div>
-          </div>
 
+            {/* Separator */}
+            <div style={{ 
+              borderTop: '1px solid var(--border-primary)', 
+              margin: '1rem -1.5rem 0 -1.5rem' 
+            }}></div>
+
+            {/* Test Content */}
             {filteredTests.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
               <div style={{ 
@@ -741,7 +747,7 @@ export default function TestsPage() {
               </button>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', margin: '0 -1.5rem -1.5rem -1.5rem' }}>
               <table style={{ width: '100%' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
@@ -778,15 +784,6 @@ export default function TestsPage() {
                       color: 'var(--text-secondary)',
                       fontSize: '0.875rem'
                     }}>
-                      Test Grubu
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
                         Adım Sayısı
                     </th>
                     <th style={{ 
@@ -797,6 +794,15 @@ export default function TestsPage() {
                       fontSize: '0.875rem'
                     }}>
                         Oluşturulma
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      Test Grubu
                     </th>
                     <th style={{ 
                       textAlign: 'left', 
@@ -871,14 +877,6 @@ export default function TestsPage() {
                         </div>
                       </td>
                       
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ 
-                          fontSize: '0.875rem', 
-                          color: 'var(--text-secondary)' 
-                        }}>
-                          {test.suite}
-                        </span>
-                      </td>
                       
                       <td style={{ padding: '1rem' }}>
                         <div style={{ 
@@ -888,7 +886,6 @@ export default function TestsPage() {
                           fontSize: '0.875rem', 
                           color: 'var(--text-secondary)' 
                         }}>
-                            <FileText size={16} />
                             <span>{test.workflow?.length || 0} adım</span>
                         </div>
                       </td>
@@ -899,6 +896,15 @@ export default function TestsPage() {
                           color: 'var(--text-secondary)' 
                         }}>
                             {formatRelativeTime(test.createdAt)}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: '1rem' }}>
+                        <span style={{ 
+                          fontSize: '0.875rem', 
+                          color: 'var(--text-secondary)' 
+                        }}>
+                          {test.suite}
                         </span>
                       </td>
                       
@@ -1059,6 +1065,7 @@ export default function TestsPage() {
               </table>
               </div>
             )}
+          </div>
         </main>
       </div>
 
