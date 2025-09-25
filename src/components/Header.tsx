@@ -326,9 +326,24 @@ export default function Header({ title, subtitle }: HeaderProps) {
                               fontWeight: 500,
                               color: 'var(--text-primary)',
                               marginBottom: '0.25rem',
-                              fontSize: '0.875rem'
+                              fontSize: '0.875rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
                             }}>
-                              {result.title}
+                              <span>{result.title}</span>
+                              <span 
+                                title={result.id}
+                                style={{
+                                  fontSize: '0.625rem',
+                                  color: 'var(--text-tertiary)',
+                                  padding: '0.125rem 0.25rem',
+                                  borderRadius: '0.25rem',
+                                  fontFamily: 'monospace',
+                                  cursor: 'help'
+                                }}>
+                                {result.id.slice(0, 8)}...
+                              </span>
                             </div>
                             <div style={{
                               fontSize: '0.75rem',
@@ -419,9 +434,24 @@ export default function Header({ title, subtitle }: HeaderProps) {
                               fontWeight: 500,
                               color: 'var(--text-primary)',
                               marginBottom: '0.25rem',
-                              fontSize: '0.875rem'
+                              fontSize: '0.875rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
                             }}>
-                              {result.title}
+                              <span>{result.title}</span>
+                              <span 
+                                title={result.id}
+                                style={{
+                                  fontSize: '0.625rem',
+                                  color: 'var(--text-tertiary)',
+                                  padding: '0.125rem 0.25rem',
+                                  borderRadius: '0.25rem',
+                                  fontFamily: 'monospace',
+                                  cursor: 'help'
+                                }}>
+                                {result.id.slice(0, 8)}...
+                              </span>
                             </div>
                             <div style={{
                               fontSize: '0.75rem',
