@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info } from 'lucide-react';
 import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
+import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 interface ImportDialogProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [previews, setPreviews] = useState<ImportPreview[]>([]);
+  const { notifyTestFailure } = useTestNotifications();
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState<{
     success: number;
@@ -94,7 +96,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     const jsonFiles = files.filter(file => file.type === 'application/json' || file.name.endsWith('.json'));
     
     if (jsonFiles.length === 0) {
-      alert('Lütfen geçerli JSON dosyaları seçin.');
+      notifyTestFailure('Import', '', 'Lütfen geçerli JSON dosyaları seçin.');
       return;
     }
 
@@ -212,7 +214,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     const validPreviews = previews.filter(p => p.isValid);
     
     if (validPreviews.length === 0) {
-      alert('Import edilecek geçerli workflow bulunamadı.');
+      notifyTestFailure('Import', '', 'Import edilecek geçerli workflow bulunamadı.');
       return;
     }
 

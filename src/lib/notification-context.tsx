@@ -27,7 +27,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const newNotification: Notification = {
       ...notification,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: `notif-${Date.now()}`,
       timestamp: new Date(),
       persistent: notification.persistent ?? true
     };
@@ -53,7 +53,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const newToast: Notification = {
       ...toast,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: `toast-${Date.now()}`,
       timestamp: new Date(),
       persistent: false,
       autoClose: toast.autoClose ?? true,

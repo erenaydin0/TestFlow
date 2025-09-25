@@ -162,6 +162,63 @@ export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors:
   };
 };
 
+// ID generation utility
+export const generateReadableId = (testName: string, existingWorkflows: Test[]): string => {
+  // Test adını temizle ve slug'a çevir
+  const cleanName = testName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '') // Özel karakterleri kaldır
+    .replace(/\s+/g, '-') // Boşlukları tire ile değiştir
+    .replace(/-+/g, '-') // Çoklu tireleri tek tireye çevir
+    .replace(/^-|-$/g, ''); // Başındaki ve sonundaki tireleri kaldır
+  
+  // Eğer temizlenmiş ad boşsa, varsayılan isim kullan
+  const baseSlug = cleanName || 'test';
+  
+  // Mevcut ID'leri kontrol et ve bir sonraki numarayı bul
+  const existingIds = existingWorkflows.map(w => w.id);
+  let counter = 1;
+  let proposedId = `${baseSlug}-${counter.toString().padStart(3, '0')}`;
+  
+  // Benzersiz ID bulunana kadar counter'ı artır
+  while (existingIds.includes(proposedId)) {
+    counter++;
+    proposedId = `${baseSlug}-${counter.toString().padStart(3, '0')}`;
+  }
+  
+  return proposedId;
+};
+
+// Mevcut testlerin ID'lerini yeni formata migrate et
+export const migrateTestIds = (): boolean => {
+  try {
+    const savedWorkflows = getSavedWorkflows();
+    let hasChanges = false;
+    
+    const updatedWorkflows = savedWorkflows.map((workflow, index) => {
+      // Eğer ID zaten yeni formatta değilse (UUID gibi uzun ID'ler)
+      if (workflow.id.length > 15 || workflow.id.includes('-') === false || /^[a-z]+-\d{3}$/.test(workflow.id) === false) {
+        const newId = generateReadableId(workflow.name, savedWorkflows.slice(0, index));
+        hasChanges = true;
+        return { ...workflow, id: newId };
+      }
+      return workflow;
+    });
+    
+    if (hasChanges) {
+      localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(updatedWorkflows));
+      console.log('Test ID\'leri yeni formata güncellendi');
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('ID migration error:', error);
+    return false;
+  }
+};
+
 // Workflow storage utilities
 const WORKFLOWS_STORAGE_KEY = 'testflow_saved_workflows';
 
@@ -203,7 +260,7 @@ export const saveWorkflowToStorage = (workflow: {
     }
     
     // Yeni workflow oluştur
-    const id = workflow.id || Math.random().toString(36).substr(2, 9);
+    const id = workflow.id || generateReadableId(workflow.name, savedWorkflows);
     
     const newWorkflow: Test = {
       id,

@@ -46,7 +46,7 @@ export default function TestBuilder() {
     generateId
   } = useTestSteps();
   
-  const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart } = useTestNotifications();
+  const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded } = useTestNotifications();
 
   const {
     selectedSteps,
@@ -321,7 +321,7 @@ export default function TestBuilder() {
   // Handle export workflow
   const handleExport = useCallback(() => {
     if (testSteps.length === 0) {
-      alert('Dışa aktarılacak test adımı bulunamadı.');
+      notifyTestFailure('Test Dışa Aktarma', '', 'Dışa aktarılacak test adımı bulunamadı.');
       return;
     }
 
@@ -330,7 +330,7 @@ export default function TestBuilder() {
       exportTestWorkflow(testSteps, workflowName);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Workflow dışa aktarılırken bir hata oluştu.');
+      notifyTestFailure('Test Dışa Aktarma', '', 'Workflow dışa aktarılırken bir hata oluştu.');
     }
   }, [testSteps]);
 
@@ -518,10 +518,10 @@ export default function TestBuilder() {
         
         // Show success message
         setTimeout(() => {
-          alert(`"${workflow.name}" workflow'u yüklendi!`);
+          notifyWorkflowLoaded(workflow.name);
         }, 100);
       } else {
-        alert('Workflow bulunamadı veya geçersiz!');
+        notifyTestFailure('Test Builder Workflow', '', 'Workflow bulunamadı veya geçersiz!');
       }
     }
   }, [searchParams, loadedWorkflowId]);

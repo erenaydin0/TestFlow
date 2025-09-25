@@ -35,6 +35,8 @@ import {
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
 import { getStatusColor, getStatusText } from '@/components/StatusBadge';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags';
 type SortOrder = 'asc' | 'desc';
@@ -53,7 +55,10 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedExecution, setSelectedExecution] = useState<ExecutionResult | null>(null);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const searchParams = useSearchParams();
+  
+  const { notifyTestDeleted, notifyTestFailure } = useTestNotifications();
   
   // Filtering and sorting state
   const [sortField, setSortField] = useState<SortField>('startTime');
@@ -425,7 +430,7 @@ export default function ReportsPage() {
       
     } catch (error) {
       console.error('Error creating report package:', error);
-      alert('Rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      notifyTestFailure('Single Download', '', 'Rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     }
   };
 
@@ -515,16 +520,16 @@ export default function ReportsPage() {
       
     } catch (error) {
       console.error('Error creating bulk report package:', error);
-      alert('Toplu rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      notifyTestFailure('Bulk Download', '', 'Toplu rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     }
   };
 
   const deleteSelectedTests = async () => {
     if (selectedTests.size === 0) return;
-    
-    const confirmMessage = `${selectedTests.size} test kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`;
-    if (!confirm(confirmMessage)) return;
+    setShowBulkDeleteDialog(true);
+  };
 
+  const confirmBulkDelete = async () => {
     try {
       const deletePromises = Array.from(selectedTests).map(async (testId) => {
         const response = await fetch(`http://localhost:3001/api/executions/${testId}`, {
@@ -541,13 +546,15 @@ export default function ReportsPage() {
       // Refresh executions list
       await fetchExecutions();
       
+      const deletedCount = selectedTests.size;
+      
       // Clear selection
       setSelectedTests(new Set());
       
-      alert(`${selectedTests.size} test kaydı başarıyla silindi.`);
+      notifyTestDeleted(`${deletedCount} test kaydı`, '');
     } catch (error) {
       console.error('Error deleting tests:', error);
-      alert('Testler silinirken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      notifyTestFailure('Bulk Delete', '', 'Testler silinirken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     }
   };
 
@@ -1418,6 +1425,18 @@ export default function ReportsPage() {
           </div>
       </div>
       )}
+
+      {/* Bulk Delete Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={showBulkDeleteDialog}
+        onClose={() => setShowBulkDeleteDialog(false)}
+        onConfirm={confirmBulkDelete}
+        title="Test Kayıtlarını Sil"
+        message={`${selectedTests.size} test kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        type="danger"
+      />
     </div>
   );
 } 

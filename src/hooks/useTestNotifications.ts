@@ -156,6 +156,13 @@ export function useTestNotifications() {
       autoClose: true,
       duration: 3000
     });
+    addNotification({
+      type: 'info',
+      title: 'Test Silindi',
+      message: `"${testName}" testi silindi`,
+      testId,
+      persistent: true
+    });
   };
 
   const notifyTestDuplicated = (testName: string, testId: string) => {
@@ -164,6 +171,16 @@ export function useTestNotifications() {
       title: 'Test Kopyalandı',
       message: `"${testName}" testi kopyalandı`,
       testId,
+      autoClose: true,
+      duration: 3000
+    });
+  };
+
+  const notifyWorkflowLoaded = (workflowName: string) => {
+    showToast({
+      type: 'success',
+      title: 'Workflow Yüklendi',
+      message: `"${workflowName}" workflow'u yüklendi!`,
       autoClose: true,
       duration: 3000
     });
@@ -179,6 +196,7 @@ export function useTestNotifications() {
     notifyExecutionStart,
     notifyExecutionComplete,
     notifyTestDeleted,
-    notifyTestDuplicated
+    notifyTestDuplicated,
+    notifyWorkflowLoaded
   };
 }

@@ -333,7 +333,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                             }}>
                               <span>{result.title}</span>
                               <span 
-                                title={result.id}
+                                title={`Test ID: ${result.id}`}
                                 style={{
                                   fontSize: '0.625rem',
                                   color: 'var(--text-tertiary)',
@@ -342,7 +342,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                                   fontFamily: 'monospace',
                                   cursor: 'help'
                                 }}>
-                                {result.id.slice(0, 8)}...
+                                {result.id.length > 15 ? `${result.id.slice(0, 12)}...` : result.id}
                               </span>
                             </div>
                             <div style={{
@@ -441,7 +441,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                             }}>
                               <span>{result.title}</span>
                               <span 
-                                title={result.id}
+                                title={`Test ID: ${result.id}`}
                                 style={{
                                   fontSize: '0.625rem',
                                   color: 'var(--text-tertiary)',
@@ -450,7 +450,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                                   fontFamily: 'monospace',
                                   cursor: 'help'
                                 }}>
-                                {result.id.slice(0, 8)}...
+                                {result.id.length > 15 ? `${result.id.slice(0, 12)}...` : result.id}
                               </span>
                             </div>
                             <div style={{

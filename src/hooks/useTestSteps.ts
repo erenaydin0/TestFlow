@@ -27,7 +27,9 @@ const useTestSteps = (): UseTestStepsReturn => {
   const canRedo = historyIndex < history.length - 1;
 
   const generateId = useCallback(() => {
-    return Math.random().toString(36).substr(2, 9);
+    // Generate readable step ID
+    const timestamp = Date.now().toString().slice(-6);
+    return `step-${timestamp}`;
   }, []);
 
   const saveToHistory = useCallback((newSteps: TestStep[]) => {

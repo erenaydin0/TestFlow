@@ -23,9 +23,10 @@ import {
   Search,
   X
 } from 'lucide-react';
-import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow, migrateTestIds } from '@/lib/utils';
 import { Test } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestsPage() {
@@ -38,6 +39,12 @@ export default function TestsPage() {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [highlightedTestId, setHighlightedTestId] = useState<string | null>(null);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [singleDeleteDialog, setSingleDeleteDialog] = useState<{show: boolean; testId: string; testName: string}>({
+    show: false,
+    testId: '',
+    testName: ''
+  });
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -47,6 +54,9 @@ export default function TestsPage() {
   useEffect(() => {
     const loadTests = () => {
       try {
+        // Önce ID migration'ı çalıştır
+        migrateTestIds();
+        
         const savedWorkflows = getSavedWorkflows();
         setTests(savedWorkflows);
       } catch (error) {
@@ -207,46 +217,55 @@ export default function TestsPage() {
   // Handle delete test
   const handleDeleteTest = (testId: string) => {
     const test = tests.find(t => t.id === testId);
-    if (test && confirm(`"${test.name}" testini silmek istediğinizden emin misiniz?`)) {
-      try {
-        if (deleteWorkflow(testId)) {
-          // Reload tests
-          const updatedTests = getSavedWorkflows();
-          setTests(updatedTests);
-          setSelectedTests(prev => {
-            const newSelection = new Set(prev);
-            newSelection.delete(testId);
-            return newSelection;
-          });
-          notifyTestDeleted(test.name, testId);
-        }
-      } catch (error) {
-        notifyTestFailure(test.name, testId, 'Test silinirken hata oluştu.');
+    if (test) {
+      setSingleDeleteDialog({
+        show: true,
+        testId: testId,
+        testName: test.name
+      });
+    }
+  };
+
+  const confirmSingleDelete = () => {
+    try {
+      if (deleteWorkflow(singleDeleteDialog.testId)) {
+        // Reload tests
+        const updatedTests = getSavedWorkflows();
+        setTests(updatedTests);
+        setSelectedTests(prev => {
+          const newSelection = new Set(prev);
+          newSelection.delete(singleDeleteDialog.testId);
+          return newSelection;
+        });
+        notifyTestDeleted(singleDeleteDialog.testName, singleDeleteDialog.testId);
       }
+    } catch (error) {
+      notifyTestFailure(singleDeleteDialog.testName, singleDeleteDialog.testId, 'Test silinirken hata oluştu.');
     }
   };
 
   // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedTests.size === 0) return;
-    
-    if (confirm(`${selectedTests.size} testi silmek istediğinizden emin misiniz?`)) {
-      try {
-        let deletedCount = 0;
-        selectedTests.forEach(testId => {
-          if (deleteWorkflow(testId)) {
-            deletedCount++;
-          }
-        });
-        
-        // Reload tests
-        const updatedTests = getSavedWorkflows();
-        setTests(updatedTests);
-        setSelectedTests(new Set());
-        alert(`${deletedCount} test başarıyla silindi!`);
-      } catch (error) {
-        alert('Testler silinirken hata oluştu.');
-      }
+    setShowBulkDeleteDialog(true);
+  };
+
+  const confirmBulkDelete = () => {
+    try {
+      let deletedCount = 0;
+      selectedTests.forEach(testId => {
+        if (deleteWorkflow(testId)) {
+          deletedCount++;
+        }
+      });
+      
+      // Reload tests
+      const updatedTests = getSavedWorkflows();
+      setTests(updatedTests);
+      setSelectedTests(new Set());
+      notifyTestDeleted(`${deletedCount} test`, '');
+    } catch (error) {
+      notifyTestFailure('Bulk Delete', '', 'Testler silinirken hata oluştu.');
     }
   };
 
@@ -258,7 +277,7 @@ export default function TestsPage() {
     const validTests = selectedTestsData.filter(test => test.workflow && test.workflow.length > 0);
     
     if (validTests.length === 0) {
-      alert('Seçilen testlerde çalıştırılabilir workflow bulunamadı.');
+      notifyTestFailure('Bulk Run', '', 'Seçilen testlerde çalıştırılabilir workflow bulunamadı.');
       return;
     }
 
@@ -311,13 +330,13 @@ export default function TestsPage() {
       });
 
       const results = await Promise.all(executionPromises);
-      const executionIds = results.map(r => r.executionId).join('\n');
+      const executionIds = results.map(r => r.executionId);
       
-      alert(`${validTests.length} test başarıyla çalıştırılmaya başlandı!\n\nExecution IDs:\n${executionIds}`);
+      notifyTestStart(`${validTests.length} test`, executionIds.join(','));
       
     } catch (error) {
       console.error('Bulk test execution error:', error);
-      alert(`Testler çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}\n\nBackend server'ın çalıştığından emin olun.`);
+      notifyTestFailure('Bulk Run', '', `Testler çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}. Backend server'ın çalıştığından emin olun.`);
     }
   };
 
@@ -332,9 +351,9 @@ export default function TestsPage() {
     if (test && test.workflow) {
       try {
         exportTestWorkflow(test.workflow, `${test.name}.json`);
-        alert(`"${test.name}" başarıyla export edildi!`);
+        notifyTestImported(`"${test.name}" başarıyla export edildi!`, testId);
       } catch (error) {
-        alert('Export işlemi sırasında hata oluştu.');
+        notifyTestFailure('Export', '', 'Export işlemi sırasında hata oluştu.');
       }
     }
   };
@@ -342,7 +361,7 @@ export default function TestsPage() {
   // Handle bulk export (selected tests)
   const handleBulkExport = () => {
     if (selectedTests.size === 0) {
-      alert('Export edilecek test seçin.');
+      notifyTestFailure('Export', '', 'Export edilecek test seçin.');
       return;
     }
 
@@ -353,7 +372,7 @@ export default function TestsPage() {
       const test = selectedTestsData[0];
       if (test.workflow) {
         exportTestWorkflow(test.workflow, `${test.name}.json`);
-        alert(`"${test.name}" başarıyla export edildi!`);
+        notifyTestImported(`"${test.name}" başarıyla export edildi!`, test.id);
       }
     } else {
       // Multiple tests export
@@ -385,7 +404,7 @@ export default function TestsPage() {
       linkElement.setAttribute('download', exportFileName);
       linkElement.click();
 
-      alert(`${selectedTestsData.length} test başarıyla export edildi!`);
+      notifyTestImported(`${selectedTestsData.length} test başarıyla export edildi!`, '');
     }
   };
 
@@ -1048,6 +1067,30 @@ export default function TestsPage() {
         isOpen={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
         onImportSuccess={handleImportSuccess}
+      />
+
+      {/* Bulk Delete Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={showBulkDeleteDialog}
+        onClose={() => setShowBulkDeleteDialog(false)}
+        onConfirm={confirmBulkDelete}
+        title="Testleri Sil"
+        message={`${selectedTests.size} testi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        type="danger"
+      />
+
+      {/* Single Delete Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={singleDeleteDialog.show}
+        onClose={() => setSingleDeleteDialog({show: false, testId: '', testName: ''})}
+        onConfirm={confirmSingleDelete}
+        title="Testi Sil"
+        message={`"${singleDeleteDialog.testName}" testini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        type="danger"
       />
     </div>
   );

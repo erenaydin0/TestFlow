@@ -69,7 +69,25 @@ app.post('/api/execute', async (req, res) => {
       return res.status(400).json({ error: 'Invalid or empty steps provided' });
     }
     
-    const executionId = uuidv4();
+    // Generate readable execution ID based on workflow name
+    const generateReadableExecutionId = (workflowName, workflowId) => {
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
+      if (workflowId && workflowId !== 'manual' && !workflowId.includes('-') === false) {
+        // Use existing readable ID + timestamp
+        return `${workflowId}-${timestamp}`;
+      }
+      // Fallback to name-based ID
+      const cleanName = workflowName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 20) || 'test';
+      return `${cleanName}-${timestamp}`;
+    };
+
+    const executionId = generateReadableExecutionId(workflowName, workflowId);
     const execution = {
       id: executionId,
       workflowId: workflowId || 'manual',
