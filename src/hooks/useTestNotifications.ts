@@ -22,7 +22,7 @@ export function useTestNotifications() {
     });
   };
 
-  const notifyTestSuccess = (testName: string, testId: string, duration?: number) => {
+  const notifyTestSuccess = (testName: string, testId: string, duration?: number, executionId?: string) => {
     const durationText = duration ? ` (${(duration / 1000).toFixed(1)}s)` : '';
     
     showToast({
@@ -30,6 +30,7 @@ export function useTestNotifications() {
       title: 'Test Başarılı',
       message: `"${testName}" testi başarıyla tamamlandı${durationText}`,
       testId,
+      executionId,
       autoClose: true,
       duration: 5000
     });
@@ -39,11 +40,12 @@ export function useTestNotifications() {
       title: 'Test Başarılı',
       message: `"${testName}" testi başarıyla tamamlandı${durationText}`,
       testId,
+      executionId,
       persistent: true
     });
   };
 
-  const notifyTestFailure = (testName: string, testId: string, error?: string, duration?: number) => {
+  const notifyTestFailure = (testName: string, testId: string, error?: string, duration?: number, executionId?: string) => {
     const durationText = duration ? ` (${(duration / 1000).toFixed(1)}s)` : '';
     const errorText = error ? `: ${error}` : '';
     
@@ -52,6 +54,7 @@ export function useTestNotifications() {
       title: 'Test Başarısız',
       message: `"${testName}" testi başarısız oldu${durationText}${errorText}`,
       testId,
+      executionId,
       autoClose: false,  // Hata bildirimleri otomatik kapanmasın
       duration: 10000
     });
@@ -61,6 +64,7 @@ export function useTestNotifications() {
       title: 'Test Başarısız',
       message: `"${testName}" testi başarısız oldu${durationText}${errorText}`,
       testId,
+      executionId,
       persistent: true
     });
   };

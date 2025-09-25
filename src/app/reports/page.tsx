@@ -117,6 +117,43 @@ export default function ReportsPage() {
     }
   }, [searchParams, executions]);
 
+  // Handle test ID parameter to find and open related execution modal
+  useEffect(() => {
+    const testId = searchParams.get('testId');
+    if (testId && executions.length > 0) {
+      console.log('Looking for testId:', testId);
+      console.log('Available executions:', executions.map(e => ({ id: e.id, workflowId: e.workflowId, workflowName: e.workflowName })));
+      
+      // Test ID'sine göre en son execution'ı bulalım - daha geniş filtreleme
+      const testExecutions = executions.filter(e => 
+        e.workflowId === testId || 
+        e.workflowName.toLowerCase().includes(testId.toLowerCase()) ||
+        e.id.includes(testId)
+      );
+      
+      console.log('Matching executions:', testExecutions);
+      
+      if (testExecutions.length > 0) {
+        // En son çalıştırılan execution'ı seç
+        const latestExecution = testExecutions.sort((a, b) => 
+          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        )[0];
+        console.log('Selected execution:', latestExecution);
+        setSelectedExecution(latestExecution);
+      } else {
+        // Eğer testId ile eşleşen bir execution bulunamadıysa, en son execution'ı seç
+        console.log('No matching executions found for testId, selecting latest execution');
+        const latestExecution = executions.sort((a, b) => 
+          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        )[0];
+        if (latestExecution) {
+          console.log('Selected latest execution:', latestExecution);
+          setSelectedExecution(latestExecution);
+        }
+      }
+    }
+  }, [searchParams, executions]);
+
   // Handle ESC key to close modal
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {

@@ -5,6 +5,7 @@ import { Bell, X, CheckCircle, XCircle, AlertCircle, Info, Trash2 } from 'lucide
 import { useNotifications } from '@/lib/notification-context';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 const iconMap = {
   success: CheckCircle,
@@ -23,8 +24,21 @@ const colorMap = {
 export function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, removeNotification, clearAllNotifications } = useNotifications();
+  const router = useRouter();
 
   const unreadCount = notifications.length;
+
+  const handleNotificationClick = (notification: any) => {
+    // ExecutionId varsa direkt o execution'ın modalını aç
+    if (notification.executionId) {
+      setIsOpen(false); // Panel'ı kapat
+      router.push(`/reports?executionId=${notification.executionId}`);
+    } else if (notification.testId) {
+      // Test ID'si varsa reports sayfasında arama yap
+      setIsOpen(false); // Panel'ı kapat
+      router.push(`/reports?testId=${notification.testId}`);
+    }
+  };
 
   return (
     <div className="relative">
@@ -90,16 +104,28 @@ export function NotificationPanel() {
                     return (
                       <div
                         key={notification.id}
-                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        className={`p-4 transition-colors ${
+                          notification.executionId || notification.testId 
+                            ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer' 
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                        onClick={() => {
+                          if (notification.executionId || notification.testId) {
+                            handleNotificationClick(notification);
+                          }
+                        }}
                       >
                         <div className="flex items-start space-x-3">
                           <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${colorMap[notification.type]}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            <p className="text-md font-medium text-gray-900 dark:text-white">
                               {notification.title}
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-gray-100 dark:text-gray-100 mt-1">
                               {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              {notification.executionId || notification.testId}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
                               {formatDistanceToNow(notification.timestamp, { 
@@ -107,23 +133,12 @@ export function NotificationPanel() {
                                 locale: tr
                               })}
                             </p>
-                            {(notification.testId || notification.executionId) && (
-                              <div className="flex items-center mt-2 space-x-2">
-                                {notification.testId && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    Test ID: {notification.testId.slice(0, 8)}...
-                                  </span>
-                                )}
-                                {notification.executionId && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    Exec ID: {notification.executionId.slice(0, 8)}...
-                                  </span>
-                                )}
-                              </div>
-                            )}
                           </div>
                           <button
-                            onClick={() => removeNotification(notification.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeNotification(notification.id);
+                            }}
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                           >
                             <X className="h-4 w-4" />
