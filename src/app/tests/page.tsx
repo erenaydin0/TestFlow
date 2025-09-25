@@ -416,19 +416,18 @@ export default function TestsPage() {
           {/* Header with stats */}
           <div style={{ marginBottom: '1.5rem' }}>
             <h1 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: 600, 
-              color: 'var(--text-primary)',
-              margin: '0 0 0.5rem 0'
+                fontSize: '1.875rem', 
+                fontWeight: 'bold', 
+                color: 'var(--text-primary)', 
+                margin: 0 
             }}>
-              Testler
+              Kayıtlı Testler
             </h1>
             <p style={{ 
-              fontSize: '0.875rem', 
-              color: 'var(--text-secondary)',
-              margin: 0
+                color: 'var(--text-secondary)', 
+                margin: '0.5rem 0 0 0' 
             }}>
-              Toplam {tests.length} test bulunuyor • {filteredTests.length} gösteriliyor
+              Toplam {tests.length} kayıtlı test bulunuyor • {filteredTests.length} gösteriliyor
             </p>
           </div>
 

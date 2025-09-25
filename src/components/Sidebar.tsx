@@ -4,20 +4,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
-  TestTube, 
-  Clock, 
-  BarChart3, 
+  TestTube,
   Settings, 
-  HelpCircle,
-  Workflow
+  Workflow,
+  Calendar
 } from 'lucide-react';
+import { BarChart } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Test Builder', href: '/test-builder', icon: Workflow },
-  { name: 'Testler', href: '/tests', icon: TestTube },
-  { name: 'Zamanlanmış', href: '/scheduled', icon: Clock },
-  { name: 'Raporlar', href: '/reports', icon: BarChart3 },
+  { name: 'Test Oluşturucu', href: '/test-builder', icon: Workflow },
+  { name: 'Kayıtlı Testler', href: '/tests', icon: TestTube },
+  { name: 'Zamanlanmış Testler', href: '/scheduled', icon: Calendar },
+  { name: 'Test Sonuçları', href: '/reports', icon: BarChart },
 ];
 
 const bottomNavigation = [
@@ -44,16 +43,6 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav style={{ flex: 1, padding: '1.5rem 1rem', overflow: 'auto' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <h3 style={{ 
-            fontSize: '0.75rem', 
-            fontWeight: 600, 
-            color: 'var(--text-tertiary)', 
-            marginBottom: '0.75rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            Ana Menü
-          </h3>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {navigation.map((item) => {
               const Icon = item.icon;

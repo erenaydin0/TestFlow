@@ -117,8 +117,38 @@ export default function ScheduledPage() {
         paddingTop: '4rem' // Header height
       }}>
         <Header />
-        
         <main style={{ padding: '1.5rem' }}>
+          {/* Header */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '2rem' 
+          }}>
+            <div>
+              <h1 style={{ 
+                fontSize: '1.875rem', 
+                fontWeight: 'bold', 
+                color: 'var(--text-primary)', 
+                margin: 0 
+              }}>
+                Zamanlanmış Testler
+              </h1>
+              <p style={{ 
+                color: 'var(--text-secondary)', 
+                margin: '0.5rem 0 0 0' 
+              }}>
+                Zamanlanmış testleri kontrol edin
+                {SCHEDULED_TESTS.length > 0 && (
+                  <span style={{ color: '#2563eb', marginLeft: '0.5rem' }}>
+                    ({SCHEDULED_TESTS.length} / {SCHEDULED_TESTS.length} test)
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        
+        
           {/* Actions */}
           <div style={{ 
             display: 'flex', 

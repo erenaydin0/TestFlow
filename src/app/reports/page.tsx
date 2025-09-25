@@ -557,7 +557,7 @@ export default function ReportsPage() {
                 color: 'var(--text-primary)', 
                 margin: 0 
               }}>
-                Test Raporları
+                Test Sonuçları
               </h1>
               <p style={{ 
                 color: 'var(--text-secondary)', 
