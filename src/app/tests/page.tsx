@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import StatusBadge from '@/components/StatusBadge';
 import { 
   Play, 
   Pause, 
@@ -19,7 +18,9 @@ import {
   FileText,
   AlertCircle,
   Download,
-  Upload
+  Upload,
+  Search,
+  X
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow } from '@/lib/utils';
 import { Test } from '@/types';
@@ -29,11 +30,12 @@ export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
-  const [statusFilter, setStatusFilter] = useState<string>('');
   const [suiteFilter, setSuiteFilter] = useState<string>('');
+  const [searchFilter, setSearchFilter] = useState<string>('');
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Load saved workflows
   useEffect(() => {
@@ -51,11 +53,22 @@ export default function TestsPage() {
     loadTests();
   }, []);
 
-  // Filter tests based on status and suite
+  // Handle URL search parameter
+  useEffect(() => {
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      setSearchFilter(searchQuery);
+    }
+  }, [searchParams]);
+
+  // Filter tests based on search and suite
   const filteredTests = tests.filter(test => {
-    const matchesStatus = !statusFilter || test.status === statusFilter;
+    const matchesSearch = !searchFilter || 
+      test.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      test.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      test.tags.some(tag => tag.toLowerCase().includes(searchFilter.toLowerCase()));
     const matchesSuite = !suiteFilter || test.suite === suiteFilter;
-    return matchesStatus && matchesSuite;
+    return matchesSearch && matchesSuite;
   });
 
   // Get unique suites for filter dropdown
@@ -414,166 +427,228 @@ export default function TestsPage() {
             </p>
           </div>
 
-          {/* Filters and Actions */}
+          {/* Tests List */}
+          <div className="card">
           <div style={{ 
             display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            marginBottom: '1.5rem' 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <select 
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-                }}
-              >
-                <option value="">Tüm Durumlar</option>
-                <option value="passed">Başarılı</option>
-                <option value="failed">Başarısız</option>
-                <option value="pending">Beklemede</option>
-                <option value="running">Çalışıyor</option>
-              </select>
-              
-              <select 
-                value={suiteFilter}
-                onChange={(e) => setSuiteFilter(e.target.value)}
-                style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-                }}
-              >
-                <option value="">Tüm Test Grupları</option>
-                {uniqueSuites.map(suite => (
-                  <option key={suite} value={suite}>{suite}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* Import/Export Buttons */}
-              <button 
-                onClick={handleImport}
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                }}
-              >
-                <Upload size={16} />
-                İçe Aktar
-              </button>
+              justifyContent: 'space-between', 
+            alignItems: 'center',
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: '0.75rem',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
+                {/* Test Name Search */}
+                <div style={{ position: 'relative', minWidth: '150px' }}>
+                  <Search size={14} style={{ 
+                    position: 'absolute', 
+                    left: '0.5rem', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)', 
+                    color: 'var(--text-secondary)' 
+                  }} />
+                  <input
+                    type="text"
+                    placeholder="Test adı..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.5rem 0.375rem 2rem',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.375rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.75rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
 
-              {selectedTests.size > 0 && (
-                <button 
-                  onClick={handleBulkExport}
+                {/* Suite Filter */}
+                <select
+                  value={suiteFilter}
+                  onChange={(e) => setSuiteFilter(e.target.value)}
                   style={{
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #2563eb',
-                    borderRadius: '0.5rem',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    color: '#2563eb',
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    minWidth: '100px'
+                  }}
+                >
+                  <option value="">Tüm Test Grupları</option>
+                  {uniqueSuites.map(suite => (
+                    <option key={suite} value={suite}>{suite}</option>
+                  ))}
+                </select>
+
+                {/* Clear Filters Button */}
+                {(searchFilter || suiteFilter) && (
+                  <button
+                    onClick={() => {
+                      setSearchFilter('');
+                      setSuiteFilter('');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.375rem 0.5rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.375rem',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    <X size={12} />
+                    Temizle
+                  </button>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {/* Import/Export Buttons */}
+                <button 
+                  onClick={handleImport}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     cursor: 'pointer',
-                    fontSize: '0.875rem',
+                    fontSize: '0.75rem',
                     fontWeight: 500,
                     transition: 'all 0.2s',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    gap: '0.25rem'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
+                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
                   }}
                 >
-                  <Download size={16} />
-                  Export ({selectedTests.size})
+                  <Upload size={12} />
+                  İçe Aktar
                 </button>
-              )}
 
-              {selectedTests.size > 0 && (
-                <>
-                  <button 
-                    onClick={handleBulkRun}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      border: '1px solid #059669',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                      color: '#059669',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Seçilenleri Çalıştır ({selectedTests.size})
-                  </button>
-                  <button 
-                    onClick={handleBulkDelete}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      border: '1px solid #dc2626',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                      color: '#dc2626',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Seçilenleri Sil ({selectedTests.size})
-                  </button>
-                </>
-              )}
-              <button 
-                onClick={handleCreateNewTest}
-                className="btn-primary" 
-                style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem' 
-                }}
-              >
-                <Plus size={16} />
-                Yeni Test Oluştur
-              </button>
+                {selectedTests.size > 0 && (
+                  <>
+                    <span style={{ 
+                      fontSize: '0.875rem', 
+                      color: 'var(--text-secondary)' 
+                    }}>
+                      {selectedTests.size} test seçili
+                    </span>
+                    <button 
+                      onClick={handleBulkExport}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        border: '1px solid #2563eb',
+                        borderRadius: '0.375rem',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        color: '#2563eb',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                      }}
+                    >
+                      <Download size={12} />
+                      Dışa Aktar
+                    </button>
+                    <button 
+                      onClick={handleBulkRun}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        border: '1px solid #059669',
+                        borderRadius: '0.375rem',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        color: '#059669',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Çalıştır
+                    </button>
+                    <button 
+                      onClick={handleBulkDelete}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        border: '1px solid #dc2626',
+                        borderRadius: '0.375rem',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Sil
+                    </button>
+                    <button
+                      onClick={() => setSelectedTests(new Set())}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.375rem 0.5rem',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <X size={12} />
+                      Temizle
+                    </button>
+                  </>
+                )}
+                
+                <button 
+                  onClick={handleCreateNewTest}
+                  className="btn-primary" 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.25rem',
+                    padding: '0.375rem 0.75rem',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  <Plus size={12} />
+                  Yeni Test
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Tests Table */}
-          {filteredTests.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
+            {filteredTests.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
               <div style={{ 
                 width: '4rem', 
                 height: '4rem', 
@@ -617,10 +692,9 @@ export default function TestsPage() {
                 <Plus size={16} />
                 İlk Test Workflow'unu Oluştur
               </button>
-            </div>
-          ) : (
-          <div className="card">
-            <div style={{ overflowX: 'auto' }}>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
@@ -658,15 +732,6 @@ export default function TestsPage() {
                       fontSize: '0.875rem'
                     }}>
                       Test Grubu
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      Durum
                     </th>
                     <th style={{ 
                       textAlign: 'left', 
@@ -760,10 +825,6 @@ export default function TestsPage() {
                         }}>
                           {test.suite}
                         </span>
-                      </td>
-                      
-                      <td style={{ padding: '1rem' }}>
-                        <StatusBadge status={test.status} />
                       </td>
                       
                       <td style={{ padding: '1rem' }}>
@@ -943,9 +1004,8 @@ export default function TestsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-          )}
+              </div>
+            )}
         </main>
       </div>
 
