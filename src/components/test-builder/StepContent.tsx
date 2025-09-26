@@ -46,6 +46,29 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
             <span>Süre: {step.duration || 1000}ms</span>
           )}
           {step.type === 'refresh' && 'Sayfa yenileme'}
+          {step.type === 'verify' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span>Element: {step.selector || 'Belirtilmedi'}</span>
+              <span>Tür: {step.verificationType || 'Belirtilmedi'}</span>
+              {step.expectedValue && <span>Değer: {step.expectedValue}</span>}
+            </div>
+          )}
+          {step.type === 'scroll' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {step.selector && <span>Element: {step.selector}</span>}
+              <span>Yön: {step.direction || 'Belirtilmedi'}</span>
+              {step.amount && <span>Miktar: {step.amount}px</span>}
+            </div>
+          )}
+          {step.type === 'hover' && (
+            <span>Element: {step.selector || 'Belirtilmedi'}</span>
+          )}
+          {step.type === 'key' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span>Tuş: {step.key || 'Belirtilmedi'}</span>
+              {step.selector && <span>Element: {step.selector}</span>}
+            </div>
+          )}
           {step.type === 'if' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               <span>Koşul: {step.condition || 'Belirtilmedi'}</span>
@@ -86,6 +109,27 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
           {step.type === 'input' && step.value && `Input: ${step.value}`}
           {step.type === 'wait' && `Süre: ${step.duration || 1000}ms`}
           {step.type === 'refresh' && 'Sayfa yenileme'}
+          {step.type === 'verify' && (
+            <div>
+              {step.selector && `Element: ${step.selector}`}
+              {step.verificationType && `, Tür: ${step.verificationType}`}
+              {step.expectedValue && `, Değer: ${step.expectedValue}`}
+            </div>
+          )}
+          {step.type === 'scroll' && (
+            <div>
+              {step.selector && `Element: ${step.selector}, `}
+              {`Yön: ${step.direction || 'Belirtilmedi'}`}
+              {step.amount && `, Miktar: ${step.amount}px`}
+            </div>
+          )}
+          {step.type === 'hover' && step.selector && `Element: ${step.selector}`}
+          {step.type === 'key' && (
+            <div>
+              {`Tuş: ${step.key || 'Belirtilmedi'}`}
+              {step.selector && `, Element: ${step.selector}`}
+            </div>
+          )}
           {step.type === 'if' && step.condition && `Koşul: ${step.condition}`}
         </div>
       )}
