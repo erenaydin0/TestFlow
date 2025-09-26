@@ -54,24 +54,41 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
   // Filtreleme
   useEffect(() => {
-    const inputValue = getCurrentInputValue().toLowerCase();
-    const selectedValues = getSelectedValues();
-    
-    if (!inputValue) {
-      setFilteredOptions(
-        options.filter(option => !selectedValues.includes(option)).slice(0, 10)
-      );
+    if (multiple) {
+      // Multiple mode - etiketler için
+      const inputValue = currentInput.toLowerCase();
+      const selectedValues = getSelectedValues();
+      
+      if (!inputValue) {
+        setFilteredOptions(
+          options.filter(option => !selectedValues.includes(option)).slice(0, 10)
+        );
+      } else {
+        const filtered = options
+          .filter(option => 
+            option.toLowerCase().includes(inputValue) &&
+            !selectedValues.includes(option)
+          )
+          .slice(0, 10);
+        setFilteredOptions(filtered);
+      }
     } else {
-      const filtered = options
-        .filter(option => 
-          option.toLowerCase().includes(inputValue) &&
-          !selectedValues.includes(option)
-        )
-        .slice(0, 10);
-      setFilteredOptions(filtered);
+      // Single mode - grup için  
+      const inputValue = currentInput.toLowerCase();
+      
+      if (!inputValue) {
+        // Input boşsa tüm seçenekleri göster
+        setFilteredOptions(options.slice(0, 10));
+      } else {
+        // Input varsa filtrele
+        const filtered = options
+          .filter(option => option.toLowerCase().includes(inputValue))
+          .slice(0, 10);
+        setFilteredOptions(filtered);
+      }
     }
     setHighlightedIndex(-1);
-  }, [currentInput, value, options, multiple]);
+  }, [currentInput, options, multiple]);
 
   // Component mount/update sırasında current input'u sync et
   useEffect(() => {
@@ -207,6 +224,16 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsOpen(true);
+    
+    // Tek seçim modunda input'taki metni seç ve currentInput'u temizle
+    if (!multiple) {
+      if (e.target.value) {
+        e.target.select();
+      }
+      // CurrentInput'u temizleyerek tüm seçeneklerin görünmesini sağla
+      setCurrentInput('');
+    }
+    
     onFocus?.(e);
   };
 
@@ -214,6 +241,10 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     // Dropdown'daki seçeneklere tıklama için küçük bir gecikme
     setTimeout(() => {
       setIsOpen(false);
+      // Tek seçim modunda currentInput'u value ile sync et
+      if (!multiple) {
+        setCurrentInput(value || '');
+      }
     }, 150);
     onBlur?.(e);
   };
@@ -290,7 +321,20 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
         
         <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            const willOpen = !isOpen;
+            setIsOpen(willOpen);
+            
+            // Tek seçim modunda input'u focus et ve metni seç
+            if (!multiple && willOpen) {
+              // CurrentInput'u temizleyerek tüm seçeneklerin görünmesini sağla
+              setCurrentInput('');
+              inputRef.current?.focus();
+              if (inputRef.current?.value) {
+                inputRef.current.select();
+              }
+            }
+          }}
           style={{
             position: 'absolute',
             right: '0.75rem',
