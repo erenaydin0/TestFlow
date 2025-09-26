@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Save, X, AlertCircle, Tag, FolderOpen } from 'lucide-react';
 
 interface SaveDialogProps {
@@ -33,15 +33,28 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
   const [tags, setTags] = useState('');
   const [suite, setSuite] = useState('Default');
   const [errors, setErrors] = useState<string[]>([]);
+  const hasInitialized = useRef(false);
 
-  // Initialize form with initial data
+  // Initialize form with initial data - only when dialog first opens
   useEffect(() => {
-    if (isOpen) {
-      setName(initialData?.name || '');
-      setDescription(initialData?.description || '');
-      setTags(initialData?.tags?.join(', ') || '');
-      setSuite(initialData?.suite || 'Default');
+    if (isOpen && !hasInitialized.current) {
+      if (initialData) {
+        setName(initialData.name || '');
+        setDescription(initialData.description || '');
+        setTags(initialData.tags?.join(', ') || '');
+        setSuite(initialData.suite || 'Default');
+      } else {
+        // Reset for new workflow
+        setName('');
+        setDescription('');
+        setTags('');
+        setSuite('Default');
+      }
       setErrors([]);
+      hasInitialized.current = true;
+    } else if (!isOpen) {
+      // Reset flag when dialog closes
+      hasInitialized.current = false;
     }
   }, [isOpen, initialData]);
 
