@@ -220,7 +220,7 @@ export const migrateTestIds = (): boolean => {
 };
 
 // Workflow storage utilities
-const WORKFLOWS_STORAGE_KEY = 'testflow_saved_workflows';
+const WORKFLOWS_STORAGE_KEY = 'CosmicQA_saved_workflows';
 
 export const saveWorkflowToStorage = (workflow: {
   name: string;
@@ -421,7 +421,7 @@ export const exportAllWorkflows = (): void => {
   const dataStr = JSON.stringify(exportData, null, 2);
   const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
   
-  const exportFileDefaultName = `testflow-workflows-backup-${new Date().toISOString().split('T')[0]}.json`;
+  const exportFileDefaultName = `CosmicQA-workflows-backup-${new Date().toISOString().split('T')[0]}.json`;
   
   const linkElement = document.createElement('a');
   linkElement.setAttribute('href', dataUri);

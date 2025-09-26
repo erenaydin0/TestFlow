@@ -195,7 +195,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
 
     // Check if workflow with same name exists
-    const existingWorkflows = JSON.parse(localStorage.getItem('testflow_saved_workflows') || '[]');
+    const existingWorkflows = JSON.parse(localStorage.getItem('CosmicQA_saved_workflows') || '[]');
     const willOverwrite = existingWorkflows.some((w: any) => w.name === workflow.name);
 
     return {

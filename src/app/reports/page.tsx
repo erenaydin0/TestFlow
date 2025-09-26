@@ -660,7 +660,7 @@ export default function ReportsPage() {
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `TestFlow_TopluRapor_${new Date().toISOString().split('T')[0]}_${selectedTests.size}test.zip`;
+      a.download = `CosmicQA_TopluRapor_${new Date().toISOString().split('T')[0]}_${selectedTests.size}test.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

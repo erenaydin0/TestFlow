@@ -462,7 +462,7 @@ export default function TestsPage() {
       const dataStr = JSON.stringify(exportData, null, 2);
       const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
       
-      const exportFileName = `testflow-workflows-${selectedTestsData.length}-tests-${new Date().toISOString().split('T')[0]}.json`;
+      const exportFileName = `CosmicQA-workflows-${selectedTestsData.length}-tests-${new Date().toISOString().split('T')[0]}.json`;
       
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);

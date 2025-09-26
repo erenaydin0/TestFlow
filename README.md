@@ -1,6 +1,6 @@
-# TestFlow - Playwright Test Automation Dashboard
+# CosmicQA - Playwright Test Automation Dashboard
 
-TestFlow, görsel test oluşturma ve Playwright ile otomatik test çalıştırma özelliklerine sahip modern bir test otomasyon platformudur.
+CosmicQA, görsel test oluşturma ve Playwright ile otomatik test çalıştırma özelliklerine sahip modern bir test otomasyon platformudur.
 
 ## 🚀 Özellikler
 
@@ -35,7 +35,7 @@ TestFlow, görsel test oluşturma ve Playwright ile otomatik test çalıştırma
 ### 1. Projeyi Klonlayın
 ```bash
 git clone <repository-url>
-cd TestFlow-Deneme
+cd CosmicQA
 ```
 
 ### 2. Dependencies'leri Kurun
@@ -116,7 +116,7 @@ npm run server:dev
 ## 📁 Proje Yapısı
 
 ```
-TestFlow-Deneme/
+CosmicQA-Deneme/
 ├── src/                          # Frontend (Next.js)
 │   ├── app/                      # App Router pages
 │   │   ├── test-builder/         # Visual test builder
@@ -188,4 +188,4 @@ Bu proje MIT lisansı ile lisanslanmıştır.
 
 ---
 
-**TestFlow** - Modern test otomasyonu için geliştirilmiştir. 🚀 
+**CosmicQA** - Modern test otomasyonu için geliştirilmiştir. 🚀 

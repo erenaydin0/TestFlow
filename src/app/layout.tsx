@@ -9,7 +9,7 @@ import { ToastContainer } from '@/components/notifications/ToastContainer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'TestFlow',
+  title: 'CosmicQA',
   description: 'Modern ve kullanıcı dostu Playwright test otomasyonu uygulaması',
 };
 

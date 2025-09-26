@@ -475,7 +475,7 @@ app.get('/api/health', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`🚀 TestFlow Backend Server running on port ${PORT}`);
+  console.log(`🚀 CosmicQA Backend Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔌 WebSocket server ready for connections`);
 });
