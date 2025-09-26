@@ -50,8 +50,9 @@ const useKeyboardShortcuts = ({
 }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent shortcuts when modal is open or input is focused
-      if (isModalOpen || (e.target as HTMLElement).tagName === 'INPUT') return;
+      // Prevent shortcuts when modal is open or input/textarea is focused
+      const target = e.target as HTMLElement;
+      if (isModalOpen || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
 
       if (e.ctrlKey || e.metaKey) {
         switch (e.key.toLowerCase()) {
