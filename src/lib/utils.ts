@@ -480,4 +480,47 @@ export const importWorkflowsFromBackup = (file: File): Promise<{ imported: numbe
     
     reader.readAsText(file);
   });
+};
+
+// Get unique tags from saved workflows
+export const getExistingTags = (): string[] => {
+  try {
+    const workflows = getSavedWorkflows();
+    const allTags = new Set<string>();
+    
+    workflows.forEach(workflow => {
+      workflow.tags.forEach(tag => {
+        if (tag.trim()) {
+          allTags.add(tag.trim());
+        }
+      });
+    });
+    
+    return Array.from(allTags).sort();
+  } catch (error) {
+    console.error('Error getting existing tags:', error);
+    return [];
+  }
+};
+
+// Get unique suites from saved workflows
+export const getExistingSuites = (): string[] => {
+  try {
+    const workflows = getSavedWorkflows();
+    const allSuites = new Set<string>();
+    
+    workflows.forEach(workflow => {
+      if (workflow.suite && workflow.suite.trim()) {
+        allSuites.add(workflow.suite.trim());
+      }
+    });
+    
+    // Add default suite if not present
+    allSuites.add('Default');
+    
+    return Array.from(allSuites).sort();
+  } catch (error) {
+    console.error('Error getting existing suites:', error);
+    return ['Default'];
+  }
 }; 

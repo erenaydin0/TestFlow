@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, X, AlertCircle, Tag, FolderOpen } from 'lucide-react';
+import AutocompleteInput from '@/components/ui/AutocompleteInput';
+import { getExistingTags, getExistingSuites } from '@/lib/utils';
 
 interface SaveDialogProps {
   isOpen: boolean;
@@ -33,7 +35,17 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
   const [tags, setTags] = useState('');
   const [suite, setSuite] = useState('Default');
   const [errors, setErrors] = useState<string[]>([]);
+  const [existingTags, setExistingTags] = useState<string[]>([]);
+  const [existingSuites, setExistingSuites] = useState<string[]>([]);
   const hasInitialized = useRef(false);
+
+  // Load existing tags and suites when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setExistingTags(getExistingTags());
+      setExistingSuites(getExistingSuites());
+    }
+  }, [isOpen]);
 
   // Initialize form with initial data - only when dialog first opens
   useEffect(() => {
@@ -347,22 +359,12 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
                 <Tag size={14} />
                 Etiketler
               </label>
-              <input
-                type="text"
+              <AutocompleteInput
                 value={tags}
-                onChange={(e) => setTags(e.target.value)}
+                onChange={setTags}
+                options={existingTags}
                 placeholder="login, checkout, smoke-test (virgülle ayırın)"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                multiple={true}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = '#2563eb';
                   e.currentTarget.style.boxShadow = '0 0 0 3px #2563eb20';
@@ -377,7 +379,7 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
                 color: 'var(--text-secondary)',
                 margin: '0.25rem 0 0 0'
               }}>
-                Etiketleri virgülle ayırarak yazın
+                Mevcut etiketlerden seçebilir ya da yeni etiket yazabilirsiniz
               </p>
             </div>
 
@@ -395,22 +397,12 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
                 <FolderOpen size={14} />
                 Test Paketi
               </label>
-              <input
-                type="text"
+              <AutocompleteInput
                 value={suite}
-                onChange={(e) => setSuite(e.target.value)}
+                onChange={setSuite}
+                options={existingSuites}
                 placeholder="Test paketinin adı"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                multiple={false}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = '#2563eb';
                   e.currentTarget.style.boxShadow = '0 0 0 3px #2563eb20';
@@ -420,6 +412,13 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               />
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                margin: '0.25rem 0 0 0'
+              }}>
+                Mevcut paketlerden seçebilir ya da yeni paket adı yazabilirsiniz
+              </p>
             </div>
           </div>
 
