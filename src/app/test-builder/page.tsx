@@ -28,6 +28,8 @@ import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
 import SaveDialog from '@/components/test-builder/SaveDialog';
+import UnsavedChangesDialog from '@/components/test-builder/UnsavedChangesDialog';
+import useUnsavedChanges from '@/hooks/useUnsavedChanges';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestBuilder() {
@@ -128,7 +130,44 @@ export default function TestBuilder() {
   const [loadedWorkflowName, setLoadedWorkflowName] = useState<string | null>(null);
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
+
+  // Promise resolver for save operation
+  const savePromiseRef = useRef<{
+    resolve: () => void;
+    reject: (error: any) => void;
+  } | null>(null);
+
+  // Unsaved changes hook
+  const {
+    hasUnsavedChanges,
+    showUnsavedDialog,
+    pendingNavigation,
+    handleNavigation,
+    confirmNavigation,
+    cancelNavigation,
+    saveAndNavigate,
+    markAsSaved,
+    resetUnsavedChanges
+  } = useUnsavedChanges({
+    testSteps,
+    onSave: async () => {
+      if (testSteps.length === 0) return;
+      
+      return new Promise<void>((resolve, reject) => {
+        savePromiseRef.current = { resolve, reject };
+        setIsSaveDialogOpen(true);
+      });
+    }
+  });
   const [headlessMode, setHeadlessMode] = useState(false);
+  
+  // When save dialog opens, hide unsaved changes dialog
+  useEffect(() => {
+    if (isSaveDialogOpen && showUnsavedDialog) {
+      // SaveDialog açıldığında UnsavedChangesDialog'u gizle
+      // Ancak bu geçici bir gizleme, gerçek kapatma handleSaveFromDialog'da olacak
+    }
+  }, [isSaveDialogOpen, showUnsavedDialog]);
   
   // Debug: Log initial state
   useEffect(() => {
@@ -425,13 +464,28 @@ export default function TestBuilder() {
         setLoadedWorkflowId(workflowId); // Yeni kaydedilen workflow'u track et
       }
       
+      // Mark as saved for unsaved changes tracking
+      markAsSaved();
+      
+      // Resolve the save promise if exists
+      if (savePromiseRef.current) {
+        savePromiseRef.current.resolve();
+        savePromiseRef.current = null;
+      }
+      
       // Optional: Clear current workspace or keep it
       // setTestSteps([]);
       // clearSelection();
     } catch (error) {
       notifyTestFailure('Test Kaydetme', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
+      
+      // Reject the save promise if exists
+      if (savePromiseRef.current) {
+        savePromiseRef.current.reject(error);
+        savePromiseRef.current = null;
+      }
     }
-  }, [testSteps, loadedWorkflowId, enableScreenshots, enableRecording, headlessMode]);
+  }, [testSteps, loadedWorkflowId, enableScreenshots, enableRecording, headlessMode, markAsSaved]);
 
   // Handle run workflow - Updated to use backend API
   const [isRunning, setIsRunning] = useState(false);
@@ -526,6 +580,11 @@ export default function TestBuilder() {
         setEnableRecording(workflow.enableRecording || false);
         setHeadlessMode(workflow.headlessMode || false);
         
+        // Reset unsaved changes after workflow is loaded
+        setTimeout(() => {
+          resetUnsavedChanges();
+        }, 0);
+        
         // Show success message only if not shown before for this workflow
         const notificationKey = `loaded-${loadWorkflowId}`;
         if (!shownNotifications.current.has(notificationKey)) {
@@ -551,7 +610,7 @@ export default function TestBuilder() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
-      <Sidebar />
+      <Sidebar onNavigationAttempt={handleNavigation} />
       
       <div style={{ 
         flex: 1, 
@@ -727,7 +786,14 @@ export default function TestBuilder() {
 
       <SaveDialog
         isOpen={isSaveDialogOpen}
-        onClose={() => setIsSaveDialogOpen(false)}
+        onClose={() => {
+          setIsSaveDialogOpen(false);
+          // Reject save promise if canceled
+          if (savePromiseRef.current) {
+            savePromiseRef.current.reject(new Error('Save canceled by user'));
+            savePromiseRef.current = null;
+          }
+        }}
         onSave={handleSaveFromDialog}
         initialData={loadedWorkflowId ? (() => {
           const workflow = getWorkflowById(loadedWorkflowId);
@@ -739,6 +805,14 @@ export default function TestBuilder() {
           } : undefined;
         })() : undefined}
         isUpdating={!!loadedWorkflowId}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={showUnsavedDialog}
+        onSave={saveAndNavigate}
+        onDiscard={confirmNavigation}
+        onCancel={cancelNavigation}
+        isSaveDialogOpen={isSaveDialogOpen}
       />
     </div>
   );

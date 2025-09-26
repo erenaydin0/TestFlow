@@ -139,7 +139,7 @@ const SaveDialog: React.FC<SaveDialogProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000
+        zIndex: 10000
       }}
       onClick={onClose}
     >

@@ -13,6 +13,10 @@ import {
 import { BarChart } from 'lucide-react';
 import { useSidebar } from '@/lib/sidebar-context';
 
+interface SidebarProps {
+  onNavigationAttempt?: (href: string) => void;
+}
+
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Test Oluşturucu', href: '/test-builder', icon: Workflow },
@@ -21,7 +25,7 @@ const navigation = [
   { name: 'Test Sonuçları', href: '/reports', icon: BarChart },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const pathname = usePathname();
   const { isCollapsed, setIsCollapsed } = useSidebar();
 
@@ -59,6 +63,12 @@ export default function Sidebar() {
                       padding: isCollapsed ? '0.75rem' : '0.75rem 1rem'
                     }}
                     title={isCollapsed ? item.name : undefined}
+                    onClick={(e) => {
+                      if (onNavigationAttempt) {
+                        e.preventDefault();
+                        onNavigationAttempt(item.href);
+                      }
+                    }}
                   >
                     <Icon size={18} />
                     {!isCollapsed && (
