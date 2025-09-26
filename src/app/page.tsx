@@ -136,16 +136,20 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div className="lg:col-span-2">
+              {/* Üst satır: Günlük Test Sonuçları (sol) + Son Testler (sağ) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+                <div className="lg:col-span-8">
                   <DailyTestResults data={chartData.dailyResults} />
                 </div>
-                <div>
-                  <TestSuiteDistribution data={chartData.testSuiteData} />
+                <div className="lg:col-span-4">
+                  <RecentTests data={chartData.recentTests} />
                 </div>
               </div>
 
-              <RecentTests data={chartData.recentTests} />
+              {/* Alt satır: Test Dağılımı (tam genişlik) */}
+              <div className="mb-6">
+                <TestSuiteDistribution data={chartData.testSuiteData} />
+              </div>
             </>
           )}
         </main>
