@@ -262,21 +262,10 @@ const extendedActions: ActionType[] = [
       {
         key: 'key',
         label: 'Tuş',
-        type: 'select',
+        type: 'text',
+        placeholder: 'Tuş yakalamak için alana tıklayın ve tuşa basın...',
         required: true,
-        options: [
-          { value: 'Enter', label: 'Enter' },
-          { value: 'Tab', label: 'Tab' },
-          { value: 'Escape', label: 'Escape' },
-          { value: 'Space', label: 'Space' },
-          { value: 'ArrowUp', label: 'Yukarı Ok' },
-          { value: 'ArrowDown', label: 'Aşağı Ok' },
-          { value: 'ArrowLeft', label: 'Sol Ok' },
-          { value: 'ArrowRight', label: 'Sağ Ok' },
-          { value: 'Backspace', label: 'Backspace' },
-          { value: 'Delete', label: 'Delete' }
-        ],
-        description: 'Basılacak klavye tuşu'
+        description: 'Basılacak klavye tuşu - input alanına tıklayıp istediğiniz tuşa basın'
       },
       {
         key: 'selector',

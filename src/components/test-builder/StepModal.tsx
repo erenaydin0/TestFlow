@@ -40,6 +40,8 @@ const StepModal: React.FC<StepModalProps> = ({
 }) => {
   // Local state for form inputs
   const [localStep, setLocalStep] = useState<TestStep | null>(null);
+  // State for keyboard capture
+  const [isCapturingKey, setIsCapturingKey] = useState<string | null>(null);
 
   // Initialize local state when step changes
   useEffect(() => {
@@ -71,6 +73,31 @@ const StepModal: React.FC<StepModalProps> = ({
     }
   };
 
+  // Handle keyboard capture for key fields
+  const handleKeyCapture = (fieldKey: string, event: React.KeyboardEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    let keyName = event.key;
+    
+    // Special key mappings
+    if (event.key === ' ') keyName = 'Space';
+    if (event.key === 'ArrowUp') keyName = 'ArrowUp';
+    if (event.key === 'ArrowDown') keyName = 'ArrowDown';
+    if (event.key === 'ArrowLeft') keyName = 'ArrowLeft';
+    if (event.key === 'ArrowRight') keyName = 'ArrowRight';
+    if (event.key === 'Enter') keyName = 'Enter';
+    if (event.key === 'Tab') keyName = 'Tab';
+    if (event.key === 'Escape') keyName = 'Escape';
+    if (event.key === 'Backspace') keyName = 'Backspace';
+    if (event.key === 'Delete') keyName = 'Delete';
+    
+    console.log('Key captured:', keyName); // Debug log
+    
+    handleLocalUpdate(fieldKey, keyName);
+    setIsCapturingKey(null);
+  };
+
   // Render field based on its configuration
   const renderField = (field: ActionField) => {
     if (!localStep) return null;
@@ -100,6 +127,44 @@ const StepModal: React.FC<StepModalProps> = ({
         e.currentTarget.style.boxShadow = 'none';
       }
     };
+
+    // Special handling for key input in keyboard actions
+    if (field.key === 'key' && step?.type === 'key') {
+      const isCapturing = isCapturingKey === field.key;
+      return (
+        <div style={{ position: 'relative' }}>
+          <input
+            key={fieldId}
+            id={fieldId}
+            type="text"
+            value={isCapturing ? 'Tuş bekleniyor...' : (value as string)}
+            onClick={() => {
+              setIsCapturingKey(field.key);
+              console.log('Input clicked, capturing keys for:', field.key);
+            }}
+            onKeyDown={(e) => {
+              console.log('Key down event:', e.key);
+              handleKeyCapture(field.key, e);
+            }}
+            onKeyUp={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            placeholder={field.placeholder}
+            required={field.required}
+            readOnly
+            style={{
+              ...baseStyle,
+              backgroundColor: isCapturing ? '#fef3c7' : 'var(--bg-secondary)',
+              color: isCapturing ? '#92400e' : 'var(--text-primary)',
+              cursor: 'pointer',
+              border: isCapturing ? '2px solid #f59e0b' : '1px solid var(--border-primary)'
+            }}
+            autoFocus={isCapturing}
+          />
+        </div>
+      );
+    }
 
     switch (field.type) {
       case 'text':
@@ -212,7 +277,7 @@ const StepModal: React.FC<StepModalProps> = ({
 
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
+      if (event.key === 'Escape' && isOpen && !isCapturingKey) {
         onClose();
       }
     };
@@ -222,7 +287,7 @@ const StepModal: React.FC<StepModalProps> = ({
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isCapturingKey]);
 
   if (!isOpen || !step || !localStep) return null;
 
