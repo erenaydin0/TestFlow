@@ -863,19 +863,34 @@ export default function TestsPage() {
                       
                       <td style={{ padding: '1rem' }}>
                         <div>
-                          <h3 style={{ 
-                            fontWeight: 500, 
-                            color: 'var(--text-primary)',
-                            margin: 0,
-                            fontSize: '0.875rem'
-                          }}>
+                          <h3 
+                            onClick={() => handleEditTest(test.id)}
+                            style={{ 
+                              fontWeight: 500, 
+                              color: 'var(--text-primary)',
+                              margin: 0,
+                              fontSize: '0.875rem',
+                              cursor: 'pointer',
+                              transition: 'color 0.2s ease',
+                              textDecoration: 'none'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#2563eb';
+                              e.currentTarget.style.textDecoration = 'underline';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'var(--text-primary)';
+                              e.currentTarget.style.textDecoration = 'none';
+                            }}
+                            title="Düzenlemek için tıklayın"
+                          >
                             {test.name}
                           </h3>
-                                                     <p style={{ 
-                             fontSize: '0.75rem', 
-                             color: 'var(--text-secondary)', 
-                             margin: '0.25rem 0 0 0'
-                           }}>
+                          <p style={{ 
+                            fontSize: '0.75rem', 
+                            color: 'var(--text-secondary)', 
+                            margin: '0.25rem 0 0 0'
+                          }}>
                             {test.description}
                           </p>
                         </div>
