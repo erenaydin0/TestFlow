@@ -63,6 +63,9 @@ class TestRunner {
         // Close context first to save video
         await this.context.close();
         console.log('Browser context closed, video saved if recording was enabled');
+        
+        // Wait a bit for video to be written
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       if (this.browser) {
