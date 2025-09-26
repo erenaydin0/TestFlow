@@ -55,8 +55,8 @@ export function useTestNotifications() {
       message: `"${testName}" testi başarısız oldu${durationText}${errorText}`,
       testId,
       executionId,
-      autoClose: false,  // Hata bildirimleri otomatik kapanmasın
-      duration: 10000
+      autoClose: true,  // Hata bildirimleri de otomatik kaybolsun
+      duration: 8000   // Hata bildirimleri için biraz daha uzun süre
     });
 
     addNotification({
@@ -138,8 +138,8 @@ export function useTestNotifications() {
       title: isSuccess ? 'Execution Tamamlandı' : 'Execution Başarısız',
       message: `"${workflowName}" execution ${isSuccess ? 'başarıyla tamamlandı' : 'başarısız oldu'}${durationText}`,
       executionId,
-      autoClose: isSuccess,
-      duration: isSuccess ? 5000 : 10000
+      autoClose: true,  // Hem başarılı hem başarısız execution'lar otomatik kaybolsun
+      duration: isSuccess ? 5000 : 8000  // Hata bildirimleri için biraz daha uzun süre
     });
 
     addNotification({
