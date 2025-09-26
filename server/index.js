@@ -394,9 +394,10 @@ async function executeTestWorkflow(executionId, execution) {
       }
     }
     
-    // Finalize execution
+    // Finalize execution - check if any steps failed
     if (execution.status === 'running') {
-      execution.status = 'completed';
+      const hasFailedSteps = execution.steps.some(step => step.status === 'failed');
+      execution.status = hasFailedSteps ? 'failed' : 'completed';
     }
     
     execution.endTime = new Date();
@@ -421,11 +422,12 @@ async function executeTestWorkflow(executionId, execution) {
     // Clean up from active executions
     activeExecutions.delete(executionId);
     
-    // Broadcast completion
+    // Broadcast completion or failure based on status
     broadcast({
-      type: 'execution:completed',
+      type: execution.status === 'failed' ? 'execution:failed' : 'execution:completed',
       executionId,
-      execution
+      execution,
+      error: execution.error
     });
     
     console.log(`Execution ${executionId} completed with status: ${execution.status}`);
