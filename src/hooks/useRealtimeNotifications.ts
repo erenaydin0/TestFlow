@@ -4,28 +4,6 @@ import { useEffect, useRef } from 'react';
 import { useWebSocket } from './useWebSocket';
 import { useTestNotifications } from './useTestNotifications';
 
-export interface ExecutionUpdateMessage {
-  type: 'execution_update' | 'execution_complete' | 'execution_failed';
-  executionId: string;
-  workflowName: string;
-  status: 'running' | 'completed' | 'failed';
-  progress?: number;
-  duration?: number;
-  error?: string;
-  timestamp: string;
-}
-
-export interface TestStepUpdateMessage {
-  type: 'step_update';
-  executionId: string;
-  stepId: string;
-  stepType: string;
-  status: 'running' | 'completed' | 'failed';
-  error?: string;
-  screenshot?: string;
-  timestamp: string;
-}
-
 export function useRealtimeNotifications() {
   const { 
     notifyExecutionStart, 

@@ -72,30 +72,6 @@ export interface TestStep {
   [key: string]: any;
 }
 
-export interface ScheduledTest {
-  id: string;
-  testId: string;
-  testName: string;
-  schedule: string; // cron expression
-  nextRun: Date;
-  lastRun?: Date;
-  status: 'active' | 'paused' | 'disabled';
-  createdAt: Date;
-}
-
-export interface TestReport {
-  id: string;
-  testId: string;
-  testName: string;
-  status: 'passed' | 'failed';
-  duration: number;
-  startTime: Date;
-  endTime: Date;
-  errorMessage?: string;
-  screenshots: string[];
-  logs: string[];
-}
-
 // Yeni execution result interface'leri
 export interface ExecutionResult {
   id: string;
@@ -132,36 +108,3 @@ export interface ExecutionStepResult {
   error?: string;
   screenshot?: string;
 }
-
-export interface DashboardStats {
-  totalTests: number;
-  passedTests: number;
-  failedTests: number;
-  pendingTests: number;
-  runningTests: number;
-  scheduledTests: number;
-  lastRunTime: Date;
-  successRate: number;
-}
-
-export interface NavigationItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: string;
-  active?: boolean;
-}
-
-// Workflow export/import interfaces
-export interface WorkflowExport {
-  version: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  steps: TestStep[];
-  metadata?: {
-    author?: string;
-    tags?: string[];
-    category?: string;
-  };
-} 
