@@ -18,7 +18,8 @@ import {
   Keyboard,
   Timer,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Link
 } from 'lucide-react';
 
 // Action category for better organization
@@ -56,7 +57,7 @@ const baseActions: ActionType[] = [
   {
     type: 'navigate',
     title: 'Sayfa Git',
-    icon: Navigation,
+    icon: Link,
     color: '#2563eb',
     description: 'Belirtilen URL\'e git',
     category: 'navigation',
