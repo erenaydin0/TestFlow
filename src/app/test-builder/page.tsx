@@ -458,6 +458,7 @@ export default function TestBuilder() {
           duration: step.duration,
           condition: step.condition,
           expectedValue: step.expectedValue,
+          verificationType: step.verificationType, // For verify actions
           direction: step.direction,
           amount: step.amount,
           filename: step.filename,

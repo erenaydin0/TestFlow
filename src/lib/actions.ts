@@ -184,11 +184,27 @@ const extendedActions: ActionType[] = [
         description: 'CSS seçici, XPath veya ID kullanarak doğrulanacak element'
       },
       {
+        key: 'verificationType',
+        label: 'Doğrulama Türü',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'text', label: 'Metin İçeriği' },
+          { value: 'contains', label: 'Metin İçerir' },
+          { value: 'value', label: 'Input Değeri' },
+          { value: 'visible', label: 'Görünür' },
+          { value: 'hidden', label: 'Gizli' },
+          { value: 'enabled', label: 'Etkin' },
+          { value: 'disabled', label: 'Devre Dışı' }
+        ],
+        description: 'Hangi tür doğrulama yapılacağını seçin'
+      },
+      {
         key: 'expectedValue',
         label: 'Beklenen Değer',
         type: 'text',
         placeholder: 'Beklenen metin veya değer',
-        description: 'Elementin sahip olması beklenen değer (boş bırakılırsa sadece varlık kontrol edilir)'
+        description: 'Elementin sahip olması beklenen değer (sadece metin türü doğrulamalar için gerekli)'
       }
     ]
   },
