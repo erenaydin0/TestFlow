@@ -39,7 +39,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       ...notification,
       id: generateUniqueId('notif'),
       timestamp: new Date(),
-      persistent: notification.persistent ?? true
+      persistent: notification.persistent ?? true,
+      read: false
     };
 
     setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // Keep max 50 notifications
@@ -93,8 +94,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const markAsRead = useCallback((id: string) => {
-    // Bu özellik ileride eklenebilir
-    console.log('Marked as read:', id);
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+  }, []);
+
+  const markAllAsRead = useCallback(() => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
   }, []);
 
   // Toast'ları otomatik temizleme
@@ -117,7 +129,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     showToast,
     removeNotification,
     clearAllNotifications,
-    markAsRead
+    markAsRead,
+    markAllAsRead
   };
 
   return (

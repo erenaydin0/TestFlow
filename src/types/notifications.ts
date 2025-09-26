@@ -4,6 +4,7 @@ export interface Notification {
   title: string;
   message: string;
   timestamp: Date;
+  read?: boolean; // Okundu durumu
   persistent?: boolean; // Kalıcı bildirimler için
   autoClose?: boolean; // Otomatik kapanma
   duration?: number; // ms cinsinden
@@ -19,4 +20,5 @@ export interface NotificationContextType {
   removeNotification: (id: string) => void;
   clearAllNotifications: () => void;
   markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bell, X, CheckCircle, XCircle, AlertCircle, Info, Trash2 } from 'lucide-react';
+import { Bell, X, CheckCircle, XCircle, AlertCircle, Info, Trash2, Check, CheckCircle2 } from 'lucide-react';
 import { useNotifications } from '@/lib/notification-context';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -23,12 +23,17 @@ const colorMap = {
 
 export function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, removeNotification, clearAllNotifications } = useNotifications();
+  const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = useNotifications();
   const router = useRouter();
 
-  const unreadCount = notifications.length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleNotificationClick = (notification: any) => {
+    // Bildirimi okundu olarak işaretle
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+    
     // ExecutionId varsa direkt o execution'ın modalını aç
     if (notification.executionId) {
       setIsOpen(false); // Panel'ı kapat
@@ -73,13 +78,27 @@ export function NotificationPanel() {
               </h3>
               <div className="flex items-center space-x-2">
                 {notifications.length > 0 && (
-                  <button
-                    onClick={clearAllNotifications}
-                    className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Tümünü Temizle
-                  </button>
+                  <>
+                    {/* Tümünü Okundu İşaretle */}
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                        title="Tümünü Okundu İşaretle"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </button>
+                    )}
+                    
+                    {/* Tümünü Temizle */}
+                    <button
+                      onClick={clearAllNotifications}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                      title="Tümünü Temizle"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
@@ -108,7 +127,7 @@ export function NotificationPanel() {
                           notification.executionId || notification.testId 
                             ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer' 
                             : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                        }`}
+                        } ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                         onClick={() => {
                           if (notification.executionId || notification.testId) {
                             handleNotificationClick(notification);
@@ -134,15 +153,33 @@ export function NotificationPanel() {
                               })}
                             </p>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeNotification(notification.id);
-                            }}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            {/* Okundu İşaretle */}
+                            {!notification.read && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                title="Okundu İşaretle"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                            )}
+                            
+                            {/* Sil */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeNotification(notification.id);
+                              }}
+                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                              title="Bildirimi Sil"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
