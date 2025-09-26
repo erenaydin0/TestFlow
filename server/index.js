@@ -408,16 +408,23 @@ async function executeTestWorkflow(executionId, execution) {
     const totalSteps = execution.steps.length;
     execution.successRate = Math.round((passedSteps / totalSteps) * 100);
     
-    // Save final execution state
-    await fs.writeJson(path.join(EXECUTIONS_DIR, `${executionId}.json`), execution);
-    
     // Close browser and save video
     await testRunner.closeBrowser();
     
     // Add video path if recording was enabled
     if (execution.options.enableRecording) {
-      execution.videoPath = `/videos/${executionId}.webm`;
+      // Check if video file was actually created
+      const videoFilePath = path.join(VIDEOS_DIR, `${executionId}.webm`);
+      if (await fs.pathExists(videoFilePath)) {
+        execution.videoPath = `/videos/${executionId}.webm`;
+        console.log(`Video saved at: ${execution.videoPath}`);
+      } else {
+        console.log(`Video recording was enabled but file not found: ${videoFilePath}`);
+      }
     }
+    
+    // Save final execution state with video path
+    await fs.writeJson(path.join(EXECUTIONS_DIR, `${executionId}.json`), execution);
     
     // Clean up from active executions
     activeExecutions.delete(executionId);
