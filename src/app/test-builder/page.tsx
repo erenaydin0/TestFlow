@@ -502,12 +502,17 @@ export default function TestBuilder() {
     }
   }, [testSteps, enableScreenshots, enableRecording, headlessMode]);
 
-  // Load workflow from URL parameter
+  // Load workflow from URL parameter - Use ref to track shown notifications
+  const shownNotifications = useRef(new Set<string>());
+  
   useEffect(() => {
     const loadWorkflowId = searchParams.get('load');
+    console.log('useEffect çalıştı:', { loadWorkflowId, loadedWorkflowId });
+    
     if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
       const workflow = getWorkflowById(loadWorkflowId);
       if (workflow && workflow.workflow) {
+        console.log('Workflow yükleniyor:', workflow.name);
         setTestSteps(workflow.workflow);
         setLoadedWorkflowId(loadWorkflowId);
         
@@ -516,13 +521,25 @@ export default function TestBuilder() {
         setEnableRecording(workflow.enableRecording || false);
         setHeadlessMode(workflow.headlessMode || false);
         
-        // Show success message
-        setTimeout(() => {
-          notifyWorkflowLoaded(workflow.name);
-        }, 100);
+        // Show success message only if not shown before for this workflow
+        const notificationKey = `loaded-${loadWorkflowId}`;
+        if (!shownNotifications.current.has(notificationKey)) {
+          console.log('Bildirim gösteriliyor:', workflow.name);
+          shownNotifications.current.add(notificationKey);
+          setTimeout(() => {
+            notifyWorkflowLoaded(workflow.name);
+          }, 100);
+        } else {
+          console.log('Bildirim zaten gösterildi, tekrar gösterilmiyor');
+        }
       } else {
         notifyTestFailure('Test Builder Workflow', '', 'Workflow bulunamadı veya geçersiz!');
       }
+    }
+    
+    // Clear notification tracking when no workflow is loaded
+    if (!loadWorkflowId) {
+      shownNotifications.current.clear();
     }
   }, [searchParams, loadedWorkflowId]);
 
