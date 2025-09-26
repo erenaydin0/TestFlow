@@ -249,6 +249,36 @@ export default function TestsPage() {
     }
   };
 
+  // Handle bulk duplicate
+  const handleBulkDuplicate = async () => {
+    if (selectedTests.size === 0) return;
+    
+    try {
+      let duplicatedCount = 0;
+      const duplicatedTests: string[] = [];
+      
+      selectedTests.forEach(testId => {
+        const test = tests.find(t => t.id === testId);
+        const duplicatedId = duplicateWorkflow(testId);
+        if (duplicatedId && test) {
+          duplicatedCount++;
+          duplicatedTests.push(test.name);
+        }
+      });
+      
+      // Reload tests
+      const updatedTests = getSavedWorkflows();
+      setTests(updatedTests);
+      setSelectedTests(new Set());
+      
+      if (duplicatedCount > 0) {
+        notifyTestDuplicated(`${duplicatedCount} test`, '');
+      }
+    } catch (error) {
+      notifyTestFailure('Bulk Duplicate', '', 'Testler kopyalanırken hata oluştu.');
+    }
+  };
+
   // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedTests.size === 0) return;
@@ -608,6 +638,32 @@ export default function TestsPage() {
                       }}
                     >
                       Çalıştır
+                    </button>
+                    <button 
+                      onClick={handleBulkDuplicate}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        border: '1px solid #7c3aed',
+                        borderRadius: '0.375rem',
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        color: '#7c3aed',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(124, 58, 237, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(124, 58, 237, 0.1)';
+                      }}
+                    >
+                      <Copy size={12} />
+                      Kopyala
                     </button>
                     <button 
                       onClick={handleBulkDelete}
