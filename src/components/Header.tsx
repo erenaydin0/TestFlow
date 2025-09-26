@@ -171,7 +171,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 margin: 0,
                 lineHeight: 1
               }}>
-                TestFlow
+                CosmicQA
               </h1>
             </div>
           </Link>
