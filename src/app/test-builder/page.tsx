@@ -125,6 +125,7 @@ export default function TestBuilder() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [loadedWorkflowId, setLoadedWorkflowId] = useState<string | null>(null);
+  const [loadedWorkflowName, setLoadedWorkflowName] = useState<string | null>(null);
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
   const [headlessMode, setHeadlessMode] = useState(false);
@@ -437,7 +438,7 @@ export default function TestBuilder() {
   
   const handleRun = useCallback(async () => {
     if (testSteps.length === 0) {
-      notifyTestFailure('Test Builder', '', 'Çalıştırılacak test adımı bulunamadı.');
+      notifyTestFailure(loadedWorkflowName || 'Test Builder', '', 'Çalıştırılacak test adımı bulunamadı.');
       return;
     }
 
@@ -473,11 +474,11 @@ export default function TestBuilder() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          workflowId: 'test-builder',
-          workflowName: 'Test Builder Workflow',
+          workflowId: loadedWorkflowId || 'test-builder',
+          workflowName: loadedWorkflowName || 'Test Builder Workflow',
           steps: backendSteps,
-          suite: 'Test Builder',
-          tags: ['manual', 'builder'],
+          suite: loadedWorkflowName ? 'Saved Tests' : 'Test Builder',
+          tags: loadedWorkflowName ? ['saved', 'edited'] : ['manual', 'builder'],
           options: {
             enableScreenshots,
             enableRecording,
@@ -492,18 +493,18 @@ export default function TestBuilder() {
       }
 
       const data = await response.json();
-      notifyTestStart('Test Builder Workflow', data.executionId);
+      notifyTestStart(loadedWorkflowName || 'Test Builder Workflow', data.executionId);
       
       // Optional: Navigate to tests page to see results
       // router.push('/tests');
       
     } catch (error) {
       console.error('Test execution error:', error);
-      notifyTestFailure('Test Builder Workflow', 'failed', error instanceof Error ? error.message : 'Bilinmeyen hata');
+      notifyTestFailure(loadedWorkflowName || 'Test Builder Workflow', 'failed', error instanceof Error ? error.message : 'Bilinmeyen hata');
     } finally {
       setIsRunning(false);
     }
-  }, [testSteps, enableScreenshots, enableRecording, headlessMode]);
+  }, [testSteps, enableScreenshots, enableRecording, headlessMode, loadedWorkflowId, loadedWorkflowName]);
 
   // Load workflow from URL parameter - Use ref to track shown notifications
   const shownNotifications = useRef(new Set<string>());
@@ -518,6 +519,7 @@ export default function TestBuilder() {
         console.log('Workflow yükleniyor:', workflow.name);
         setTestSteps(workflow.workflow);
         setLoadedWorkflowId(loadWorkflowId);
+        setLoadedWorkflowName(workflow.name);
         
         // Load screenshot and recording settings
         setEnableScreenshots(workflow.enableScreenshots || false);
@@ -543,6 +545,7 @@ export default function TestBuilder() {
     // Clear notification tracking when no workflow is loaded
     if (!loadWorkflowId) {
       shownNotifications.current.clear();
+      setLoadedWorkflowName(null);
     }
   }, [searchParams, loadedWorkflowId]);
 
