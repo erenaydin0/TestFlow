@@ -21,13 +21,15 @@ import {
   Download,
   Upload,
   Search,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow, migrateTestIds } from '@/lib/utils';
 import { Test } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MultiSelect from '@/components/MultiSelect';
+import EditTestModal from '@/components/tests/EditTestModal';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
 export default function TestsPage() {
@@ -46,6 +48,10 @@ export default function TestsPage() {
     show: false,
     testId: '',
     testName: ''
+  });
+  const [editTestModal, setEditTestModal] = useState<{show: boolean; test: Test | null}>({
+    show: false,
+    test: null
   });
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -196,10 +202,34 @@ export default function TestsPage() {
     }
   };
 
-  // Handle edit test
+  // Handle edit test workflow
   const handleEditTest = (testId: string) => {
     // Navigate to test builder with the workflow loaded
     router.push(`/test-builder?load=${testId}`);
+  };
+
+  // Handle edit test metadata (name, description, tags, suite)
+  const handleEditTestMetadata = (testId: string) => {
+    const test = tests.find(t => t.id === testId);
+    if (test) {
+      setEditTestModal({
+        show: true,
+        test: test
+      });
+    }
+  };
+
+  // Handle test update from modal
+  const handleTestUpdate = (updatedTest: Test) => {
+    // Update local state
+    setTests(prevTests => 
+      prevTests.map(test => 
+        test.id === updatedTest.id ? updatedTest : test
+      )
+    );
+    
+    // Show success notification
+    notifyTestImported(`${updatedTest.name} güncellendi`, '');
   };
 
   // Handle duplicate test
@@ -1058,9 +1088,33 @@ export default function TestsPage() {
                             e.currentTarget.style.backgroundColor = 'transparent';
                             e.currentTarget.style.color = 'var(--text-secondary)';
                               }}
-                              title="Testi Düzenle"
+                              title="Workflow'u Düzenle"
                             >
                             <Edit size={16} />
+                          </button>
+                          
+                            <button 
+                              onClick={() => handleEditTestMetadata(test.id)}
+                              style={{ 
+                            padding: '0.25rem', 
+                            color: 'var(--text-secondary)', 
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                              }}
+                              title="Test Bilgilerini Düzenle"
+                            >
+                            <Settings size={16} />
                           </button>
                           
                             <button 
@@ -1173,6 +1227,14 @@ export default function TestsPage() {
         confirmText="Sil"
         cancelText="İptal"
         type="danger"
+      />
+
+      {/* Edit Test Modal */}
+      <EditTestModal
+        isOpen={editTestModal.show}
+        onClose={() => setEditTestModal({show: false, test: null})}
+        onUpdate={handleTestUpdate}
+        test={editTestModal.test}
       />
     </div>
   );
