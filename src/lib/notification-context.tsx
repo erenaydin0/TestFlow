@@ -8,6 +8,16 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Notification[]>([]);
+  
+  // Counter for unique IDs to prevent duplicates
+  const [idCounter, setIdCounter] = useState(0);
+  
+  const generateUniqueId = useCallback((prefix: string) => {
+    const timestamp = Date.now();
+    const counter = idCounter;
+    setIdCounter(prev => prev + 1);
+    return `${prefix}-${timestamp}-${counter}`;
+  }, [idCounter]);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     // Check for recent duplicates (same type, title, and testId/executionId in last 5 seconds)
@@ -27,33 +37,36 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const newNotification: Notification = {
       ...notification,
-      id: `notif-${Date.now()}`,
+      id: generateUniqueId('notif'),
       timestamp: new Date(),
       persistent: notification.persistent ?? true
     };
 
     setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // Keep max 50 notifications
-  }, [notifications]);
+  }, [notifications, generateUniqueId]);
 
   const showToast = useCallback((toast: Omit<Notification, 'id' | 'timestamp' | 'persistent'>) => {
-    // Check for recent duplicate toasts (same type, title in last 2 seconds)
+    // Check for recent duplicate toasts (same type, title, message in last 3 seconds)
     const now = new Date();
     const isDuplicate = toasts.some(existing => 
       existing.type === toast.type &&
       existing.title === toast.title &&
+      existing.message === toast.message &&
       existing.testId === toast.testId &&
       existing.executionId === toast.executionId &&
-      (now.getTime() - existing.timestamp.getTime()) < 2000 // 2 seconds
+      (now.getTime() - existing.timestamp.getTime()) < 3000 // 3 seconds
     );
 
     if (isDuplicate) {
-      console.log('Skipping duplicate toast:', toast.title);
+      console.log('Duplicate toast atlandı:', toast.title, toast.message);
       return;
     }
+    
+    console.log('Yeni toast ekleniyor:', toast.title, toast.message);
 
     const newToast: Notification = {
       ...toast,
-      id: `toast-${Date.now()}`,
+      id: generateUniqueId('toast'),
       timestamp: new Date(),
       persistent: false,
       autoClose: toast.autoClose ?? true,
@@ -68,7 +81,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         setToasts(prev => prev.filter(t => t.id !== newToast.id));
       }, newToast.duration);
     }
-  }, [toasts]);
+  }, [toasts, generateUniqueId]);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
