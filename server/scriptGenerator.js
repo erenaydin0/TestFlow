@@ -9,7 +9,8 @@ class ScriptGenerator {
       'verify': this.generateVerify,
       'scroll': this.generateScroll,
       'hover': this.generateHover,
-      'key': this.generateKey
+      'key': this.generateKey,
+      'dropdown': this.generateDropdown
     };
   }
 
@@ -155,6 +156,37 @@ class ScriptGenerator {
     return `await page.keyboard.press('${this.escapeString(key)}');`;
   }
 
+  generateDropdown(config, index) {
+    const selector = config.selector || config.target || '';
+    const optionType = config.optionType || 'value';
+    const optionValue = config.optionValue || config.value || '';
+    
+    if (!selector) {
+      return `throw new Error('Dropdown action requires a selector');`;
+    }
+    
+    if (!optionValue) {
+      return `throw new Error('Dropdown action requires an option value');`;
+    }
+    
+    let selectCode = '';
+    if (optionType === 'value') {
+      selectCode = `await page.selectOption('${this.escapeString(selector)}', { value: '${this.escapeString(optionValue)}' });`;
+    } else if (optionType === 'text') {
+      selectCode = `await page.selectOption('${this.escapeString(selector)}', { label: '${this.escapeString(optionValue)}' });`;
+    } else if (optionType === 'index') {
+      const index = parseInt(optionValue);
+      if (isNaN(index)) {
+        return `throw new Error('Invalid index value: ${optionValue}');`;
+      }
+      selectCode = `await page.selectOption('${this.escapeString(selector)}', { index: ${index} });`;
+    } else {
+      return `throw new Error('Unknown option type: ${optionType}');`;
+    }
+    
+    return selectCode;
+  }
+
   escapeString(str) {
     if (typeof str !== 'string') return str;
     return str.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
@@ -262,6 +294,20 @@ async function executeTestSteps(steps, executionId, onStepUpdate) {
             
           case 'key':
             await page.keyboard.press(step.config.key || step.config.value);
+            break;
+            
+          case 'dropdown':
+            const dropdownSelector = step.config.selector || step.config.target;
+            const optionType = step.config.optionType || 'value';
+            const optionValue = step.config.optionValue || step.config.value;
+            
+            if (optionType === 'value') {
+              await page.selectOption(dropdownSelector, { value: optionValue });
+            } else if (optionType === 'text') {
+              await page.selectOption(dropdownSelector, { label: optionValue });
+            } else if (optionType === 'index') {
+              await page.selectOption(dropdownSelector, { index: parseInt(optionValue) });
+            }
             break;
             
           default:

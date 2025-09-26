@@ -462,7 +462,9 @@ export default function TestBuilder() {
           direction: step.direction,
           amount: step.amount,
           filename: step.filename,
-          key: step.key
+          key: step.key,
+          optionType: step.optionType, // For dropdown actions
+          optionValue: step.optionValue // For dropdown actions
         }
       }));
       const response = await fetch('http://localhost:3001/api/execute', {

@@ -17,7 +17,8 @@ import {
   MousePointer2,
   Keyboard,
   Timer,
-  Zap
+  Zap,
+  ChevronDown
 } from 'lucide-react';
 
 // Action category for better organization
@@ -289,6 +290,44 @@ const extendedActions: ActionType[] = [
         type: 'text',
         placeholder: '#element, .input-field, //input[@type=\'text\'] (boş bırakılırsa genel tuş basımı)',
         description: 'CSS seçici, XPath veya ID kullanarak tuş basımının yapılacağı element'
+      }
+    ]
+  },
+  {
+    type: 'dropdown',
+    title: 'Dropdown Seç',
+    icon: ChevronDown,
+    color: '#0d9488',
+    description: 'Dropdown menüden seçim yap',
+    category: 'input',
+    fields: [
+      {
+        key: 'selector',
+        label: 'Seçici (Selector)',
+        type: 'text',
+        placeholder: '#select, .dropdown, //select[@name=\'country\'], [name=\'dropdown\']',
+        required: true,
+        description: 'CSS seçici, XPath veya ID kullanarak dropdown elementi'
+      },
+      {
+        key: 'optionType',
+        label: 'Seçim Türü',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'value', label: 'Değer (Value)' },
+          { value: 'text', label: 'Görünen Metin' },
+          { value: 'index', label: 'Sıra Numarası' }
+        ],
+        description: 'Hangi yöntemle seçim yapılacağını belirtin'
+      },
+      {
+        key: 'optionValue',
+        label: 'Seçilecek Değer',
+        type: 'text',
+        placeholder: 'Seçilecek değer, metin veya index numarası',
+        required: true,
+        description: 'Seçim türüne göre: value attribute, görünen metin veya 0-tabanlı index numarası'
       }
     ]
   }

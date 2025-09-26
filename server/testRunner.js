@@ -140,6 +140,10 @@ class TestRunner {
           await this.executeKey(step.config);
           break;
           
+        case 'dropdown':
+          await this.executeDropdown(step.config);
+          break;
+          
         case 'if':
           await this.executeIf(step.config);
           break;
@@ -420,6 +424,75 @@ class TestRunner {
     
     console.log(`Pressing key: ${key}`);
     await this.page.keyboard.press(key);
+  }
+
+  async executeDropdown(config) {
+    console.log('executeDropdown called with config:', JSON.stringify(config, null, 2));
+    
+    const rawSelector = config.selector || config.target || '';
+    const optionType = config.optionType || 'value';
+    const optionValue = config.optionValue || config.value || '';
+    
+    if (!rawSelector) {
+      console.error('No selector found in config:', config);
+      throw new Error('Dropdown action requires a selector');
+    }
+    
+    if (!optionValue) {
+      throw new Error('Dropdown action requires an option value');
+    }
+    
+    const selector = this.normalizeSelector(rawSelector);
+    console.log(`Selecting from dropdown: ${rawSelector} -> normalized: ${selector}, type: ${optionType}, value: "${optionValue}"`);
+    
+    try {
+      // Check if element exists first
+      const elementExists = await this.elementExists(rawSelector);
+      console.log(`Dropdown element exists: ${elementExists}`);
+      
+      if (!elementExists) {
+        throw new Error(`Dropdown element not found: ${rawSelector}`);
+      }
+      
+      // Wait for element to be visible
+      console.log('Waiting for dropdown element to be visible...');
+      await this.page.waitForSelector(selector, { state: 'visible', timeout: 10000 });
+      
+      // Select option based on type
+      console.log(`Selecting option by ${optionType}: ${optionValue}`);
+      
+      if (optionType === 'value') {
+        // Select by value attribute
+        await this.page.selectOption(selector, { value: optionValue });
+      } else if (optionType === 'text') {
+        // Select by visible text
+        await this.page.selectOption(selector, { label: optionValue });
+      } else if (optionType === 'index') {
+        // Select by index (0-based)
+        const index = parseInt(optionValue);
+        if (isNaN(index)) {
+          throw new Error(`Invalid index value: ${optionValue}`);
+        }
+        await this.page.selectOption(selector, { index: index });
+      } else {
+        throw new Error(`Unknown option type: ${optionType}`);
+      }
+      
+      console.log('Dropdown selection completed successfully');
+      
+    } catch (error) {
+      console.error('Dropdown action failed:', error.message);
+      
+      // Take a screenshot for debugging
+      try {
+        await this.page.screenshot({ path: `debug-dropdown-error-${Date.now()}.png` });
+        console.log('Debug screenshot taken');
+      } catch (screenshotError) {
+        console.error('Failed to take debug screenshot:', screenshotError);
+      }
+      
+      throw error;
+    }
   }
 
   async executeRefresh(config) {

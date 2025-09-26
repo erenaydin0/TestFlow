@@ -56,6 +56,13 @@ export interface TestStep {
   // Key press properties
   key?: string;
   
+  // Dropdown properties
+  optionType?: 'value' | 'text' | 'index';
+  optionValue?: string;
+  
+  // Verification properties
+  verificationType?: 'text' | 'contains' | 'value' | 'visible' | 'hidden' | 'enabled' | 'disabled';
+  
   // Connection properties
   connections?: string[]; // Array of connected step IDs (for regular steps)
   trueConnection?: string; // If step true branch

@@ -69,6 +69,13 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
               {step.selector && <span>Element: {step.selector}</span>}
             </div>
           )}
+          {step.type === 'dropdown' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span>Element: {step.selector || 'Belirtilmedi'}</span>
+              <span>Tür: {step.optionType || 'Belirtilmedi'}</span>
+              <span>Değer: {step.optionValue || 'Belirtilmedi'}</span>
+            </div>
+          )}
           {step.type === 'if' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               <span>Koşul: {step.condition || 'Belirtilmedi'}</span>
@@ -128,6 +135,13 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
             <div>
               {`Tuş: ${step.key || 'Belirtilmedi'}`}
               {step.selector && `, Element: ${step.selector}`}
+            </div>
+          )}
+          {step.type === 'dropdown' && (
+            <div>
+              {step.selector && `Element: ${step.selector}, `}
+              {`Tür: ${step.optionType || 'Belirtilmedi'}, `}
+              {`Değer: ${step.optionValue || 'Belirtilmedi'}`}
             </div>
           )}
           {step.type === 'if' && step.condition && `Koşul: ${step.condition}`}
