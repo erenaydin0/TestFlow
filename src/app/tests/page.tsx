@@ -22,7 +22,11 @@ import {
   Upload,
   Search,
   X,
-  Settings
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow, migrateTestIds } from '@/lib/utils';
 import { Test } from '@/types';
@@ -55,6 +59,10 @@ export default function TestsPage() {
   });
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useTestNotifications();
 
@@ -117,6 +125,18 @@ export default function TestsPage() {
     return matchesSearch && matchesSuite && matchesTags;
   });
 
+  // Pagination logic
+  const totalItems = filteredTests.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageTests = filteredTests.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchFilter, suiteFilter, tagsFilter]);
+
   // Get unique suites and tags for filter dropdowns
   const uniqueSuites = Array.from(new Set(tests.map(test => test.suite)));
   const uniqueTags = Array.from(new Set(tests.flatMap(test => test.tags)));
@@ -135,11 +155,23 @@ export default function TestsPage() {
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTests(new Set(filteredTests.map(test => test.id)));
+      setSelectedTests(new Set(currentPageTests.map(test => test.id)));
     } else {
       setSelectedTests(new Set());
     }
   };
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
 
   // Handle run test - Updated to use backend API
   const handleRunTest = async (testId: string) => {
@@ -536,6 +568,11 @@ export default function TestsPage() {
                 margin: '0.5rem 0 0 0' 
             }}>
               Toplam {tests.length} kayıtlı test bulunuyor • {filteredTests.length} gösteriliyor
+              {totalPages > 1 && (
+                <span style={{ marginLeft: '0.5rem' }}>
+                  (Sayfa {currentPage} / {totalPages})
+                </span>
+              )}
             </p>
           </div>
 
@@ -850,7 +887,7 @@ export default function TestsPage() {
                     }}>
                       <input 
                         type="checkbox" 
-                          checked={selectedTests.size === filteredTests.length && filteredTests.length > 0}
+                          checked={selectedTests.size === currentPageTests.length && currentPageTests.length > 0}
                           onChange={(e) => handleSelectAll(e.target.checked)}
                         style={{ 
                           borderRadius: '0.25rem', 
@@ -915,7 +952,7 @@ export default function TestsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                    {filteredTests.map((test) => (
+                    {currentPageTests.map((test) => (
                     <tr 
                       key={test.id}
                       id={`test-${test.id}`}
@@ -1192,6 +1229,162 @@ export default function TestsPage() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '1.5rem',
+                  padding: '0.75rem 1.5rem',
+                  borderTop: '1px solid var(--border-primary)'
+                }}>
+                  {/* Pagination Info */}
+                  <div style={{ 
+                    color: 'var(--text-secondary)', 
+                    fontSize: '0.875rem' 
+                  }}>
+                    {totalItems > 0 ? (
+                      <>
+                        <span>{startIndex + 1} - {Math.min(endIndex, totalItems)}</span>
+                        <span style={{ margin: '0 0.25rem' }}>•</span>
+                        <span>{totalItems} toplam test</span>
+                      </>
+                    ) : (
+                      'Test bulunamadı'
+                    )}
+                  </div>
+
+                  {/* Pagination Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                      onClick={goToFirstPage}
+                      disabled={currentPage === 1}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '2rem',
+                        height: '2rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.375rem',
+                        backgroundColor: currentPage === 1 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                        color: currentPage === 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="İlk sayfa"
+                    >
+                      <ChevronsLeft size={14} />
+                    </button>
+
+                    <button
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '2rem',
+                        height: '2rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.375rem',
+                        backgroundColor: currentPage === 1 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                        color: currentPage === 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="Önceki sayfa"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      {(() => {
+                        const pages = [];
+                        const maxVisiblePages = 5;
+                        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                        
+                        if (endPage - startPage + 1 < maxVisiblePages) {
+                          startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                        }
+
+                        for (let i = startPage; i <= endPage; i++) {
+                          pages.push(
+                            <button
+                              key={i}
+                              onClick={() => goToPage(i)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '2rem',
+                                height: '2rem',
+                                border: '1px solid var(--border-primary)',
+                                borderRadius: '0.375rem',
+                                backgroundColor: i === currentPage ? '#2563eb' : 'var(--bg-primary)',
+                                color: i === currentPage ? 'white' : 'var(--text-primary)',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem',
+                                fontWeight: i === currentPage ? '600' : '400',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              {i}
+                            </button>
+                          );
+                        }
+                        return pages;
+                      })()}
+                    </div>
+
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '2rem',
+                        height: '2rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.375rem',
+                        backgroundColor: currentPage === totalPages ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                        color: currentPage === totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="Sonraki sayfa"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+
+                    <button
+                      onClick={goToLastPage}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '2rem',
+                        height: '2rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.375rem',
+                        backgroundColor: currentPage === totalPages ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                        color: currentPage === totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      title="Son sayfa"
+                    >
+                      <ChevronsRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
               </div>
             )}
           </div>

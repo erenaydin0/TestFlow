@@ -30,7 +30,11 @@ import {
   ArrowDown,
   X,
   Tag,
-  Trash2
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
@@ -71,6 +75,10 @@ export default function ReportsPage() {
     tags: []
   });
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch executions from backend
   const fetchExecutions = async () => {
@@ -268,6 +276,18 @@ export default function ReportsPage() {
     return filtered;
   }, [executions, filters, sortField, sortOrder]);
 
+  // Pagination logic
+  const totalItems = filteredAndSortedExecutions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageExecutions = filteredAndSortedExecutions.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortField, sortOrder]);
+
   // Calculate stats based on filtered results
   const stats = useMemo(() => {
     const filtered = filteredAndSortedExecutions;
@@ -307,6 +327,18 @@ export default function ReportsPage() {
       tags: []
     });
   };
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (Array.isArray(value)) {
@@ -590,7 +622,7 @@ export default function ReportsPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTests(new Set(filteredAndSortedExecutions.map(e => e.id)));
+      setSelectedTests(new Set(currentPageExecutions.map(e => e.id)));
     } else {
       setSelectedTests(new Set());
     }
@@ -746,6 +778,11 @@ export default function ReportsPage() {
                 {hasActiveFilters && (
                   <span style={{ color: '#2563eb', marginLeft: '0.5rem' }}>
                     ({filteredAndSortedExecutions.length} / {executions.length} sonuç)
+                  </span>
+                )}
+                {!hasActiveFilters && totalItems > 0 && (
+                  <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                    ({totalItems} toplam test)
                   </span>
                 )}
               </p>
@@ -1118,7 +1155,7 @@ export default function ReportsPage() {
                       <th style={{ padding: '0.75rem', textAlign: 'left', width: '40px' }}>
                         <input
                           type="checkbox"
-                          checked={selectedTests.size === filteredAndSortedExecutions.length && filteredAndSortedExecutions.length > 0}
+                          checked={selectedTests.size === currentPageExecutions.length && currentPageExecutions.length > 0}
                           onChange={(e) => handleSelectAll(e.target.checked)}
                           style={{ cursor: 'pointer' }}
                         />
@@ -1242,7 +1279,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAndSortedExecutions.map((execution) => (
+                    {currentPageExecutions.map((execution) => (
                       <tr 
                         key={execution.id} 
                         style={{ 
@@ -1375,6 +1412,162 @@ export default function ReportsPage() {
                     ))}
                   </tbody>
                 </table>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '1.5rem',
+                    padding: '0.75rem 0',
+                    borderTop: '1px solid var(--border-primary)'
+                  }}>
+                    {/* Pagination Info */}
+                    <div style={{ 
+                      color: 'var(--text-secondary)', 
+                      fontSize: '0.875rem' 
+                    }}>
+                      {totalItems > 0 ? (
+                        <>
+                          <span>{startIndex + 1} - {Math.min(endIndex, totalItems)}</span>
+                          <span style={{ margin: '0 0.25rem' }}>•</span>
+                          <span>{totalItems} toplam sonuç</span>
+                        </>
+                      ) : (
+                        'Sonuç bulunamadı'
+                      )}
+                    </div>
+
+                    {/* Pagination Buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        onClick={goToFirstPage}
+                        disabled={currentPage === 1}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '2rem',
+                          height: '2rem',
+                          border: '1px solid var(--border-primary)',
+                          borderRadius: '0.375rem',
+                          backgroundColor: currentPage === 1 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                          color: currentPage === 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title="İlk sayfa"
+                      >
+                        <ChevronsLeft size={14} />
+                      </button>
+
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '2rem',
+                          height: '2rem',
+                          border: '1px solid var(--border-primary)',
+                          borderRadius: '0.375rem',
+                          backgroundColor: currentPage === 1 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                          color: currentPage === 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title="Önceki sayfa"
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        {(() => {
+                          const pages = [];
+                          const maxVisiblePages = 5;
+                          let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                          let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                          
+                          if (endPage - startPage + 1 < maxVisiblePages) {
+                            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                          }
+
+                          for (let i = startPage; i <= endPage; i++) {
+                            pages.push(
+                              <button
+                                key={i}
+                                onClick={() => goToPage(i)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '2rem',
+                                  height: '2rem',
+                                  border: '1px solid var(--border-primary)',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: i === currentPage ? '#2563eb' : 'var(--bg-primary)',
+                                  color: i === currentPage ? 'white' : 'var(--text-primary)',
+                                  cursor: 'pointer',
+                                  fontSize: '0.875rem',
+                                  fontWeight: i === currentPage ? '600' : '400',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {i}
+                              </button>
+                            );
+                          }
+                          return pages;
+                        })()}
+                      </div>
+
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '2rem',
+                          height: '2rem',
+                          border: '1px solid var(--border-primary)',
+                          borderRadius: '0.375rem',
+                          backgroundColor: currentPage === totalPages ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                          color: currentPage === totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title="Sonraki sayfa"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+
+                      <button
+                        onClick={goToLastPage}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '2rem',
+                          height: '2rem',
+                          border: '1px solid var(--border-primary)',
+                          borderRadius: '0.375rem',
+                          backgroundColor: currentPage === totalPages ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                          color: currentPage === totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title="Son sayfa"
+                      >
+                        <ChevronsRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
                         </div>
