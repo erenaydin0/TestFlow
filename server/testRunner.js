@@ -255,8 +255,9 @@ class TestRunner {
       
       // Take a screenshot for debugging
       try {
-        await this.page.screenshot({ path: `debug-click-error-${Date.now()}.png` });
-        console.log('Debug screenshot taken');
+        const debugScreenshotPath = path.join(this.screenshotsDir, `error-${Date.now()}.png`);
+        await this.page.screenshot({ path: debugScreenshotPath });
+        console.log('Debug screenshot taken:', debugScreenshotPath);
       } catch (screenshotError) {
         console.error('Failed to take debug screenshot:', screenshotError);
       }
@@ -302,8 +303,9 @@ class TestRunner {
       
       // Take a screenshot for debugging
       try {
-        await this.page.screenshot({ path: `debug-type-error-${Date.now()}.png` });
-        console.log('Debug screenshot taken');
+        const debugScreenshotPath = path.join(this.screenshotsDir, `debug-type-error-${Date.now()}.png`);
+        await this.page.screenshot({ path: debugScreenshotPath });
+        console.log('Debug screenshot taken:', debugScreenshotPath);
       } catch (screenshotError) {
         console.error('Failed to take debug screenshot:', screenshotError);
       }
@@ -488,8 +490,9 @@ class TestRunner {
       
       // Take a screenshot for debugging
       try {
-        await this.page.screenshot({ path: `debug-dropdown-error-${Date.now()}.png` });
-        console.log('Debug screenshot taken');
+        const debugScreenshotPath = path.join(this.screenshotsDir, `debug-dropdown-error-${Date.now()}.png`);
+        await this.page.screenshot({ path: debugScreenshotPath });
+        console.log('Debug screenshot taken:', debugScreenshotPath);
       } catch (screenshotError) {
         console.error('Failed to take debug screenshot:', screenshotError);
       }
