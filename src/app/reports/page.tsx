@@ -8,6 +8,7 @@ import { useSidebar } from '@/lib/sidebar-context';
 import StatusBadge from '@/components/StatusBadge';
 import StatsCards from '@/components/StatsCards';
 import MultiSelect from '@/components/MultiSelect';
+import DataFilters from '@/components/common/DataFilters';
 import { 
   Download, 
   Filter,
@@ -39,20 +40,22 @@ import {
   Globe
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
-import { ExecutionResult } from '@/types';
+import { ExecutionResult, BrowserType } from '@/types';
 import { getStatusColor, getStatusText } from '@/components/StatusBadge';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
+import { filterExecutions, getUniqueFilterOptions, exportExecutionsToCSV } from '@/lib/exportUtils';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 type SortOrder = 'asc' | 'desc';
 
 interface FilterState {
-  status: string;
-  dateRange: string;
-  workflowName: string;
+  search: string;
+  status?: string;
+  dateRange?: string;
   suite: string[];
   tags: string[];
+  browserType: BrowserType[];
 }
 
 export default function ReportsPage() {
@@ -70,11 +73,12 @@ export default function ReportsPage() {
   const [sortField, setSortField] = useState<SortField>('startTime');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [filters, setFilters] = useState<FilterState>({
+    search: '',
     status: '',
     dateRange: '',
-    workflowName: '',
     suite: [],
-    tags: []
+    tags: [],
+    browserType: []
   });
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
   
@@ -111,7 +115,7 @@ export default function ReportsPage() {
     if (searchQuery) {
       setFilters(prev => ({
         ...prev,
-        workflowName: searchQuery
+        search: searchQuery
       }));
     }
   }, [searchParams]);
@@ -212,8 +216,13 @@ export default function ReportsPage() {
         }
       }
 
-      // Workflow name filter
-      if (filters.workflowName && !execution.workflowName.toLowerCase().includes(filters.workflowName.toLowerCase())) {
+      // Search filter (workflow name)
+      if (filters.search && !execution.workflowName.toLowerCase().includes(filters.search.toLowerCase())) {
+        return false;
+      }
+
+      // Browser type filter
+      if (filters.browserType.length > 0 && !filters.browserType.includes(execution.options?.browserType || 'chromium')) {
         return false;
       }
 
@@ -317,20 +326,16 @@ export default function ReportsPage() {
     }
   };
 
-  const handleFilterChange = (key: keyof FilterState, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
+  // handleFilterChange removed - now using direct setFilters in DataFilters component
 
   const clearFilters = () => {
     setFilters({
+      search: '',
       status: '',
       dateRange: '',
-      workflowName: '',
       suite: [],
-      tags: []
+      tags: [],
+      browserType: []
     });
   };
 
@@ -353,33 +358,9 @@ export default function ReportsPage() {
     return value !== '' && value !== null;
   });
 
-  // Benzersiz suite ve tag değerlerini toplama
-  const { uniqueSuites, uniqueTags, uniqueStatuses } = useMemo(() => {
-    const suites = new Set<string>();
-    const tags = new Set<string>();
-    const statuses = new Set<string>();
-
-    executions.forEach(execution => {
-      if (execution.suite && execution.suite.trim()) {
-        suites.add(execution.suite);
-      }
-      if (execution.tags && execution.tags.length > 0) {
-        execution.tags.forEach(tag => {
-          if (tag.trim()) {
-            tags.add(tag);
-          }
-        });
-      }
-      if (execution.status) {
-        statuses.add(execution.status);
-      }
-    });
-
-    return {
-      uniqueSuites: Array.from(suites).sort(),
-      uniqueTags: Array.from(tags).sort(),
-      uniqueStatuses: Array.from(statuses).sort()
-    };
+  // Get unique filter options using common utility
+  const filterOptions = useMemo(() => {
+    return getUniqueFilterOptions([], executions);
   }, [executions]);
 
 
@@ -821,121 +802,15 @@ export default function ReportsPage() {
               paddingBottom: '1rem',
               borderBottom: '1px solid var(--border-primary)'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                gap: '0.75rem',
-                alignItems: 'center',
-                flexWrap: 'wrap'
-              }}>
-                {/* Test Name Search */}
-                <div style={{ position: 'relative', minWidth: '150px' }}>
-                  <Search size={14} style={{ 
-                    position: 'absolute', 
-                    left: '0.5rem', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)', 
-                    color: 'var(--text-secondary)' 
-                  }} />
-                  <input
-                    type="text"
-                    placeholder="Test adı..."
-                    value={filters.workflowName}
-                    onChange={(e) => handleFilterChange('workflowName', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.375rem 0.5rem 0.375rem 2rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.75rem',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                {/* Status Filter */}
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="">Tüm Durumlar</option>
-                  {uniqueStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getStatusText(status)}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Date Range Filter */}
-                <select
-                  value={filters.dateRange}
-                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '100px'
-                  }}
-                >
-                  <option value="">Tüm Zamanlar</option>
-                  <option value="today">Bugün</option>
-                  <option value="yesterday">Dün</option>
-                  <option value="last7days">Son 7 Gün</option>
-                  <option value="last30days">Son 30 Gün</option>
-                </select>
-
-                {/* Suite Filter */}
-                <MultiSelect
-                  options={uniqueSuites}
-                  selectedValues={filters.suite}
-                  onChange={(values) => handleFilterChange('suite', values)}
-                  placeholder="Tüm Test Grupları"
-                  className="min-w-[120px]"
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <DataFilters
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  availableOptions={filterOptions}
+                  searchPlaceholder="Test adı..."
+                  showStatus={true}
+                  showDateRange={true}
                 />
-
-                {/* Tags Filter */}
-                <MultiSelect
-                  options={uniqueTags}
-                  selectedValues={filters.tags}
-                  onChange={(values) => handleFilterChange('tags', values)}
-                  placeholder="Tüm Etiketler"
-                  className="min-w-[120px]"
-                />
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.375rem 0.5rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.375rem',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    <X size={12} />
-                    Temizle
-                  </button>
-                )}
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1006,129 +881,7 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* Keep old filters section hidden */}
-            {false && (
-              <div style={{
-                display: 'flex',
-                gap: '0.75rem',
-                alignItems: 'center',
-                marginBottom: '1rem',
-                padding: '0.75rem',
-                backgroundColor: 'var(--bg-secondary)',
-                borderRadius: '0.5rem',
-                border: '1px solid var(--border-primary)',
-                flexWrap: 'wrap'
-              }}>
-                {/* Test Name Search */}
-                <div style={{ position: 'relative', minWidth: '150px' }}>
-                  <Search size={14} style={{ 
-                    position: 'absolute', 
-                    left: '0.5rem', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)', 
-                    color: 'var(--text-secondary)' 
-                  }} />
-                  <input
-                    type="text"
-                    placeholder="Test adı..."
-                    value={filters.workflowName}
-                    onChange={(e) => handleFilterChange('workflowName', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.375rem 0.5rem 0.375rem 2rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.75rem',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                {/* Status Filter */}
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '100px'
-                  }}
-                >
-                  <option value="">Tüm Durumlar</option>
-                  <option value="completed">Tamamlandı</option>
-                  <option value="failed">Başarısız</option>
-                  <option value="running">Çalışıyor</option>
-                  <option value="queued">Sırada</option>
-                </select>
-
-                {/* Date Range Filter */}
-                <select
-                  value={filters.dateRange}
-                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    minWidth: '100px'
-                  }}
-                >
-                  <option value="">Tüm Zamanlar</option>
-                  <option value="today">Bugün</option>
-                  <option value="yesterday">Dün</option>
-                  <option value="last7days">Son 7 Gün</option>
-                  <option value="last30days">Son 30 Gün</option>
-                </select>
-
-                {/* Suite Filter */}
-                <MultiSelect
-                  options={uniqueSuites}
-                  selectedValues={filters.suite}
-                  onChange={(values) => handleFilterChange('suite', values)}
-                  placeholder="Tüm Test Grupları"
-                  className="min-w-[120px]"
-                />
-
-                {/* Tags Filter */}
-                <MultiSelect
-                  options={uniqueTags}
-                  selectedValues={filters.tags}
-                  onChange={(values) => handleFilterChange('tags', values)}
-                  placeholder="Tüm Etiketler"
-                  className="min-w-[120px]"
-                />
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.375rem 0.5rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.375rem',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    <X size={12} />
-                    Temizle
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Old filters section removed - now using DataFilters component above */}
 
             {loading ? (
               <div style={{ 

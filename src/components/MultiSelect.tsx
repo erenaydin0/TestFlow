@@ -9,6 +9,7 @@ interface MultiSelectProps {
   onChange: (values: string[]) => void;
   placeholder?: string;
   className?: string;
+  renderOption?: (option: string) => React.ReactNode;
 }
 
 export default function MultiSelect({
@@ -16,7 +17,8 @@ export default function MultiSelect({
   selectedValues,
   onChange,
   placeholder = "Seçiniz...",
-  className = ""
+  className = "",
+  renderOption
 }: MultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -237,7 +239,7 @@ export default function MultiSelect({
                     }
                   }}
                 >
-                  <span>{option}</span>
+                  <span>{renderOption ? renderOption(option) : option}</span>
                   {selectedValues.includes(option) && (
                     <Check size={14} style={{ color: '#10b981' }} />
                   )}

@@ -36,8 +36,11 @@ import ImportDialog from '@/components/test-builder/ImportDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MultiSelect from '@/components/MultiSelect';
 import TestModal from '@/components/TestModal';
+import DataFilters from '@/components/common/DataFilters';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/lib/browser-context';
+import { exportTestsToCSV, filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
+import { BrowserType } from '@/types';
 
 export default function TestsPage() {
   const { isCollapsed } = useSidebar();
@@ -45,9 +48,12 @@ export default function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
-  const [suiteFilter, setSuiteFilter] = useState<string[]>([]);
-  const [searchFilter, setSearchFilter] = useState<string>('');
-  const [tagsFilter, setTagsFilter] = useState<string[]>([]);
+  const [filters, setFilters] = useState({
+    search: '',
+    suite: [] as string[],
+    tags: [] as string[],
+    browserType: [] as BrowserType[]
+  });
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [highlightedTestId, setHighlightedTestId] = useState<string | null>(null);
@@ -93,7 +99,7 @@ export default function TestsPage() {
   useEffect(() => {
     const searchQuery = searchParams.get('search');
     if (searchQuery) {
-      setSearchFilter(searchQuery);
+      setFilters(prev => ({ ...prev, search: searchQuery }));
     }
   }, [searchParams]);
 
@@ -117,17 +123,8 @@ export default function TestsPage() {
     }
   }, [searchParams, tests]);
 
-  // Filter tests based on search, suite and tags
-  const filteredTests = tests.filter(test => {
-    const matchesSearch = !searchFilter || 
-      test.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      test.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      test.tags.some(tag => tag.toLowerCase().includes(searchFilter.toLowerCase()));
-    const matchesSuite = suiteFilter.length === 0 || suiteFilter.includes(test.suite);
-    const matchesTags = tagsFilter.length === 0 || 
-      tagsFilter.some(filterTag => test.tags.includes(filterTag));
-    return matchesSearch && matchesSuite && matchesTags;
-  });
+  // Filter tests using common utility
+  const filteredTests = filterTests(tests, filters);
 
   // Pagination logic
   const totalItems = filteredTests.length;
@@ -139,11 +136,10 @@ export default function TestsPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchFilter, suiteFilter, tagsFilter]);
+  }, [filters]);
 
-  // Get unique suites and tags for filter dropdowns
-  const uniqueSuites = Array.from(new Set(tests.map(test => test.suite)));
-  const uniqueTags = Array.from(new Set(tests.flatMap(test => test.tags)));
+  // Get unique filter options from common utility
+  const filterOptions = getUniqueFilterOptions(tests);
 
   // Handle test selection
   const handleTestSelection = (testId: string, checked: boolean) => {
@@ -481,6 +477,18 @@ export default function TestsPage() {
   };
 
   // Handle bulk export (selected tests)
+  // Handle CSV export (selected tests)
+  const handleBulkCSVExport = () => {
+    if (selectedTests.size === 0) {
+      notifyTestFailure('CSV Export', '', 'Export edilecek test seçin.');
+      return;
+    }
+
+    const selectedTestsData = tests.filter(test => selectedTests.has(test.id));
+    exportTestsToCSV(selectedTestsData);
+    notifyTestImported(`${selectedTestsData.length} test CSV olarak export edildi!`, '');
+  };
+
   const handleBulkExport = () => {
     if (selectedTests.size === 0) {
       notifyTestFailure('Export', '', 'Export edilecek test seçin.');
@@ -630,76 +638,14 @@ export default function TestsPage() {
                 alignItems: 'center',
                 flexWrap: 'wrap'
               }}>
-                {/* Test Name Search */}
-                <div style={{ position: 'relative', minWidth: '150px' }}>
-                  <Search size={14} style={{ 
-                    position: 'absolute', 
-                    left: '0.5rem', 
-                    top: '50%', 
-                    transform: 'translateY(-50%)', 
-                    color: 'var(--text-secondary)' 
-                  }} />
-                  <input
-                    type="text"
-                    placeholder="Test adı..."
-                    value={searchFilter}
-                    onChange={(e) => setSearchFilter(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.375rem 0.5rem 0.375rem 2rem',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.75rem',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-
-                {/* Suite Filter */}
-                <MultiSelect
-                  options={uniqueSuites}
-                  selectedValues={suiteFilter}
-                  onChange={setSuiteFilter}
-                  placeholder="Tüm Test Grupları"
-                  className="min-w-[120px]"
+                <DataFilters
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  availableOptions={filterOptions}
+                  searchPlaceholder="Test ara..."
+                  showStatus={false}
+                  showDateRange={false}
                 />
-
-                {/* Tags Filter */}
-                <MultiSelect
-                  options={uniqueTags}
-                  selectedValues={tagsFilter}
-                  onChange={setTagsFilter}
-                  placeholder="Tüm Etiketler"
-                  className="min-w-[120px]"
-                />
-
-                {/* Clear Filters Button */}
-                {(searchFilter || suiteFilter.length > 0 || tagsFilter.length > 0) && (
-                  <button
-                    onClick={() => {
-                      setSearchFilter('');
-                      setSuiteFilter([]);
-                      setTagsFilter([]);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.375rem 0.5rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.375rem',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    <X size={12} />
-                    Temizle
-                  </button>
-                )}
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
