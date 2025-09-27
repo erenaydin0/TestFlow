@@ -60,11 +60,6 @@ app.post('/api/execute', async (req, res) => {
   try {
     const { workflowId, workflowName, steps, suite, tags, options = {} } = req.body;
     
-    console.log('Received options:', options);
-    console.log('Screenshot enabled:', options.enableScreenshots);
-    console.log('Recording enabled:', options.enableRecording);
-    console.log('Headless mode:', options.headlessMode);
-    
     if (!steps || !Array.isArray(steps) || steps.length === 0) {
       return res.status(400).json({ error: 'Invalid or empty steps provided' });
     }
@@ -99,7 +94,8 @@ app.post('/api/execute', async (req, res) => {
       options: {
         enableScreenshots: options.enableScreenshots || false,
         enableRecording: options.enableRecording || false,
-        headlessMode: options.headlessMode || false
+        headlessMode: options.headlessMode || false,
+        browserType: options.browserType || 'chromium'
       },
       steps: steps.map(step => {
         console.log('Processing step:', JSON.stringify(step, null, 2));

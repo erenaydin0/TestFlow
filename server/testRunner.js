@@ -8,6 +8,7 @@ class TestRunner {
     this.browser = null;
     this.context = null;
     this.page = null;
+    this.currentBrowserType = null; // Track current browser type
     this.screenshotsDir = path.join(__dirname, 'screenshots');
     
     // Ensure screenshots directory exists
@@ -55,7 +56,17 @@ class TestRunner {
       launchOptions.channel = 'msedge';
     }
     
-    this.browser = await browserEngine.launch(launchOptions);
+
+    try {
+      this.browser = await browserEngine.launch(launchOptions);
+      this.currentBrowserType = browserType; // Track current browser type
+      console.log('✅ Browser launched successfully:', browserType);
+    } catch (error) {
+      console.error('❌ Failed to launch', browserType, '- Error:', error.message);
+      console.log('🔄 Falling back to chromium...');
+      this.browser = await chromium.launch(launchOptions);
+      this.currentBrowserType = 'chromium'; // Track fallback browser type
+    }
     
     const contextOptions = {
       viewport
@@ -101,6 +112,7 @@ class TestRunner {
         this.browser = null;
         this.context = null;
         this.page = null;
+        this.currentBrowserType = null; // Reset browser type
       }
     } catch (error) {
       console.error('Error closing browser:', error);
@@ -117,13 +129,26 @@ class TestRunner {
     };
 
     try {
-      // Initialize browser if not already done
-      if (!this.browser) {
+      // Initialize browser if not already done OR browser type changed
+      const requestedBrowserType = options.browserType || 'chromium';
+      const needsReinitialization = !this.browser || this.currentBrowserType !== requestedBrowserType;
+      
+      if (needsReinitialization) {
+        console.log(`🔄 Browser reinitialization needed. Current: ${this.currentBrowserType}, Requested: ${requestedBrowserType}`);
+        
+        // Close existing browser if it exists
+        if (this.browser) {
+          console.log('🔒 Closing existing browser before switching...');
+          await this.closeBrowser();
+        }
+        
         await this.initializeBrowser({
           headless: options.headlessMode || false,
           enableRecording: options.enableRecording || false,
-          browserType: options.browserType || 'chromium'
+          browserType: requestedBrowserType
         });
+      } else {
+        console.log(`♻️ Reusing existing browser: ${this.currentBrowserType}`);
       }
 
       console.log(`Executing step: ${step.type}`);

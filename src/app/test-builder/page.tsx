@@ -137,6 +137,15 @@ export default function TestBuilder() {
   // Browser settings
   const { defaultBrowser, defaultHeadless, defaultRecording, defaultScreenshots } = useBrowserSettings();
   const [selectedBrowser, setSelectedBrowser] = useState<BrowserType>(defaultBrowser);
+  
+  const handleBrowserChange = (browser: BrowserType) => {
+    setSelectedBrowser(browser);
+  };
+  
+  // Context'teki defaultBrowser değiştiğinde selectedBrowser'ı güncelle (sadece ilk yükleme için)
+  useEffect(() => {
+    setSelectedBrowser(defaultBrowser);
+  }, []); // defaultBrowser dependency'si kaldırıldı - sadece mount'ta çalışsın
 
   // Promise resolver for save operation
   const savePromiseRef = useRef<{
@@ -511,6 +520,8 @@ export default function TestBuilder() {
       return;
     }
 
+
+    
     setIsRunning(true);
 
     try {
@@ -574,7 +585,7 @@ export default function TestBuilder() {
     } finally {
       setIsRunning(false);
     }
-  }, [testSteps, enableScreenshots, enableRecording, headlessMode, loadedWorkflowId, loadedWorkflowName]);
+  }, [testSteps, enableScreenshots, enableRecording, headlessMode, selectedBrowser, loadedWorkflowId, loadedWorkflowName]);
 
   // Load workflow from URL parameter - Use ref to track shown notifications
   const shownNotifications = useRef(new Set<string>());
@@ -699,7 +710,7 @@ export default function TestBuilder() {
               setHeadlessMode(!headlessMode);
             }}
             selectedBrowser={selectedBrowser}
-            onBrowserChange={setSelectedBrowser}
+            onBrowserChange={handleBrowserChange}
           />
 
           {/* Floating Actions Panel */}

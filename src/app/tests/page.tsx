@@ -35,9 +35,11 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import MultiSelect from '@/components/MultiSelect';
 import EditTestModal from '@/components/tests/EditTestModal';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
+import { useBrowserSettings } from '@/lib/browser-context';
 
 export default function TestsPage() {
   const { isCollapsed } = useSidebar();
+  const browserSettings = useBrowserSettings();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
@@ -181,6 +183,13 @@ export default function TestsPage() {
       return;
     }
 
+
+    // Debug: Browser ayarlarını kontrol et
+    console.log('🔍 TESTS PAGE DEBUG:');
+    console.log('- browserSettings:', browserSettings);
+    console.log('- test.browserType:', test.browserType);
+    console.log('- Final browserType:', test.browserType || browserSettings.defaultBrowser);
+
     try {
       // Convert frontend steps to backend format
       const backendSteps = test.workflow.map(step => ({
@@ -214,10 +223,10 @@ export default function TestsPage() {
           suite: test.suite,
           tags: test.tags,
           options: {
-            enableScreenshots: test.enableScreenshots || false,
-            enableRecording: test.enableRecording || false,
-            headlessMode: test.headlessMode || false,
-            browserType: test.browserType || 'chromium'
+            enableScreenshots: test.enableScreenshots || browserSettings.defaultScreenshots,
+            enableRecording: test.enableRecording || browserSettings.defaultRecording,
+            headlessMode: test.headlessMode !== undefined ? test.headlessMode : browserSettings.defaultHeadless,
+            browserType: test.browserType || browserSettings.defaultBrowser
           }
         })
       });

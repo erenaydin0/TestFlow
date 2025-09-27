@@ -34,27 +34,50 @@ export function BrowserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // localStorage'dan ayarları yükle
-    try {
-      const savedSettings = localStorage.getItem('browserSettings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
+    const loadSettings = () => {
+      try {
+        const savedSettings = localStorage.getItem('browserSettings');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          const newSettings = { ...DEFAULT_SETTINGS, ...parsed };
+          setSettings(newSettings);
+        }
+      } catch (error) {
+        console.error('Error loading browser settings:', error);
       }
-    } catch (error) {
-      console.error('Error loading browser settings:', error);
-    }
+    };
+
+    loadSettings();
+
+    // localStorage değişikliklerini dinle (diğer sekmelerden değişiklikleri yakala)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'browserSettings') {
+        loadSettings();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
     setMounted(true);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   useEffect(() => {
     if (mounted) {
-      // localStorage'a kaydet
       localStorage.setItem('browserSettings', JSON.stringify(settings));
     }
   }, [settings, mounted]);
 
   const setDefaultBrowser = (browser: BrowserType) => {
-    setSettings(prev => ({ ...prev, defaultBrowser: browser }));
+    const newSettings = { ...settings, defaultBrowser: browser };
+    setSettings(newSettings);
+    
+    // Hemen localStorage'a da yaz (useEffect'i beklemeden)
+    if (mounted) {
+      localStorage.setItem('browserSettings', JSON.stringify(newSettings));
+    }
   };
 
   const setDefaultHeadless = (headless: boolean) => {
