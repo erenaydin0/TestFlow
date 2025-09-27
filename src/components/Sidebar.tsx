@@ -49,7 +49,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
     }}>
       {/* Navigation */}
       <nav style={{ flex: 1, padding: isCollapsed ? '1.5rem 0.5rem' : '1.5rem 1rem', overflow: 'auto' }}>
-        <div style={{ marginBottom: '2rem' }}>
+        <div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -85,42 +85,22 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
             })}
           </ul>
         </div>
-        
-        {/* Ayarlar Butonu */}
-        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-primary)' }}>
-          <button
-            onClick={openModal}
-            className="sidebar-item"
-            style={{
-              textDecoration: 'none',
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              padding: isCollapsed ? '0.75rem' : '0.75rem 1rem',
-              width: '100%',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            title={isCollapsed ? 'Ayarlar' : undefined}
-          >
-            <Settings size={18} />
-            {!isCollapsed && (
-              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                Ayarlar
-              </span>
-            )}
-          </button>
-        </div>
       </nav>
 
-      {/* Collapse Toggle */}
+      {/* Alt Kısım - Ayarlar ve Collapse Toggle */}
       <div style={{ 
         padding: isCollapsed ? '0.5rem' : '1rem', 
         backgroundColor: 'var(--bg-primary)',
         display: 'flex',
-        justifyContent: isCollapsed ? 'center' : 'flex-end'
+        flexDirection: isCollapsed ? 'column' : 'row',
+        alignItems: 'center',
+        justifyContent: isCollapsed ? 'center' : 'space-between',
+        gap: isCollapsed ? '0.5rem' : '1rem',
+        borderTop: '1px solid var(--border-primary)'
       }}>
+        {/* Ayarlar Butonu - Sol */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={openModal}
           style={{
             background: 'none',
             border: 'none',
@@ -143,10 +123,74 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
             e.currentTarget.style.backgroundColor = 'transparent';
             e.currentTarget.style.color = 'var(--text-secondary)';
           }}
-          title={isCollapsed ? 'Sidebar\'ı Genişlet' : 'Sidebar\'ı Daralt'}
+          title="Ayarlar"
         >
-          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          <Settings size={20} />
         </button>
+
+        {/* Collapse Toggle - Sağ */}
+        {!isCollapsed && (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '0.75rem',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.2s ease, background-color 0.2s ease',
+              minWidth: '2.5rem',
+              minHeight: '2.5rem'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+            title="Sidebar'ı Daralt"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+
+        {/* Collapsed durumda genişlet butonu */}
+        {isCollapsed && (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '0.75rem',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.2s ease, background-color 0.2s ease',
+              minWidth: '2.5rem',
+              minHeight: '2.5rem'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+            title="Sidebar'ı Genişlet"
+          >
+            <ChevronRight size={20} />
+          </button>
+        )}
       </div>
     </aside>
   );
