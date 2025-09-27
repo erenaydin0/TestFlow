@@ -166,6 +166,24 @@ interface TestNameCellProps {
 }
 
 export const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) => {
+  const [showCopied, setShowCopied] = React.useState(false);
+
+  const handleCopyId = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (id) {
+      try {
+        await navigator.clipboard.writeText(id);
+        // Görsel feedback göster
+        setShowCopied(true);
+        setTimeout(() => {
+          setShowCopied(false);
+        }, 1500);
+      } catch (err) {
+        console.error('ID kopyalanamadı:', err);
+      }
+    }
+  };
+
   return (
     <div>
       <div style={{ 
@@ -186,13 +204,32 @@ export const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, i
         </div>
       )}
       {id && (
-        <div style={{ 
-          fontSize: '0.7rem', 
-          color: 'var(--text-tertiary)',
-          fontFamily: 'monospace',
-          marginTop: '0.25rem'
-        }}>
-          ID: {id.slice(0, 8)}...
+        <div style={{ position: 'relative' }}>
+          <div 
+            style={{ 
+              fontSize: '0.7rem', 
+              color: showCopied ? '#059669' : 'var(--text-tertiary)',
+              fontFamily: 'monospace',
+              marginTop: '0.25rem',
+              cursor: 'pointer',
+              transition: 'color 0.2s ease',
+              fontWeight: showCopied ? 600 : 400
+            }}
+            title={`${id} (Kopyalamak için tıklayın)`}
+            onClick={handleCopyId}
+            onMouseEnter={(e) => {
+              if (!showCopied) {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!showCopied) {
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }
+            }}
+          >
+            {showCopied ? 'Kopyalandı! ✓' : `ID: ${id.slice(0, 12)}...`}
+          </div>
         </div>
       )}
     </div>
