@@ -48,7 +48,7 @@ export default function Dashboard() {
       completedExecutions: executions.filter(e => e.status === 'completed').length,
       failedExecutions: executions.filter(e => e.status === 'failed').length,
       avgDuration: executions.length > 0 ? 
-        Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + ((e.duration || 0) / 1000), 0) / executions.filter(e => e.duration).length) : 0,
+        Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / executions.filter(e => e.duration).length) : 0,
       successRate: executions.length > 0 ? 
         Math.round((executions.filter(e => e.status === 'completed').length / executions.length) * 100) : 0
     };
