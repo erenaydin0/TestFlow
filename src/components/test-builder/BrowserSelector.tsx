@@ -36,17 +36,17 @@ export default function BrowserSelector({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.5rem 0.75rem',
+          gap: '0.375rem',
+          padding: '0.375rem 0.5rem',
           backgroundColor: 'var(--bg-secondary)',
           border: '1px solid var(--border-primary)',
           borderRadius: '0.5rem',
           color: 'var(--text-primary)',
-          fontSize: '0.875rem',
+          fontSize: '0.8rem',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           transition: 'all 0.2s ease',
-          minWidth: '120px'
+          minWidth: '90px'
         }}
         onMouseEnter={(e) => {
           if (!disabled) {
@@ -60,13 +60,13 @@ export default function BrowserSelector({
         }}
       >
         <SelectedIconComponent 
-          size={16} 
+          size={14} 
           style={{ color: selectedOption?.color || '#4285F4' }} 
         />
         <span>{selectedOption?.label || 'Chrome'}</span>
         <svg 
-          width="12" 
-          height="12" 
+          width="10" 
+          height="10" 
           viewBox="0 0 12 12" 
           fill="none"
           style={{ 
@@ -153,14 +153,14 @@ export default function BrowserSelector({
                   }}
                 >
                   <IconComponent 
-                    size={16} 
+                    size={14} 
                     style={{ color: isSelected ? 'white' : option.color }} 
                   />
                   <span>{option.label}</span>
                   {isSelected && (
                     <svg 
-                      width="16" 
-                      height="16" 
+                      width="14" 
+                      height="14" 
                       viewBox="0 0 16 16" 
                       fill="none"
                       style={{ marginLeft: 'auto' }}
