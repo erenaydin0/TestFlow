@@ -4,16 +4,12 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import { useSidebar } from '@/lib/sidebar-context';
 import StatsCards from '@/components/StatsCards';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
-import { BrowserCell, TagsCell, DateCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } from '@/components/common/TableCells';
+import { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } from '@/components/common/TableCells';
 import { 
   Download, 
-  Eye,
   Image,
   Video,
   RefreshCw,
@@ -23,9 +19,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   AlertCircle,
   FileText,
   Tag,
@@ -34,16 +27,14 @@ import {
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import StatusBadge, { getStatusColor, getStatusText } from '@/components/StatusBadge';
-import { ExecutionResult, BrowserType } from '@/types';
+import { ExecutionResult } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
-import { exportExecutionsToCSV } from '@/lib/exportUtils';
 import { useReports } from '@/hooks/useReports';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 
 export default function ReportsPage() {
-  const { isCollapsed } = useSidebar();
   const {
     executions,
     filteredExecutions,
@@ -78,8 +69,6 @@ export default function ReportsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  // fetchExecutions artık useReports hook'undan geliyor
 
   // Handle URL search parameter
   useEffect(() => {
@@ -157,10 +146,6 @@ export default function ReportsPage() {
     };
   }, [selectedExecution]);
 
-  // filteredExecutions ve sortedExecutions artık useReports hook'undan geliyor
-
-  // filterOptions artık useReports hook'undan geliyor
-
   // Define table columns for DataTable
   const columns: Column<ExecutionResult>[] = [
     {
@@ -189,7 +174,9 @@ export default function ReportsPage() {
       label: 'Başlangıç',
       sortable: true,
       render: (value, execution) => (
-        <DateCell date={execution.startTime} format="relative" />
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          {formatRelativeTime(execution.startTime)}
+        </span>
       )
     },
     {
@@ -266,10 +253,6 @@ export default function ReportsPage() {
     setCurrentPage(1);
   }, [filters, sortField, sortOrder]);
 
-  // stats artık useReports hook'undan geliyor (filteredStats olarak)
-
-  // handleSort ve clearFilters artık useReports hook'undan geliyor
-
   // Pagination functions
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -282,15 +265,6 @@ export default function ReportsPage() {
   const goToPreviousPage = () => goToPage(currentPage - 1);
   const goToNextPage = () => goToPage(currentPage + 1);
 
-  // hasActiveFilters artık useReports hook'undan geliyor
-
-
-
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown size={12} />;
-    return sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
-  };
 
   // Create single CSV report for test execution
   const createTestCSVReport = (executions: ExecutionResult[]) => {
@@ -529,24 +503,6 @@ export default function ReportsPage() {
     }
   };
 
-  // Selection functions
-  const handleTestSelection = (testId: string, checked: boolean) => {
-    const newSelection = new Set(selectedExecutions);
-    if (checked) {
-      newSelection.add(testId);
-    } else {
-      newSelection.delete(testId);
-    }
-    setSelectedExecutions(newSelection);
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedExecutions(new Set(currentPageExecutions.map(e => e.id)));
-    } else {
-      setSelectedExecutions(new Set());
-    }
-  };
 
   const downloadSelectedTests = async () => {
     if (selectedExecutions.size === 0) return;

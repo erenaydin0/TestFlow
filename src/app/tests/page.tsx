@@ -17,13 +17,13 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import { exportTestWorkflow } from '@/lib/utils';
-import { Test, BrowserType } from '@/types';
+import { Test } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import TestModal from '@/components/TestModal';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
-import { BrowserCell, TagsCell, DateCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
+import { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/lib/browser-context';
 import { exportTestsToCSV } from '@/lib/exportUtils';
@@ -190,7 +190,9 @@ export default function TestsPage() {
       label: 'Oluşturulma',
       sortable: true,
       render: (value, test) => (
-        <DateCell date={test.createdAt} format="relative" />
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          {test.createdAt ? new Date(test.createdAt).toLocaleDateString('tr-TR') : '-'}
+        </span>
       )
     },
     {
