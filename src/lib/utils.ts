@@ -62,11 +62,32 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
 
 
 // Test workflow import/export functions
-export const exportTestWorkflow = (testSteps: TestStep[], fileName?: string) => {
+export const exportTestWorkflow = (
+  testSteps: TestStep[], 
+  fileName?: string, 
+  metadata?: {
+    description?: string;
+    tags?: string[];
+    suite?: string;
+    browserType?: BrowserType;
+    enableScreenshots?: boolean;
+    enableRecording?: boolean;
+    headlessMode?: boolean;
+  }
+) => {
   const workflow = {
-    version: '1.0',
+    version: '1.1', // Updated version to support metadata
     name: fileName || 'test-workflow',
+    description: metadata?.description || '',
     createdAt: new Date().toISOString(),
+    metadata: {
+      tags: metadata?.tags || [],
+      suite: metadata?.suite || 'Default',
+      browserType: metadata?.browserType || 'chromium',
+      enableScreenshots: metadata?.enableScreenshots || false,
+      enableRecording: metadata?.enableRecording || false,
+      headlessMode: metadata?.headlessMode || false
+    },
     steps: testSteps.map(step => ({
       ...step,
       // Remove any UI-specific properties that shouldn't be exported
@@ -86,7 +107,19 @@ export const exportTestWorkflow = (testSteps: TestStep[], fileName?: string) => 
   linkElement.click();
 };
 
-export const importTestWorkflow = (file: File): Promise<{ steps: TestStep[]; name: string }> => {
+export const importTestWorkflow = (file: File): Promise<{ 
+  steps: TestStep[]; 
+  name: string;
+  metadata?: {
+    description?: string;
+    tags?: string[];
+    suite?: string;
+    browserType?: BrowserType;
+    enableScreenshots?: boolean;
+    enableRecording?: boolean;
+    headlessMode?: boolean;
+  };
+}> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -111,7 +144,16 @@ export const importTestWorkflow = (file: File): Promise<{ steps: TestStep[]; nam
         
         resolve({
           steps: validSteps,
-          name: workflow.name || 'imported-workflow'
+          name: workflow.name || 'imported-workflow',
+          metadata: {
+            description: workflow.description || '',
+            tags: workflow.metadata?.tags || workflow.tags || [],
+            suite: workflow.metadata?.suite || workflow.suite || 'Default',
+            browserType: workflow.metadata?.browserType || workflow.browserType || 'chromium',
+            enableScreenshots: workflow.metadata?.enableScreenshots || workflow.enableScreenshots || false,
+            enableRecording: workflow.metadata?.enableRecording || workflow.enableRecording || false,
+            headlessMode: workflow.metadata?.headlessMode || workflow.headlessMode || false
+          }
         });
       } catch (error) {
         reject(new Error(`Dosya okuma hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`));
@@ -460,7 +502,11 @@ export const importWorkflowsFromBackup = (file: File): Promise<{ imported: numbe
                 description: workflow.description,
                 steps: workflow.workflow || [],
                 tags: workflow.tags,
-                suite: workflow.suite
+                suite: workflow.suite,
+                enableScreenshots: workflow.enableScreenshots || false,
+                enableRecording: workflow.enableRecording || false,
+                headlessMode: workflow.headlessMode || false,
+                browserType: workflow.browserType || 'chromium'
               });
               imported++;
             } catch (error) {

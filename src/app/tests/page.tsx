@@ -460,7 +460,19 @@ export default function TestsPage() {
     const test = tests.find(t => t.id === testId);
     if (test && test.workflow) {
       try {
-        exportTestWorkflow(test.workflow, `${test.name}.json`);
+        exportTestWorkflow(
+          test.workflow, 
+          `${test.name}.json`,
+          {
+            description: test.description,
+            tags: test.tags,
+            suite: test.suite,
+            browserType: test.browserType,
+            enableScreenshots: test.enableScreenshots,
+            enableRecording: test.enableRecording,
+            headlessMode: test.headlessMode
+          }
+        );
         notifyTestImported(`"${test.name}" başarıyla export edildi!`, testId);
       } catch (error) {
         notifyTestFailure('Export', '', 'Export işlemi sırasında hata oluştu.');
@@ -481,13 +493,25 @@ export default function TestsPage() {
       // Single test export
       const test = selectedTestsData[0];
       if (test.workflow) {
-        exportTestWorkflow(test.workflow, `${test.name}.json`);
+        exportTestWorkflow(
+          test.workflow, 
+          `${test.name}.json`,
+          {
+            description: test.description,
+            tags: test.tags,
+            suite: test.suite,
+            browserType: test.browserType,
+            enableScreenshots: test.enableScreenshots,
+            enableRecording: test.enableRecording,
+            headlessMode: test.headlessMode
+          }
+        );
         notifyTestImported(`"${test.name}" başarıyla export edildi!`, test.id);
       }
     } else {
       // Multiple tests export
       const exportData = {
-        version: '1.0',
+        version: '1.1', // Updated version to support browser settings
         exportDate: new Date().toISOString(),
         exportType: 'multiple-workflows',
         workflows: selectedTestsData.map(test => ({
@@ -496,6 +520,10 @@ export default function TestsPage() {
           steps: test.workflow || [],
           tags: test.tags,
           suite: test.suite,
+          browserType: test.browserType || 'chromium',
+          enableScreenshots: test.enableScreenshots || false,
+          enableRecording: test.enableRecording || false,
+          headlessMode: test.headlessMode || false,
           metadata: {
             createdAt: test.createdAt,
             updatedAt: test.updatedAt,

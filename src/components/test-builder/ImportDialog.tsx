@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, X, AlertCircle, FileText, CheckCircle, Info } from 'lucide-react';
+import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
+import { BrowserType } from '@/types';
 
 interface ImportDialogProps {
   isOpen: boolean;
@@ -17,6 +18,10 @@ interface ImportPreview {
   stepCount: number;
   tags: string[];
   suite: string;
+  browserType?: BrowserType;
+  enableScreenshots?: boolean;
+  enableRecording?: boolean;
+  headlessMode?: boolean;
   isValid: boolean;
   errors: string[];
   willOverwrite: boolean;
@@ -122,8 +127,12 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             name: parsed.name || file.name.replace('.json', ''),
             description: parsed.description || '',
             steps: parsed.steps,
-            tags: parsed.tags || [],
-            suite: parsed.suite || 'Imported'
+            tags: parsed.metadata?.tags || parsed.tags || [],
+            suite: parsed.metadata?.suite || parsed.suite || 'Imported',
+            browserType: parsed.metadata?.browserType || parsed.browserType || 'chromium',
+            enableScreenshots: parsed.metadata?.enableScreenshots || parsed.enableScreenshots || false,
+            enableRecording: parsed.metadata?.enableRecording || parsed.enableRecording || false,
+            headlessMode: parsed.metadata?.headlessMode || parsed.headlessMode || false
           };
           const preview = createPreview(workflowData, file.name);
           newPreviews.push(preview);
@@ -134,10 +143,14 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               const result = await importTestWorkflow(file);
               const workflowData = {
                 name: result.name || file.name.replace('.json', ''),
-                description: '',
+                description: result.metadata?.description || '',
                 steps: result.steps,
-                tags: [],
-                suite: 'Imported'
+                tags: result.metadata?.tags || [],
+                suite: result.metadata?.suite || 'Imported',
+                browserType: result.metadata?.browserType || 'chromium',
+                enableScreenshots: result.metadata?.enableScreenshots || false,
+                enableRecording: result.metadata?.enableRecording || false,
+                headlessMode: result.metadata?.headlessMode || false
               };
               const preview = createPreview(workflowData, file.name);
               newPreviews.push(preview);
@@ -150,6 +163,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                 tags: [],
                 suite: '',
                 isValid: false,
+                browserType: 'chromium',
+                enableScreenshots: false,
+                enableRecording: false,
+                headlessMode: false,
                 errors: [`Import hatası: ${importError instanceof Error ? importError.message : 'Bilinmeyen hata'}`],
                 willOverwrite: false
               });
@@ -204,6 +221,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       stepCount: workflow.steps ? workflow.steps.length : 0,
       tags: workflow.tags || [],
       suite: workflow.suite || 'Imported',
+      browserType: workflow.browserType || 'chromium',
+      enableScreenshots: workflow.enableScreenshots || false,
+      enableRecording: workflow.enableRecording || false,
+      headlessMode: workflow.headlessMode || false,
       isValid: errors.length === 0,
       errors,
       willOverwrite
@@ -242,7 +263,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           description: preview.description,
           steps: workflowData.steps || [],
           tags: preview.tags,
-          suite: preview.suite
+          suite: preview.suite,
+          browserType: preview.browserType,
+          enableScreenshots: preview.enableScreenshots,
+          enableRecording: preview.enableRecording,
+          headlessMode: preview.headlessMode
         });
         success++;
       } catch (error) {
@@ -478,12 +503,39 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                     fontSize: '0.75rem', 
                     color: 'var(--text-secondary)',
                     display: 'flex',
+                    flexWrap: 'wrap',
                     gap: '1rem'
                   }}>
                     <span>📋 {preview.stepCount} adım</span>
                     <span>📁 {preview.suite}</span>
                     {preview.tags.length > 0 && (
                       <span>🏷️ {preview.tags.join(', ')}</span>
+                    )}
+                    {preview.browserType && (
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        {(() => {
+                          switch(preview.browserType) {
+                            case 'chromium': return <Chrome size={12} style={{ color: '#4285F4' }} />;
+                            case 'firefox': return <Globe size={12} style={{ color: '#FF7139' }} />;
+                            case 'webkit': return <Globe size={12} style={{ color: '#007AFF' }} />;
+                            case 'msedge': return <Globe size={12} style={{ color: '#0078D4' }} />;
+                            default: return <Chrome size={12} style={{ color: '#4285F4' }} />;
+                          }
+                        })()} 
+                        {(() => {
+                          switch(preview.browserType) {
+                            case 'chromium': return 'Chrome';
+                            case 'firefox': return 'Firefox';
+                            case 'webkit': return 'Safari';
+                            case 'msedge': return 'Edge';
+                            default: return 'Chrome';
+                          }
+                        })()} 
+                      </span>
                     )}
                   </div>
                   

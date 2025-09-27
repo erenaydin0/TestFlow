@@ -391,17 +391,30 @@ export default function TestBuilder() {
 
     try {
       const workflowName = `test-workflow-${new Date().toISOString().split('T')[0]}`;
-      exportTestWorkflow(testSteps, workflowName);
+      exportTestWorkflow(
+        testSteps, 
+        workflowName, 
+        {
+          description: '',
+          tags: [],
+          suite: 'Default',
+          browserType: selectedBrowser,
+          enableScreenshots,
+          enableRecording,
+          headlessMode
+        }
+      );
+      notifyTestImported(`"${workflowName}" başarıyla export edildi!`, '');
     } catch (error) {
       console.error('Export error:', error);
       notifyTestFailure('Test Dışa Aktarma', '', 'Workflow dışa aktarılırken bir hata oluştu.');
     }
-  }, [testSteps]);
+  }, [testSteps, selectedBrowser, enableScreenshots, enableRecording, headlessMode]);
 
   // Handle import workflow
   const handleImport = useCallback(async (file: File) => {
     try {
-      const { steps, name } = await importTestWorkflow(file);
+      const { steps, name, metadata } = await importTestWorkflow(file);
       
       // Validate imported workflow
       const validation = validateWorkflow(steps);
@@ -442,7 +455,22 @@ export default function TestBuilder() {
       setTestSteps(updatedSteps);
       saveToHistory(updatedSteps);
 
-      notifyTestImported(`${name} (${newSteps.length} adım)`, '');
+      // Apply imported browser settings if available
+      if (metadata?.browserType && metadata.browserType !== selectedBrowser) {
+        setSelectedBrowser(metadata.browserType);
+      }
+      if (metadata?.enableScreenshots !== undefined && metadata.enableScreenshots !== enableScreenshots) {
+        setEnableScreenshots(metadata.enableScreenshots);
+      }
+      if (metadata?.enableRecording !== undefined && metadata.enableRecording !== enableRecording) {
+        setEnableRecording(metadata.enableRecording);
+      }
+      if (metadata?.headlessMode !== undefined && metadata.headlessMode !== headlessMode) {
+        setHeadlessMode(metadata.headlessMode);
+      }
+
+      const metadataInfo = metadata?.browserType ? ` (${metadata.browserType})` : '';
+      notifyTestImported(`${name} (${newSteps.length} adım)${metadataInfo}`, '');
     } catch (error) {
       console.error('Import error:', error);
       notifyTestFailure('Workflow İçe Aktarma', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
