@@ -354,7 +354,6 @@ export const StepCountCell: React.FC<StepCountCellProps> = ({ count }) => {
       justifyContent: 'center',
       width: '2rem',
       height: '2rem',
-      backgroundColor: 'var(--bg-tertiary)',
       borderRadius: '0.375rem',
       fontSize: '0.875rem',
       fontWeight: 500,

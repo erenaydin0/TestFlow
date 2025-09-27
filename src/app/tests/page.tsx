@@ -214,7 +214,7 @@ export default function TestsPage() {
       label: 'Adım Sayısı',
       sortable: true,
       align: 'center',
-      width: '100px',
+      width: '120px',
       render: (value, test) => (
         <StepCountCell count={test.workflow?.length || 0} />
       )
