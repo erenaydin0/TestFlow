@@ -34,7 +34,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Chrome,
+  Globe
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { ExecutionResult } from '@/types';
@@ -42,7 +44,7 @@ import { getStatusColor, getStatusText } from '@/components/StatusBadge';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 
-type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags';
+type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 type SortOrder = 'asc' | 'desc';
 
 interface FilterState {
@@ -264,6 +266,10 @@ export default function ReportsPage() {
           aValue = (a.tags || []).length;
           bValue = (b.tags || []).length;
           break;
+        case 'browserType':
+          aValue = a.options?.browserType || 'chromium';
+          bValue = b.options?.browserType || 'chromium';
+          break;
         default:
           return 0;
       }
@@ -395,6 +401,7 @@ export default function ReportsPage() {
       'Başarı Oranı (%)',
       'Test Grubu',
       'Etiketler',
+      'Tarayıcı',
       'Toplam Adım',
       'Başarılı Adım',
       'Başarısız Adım',
@@ -426,6 +433,16 @@ export default function ReportsPage() {
         execution.successRate || '',
         execution.suite || '',
         (execution.tags || []).join(', '),
+        (() => {
+          const browserType = execution.options?.browserType || 'chromium';
+          switch(browserType) {
+            case 'chromium': return 'Chrome';
+            case 'firefox': return 'Firefox';
+            case 'webkit': return 'Safari';
+            case 'msedge': return 'Edge';
+            default: return 'Chrome';
+          }
+        })(),
         execution.steps.length,
         execution.steps.filter(s => s.status === 'passed').length,
         execution.steps.filter(s => s.status === 'failed').length,
@@ -1273,6 +1290,24 @@ export default function ReportsPage() {
                           {getSortIcon('tags')}
                         </div>
                       </th>
+                      <th 
+                        style={{ 
+                          padding: '0.75rem', 
+                          textAlign: 'left', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          width: '120px'
+                        }}
+                        onClick={() => handleSort('browserType')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Globe size={14} />
+                          Tarayıcı
+                          {getSortIcon('browserType')}
+                        </div>
+                      </th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                         Rapor
                       </th>
@@ -1383,6 +1418,43 @@ export default function ReportsPage() {
                           ) : (
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
                           )}
+                        </td>
+                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                          {(() => {
+                            const browserType = execution.options?.browserType || 'chromium';
+                            const getBrowserIcon = () => {
+                              switch(browserType) {
+                                case 'chromium': return <Chrome size={16} style={{ color: '#4285F4' }} />;
+                                case 'firefox': return <Globe size={16} style={{ color: '#FF7139' }} />;
+                                case 'webkit': return <Globe size={16} style={{ color: '#007AFF' }} />;
+                                case 'msedge': return <Globe size={16} style={{ color: '#0078D4' }} />;
+                                default: return <Chrome size={16} style={{ color: '#4285F4' }} />;
+                              }
+                            };
+                            const getBrowserName = () => {
+                              switch(browserType) {
+                                case 'chromium': return 'Chrome';
+                                case 'firefox': return 'Firefox';
+                                case 'webkit': return 'Safari';
+                                case 'msedge': return 'Edge';
+                                default: return 'Chrome';
+                              }
+                            };
+                            return (
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem',
+                                justifyContent: 'center',
+                                fontSize: '0.875rem'
+                              }}>
+                                {getBrowserIcon()}
+                                <span style={{ color: 'var(--text-primary)' }}>
+                                  {getBrowserName()}
+                                </span>
+                              </div>
+                            );
+                          })()} 
                         </td>
                         <td style={{ padding: '0.75rem' }}>
                           <button
@@ -1670,6 +1742,130 @@ export default function ReportsPage() {
                       <strong>Süre:</strong> {formatDuration(selectedExecution.duration)}
                     </div>
                   )}
+                </div>
+                
+                {/* Test Metadata */}
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  marginTop: '1rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  {/* Browser */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <strong>Tarayıcı:</strong>
+                    {(() => {
+                      const browserType = selectedExecution.options?.browserType || 'chromium';
+                      const getBrowserIcon = () => {
+                        switch(browserType) {
+                          case 'chromium': return <Chrome size={14} style={{ color: '#4285F4' }} />;
+                          case 'firefox': return <Globe size={14} style={{ color: '#FF7139' }} />;
+                          case 'webkit': return <Globe size={14} style={{ color: '#007AFF' }} />;
+                          case 'msedge': return <Globe size={14} style={{ color: '#0078D4' }} />;
+                          default: return <Chrome size={14} style={{ color: '#4285F4' }} />;
+                        }
+                      };
+                      const getBrowserName = () => {
+                        switch(browserType) {
+                          case 'chromium': return 'Chrome';
+                          case 'firefox': return 'Firefox';
+                          case 'webkit': return 'Safari';
+                          case 'msedge': return 'Edge';
+                          default: return 'Chrome';
+                        }
+                      };
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          {getBrowserIcon()}
+                          <span>{getBrowserName()}</span>
+                        </div>
+                      );
+                    })()} 
+                  </div>
+                  
+                  {/* Suite */}
+                  {selectedExecution.suite && (
+                    <div>
+                      <strong>Test Grubu:</strong> {selectedExecution.suite}
+                    </div>
+                  )}
+                  
+                  {/* Tags */}
+                  {selectedExecution.tags && selectedExecution.tags.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong>Etiketler:</strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                        {selectedExecution.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.125rem 0.5rem',
+                              backgroundColor: 'var(--bg-tertiary)',
+                              color: 'var(--text-secondary)',
+                              fontSize: '0.75rem',
+                              borderRadius: '0.375rem',
+                              border: '1px solid var(--border-primary)'
+                            }}
+                          >
+                            <Tag size={10} />
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Test Options */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {selectedExecution.options?.headlessMode && (
+                      <span style={{
+                        fontSize: '0.75rem',
+                        padding: '0.125rem 0.5rem',
+                        backgroundColor: '#f3f4f6',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #d1d5db'
+                      }}>
+                        Headless
+                      </span>
+                    )}
+                    {selectedExecution.options?.enableScreenshots && (
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '0.75rem',
+                        padding: '0.125rem 0.5rem',
+                        backgroundColor: '#ecfdf5',
+                        color: '#059669',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #a7f3d0'
+                      }}>
+                        <Image size={10} />
+                        Screenshots
+                      </span>
+                    )}
+                    {selectedExecution.options?.enableRecording && (
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '0.75rem',
+                        padding: '0.125rem 0.5rem',
+                        backgroundColor: '#fef2f2',
+                        color: '#dc2626',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #fecaca'
+                      }}>
+                        <Video size={10} />
+                        Recording
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               
