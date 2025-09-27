@@ -70,15 +70,11 @@ export const TagsCell: React.FC<TagsCellProps> = ({ tags = [], maxVisible = 2 })
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.25rem',
-            padding: '0.125rem 0.5rem',
-            backgroundColor: 'var(--bg-tertiary)',
             color: 'var(--text-secondary)',
-            fontSize: '0.75rem',
-            borderRadius: '0.375rem',
-            border: '1px solid var(--border-primary)'
+            fontSize: '0.75rem'
           }}
         >
-          <Tag size={12} />
+          <span style={{ color: 'var(--text-tertiary)', fontSize: '1rem' }}>#</span>
           {tag}
         </span>
       ))}
