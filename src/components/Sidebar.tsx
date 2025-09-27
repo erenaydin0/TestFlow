@@ -6,12 +6,12 @@ import {
   LayoutDashboard, 
   TestTube,
   Workflow,
-  Calendar,
+  AlarmClock,
   ChevronLeft,
   ChevronRight,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
-import { BarChart } from 'lucide-react';
 import { useSidebar } from '@/lib/sidebar-context';
 import { useSettingsModal } from '@/lib/settings-modal-context';
 
@@ -21,10 +21,10 @@ interface SidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Test Oluşturucu', href: '/test-builder', icon: Workflow },
-  { name: 'Kayıtlı Testler', href: '/tests', icon: TestTube },
-  { name: 'Zamanlanmış Testler', href: '/scheduled', icon: Calendar },
-  { name: 'Test Sonuçları', href: '/reports', icon: BarChart },
+  { name: 'Oluşturucu', href: '/test-builder', icon: Workflow },
+  { name: 'Testler', href: '/tests', icon: TestTube },
+  { name: 'Zamanlanmış', href: '/scheduled', icon: AlarmClock },
+  { name: 'Sonuçlar', href: '/reports', icon: FileText },
 ];
 
 export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
