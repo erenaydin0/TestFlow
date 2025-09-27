@@ -415,7 +415,11 @@ export const duplicateWorkflow = (id: string, newName?: string): string | null =
       description: workflow.description,
       steps: workflow.workflow || [],
       tags: workflow.tags,
-      suite: workflow.suite
+      suite: workflow.suite,
+      enableScreenshots: workflow.enableScreenshots,
+      enableRecording: workflow.enableRecording,
+      headlessMode: workflow.headlessMode,
+      browserType: workflow.browserType
     };
     
     return saveWorkflowToStorage(duplicatedWorkflow);
