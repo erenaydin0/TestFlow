@@ -49,6 +49,42 @@ export default function DailyTestResults({ data }: DailyTestResultsProps) {
                 const date = new Date(value);
                 return date.toLocaleDateString('tr-TR');
               }}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const total = payload[0].payload.total;
+                  return (
+                    <div 
+                      style={{ 
+                        backgroundColor: bgColors.primary, 
+                        border: `1px solid ${borderColors.primary}`,
+                        borderRadius: '0.5rem',
+                        padding: '12px',
+                        color: textColors.primary,
+                        fontSize: '14px'
+                      }}
+                    >
+                      <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>
+                        {label ? new Date(label).toLocaleDateString('tr-TR') : ''}
+                      </p>
+                      {payload.map((entry, index) => (
+                        <p key={index} style={{ margin: '4px 0', color: entry.color }}>
+                          {`${entry.name}: ${entry.value}`}
+                        </p>
+                      ))}
+                      <div style={{ 
+                        marginTop: '8px', 
+                        paddingTop: '8px', 
+                        borderTop: `1px solid ${borderColors.primary}`,
+                        color: '#ffffff',
+                        fontWeight: 'bold'
+                      }}>
+                        Toplam: {total}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <Area 
               type="monotone" 

@@ -1,4 +1,6 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface TestSuite {
   name: string;
@@ -6,11 +8,26 @@ interface TestSuite {
   color: string;
 }
 
-interface TestSuiteDistributionProps {
-  data: TestSuite[];
+interface BrowserDistribution {
+  name: string;
+  value: number;
+  color: string;
 }
 
-export default function TestSuiteDistribution({ data }: TestSuiteDistributionProps) {
+interface TestSuiteDistributionProps {
+  testSuiteData: TestSuite[];
+  browserData: BrowserDistribution[];
+}
+
+export default function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistributionProps) {
+  const [currentPage, setCurrentPage] = useState(0); // 0: Test Dağılımı, 1: Tarayıcı Dağılımı
+  
+  const pages = [
+    { title: 'Test Dağılımı', data: testSuiteData },
+    { title: 'Tarayıcı Dağılımı', data: browserData }
+  ];
+  
+  const currentData = pages[currentPage].data;
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -35,9 +52,47 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>
-        Test Dağılımı
-      </h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          {pages[currentPage].title}
+        </h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage(currentPage === 0 ? 1 : 0)}
+            disabled={currentPage === 0}
+            className="p-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <ChevronLeftIcon className="w-5 h-5" />
+          </button>
+          <div className="flex gap-1">
+            {pages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index)}
+                className="w-2 h-2 rounded-full transition-colors"
+                style={{
+                  backgroundColor: index === currentPage ? 'var(--border-secondary)' : 'var(--border-primary)'
+                }}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => setCurrentPage(currentPage === 1 ? 0 : 1)}
+            disabled={currentPage === 1}
+            className="p-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <ChevronRightIcon className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
       <div className="flex flex-col md:flex-row gap-8 items-center">
         {/* Grafik - Sol taraf */}
         <div className="flex-shrink-0">
@@ -45,7 +100,7 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={currentData}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -53,7 +108,7 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {data.map((entry, index) => (
+                  {currentData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -66,7 +121,7 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
         {/* Legend - Sağ taraf */}
         <div className="flex-1 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.map((item, index) => (
+            {currentData.map((item, index) => (
               <div key={index} className="flex items-center gap-3 min-w-0">
                 <div 
                   className="w-4 h-4 rounded-full flex-shrink-0"
@@ -84,7 +139,7 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
                     className="text-xs" 
                     style={{ color: 'var(--text-secondary)' }}
                   >
-                    {item.value} test
+                    {item.value} {currentPage === 0 ? 'test' : 'çalıştırma'}
                   </div>
                 </div>
               </div>
@@ -95,10 +150,10 @@ export default function TestSuiteDistribution({ data }: TestSuiteDistributionPro
           <div className="mt-6 pt-4 border-t" style={{ borderColor: 'var(--border-primary)' }}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                Toplam Test
+                Toplam {currentPage === 0 ? 'Test' : 'Çalıştırma'}
               </span>
               <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                {data.reduce((sum, item) => sum + item.value, 0)}
+                {currentData.reduce((sum, item) => sum + item.value, 0)}
               </span>
             </div>
           </div>

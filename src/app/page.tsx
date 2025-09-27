@@ -7,7 +7,7 @@ import StatsCards from '@/components/StatsCards';
 import { 
   DailyTestResults, 
   TestSuiteDistribution, 
-  RecentTests 
+  RecentTests
 } from '@/components/dashboard';
 import { ExecutionResult } from '@/types';
 import { useSidebar } from '@/lib/sidebar-context';
@@ -48,7 +48,7 @@ export default function Dashboard() {
       completedExecutions: executions.filter(e => e.status === 'completed').length,
       failedExecutions: executions.filter(e => e.status === 'failed').length,
       avgDuration: executions.length > 0 ? 
-        Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / executions.filter(e => e.duration).length) : 0,
+        Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + ((e.duration || 0) / 1000), 0) / executions.filter(e => e.duration).length) : 0,
       successRate: executions.length > 0 ? 
         Math.round((executions.filter(e => e.status === 'completed').length / executions.length) * 100) : 0
     };
@@ -91,6 +91,21 @@ export default function Dashboard() {
       color: colors[index % colors.length]
     }));
 
+    // Browser distribution
+    const browserData = executions.reduce((acc, execution) => {
+      const browser = execution.options?.browserType || 'chromium';
+      acc[browser] = (acc[browser] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const browserColors = ['#4285f4', '#ff6d01', '#9333ea', '#059669', '#dc2626'];
+    const browserDataWithColors = Object.entries(browserData).map(([name, value], index) => ({
+      name: name === 'chromium' ? 'Chrome' : 
+            name === 'firefox' ? 'Firefox' : 
+            name === 'webkit' ? 'Safari' : name,
+      value,
+      color: browserColors[index % browserColors.length]
+    }));
 
     // Recent tests (last 5) - map to RecentTest interface
     const recentTests = executions
@@ -110,6 +125,7 @@ export default function Dashboard() {
     return {
       dailyResults,
       testSuiteData: testSuiteDataWithColors,
+      browserData: browserDataWithColors,
       recentTests
     };
   }, [executions]);
@@ -136,7 +152,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {/* Üst satır: Günlük Test Sonuçları (sol) + Son Testler (sağ) */}
+              {/* İlk satır: Günlük Test Sonuçları + Son Testler */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
                 <div className="lg:col-span-8">
                   <DailyTestResults data={chartData.dailyResults} />
@@ -145,10 +161,12 @@ export default function Dashboard() {
                   <RecentTests data={chartData.recentTests} />
                 </div>
               </div>
-
-              {/* Alt satır: Test Dağılımı (tam genişlik) */}
-              <div className="mb-6">
-                <TestSuiteDistribution data={chartData.testSuiteData} />
+              {/* İkinci satır: Test Dağılımı + Hata Türleri */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <TestSuiteDistribution 
+                  testSuiteData={chartData.testSuiteData} 
+                  browserData={chartData.browserData}
+                />
               </div>
             </>
           )}
