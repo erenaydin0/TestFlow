@@ -114,7 +114,7 @@ export const useReports = (options: UseReportsOptions = {}) => {
 
   // Get unique filter options
   const filterOptions = useMemo(() => {
-    return getUniqueFilterOptions(executions);
+    return getUniqueFilterOptions([], executions);
   }, [executions]);
 
   // Check if filters are active
