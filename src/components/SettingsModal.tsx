@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Chrome, Globe, Sun, Moon, Monitor, Settings, Palette, Code } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
+import { IconButton } from '@/components/ui';
 import { useBrowserSettings } from '@/lib/browser-context';
 
 interface SettingsModalProps {
@@ -538,31 +539,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 })()}
               </h3>
             </div>
-            <button
+            <IconButton
+              icon={X}
+              variant="ghost"
+              size="md"
+              tooltip="Kapat"
               onClick={onClose}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                padding: '0.5rem',
-                borderRadius: '0.375rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }}
-            >
-              <X size={20} />
-            </button>
+            />
           </div>
 
           {/* Content */}

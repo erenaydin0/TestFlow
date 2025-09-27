@@ -28,6 +28,7 @@ import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/lib/browser-context';
 import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTests } from '@/hooks/useTests';
+import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
 export default function TestsPage() {
   const browserSettings = useBrowserSettings();
@@ -685,151 +686,71 @@ export default function TestsPage() {
                       {selectedTests.size} test seçili
                     </span>
                     
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={X}
                       onClick={() => setSelectedTests(new Set())}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.375rem 0.5rem',
-                        backgroundColor: '#6b7280',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
                     >
-                      <X size={12} />
                       Temizle
-                    </button>
-                    <button 
-                      onClick={handleBulkRun}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: '1px solid #059669',
-                        borderRadius: '0.375rem',
-                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                        color: '#059669',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      Çalıştır
-                    </button>
-                    <button 
-                      onClick={handleBulkDuplicate}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: '1px solid #7c3aed',
-                        borderRadius: '0.375rem',
-                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
-                        color: '#7c3aed',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(124, 58, 237, 0.2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(124, 58, 237, 0.1)';
-                      }}
-                    >
-                      <Copy size={12} />
-                      Kopyala
-                    </button>
-                    <button 
-                      onClick={handleBulkDelete}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: '1px solid #dc2626',
-                        borderRadius: '0.375rem',
-                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                        color: '#dc2626',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      Sil
-                    </button>
-                    <button 
+                    </Button>
+                    <ButtonGroup spacing="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBulkRun}
+                        style={{ color: '#059669', borderColor: '#059669' }}
+                      >
+                        Çalıştır
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Copy}
+                        onClick={handleBulkDuplicate}
+                        style={{ color: '#7c3aed', borderColor: '#7c3aed' }}
+                      >
+                        Kopyala
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBulkDelete}
+                        style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                      >
+                        Sil
+                      </Button>
+                    </ButtonGroup>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={Download}
                       onClick={handleBulkExport}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: '1px solid #2563eb',
-                        borderRadius: '0.375rem',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        color: '#2563eb',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
-                      }}
+                      style={{ color: '#2563eb', borderColor: '#2563eb' }}
                     >
-                      <Download size={12} />
                       Dışa Aktar
-                    </button>
+                    </Button>
                   </>
                 )}
 
-                <button 
-                  onClick={handleImport}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                  }}
-                >
-                  <Upload size={12} />
-                  İçe Aktar
-                </button>
-                <button 
-                  onClick={handleCreateNewTest}
-                  className="btn-primary" 
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.25rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  <Plus size={12} />
-                  Yeni Test
-                </button>
+                <ButtonGroup spacing="sm">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={Upload}
+                    onClick={handleImport}
+                  >
+                    İçe Aktar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={Plus}
+                    onClick={handleCreateNewTest}
+                  >
+                    Yeni Test
+                  </Button>
+                </ButtonGroup>
               </div>
             </div>
 

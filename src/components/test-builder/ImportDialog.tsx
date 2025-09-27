@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
+import { Button, ButtonGroup, IconButton } from '@/components/ui';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { BrowserType } from '@/types';
 
@@ -554,46 +555,24 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               ))}
             </div>
 
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '0.75rem'
-            }}>
-              <button
+            <ButtonGroup align="end" spacing="md">
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={handleClose}
-                style={{
-                  padding: '0.75rem 1rem',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
               >
                 İptal
-              </button>
-              <button
-                onClick={handleImport}
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
                 disabled={importing || previews.filter(p => p.isValid).length === 0}
-                style={{
-                  padding: '0.75rem 1rem',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  backgroundColor: importing || previews.filter(p => p.isValid).length === 0 ? '#9ca3af' : '#2563eb',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  cursor: importing || previews.filter(p => p.isValid).length === 0 ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
+                loading={importing}
+                onClick={handleImport}
               >
                 {importing ? 'Import Ediliyor...' : `${previews.filter(p => p.isValid).length} Workflow'u Import Et`}
-              </button>
-            </div>
+              </Button>
+            </ButtonGroup>
           </div>
         ) : (
           /* File Drop Zone */

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Chrome, Globe } from 'lucide-react';
 import MultiSelect from '@/components/MultiSelect';
+import { Button } from '@/components/ui';
 import { BrowserType } from '@/types';
 
 interface FilterState {
@@ -94,25 +95,15 @@ const DataFilters: React.FC<DataFiltersProps> = ({
             Filtreler
           </span>
           {hasActiveFilters && (
-            <button
+            <Button
+              variant="outline"
+              size="xs"
+              icon={X}
               onClick={clearAllFilters}
-              style={{
-                marginLeft: 'auto',
-                padding: '0.25rem 0.5rem',
-                backgroundColor: 'transparent',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.375rem',
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem'
-              }}
+              style={{ marginLeft: 'auto' }}
             >
-              <X size={12} />
               Temizle
-            </button>
+            </Button>
           )}
         </div>
 
@@ -359,36 +350,15 @@ const DataFilters: React.FC<DataFiltersProps> = ({
 
         {/* Clear Filters Button */}
         {hasActiveFilters && (
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            icon={X}
             onClick={clearAllFilters}
-            style={{
-              marginLeft: 'auto',
-              padding: '0.375rem 0.75rem',
-              backgroundColor: 'transparent',
-              border: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem',
-              fontSize: '0.75rem',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-              e.currentTarget.style.borderColor = '#dc2626';
-              e.currentTarget.style.color = '#dc2626';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = 'var(--border-primary)';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
+            style={{ marginLeft: 'auto' }}
           >
-            <X size={12} />
             Filtreleri Temizle
-          </button>
+          </Button>
         )}
       </div>
     </div>

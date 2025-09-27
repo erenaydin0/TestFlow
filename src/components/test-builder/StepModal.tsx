@@ -9,6 +9,7 @@ import {
   X,
   Save
 } from 'lucide-react';
+import { IconButton } from '@/components/ui';
 import { TestStep } from '@/types';
 import { availableActions, getActionByType, ActionField } from '@/lib/actions';
 
@@ -384,29 +385,13 @@ const StepModal: React.FC<StepModalProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <IconButton
+            icon={X}
+            variant="ghost"
+            size="md"
+            tooltip="Kapat"
             onClick={onClose}
-            style={{
-              width: '2rem',
-              height: '2rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '0.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <X size={18} />
-          </button>
+          />
         </div>
 
         {/* Form Fields */}

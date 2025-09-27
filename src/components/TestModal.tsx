@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
+import { Button, ButtonGroup } from '@/components/ui';
 import BrowserSelector from './test-builder/BrowserSelector';
 import { getExistingTags, getExistingSuites } from '@/lib/utils';
 import { BrowserType } from '@/types';
@@ -476,69 +477,32 @@ const TestModal: React.FC<TestModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '0.75rem',
-            marginTop: '1.5rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid var(--border-primary)'
-          }}>
-            <button
-              type="button"
+          <ButtonGroup 
+            align="end"
+            spacing="md"
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-primary)'
+            }}
+          >
+            <Button
+              variant="secondary"
+              size="md"
               onClick={onClose}
-              style={{
-                padding: '0.75rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-              }}
             >
               İptal
-            </button>
-            <button
-              type="submit"
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              icon={IconComponent}
               disabled={!name.trim()}
-              style={{
-                padding: '0.75rem 1rem',
-                border: 'none',
-                borderRadius: '0.5rem',
-                backgroundColor: !name.trim() ? '#9ca3af' : primaryColor,
-                color: 'white',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                cursor: !name.trim() ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                if (name.trim()) {
-                  e.currentTarget.style.backgroundColor = primaryColorHover;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (name.trim()) {
-                  e.currentTarget.style.backgroundColor = primaryColor;
-                }
-              }}
+              type="submit"
             >
-              <IconComponent size={14} />
               {submitButtonText}
-            </button>
-          </div>
+            </Button>
+          </ButtonGroup>
         </form>
       </div>
     </div>

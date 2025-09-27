@@ -31,6 +31,7 @@ import { ExecutionResult } from '@/types';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useReports } from '@/hooks/useReports';
+import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 
@@ -653,60 +654,32 @@ export default function ReportsPage() {
                     }}>
                       {selectedExecutions.size} test seçili
                     </span>
-                    <button
-                      onClick={downloadSelectedTests}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.375rem 0.75rem',
-                        backgroundColor: '#059669',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <Download size={12} />
-                      Seçilenleri İndir
-                    </button>
-                    <button
-                      onClick={deleteSelectedTests}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.375rem 0.75rem',
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <Trash2 size={12} />
-                      Sil
-                    </button>
-                    <button
-                      onClick={() => setSelectedExecutions(new Set())}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.375rem 0.75rem',
-                        backgroundColor: '#6b7280',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <X size={12} />
-                      Seçimi Temizle
-                    </button>
+                    <ButtonGroup spacing="sm">
+                      <Button
+                        variant="success"
+                        size="sm"
+                        icon={Download}
+                        onClick={downloadSelectedTests}
+                      >
+                        Seçilenleri İndir
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={Trash2}
+                        onClick={deleteSelectedTests}
+                      >
+                        Sil
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={X}
+                        onClick={() => setSelectedExecutions(new Set())}
+                      >
+                        Seçimi Temizle
+                      </Button>
+                    </ButtonGroup>
                   </div>
                 )}
               </div>
@@ -1150,55 +1123,22 @@ export default function ReportsPage() {
                 </div>
               </div>
               
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
+              <ButtonGroup spacing="sm">
+                <IconButton
+                  icon={Download}
+                  variant="ghost"
+                  size="md"
+                  tooltip="Raporu İndir"
                   onClick={() => downloadSingleExecution(selectedExecution)}
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-secondary)',
-                    borderRadius: '0.375rem',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                    e.currentTarget.style.color = '#059669';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                  }}
-                  title="Raporu İndir"
-                >
-                  <Download size={18} />
-                </button>
-                <button
+                />
+                <IconButton
+                  icon={X}
+                  variant="ghost"
+                  size="md"
+                  tooltip="Kapat"
                   onClick={() => setSelectedExecution(null)}
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-secondary)',
-                    fontSize: '1.25rem',
-                    borderRadius: '0.375rem',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                    e.currentTarget.style.color = '#dc2626';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                  }}
-                  title="Kapat"
-                >
-                  ✕
-                </button>
-              </div>
+                />
+              </ButtonGroup>
             </div>
 
             {/* Steps */}

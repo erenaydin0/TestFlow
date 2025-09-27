@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Button, ButtonGroup } from '@/components/ui';
 
 interface UnsavedChangesDialogProps {
   isOpen: boolean;
@@ -108,101 +109,38 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '12px',
-            marginTop: '24px',
-            justifyContent: 'flex-end',
-          }}
+        <ButtonGroup 
+          align="end"
+          spacing="sm"
+          style={{ marginTop: '24px' }}
         >
-          <button
-            onClick={onCancel}
+          <Button
+            variant="secondary"
+            size="sm"
             disabled={isInSavingMode}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-primary)',
-              backgroundColor: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: isInSavingMode ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: isInSavingMode ? 0.5 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!isInSavingMode) {
-                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isInSavingMode) {
-                e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-              }
-            }}
+            onClick={onCancel}
           >
             İptal
-          </button>
-          
-          <button
-            onClick={onDiscard}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             disabled={isInSavingMode}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid #ef4444',
-              backgroundColor: 'transparent',
-              color: '#ef4444',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: isInSavingMode ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: isInSavingMode ? 0.5 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!isInSavingMode) {
-                e.currentTarget.style.backgroundColor = '#ef444410';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isInSavingMode) {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
+            onClick={onDiscard}
+            style={{ color: '#ef4444', borderColor: '#ef4444' }}
           >
             Kaydetme
-          </button>
-          
-          <button
-            onClick={handleSave}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
             disabled={isInSavingMode}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid transparent',
-              backgroundColor: isInSavingMode ? '#94a3b8' : '#3b82f6',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: isInSavingMode ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: isInSavingMode ? 0.7 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!isInSavingMode) {
-                e.currentTarget.style.opacity = '0.9';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isInSavingMode) {
-                e.currentTarget.style.opacity = '1';
-              }
-            }}
+            loading={isInSavingMode}
+            onClick={handleSave}
           >
             {isInSavingMode ? 'Kaydediliyor...' : 'Kaydet'}
-          </button>
-        </div>
+          </Button>
+        </ButtonGroup>
       </div>
     </div>
   );

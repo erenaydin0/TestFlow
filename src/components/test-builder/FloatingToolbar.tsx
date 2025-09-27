@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { TestStep, BrowserType } from '@/types';
 import BrowserSelector from './BrowserSelector';
+import { IconButton, ButtonGroup } from '@/components/ui';
 
 interface FloatingToolbarProps {
   // Auto-arrange
@@ -150,51 +151,40 @@ export default function FloatingToolbar({
         </>
       )}
 
-      <button 
-        onClick={onRun}
-        className="canvas-control"
-        title={isRunning ? "Test Çalışıyor..." : "Testi Çalıştır"}
-        disabled={testStepsCount === 0 || isRunning}
-        style={{
-          opacity: testStepsCount === 0 || isRunning ? 0.5 : 1,
-          cursor: testStepsCount === 0 || isRunning ? 'not-allowed' : 'pointer',
-          color: testStepsCount > 0 ? '#059669' : 'var(--text-secondary)'
-        }}
-      >
-        <Play size={16} />
-        {isRunning && <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}>...</span>}
-      </button>
-      <button 
-        onClick={onSave}
-        className="canvas-control"
-        title="Workflow'u Kaydet"
-        disabled={testStepsCount === 0}
-        style={{
-          opacity: testStepsCount === 0 ? 0.5 : 1,
-          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Save size={16} />
-      </button>
-      <button 
-        onClick={onExport}
-        className="canvas-control"
-        title="Workflow'u Dışa Aktar (.json)"
-        disabled={testStepsCount === 0}
-        style={{
-          opacity: testStepsCount === 0 ? 0.5 : 1,
-          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Download size={16} />
-      </button>
-      <button 
-        onClick={handleImportClick}
-        className="canvas-control"
-        title="Workflow'u İçe Aktar (.json)"
-      >
-        <Upload size={16} />
-      </button>
+      <ButtonGroup spacing="xs">
+        <IconButton
+          icon={Play}
+          variant={testStepsCount > 0 ? "success" : "ghost"}
+          size="sm"
+          tooltip={isRunning ? "Test Çalışıyor..." : "Testi Çalıştır"}
+          disabled={testStepsCount === 0 || isRunning}
+          loading={isRunning}
+          onClick={onRun}
+        />
+        <IconButton
+          icon={Save}
+          variant="ghost"
+          size="sm"
+          tooltip="Workflow'u Kaydet"
+          disabled={testStepsCount === 0}
+          onClick={onSave}
+        />
+        <IconButton
+          icon={Download}
+          variant="ghost"
+          size="sm"
+          tooltip="Workflow'u Dışa Aktar (.json)"
+          disabled={testStepsCount === 0}
+          onClick={onExport}
+        />
+        <IconButton
+          icon={Upload}
+          variant="ghost"
+          size="sm"
+          tooltip="Workflow'u İçe Aktar (.json)"
+          onClick={handleImportClick}
+        />
+      </ButtonGroup>
       
       <div style={{
         width: '1px',
@@ -203,31 +193,24 @@ export default function FloatingToolbar({
         margin: '0 0.25rem'
       }}></div>
       
-      <button 
-        onClick={onUndo}
-        className="canvas-control"
-        title="Geri Al - Ctrl+Z"
-        disabled={!canUndo}
-        style={{
-          opacity: !canUndo ? 0.5 : 1,
-          cursor: !canUndo ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Undo size={16} />
-      </button>
-      
-      <button 
-        onClick={onRedo}
-        className="canvas-control"
-        title="İleri Al - Ctrl+Y"
-        disabled={!canRedo}
-        style={{
-          opacity: !canRedo ? 0.5 : 1,
-          cursor: !canRedo ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Redo size={16} />
-      </button>
+      <ButtonGroup spacing="xs">
+        <IconButton
+          icon={Undo}
+          variant="ghost"
+          size="sm"
+          tooltip="Geri Al - Ctrl+Z"
+          disabled={!canUndo}
+          onClick={onUndo}
+        />
+        <IconButton
+          icon={Redo}
+          variant="ghost"
+          size="sm"
+          tooltip="İleri Al - Ctrl+Y"
+          disabled={!canRedo}
+          onClick={onRedo}
+        />
+      </ButtonGroup>
       
       <div style={{
         width: '1px',
@@ -238,93 +221,87 @@ export default function FloatingToolbar({
       
       <button 
         onClick={onAutoArrange}
-        className="canvas-control"
         title="Adımları Otomatik Hizala"
         disabled={testStepsCount === 0}
         style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: 'none',
+          borderRadius: '0.375rem',
+          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer',
+          color: 'var(--text-secondary)',
           opacity: testStepsCount === 0 ? 0.5 : 1,
-          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer'
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '2rem',
+          height: '2rem'
+        }}
+        onMouseEnter={(e) => {
+          if (testStepsCount > 0) {
+            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
         }}
       >
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.25rem'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 3px)',
+          gridTemplateRows: 'repeat(3, 3px)',
+          gap: '1px'
         }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 3px)',
-            gridTemplateRows: 'repeat(3, 3px)',
-            gap: '1px'
-          }}>
-            {[...Array(9)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: '3px',
-                  height: '3px',
-                  backgroundColor: 'currentColor',
-                  borderRadius: '0.5px'
-                }}
-              />
-            ))}
-          </div>
+          {[...Array(9)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: '3px',
+                height: '3px',
+                backgroundColor: 'currentColor',
+                borderRadius: '0.5px'
+              }}
+            />
+          ))}
         </div>
       </button>
       
-      <button 
+      <IconButton
+        icon={Magnet}
+        variant={snapEnabled ? "primary" : "ghost"}
+        size="sm"
+        tooltip={snapEnabled ? "Otomatik Sabitlemeyi Kapat" : "Otomatik Sabitlemeyi Aç"}
         onClick={onToggleSnap}
-        className="canvas-control"
-        title={snapEnabled ? "Otomatik Sabitlemeyi Kapat" : "Otomatik Sabitlemeyi Aç"}
-        style={{
-          backgroundColor: snapEnabled ? '#3b82f620' : 'transparent',
-          color: snapEnabled ? '#3b82f6' : 'var(--text-secondary)'
-        }}
-      >
-        <Magnet size={16} />
-      </button>
+        style={snapEnabled ? { backgroundColor: '#3b82f620', color: '#3b82f6' } : {}}
+      />
       
-      <button 
-        onClick={() => {
-          onToggleScreenshots?.();
-        }}
-        className="canvas-control"
-        title={enableScreenshots ? "Ekran Görüntüsü Almayı Kapat" : "Ekran Görüntüsü Almayı Aç"}
-        style={{
-          backgroundColor: enableScreenshots ? '#9333ea20' : 'transparent',
-          color: enableScreenshots ? '#9333ea' : 'var(--text-secondary)'
-        }}
-      >
-        <Camera size={16} />
-      </button>
-      
-      <button 
-        onClick={() => {
-          onToggleRecording?.();
-        }}
-        className="canvas-control"
-        title={enableRecording ? "Ekran Kaydını Kapat" : "Ekran Kaydını Aç"}
-        style={{
-          backgroundColor: enableRecording ? '#dc262620' : 'transparent',
-          color: enableRecording ? '#dc2626' : 'var(--text-secondary)'
-        }}
-      >
-        <Video size={16} />
-      </button>
-      
-      <button 
-        onClick={() => {
-          onToggleHeadless?.();
-        }}
-        className="canvas-control"
-        title={headlessMode ? "Görünür Mod (Browser Açık)" : "Gizli Mod (Headless)"}
-        style={{
-          backgroundColor: headlessMode ? '#059669' : 'transparent',
-          color: headlessMode ? '#ffffff' : 'var(--text-secondary)'
-        }}
-      >
-        <EyeOff size={16} />
-      </button>
+      <ButtonGroup spacing="xs">
+        <IconButton
+          icon={Camera}
+          variant={enableScreenshots ? "warning" : "ghost"}
+          size="sm"
+          tooltip={enableScreenshots ? "Ekran Görüntüsü Almayı Kapat" : "Ekran Görüntüsü Almayı Aç"}
+          onClick={() => onToggleScreenshots?.()}
+          style={enableScreenshots ? { backgroundColor: '#9333ea20', color: '#9333ea' } : {}}
+        />
+        <IconButton
+          icon={Video}
+          variant={enableRecording ? "danger" : "ghost"}
+          size="sm"
+          tooltip={enableRecording ? "Ekran Kaydını Kapat" : "Ekran Kaydını Aç"}
+          onClick={() => onToggleRecording?.()}
+          style={enableRecording ? { backgroundColor: '#dc262620', color: '#dc2626' } : {}}
+        />
+        <IconButton
+          icon={headlessMode ? EyeOff : Eye}
+          variant={headlessMode ? "success" : "ghost"}
+          size="sm"
+          tooltip={headlessMode ? "Görünür Mod (Browser Açık)" : "Gizli Mod (Headless)"}
+          onClick={() => onToggleHeadless?.()}
+          style={headlessMode ? { backgroundColor: '#059669', color: '#ffffff' } : {}}
+        />
+      </ButtonGroup>
       
       <div style={{
         width: '1px',
@@ -333,58 +310,40 @@ export default function FloatingToolbar({
         margin: '0 0.25rem'
       }}></div>
       
-      <button 
-        onClick={onCopy}
-        className="canvas-control"
-        title={`Kopyala (${selectedStepsCount} adım seçili) - Ctrl+C`}
-        disabled={selectedStepsCount === 0}
-        style={{
-          opacity: selectedStepsCount === 0 ? 0.5 : 1,
-          cursor: selectedStepsCount === 0 ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Copy size={16} />
-      </button>
-      
-      <button 
-        onClick={onPaste}
-        className="canvas-control"
-        title={`Yapıştır (${copiedStepsCount} adım panoda) - Ctrl+V`}
-        disabled={copiedStepsCount === 0}
-        style={{
-          opacity: copiedStepsCount === 0 ? 0.5 : 1,
-          cursor: copiedStepsCount === 0 ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Clipboard size={16} />
-      </button>
-      
-      <button 
-        onClick={onDuplicate}
-        className="canvas-control"
-        title={`Çoğalt (${selectedStepsCount} adım seçili) - Ctrl+D`}
-        disabled={selectedStepsCount === 0}
-        style={{
-          opacity: selectedStepsCount === 0 ? 0.5 : 1,
-          cursor: selectedStepsCount === 0 ? 'not-allowed' : 'pointer'
-        }}
-      >
-        <Files size={16} />
-      </button>
-      
-      <button 
-        onClick={onDeleteSelected}
-        className="canvas-control"
-        title={`Sil (${selectedStepsCount} adım seçili) - Delete`}
-        disabled={selectedStepsCount === 0}
-        style={{
-          opacity: selectedStepsCount === 0 ? 0.5 : 1,
-          cursor: selectedStepsCount === 0 ? 'not-allowed' : 'pointer',
-          color: selectedStepsCount > 0 ? '#dc2626' : 'var(--text-secondary)'
-        }}
-      >
-        <Trash2 size={16} />
-      </button>
+      <ButtonGroup spacing="xs">
+        <IconButton
+          icon={Copy}
+          variant="ghost"
+          size="sm"
+          tooltip={`Kopyala (${selectedStepsCount} adım seçili) - Ctrl+C`}
+          disabled={selectedStepsCount === 0}
+          onClick={onCopy}
+        />
+        <IconButton
+          icon={Clipboard}
+          variant="ghost"
+          size="sm"
+          tooltip={`Yapıştır (${copiedStepsCount} adım panoda) - Ctrl+V`}
+          disabled={copiedStepsCount === 0}
+          onClick={onPaste}
+        />
+        <IconButton
+          icon={Files}
+          variant="ghost"
+          size="sm"
+          tooltip={`Çoğalt (${selectedStepsCount} adım seçili) - Ctrl+D`}
+          disabled={selectedStepsCount === 0}
+          onClick={onDuplicate}
+        />
+        <IconButton
+          icon={Trash2}
+          variant={selectedStepsCount > 0 ? "danger" : "ghost"}
+          size="sm"
+          tooltip={`Sil (${selectedStepsCount} adım seçili) - Delete`}
+          disabled={selectedStepsCount === 0}
+          onClick={onDeleteSelected}
+        />
+      </ButtonGroup>
       
       {/* Connection mode indicator */}
       {isConnecting && (

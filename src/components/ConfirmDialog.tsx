@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button, ButtonGroup } from '@/components/ui';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -39,30 +40,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     }
   };
 
-  const getConfirmButtonStyle = () => {
-    switch (type) {
-      case 'danger': 
-        return {
-          backgroundColor: '#ef4444',
-          borderColor: '#ef4444',
-        };
-      case 'warning':
-        return {
-          backgroundColor: '#f59e0b',
-          borderColor: '#f59e0b',
-        };
-      case 'info':
-        return {
-          backgroundColor: '#3b82f6',
-          borderColor: '#3b82f6',
-        };
-      default:
-        return {
-          backgroundColor: '#f59e0b',
-          borderColor: '#f59e0b',
-        };
-    }
-  };
 
   return (
     <div
@@ -156,59 +133,26 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '12px',
-            marginTop: '24px',
-            justifyContent: 'flex-end',
-          }}
+        <ButtonGroup 
+          spacing="sm" 
+          align="end"
+          style={{ marginTop: '24px' }}
         >
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onClose}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-primary)',
-              backgroundColor: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-            }}
           >
             {cancelText}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={type === 'danger' ? 'danger' : type === 'warning' ? 'warning' : 'primary'}
+            size="sm"
             onClick={handleConfirm}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid transparent',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              ...getConfirmButtonStyle(),
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
           >
             {confirmText}
-          </button>
-        </div>
+          </Button>
+        </ButtonGroup>
       </div>
     </div>
   );
