@@ -9,6 +9,8 @@ import StatusBadge from '@/components/StatusBadge';
 import StatsCards from '@/components/StatsCards';
 import MultiSelect from '@/components/MultiSelect';
 import DataFilters from '@/components/common/DataFilters';
+import DataTable, { Column } from '@/components/common/DataTable';
+import { BrowserCell, TagsCell, DateCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } from '@/components/common/TableCells';
 import { 
   Download, 
   Filter,
@@ -81,6 +83,7 @@ export default function ReportsPage() {
     browserType: []
   });
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
+  const [highlightedExecutionId, setHighlightedExecutionId] = useState<string | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -185,64 +188,15 @@ export default function ReportsPage() {
     };
   }, [selectedExecution]);
 
-  // Filter and sort executions
-  const filteredAndSortedExecutions = useMemo(() => {
-    let filtered = executions.filter(execution => {
-      // Status filter
-      if (filters.status && execution.status !== filters.status) {
-        return false;
-      }
+  // Filter executions using common utility
+  const filteredExecutions = useMemo(() => {
+    return filterExecutions(executions, filters);
+  }, [executions, filters]);
 
-      // Date range filter
-      if (filters.dateRange) {
-        const executionDate = new Date(execution.startTime);
-        const now = new Date();
-        const dayInMs = 24 * 60 * 60 * 1000;
-        
-        switch (filters.dateRange) {
-          case 'today':
-            if (executionDate.toDateString() !== now.toDateString()) return false;
-            break;
-          case 'yesterday':
-            const yesterday = new Date(now.getTime() - dayInMs);
-            if (executionDate.toDateString() !== yesterday.toDateString()) return false;
-            break;
-          case 'last7days':
-            if (executionDate.getTime() < now.getTime() - 7 * dayInMs) return false;
-            break;
-          case 'last30days':
-            if (executionDate.getTime() < now.getTime() - 30 * dayInMs) return false;
-            break;
-        }
-      }
-
-      // Search filter (workflow name)
-      if (filters.search && !execution.workflowName.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-
-      // Browser type filter
-      if (filters.browserType.length > 0 && !filters.browserType.includes(execution.options?.browserType || 'chromium')) {
-        return false;
-      }
-
-
-
-      // Suite filter
-      if (filters.suite.length > 0 && (!execution.suite || !filters.suite.includes(execution.suite))) {
-        return false;
-      }
-
-      // Tags filter
-      if (filters.tags.length > 0 && (!execution.tags || !execution.tags.some(tag => filters.tags.includes(tag)))) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // Sort
-    filtered.sort((a, b) => {
+  // Sort executions
+  const sortedExecutions = useMemo(() => {
+    const sorted = [...filteredExecutions];
+    sorted.sort((a, b) => {
       let aValue: any;
       let bValue: any;
 
@@ -288,15 +242,130 @@ export default function ReportsPage() {
       return 0;
     });
 
-    return filtered;
-  }, [executions, filters, sortField, sortOrder]);
+    return sorted;
+  }, [filteredExecutions, sortField, sortOrder]);
+
+  // Get unique filter options for executions
+  const filterOptions = useMemo(() => {
+    const suites = new Set<string>();
+    const tags = new Set<string>();
+    const browsers = new Set<BrowserType>();
+    const statuses = new Set<string>();
+
+    executions.forEach(execution => {
+      if (execution.suite) suites.add(execution.suite);
+      execution.tags?.forEach(tag => tags.add(tag));
+      if (execution.options?.browserType) browsers.add(execution.options.browserType);
+      statuses.add(execution.status);
+    });
+
+    return {
+      suites: Array.from(suites).sort(),
+      tags: Array.from(tags).sort(),
+      browserTypes: Array.from(browsers).sort(),
+      statuses: Array.from(statuses).sort()
+    };
+  }, [executions]);
+
+  // Define table columns for DataTable
+  const columns: Column<ExecutionResult>[] = [
+    {
+      key: 'workflowName',
+      label: 'Test Adı',
+      sortable: true,
+      render: (value, execution) => (
+        <TestNameCell 
+          name={execution.workflowName} 
+          id={execution.id}
+        />
+      )
+    },
+    {
+      key: 'status',
+      label: 'Durum',
+      sortable: true,
+      align: 'center',
+      width: '100px',
+      render: (value, execution) => (
+        <StatusCell status={execution.status} size="sm" />
+      )
+    },
+    {
+      key: 'startTime',
+      label: 'Başlangıç',
+      sortable: true,
+      render: (value, execution) => (
+        <DateCell date={execution.startTime} format="relative" />
+      )
+    },
+    {
+      key: 'duration',
+      label: 'Süre',
+      sortable: true,
+      align: 'center',
+      width: '100px',
+      render: (value, execution) => (
+        <DurationCell duration={execution.duration} />
+      )
+    },
+    {
+      key: 'successRate',
+      label: 'Başarı',
+      sortable: true,
+      align: 'center',
+      width: '80px',
+      render: (value, execution) => (
+        <SuccessRateCell rate={execution.successRate} />
+      )
+    },
+    {
+      key: 'suite',
+      label: 'Test Grubu',
+      sortable: true,
+      render: (value) => (
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          {value || '-'}
+        </span>
+      )
+    },
+    {
+      key: 'tags',
+      label: 'Etiketler',
+      sortable: true,
+      render: (value, execution) => (
+        <TagsCell tags={execution.tags} maxVisible={2} />
+      )
+    },
+    {
+      key: 'browserType',
+      label: 'Tarayıcı',
+      sortable: true,
+      align: 'center',
+      width: '120px',
+      render: (value, execution) => (
+        <BrowserCell browserType={execution.options?.browserType} />
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Rapor',
+      sortable: false,
+      align: 'center',
+      width: '80px',
+      render: (value, execution) => (
+        <ActionsCell
+          onDownload={() => downloadSingleExecution(execution)}
+        />
+      )
+    }
+  ];
 
   // Pagination logic
-  const totalItems = filteredAndSortedExecutions.length;
+  const totalItems = sortedExecutions.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageExecutions = filteredAndSortedExecutions.slice(startIndex, endIndex);
+  const currentPageExecutions = sortedExecutions.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -305,7 +374,7 @@ export default function ReportsPage() {
 
   // Calculate stats based on filtered results
   const stats = useMemo(() => {
-    const filtered = filteredAndSortedExecutions;
+    const filtered = sortedExecutions;
     return {
       totalExecutions: filtered.length,
       completedExecutions: filtered.filter(e => e.status === 'completed').length,
@@ -315,7 +384,7 @@ export default function ReportsPage() {
       successRate: filtered.length > 0 ? 
         Math.round((filtered.filter(e => e.status === 'completed').length / filtered.length) * 100) : 0
     };
-  }, [filteredAndSortedExecutions]);
+  }, [sortedExecutions]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -358,10 +427,6 @@ export default function ReportsPage() {
     return value !== '' && value !== null;
   });
 
-  // Get unique filter options using common utility
-  const filterOptions = useMemo(() => {
-    return getUniqueFilterOptions([], executions);
-  }, [executions]);
 
 
 
@@ -634,7 +699,7 @@ export default function ReportsPage() {
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
       
-      const selectedExecutions = filteredAndSortedExecutions.filter(e => selectedTests.has(e.id));
+      const selectedExecutions = sortedExecutions.filter(e => selectedTests.has(e.id));
       
       // Create main CSV report
       const csvContent = createTestCSVReport(selectedExecutions);
@@ -775,12 +840,7 @@ export default function ReportsPage() {
                 Çalıştırılan testlerin detaylı sonuçları
                 {hasActiveFilters && (
                   <span style={{ color: '#2563eb', marginLeft: '0.5rem' }}>
-                    ({filteredAndSortedExecutions.length} / {executions.length} sonuç)
-                  </span>
-                )}
-                {!hasActiveFilters && totalItems > 0 && (
-                  <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-                    ({totalItems} toplam test)
+                    ({sortedExecutions.length} / {executions.length} sonuç)
                   </span>
                 )}
               </p>
@@ -806,7 +866,12 @@ export default function ReportsPage() {
                 <DataFilters
                   filters={filters}
                   onFiltersChange={setFilters}
-                  availableOptions={filterOptions}
+                  availableOptions={{
+                    suites: filterOptions.suites,
+                    tags: filterOptions.tags,
+                    browsers: filterOptions.browserTypes,
+                    statuses: filterOptions.statuses
+                  }}
                   searchPlaceholder="Test adı..."
                   showStatus={true}
                   showDateRange={true}
@@ -904,7 +969,7 @@ export default function ReportsPage() {
                 <AlertCircle size={24} />
                 <span style={{ marginLeft: '0.5rem' }}>Hata: {error}</span>
             </div>
-            ) : filteredAndSortedExecutions.length === 0 ? (
+            ) : sortedExecutions.length === 0 ? (
           <div style={{ 
                 display: 'flex', 
                 justifyContent: 'center', 
@@ -918,325 +983,25 @@ export default function ReportsPage() {
                 </span>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', width: '40px' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedTests.size === currentPageExecutions.length && currentPageExecutions.length > 0}
-                          onChange={(e) => handleSelectAll(e.target.checked)}
-                          style={{ cursor: 'pointer' }}
-                        />
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('workflowName')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Test Adı
-                          {getSortIcon('workflowName')}
-                        </div>
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('status')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Durum
-                          {getSortIcon('status')}
-                        </div>
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('startTime')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Başlangıç
-                          {getSortIcon('startTime')}
-                        </div>
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('duration')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Süre
-                          {getSortIcon('duration')}
-                            </div>
-                      </th>
-
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('successRate')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Başarı Oranı
-                          {getSortIcon('successRate')}
-                            </div>
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('suite')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Test Grubu
-                          {getSortIcon('suite')}
-                        </div>
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none'
-                        }}
-                        onClick={() => handleSort('tags')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          Etiketler
-                          {getSortIcon('tags')}
-                        </div>
-                      </th>
-                      <th 
-                        style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'left', 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                          width: '120px'
-                        }}
-                        onClick={() => handleSort('browserType')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <Globe size={14} />
-                          Tarayıcı
-                          {getSortIcon('browserType')}
-                        </div>
-                      </th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        Rapor
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentPageExecutions.map((execution) => (
-                      <tr 
-                        key={execution.id} 
-                        style={{ 
-                          borderBottom: '1px solid var(--border-primary)',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                        onClick={(e) => {
-                          // Checkbox ve butonlara tıklanınca modal açılmasın
-                          if (e.target instanceof HTMLInputElement || 
-                              e.target instanceof HTMLButtonElement ||
-                              (e.target as HTMLElement).closest('button')) {
-                            return;
-                          }
-                          setSelectedExecution(execution);
-                        }}
-                      >
-                        <td style={{ padding: '0.75rem' }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedTests.has(execution.id)}
-                            onChange={(e) => handleTestSelection(execution.id, e.target.checked)}
-                            style={{ cursor: 'pointer' }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <div>
-                            <div style={{ 
-                              fontWeight: 500, 
-                              color: 'var(--text-primary)',
-                              marginBottom: '0.25rem'
-                            }}>
-                              {execution.workflowName}
-                            </div>
-                            <div style={{ 
-                              fontSize: '0.75rem', 
-                              color: 'var(--text-secondary)' 
-                            }}>
-                              ID: {execution.id.slice(0, 8)}...
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <StatusBadge status={execution.status} size="md" />
-                        </td>
-                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {formatRelativeTime(new Date(execution.startTime))}
-                        </td>
-                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {execution.duration ? formatDuration(execution.duration) : '-'}
-                        </td>
-                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {(() => {
-                            const totalSteps = execution.steps.length;
-                            const completedSteps = execution.steps.filter(step => step.status === 'passed').length;
-                            const successRate = execution.successRate !== undefined ? execution.successRate : 0;
-                            return `${completedSteps}/${totalSteps} %${successRate}`;
-                          })()}
-                        </td>
-                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {execution.suite || '-'}
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          {execution.tags && execution.tags.length > 0 ? (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                              {execution.tags.slice(0, 2).map((tag, index) => (
-                                <span
-                                  key={index}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.25rem',
-                                    padding: '0.125rem 0.5rem',
-                                    backgroundColor: 'var(--bg-tertiary)',
-                                    color: 'var(--text-secondary)',
-                                    fontSize: '0.75rem',
-                                    borderRadius: '0.375rem',
-                                    border: '1px solid var(--border-primary)'
-                                  }}
-                                >
-                                  <Tag size={12} />
-                                  {tag}
-                              </span>
-                              ))}
-                              {execution.tags.length > 2 && (
-                              <span style={{ 
-                                  fontSize: '0.75rem', 
-                                  color: 'var(--text-tertiary)' 
-                                }}>
-                                  +{execution.tags.length - 2}
-                              </span>
-                            )}
-                          </div>
-                          ) : (
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                          {(() => {
-                            const browserType = execution.options?.browserType || 'chromium';
-                            const getBrowserIcon = () => {
-                              switch(browserType) {
-                                case 'chromium': return <Chrome size={16} style={{ color: '#4285F4' }} />;
-                                case 'firefox': return <Globe size={16} style={{ color: '#FF7139' }} />;
-                                case 'webkit': return <Globe size={16} style={{ color: '#007AFF' }} />;
-                                case 'msedge': return <Globe size={16} style={{ color: '#0078D4' }} />;
-                                default: return <Chrome size={16} style={{ color: '#4285F4' }} />;
-                              }
-                            };
-                            const getBrowserName = () => {
-                              switch(browserType) {
-                                case 'chromium': return 'Chrome';
-                                case 'firefox': return 'Firefox';
-                                case 'webkit': return 'Safari';
-                                case 'msedge': return 'Edge';
-                                default: return 'Chrome';
-                              }
-                            };
-                            return (
-                              <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '0.5rem',
-                                justifyContent: 'center',
-                                fontSize: '0.875rem'
-                              }}>
-                                {getBrowserIcon()}
-                                <span style={{ color: 'var(--text-primary)' }}>
-                                  {getBrowserName()}
-                                </span>
-                              </div>
-                            );
-                          })()} 
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              downloadSingleExecution(execution);
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.5rem',
-                              padding: '0.5rem 0.75rem',
-                              backgroundColor: '#059669',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '0.375rem',
-                              cursor: 'pointer',
-                              fontSize: '0.875rem',
-                              fontWeight: 500
-                            }}
-                          >
-                            <Download size={14} />
-                            İndir
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                <DataTable
+                  data={currentPageExecutions}
+                  columns={columns}
+                  loading={loading}
+                  emptyMessage="Sonuç bulunamadı"
+                  selectable={true}
+                  selectedItems={selectedTests}
+                  onSelectionChange={setSelectedTests}
+                  getItemId={(execution) => execution.id}
+                  highlightedItemId={highlightedExecutionId}
+                  onSort={(field: string, order: 'asc' | 'desc') => {
+                    setSortField(field as SortField);
+                    setSortOrder(order);
+                  }}
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onRowClick={(execution) => setSelectedExecution(execution)}
+                />
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -37,6 +37,8 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import MultiSelect from '@/components/MultiSelect';
 import TestModal from '@/components/TestModal';
 import DataFilters from '@/components/common/DataFilters';
+import DataTable, { Column } from '@/components/common/DataTable';
+import { BrowserCell, TagsCell, DateCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/lib/browser-context';
 import { exportTestsToCSV, filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
@@ -73,6 +75,10 @@ export default function TestsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useTestNotifications();
 
@@ -124,14 +130,60 @@ export default function TestsPage() {
   }, [searchParams, tests]);
 
   // Filter tests using common utility
-  const filteredTests = filterTests(tests, filters);
+  const filteredTests = useMemo(() => {
+    return filterTests(tests, filters);
+  }, [tests, filters]);
+
+  // Sort tests
+  const sortedTests = useMemo(() => {
+    const sorted = [...filteredTests];
+    sorted.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'stepCount':
+          aValue = a.workflow?.length || 0;
+          bValue = b.workflow?.length || 0;
+          break;
+        case 'createdAt':
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        case 'suite':
+          aValue = (a.suite || '').toLowerCase();
+          bValue = (b.suite || '').toLowerCase();
+          break;
+        case 'tags':
+          aValue = (a.tags || []).length;
+          bValue = (b.tags || []).length;
+          break;
+        case 'browserType':
+          aValue = a.browserType || 'chromium';
+          bValue = b.browserType || 'chromium';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [filteredTests, sortField, sortOrder]);
 
   // Pagination logic
-  const totalItems = filteredTests.length;
+  const totalItems = sortedTests.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageTests = filteredTests.slice(startIndex, endIndex);
+  const currentPageTests = sortedTests.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -139,7 +191,88 @@ export default function TestsPage() {
   }, [filters]);
 
   // Get unique filter options from common utility
-  const filterOptions = getUniqueFilterOptions(tests);
+  const filterOptions = useMemo(() => {
+    return getUniqueFilterOptions(tests);
+  }, [tests]);
+
+  // Define table columns for DataTable
+  const columns: Column<Test>[] = [
+    {
+      key: 'name',
+      label: 'Test Adı',
+      sortable: true,
+      render: (value, test) => (
+        <TestNameCell 
+          name={test.name} 
+          description={test.description} 
+          id={test.id}
+        />
+      )
+    },
+    {
+      key: 'stepCount',
+      label: 'Adım Sayısı',
+      sortable: true,
+      align: 'center',
+      width: '100px',
+      render: (value, test) => (
+        <StepCountCell count={test.workflow?.length || 0} />
+      )
+    },
+    {
+      key: 'createdAt',
+      label: 'Oluşturulma',
+      sortable: true,
+      render: (value, test) => (
+        <DateCell date={test.createdAt} format="relative" />
+      )
+    },
+    {
+      key: 'suite',
+      label: 'Test Grubu',
+      sortable: true,
+      render: (value) => (
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          {value || '-'}
+        </span>
+      )
+    },
+    {
+      key: 'tags',
+      label: 'Etiketler',
+      sortable: true,
+      render: (value, test) => (
+        <TagsCell tags={test.tags} maxVisible={2} />
+      )
+    },
+    {
+      key: 'browserType',
+      label: 'Tarayıcı',
+      sortable: true,
+      align: 'center',
+      width: '120px',
+      render: (value, test) => (
+        <BrowserCell browserType={test.browserType} />
+      )
+    },
+    {
+      key: 'actions',
+      label: 'İşlemler',
+      sortable: false,
+      align: 'right',
+      width: '200px',
+      render: (value, test) => (
+        <ActionsCell
+          onRun={() => handleRunTest(test.id)}
+          onEdit={() => handleEditTest(test.id)}
+          onSettings={() => handleEditTestMetadata(test.id)}
+          onDuplicate={() => handleDuplicateTest(test.id)}
+          onExport={() => handleExportTest(test.id)}
+          onDelete={() => handleDeleteTest(test.id)}
+        />
+      )
+    }
+  ];
 
   // Handle test selection
   const handleTestSelection = (testId: string, checked: boolean) => {
@@ -616,12 +749,7 @@ export default function TestsPage() {
                 color: 'var(--text-secondary)', 
                 margin: '0.5rem 0 0 0' 
             }}>
-              Toplam {tests.length} kayıtlı test bulunuyor • {filteredTests.length} gösteriliyor
-              {totalPages > 1 && (
-                <span style={{ marginLeft: '0.5rem' }}>
-                  (Sayfa {currentPage} / {totalPages})
-                </span>
-              )}
+              Toplam {tests.length} kayıtlı test bulunuyor.
             </p>
           </div>
 
@@ -641,7 +769,11 @@ export default function TestsPage() {
                 <DataFilters
                   filters={filters}
                   onFiltersChange={setFilters}
-                  availableOptions={filterOptions}
+                  availableOptions={{
+                    suites: filterOptions.suites,
+                    tags: filterOptions.tags,
+                    browsers: filterOptions.browsers || []
+                  }}
                   searchPlaceholder="Test ara..."
                   showStatus={false}
                   showDateRange={false}
@@ -810,7 +942,7 @@ export default function TestsPage() {
             {/* Separator */}
             <div style={{ 
               borderTop: '1px solid var(--border-primary)', 
-              margin: '1rem -1.5rem 0 -1.5rem' 
+              margin: '1rem 0 0 0' 
             }}></div>
 
             {/* Test Content */}
@@ -861,409 +993,25 @@ export default function TestsPage() {
               </button>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto', margin: '0 -1.5rem -1.5rem -1.5rem' }}>
-              <table style={{ width: '100%' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      <input 
-                        type="checkbox" 
-                          checked={selectedTests.size === currentPageTests.length && currentPageTests.length > 0}
-                          onChange={(e) => handleSelectAll(e.target.checked)}
-                        style={{ 
-                          borderRadius: '0.25rem', 
-                          border: '1px solid var(--border-primary)' 
-                        }} 
-                      />
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      Test Adı
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                        Adım Sayısı
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                        Oluşturulma
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      Test Grubu
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      Etiketler
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem',
-                      width: '120px'
-                    }}>
-                      Tarayıcı
-                    </th>
-                    <th style={{ 
-                      textAlign: 'left', 
-                      padding: '1rem', 
-                      fontWeight: 500, 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      İşlemler
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                    {currentPageTests.map((test) => (
-                    <tr 
-                      key={test.id}
-                      id={`test-${test.id}`}
-                      style={{ 
-                        borderBottom: '1px solid var(--border-primary)',
-                        transition: 'all 0.3s ease',
-                        backgroundColor: highlightedTestId === test.id ? 'var(--bg-tertiary)' : 'transparent',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (highlightedTestId !== test.id) {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (highlightedTestId !== test.id) {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }
-                      }}
-                    >
-                      <td style={{ padding: '1rem' }}>
-                        <input 
-                          type="checkbox" 
-                            checked={selectedTests.has(test.id)}
-                            onChange={(e) => handleTestSelection(test.id, e.target.checked)}
-                          style={{ 
-                            borderRadius: '0.25rem', 
-                            border: '1px solid var(--border-primary)' 
-                          }} 
-                        />
-                      </td>
-                      
-                      <td style={{ padding: '1rem' }}>
-                        <div>
-                          <h3 
-                            onClick={() => handleEditTest(test.id)}
-                            style={{ 
-                              fontWeight: 500, 
-                              color: 'var(--text-primary)',
-                              margin: 0,
-                              fontSize: '0.875rem',
-                              cursor: 'pointer',
-                              transition: 'color 0.2s ease',
-                              textDecoration: 'none'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = '#2563eb';
-                              e.currentTarget.style.textDecoration = 'underline';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = 'var(--text-primary)';
-                              e.currentTarget.style.textDecoration = 'none';
-                            }}
-                            title="Düzenlemek için tıklayın"
-                          >
-                            {test.name}
-                          </h3>
-                          <p style={{ 
-                            fontSize: '0.75rem', 
-                            color: 'var(--text-secondary)', 
-                            margin: '0.25rem 0 0 0'
-                          }}>
-                            {test.description}
-                          </p>
-                        </div>
-                      </td>
-                      
-                      
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '0.25rem', 
-                          fontSize: '0.875rem', 
-                          color: 'var(--text-secondary)' 
-                        }}>
-                            <span>{test.workflow?.length || 0} adım</span>
-                        </div>
-                      </td>
-                      
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ 
-                          fontSize: '0.875rem', 
-                          color: 'var(--text-secondary)' 
-                        }}>
-                            {formatRelativeTime(test.createdAt)}
-                        </span>
-                      </td>
-
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ 
-                          fontSize: '0.875rem', 
-                          color: 'var(--text-secondary)' 
-                        }}>
-                          {test.suite}
-                        </span>
-                      </td>
-                      
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                          {test.tags.slice(0, 2).map((tag) => (
-                            <span
-                              key={tag}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                padding: '0.125rem 0.5rem',
-                                backgroundColor: 'var(--bg-tertiary)',
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.75rem',
-                                borderRadius: '0.375rem',
-                                border: '1px solid var(--border-primary)'
-                              }}
-                            >
-                              <Tag size={12} />
-                              {tag}
-                            </span>
-                          ))}
-                          {test.tags.length > 2 && (
-                            <span style={{ 
-                              fontSize: '0.75rem', 
-                              color: 'var(--text-tertiary)' 
-                            }}>
-                              +{test.tags.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      
-                      <td style={{ padding: '1rem', textAlign: 'center' }}>
-                        {(() => {
-                          const browserType = test.browserType || 'chromium';
-                          const getBrowserIcon = () => {
-                            switch(browserType) {
-                              case 'chromium': return <Chrome size={16} style={{ color: '#4285F4' }} />;
-                              case 'firefox': return <Globe size={16} style={{ color: '#FF7139' }} />;
-                              case 'webkit': return <Globe size={16} style={{ color: '#007AFF' }} />;
-                              case 'msedge': return <Globe size={16} style={{ color: '#0078D4' }} />;
-                              default: return <Chrome size={16} style={{ color: '#4285F4' }} />;
-                            }
-                          };
-                          const getBrowserName = () => {
-                            switch(browserType) {
-                              case 'chromium': return 'Chrome';
-                              case 'firefox': return 'Firefox';
-                              case 'webkit': return 'Safari';
-                              case 'msedge': return 'Edge';
-                              default: return 'Chrome';
-                            }
-                          };
-                          return (
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '0.5rem',
-                              justifyContent: 'center',
-                              fontSize: '0.875rem'
-                            }}>
-                              {getBrowserIcon()}
-                              <span style={{ color: 'var(--text-primary)' }}>
-                                {getBrowserName()}
-                              </span>
-                            </div>
-                          );
-                        })()}
-                      </td>
-                      
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <button 
-                              onClick={() => handleRunTest(test.id)}
-                              style={{ 
-                              padding: '0.25rem', 
-                              color: '#059669', 
-                              backgroundColor: 'transparent',
-                              border: 'none',
-                              borderRadius: '0.25rem',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'rgba(5, 150, 105, 0.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                              }}
-                              title="Testi Çalıştır"
-                            >
-                              <Play size={16} />
-                            </button>
-                          
-                            <button 
-                              onClick={() => handleEditTest(test.id)}
-                              style={{ 
-                            padding: '0.25rem', 
-                            color: 'var(--text-secondary)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                              }}
-                              title="Workflow'u Düzenle"
-                            >
-                            <Edit size={16} />
-                          </button>
-                          
-                            <button 
-                              onClick={() => handleEditTestMetadata(test.id)}
-                              style={{ 
-                            padding: '0.25rem', 
-                            color: 'var(--text-secondary)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                              }}
-                              title="Test Bilgilerini Düzenle"
-                            >
-                            <Settings size={16} />
-                          </button>
-                          
-                            <button 
-                              onClick={() => handleExportTest(test.id)}
-                              style={{ 
-                            padding: '0.25rem', 
-                                color: 'var(--text-secondary)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = 'var(--text-secondary)';
-                              }}
-                              title="Testi Dışa Aktar"
-                            >
-                              <Download size={16} />
-                          </button>
-                          
-                            <button 
-                              onClick={() => handleDuplicateTest(test.id)}
-                              style={{ 
-                            padding: '0.25rem', 
-                            color: 'var(--text-secondary)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                              }}
-                              title="Testi Kopyala"
-                            >
-                              <Copy size={16} />
-                            </button>
-                            
-                            <button 
-                              onClick={() => handleDeleteTest(test.id)}
-                              style={{ 
-                                padding: '0.25rem', 
-                                color: '#dc2626', 
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                              }}
-                              title="Testi Sil"
-                            >
-                              <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div>
+                <DataTable
+                  data={currentPageTests}
+                  columns={columns}
+                  loading={loading}
+                  emptyMessage="Test bulunamadı"
+                  selectable={true}
+                  selectedItems={selectedTests}
+                  onSelectionChange={setSelectedTests}
+                  getItemId={(test) => test.id}
+                  highlightedItemId={highlightedTestId}
+                  onRowClick={(test) => handleEditTest(test.id)}
+                  onSort={(field: string, order: 'asc' | 'desc') => {
+                    setSortField(field);
+                    setSortOrder(order);
+                  }}
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                />
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
