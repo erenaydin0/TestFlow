@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
-import { TestStep, Test } from '@/types';
+import { TestStep, Test, BrowserType } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -232,6 +232,7 @@ export const saveWorkflowToStorage = (workflow: {
   enableScreenshots?: boolean;
   enableRecording?: boolean;
   headlessMode?: boolean;
+  browserType?: BrowserType;
 }): string => {
   try {
     const savedWorkflows = getSavedWorkflows();
@@ -251,6 +252,7 @@ export const saveWorkflowToStorage = (workflow: {
           enableScreenshots: workflow.enableScreenshots || false,
           enableRecording: workflow.enableRecording || false,
           headlessMode: workflow.headlessMode || false,
+          browserType: workflow.browserType || 'chromium',
           updatedAt: new Date()
         };
         
@@ -276,7 +278,8 @@ export const saveWorkflowToStorage = (workflow: {
       isExecutable: true,
       enableScreenshots: workflow.enableScreenshots || false,
       enableRecording: workflow.enableRecording || false,
-      headlessMode: workflow.headlessMode || false
+      headlessMode: workflow.headlessMode || false,
+      browserType: workflow.browserType || 'chromium'
     };
     
     // Check for duplicate names (mevcut workflow'un kendisi hariç)

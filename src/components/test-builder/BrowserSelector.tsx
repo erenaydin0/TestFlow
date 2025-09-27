@@ -30,6 +30,7 @@ export default function BrowserSelector({
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
+        type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         style={{
@@ -121,6 +122,7 @@ export default function BrowserSelector({
               
               return (
                 <button
+                  type="button"
                   key={option.value}
                   onClick={() => {
                     onBrowserChange(option.value);

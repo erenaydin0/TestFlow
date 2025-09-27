@@ -26,14 +26,16 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Chrome,
+  Globe
 } from 'lucide-react';
-import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow, migrateTestIds } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow, migrateTestIds, updateWorkflow } from '@/lib/utils';
 import { Test } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MultiSelect from '@/components/MultiSelect';
-import EditTestModal from '@/components/tests/EditTestModal';
+import TestModal from '@/components/TestModal';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/lib/browser-context';
 
@@ -424,7 +426,8 @@ export default function TestsPage() {
             options: {
               enableScreenshots: test.enableScreenshots || false,
               enableRecording: test.enableRecording || false,
-              headlessMode: test.headlessMode || false
+              headlessMode: test.headlessMode || false,
+              browserType: test.browserType || 'chromium'
             }
           })
         });
@@ -955,6 +958,16 @@ export default function TestsPage() {
                       padding: '1rem', 
                       fontWeight: 500, 
                       color: 'var(--text-secondary)',
+                      fontSize: '0.875rem',
+                      width: '120px'
+                    }}>
+                      Tarayıcı
+                    </th>
+                    <th style={{ 
+                      textAlign: 'left', 
+                      padding: '1rem', 
+                      fontWeight: 500, 
+                      color: 'var(--text-secondary)',
                       fontSize: '0.875rem'
                     }}>
                       İşlemler
@@ -1090,6 +1103,44 @@ export default function TestsPage() {
                             </span>
                           )}
                         </div>
+                      </td>
+                      
+                      <td style={{ padding: '1rem', textAlign: 'center' }}>
+                        {(() => {
+                          const browserType = test.browserType || 'chromium';
+                          const getBrowserIcon = () => {
+                            switch(browserType) {
+                              case 'chromium': return <Chrome size={16} style={{ color: '#4285F4' }} />;
+                              case 'firefox': return <Globe size={16} style={{ color: '#FF7139' }} />;
+                              case 'webkit': return <Globe size={16} style={{ color: '#007AFF' }} />;
+                              case 'msedge': return <Globe size={16} style={{ color: '#0078D4' }} />;
+                              default: return <Chrome size={16} style={{ color: '#4285F4' }} />;
+                            }
+                          };
+                          const getBrowserName = () => {
+                            switch(browserType) {
+                              case 'chromium': return 'Chrome';
+                              case 'firefox': return 'Firefox';
+                              case 'webkit': return 'Safari';
+                              case 'msedge': return 'Edge';
+                              default: return 'Chrome';
+                            }
+                          };
+                          return (
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '0.5rem',
+                              justifyContent: 'center',
+                              fontSize: '0.875rem'
+                            }}>
+                              {getBrowserIcon()}
+                              <span style={{ color: 'var(--text-primary)' }}>
+                                {getBrowserName()}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </td>
                       
                       <td style={{ padding: '1rem' }}>
@@ -1433,11 +1484,37 @@ export default function TestsPage() {
       />
 
       {/* Edit Test Modal */}
-      <EditTestModal
+      <TestModal
         isOpen={editTestModal.show}
         onClose={() => setEditTestModal({show: false, test: null})}
-        onUpdate={handleTestUpdate}
-        test={editTestModal.test}
+        onSave={(data) => {
+          if (editTestModal.test) {
+            const updatedTest = {
+              ...editTestModal.test,
+              name: data.name,
+              description: data.description,
+              tags: data.tags,
+              suite: data.suite,
+              browserType: data.browserType,
+              updatedAt: new Date()
+            };
+            
+            // Update in storage
+            updateWorkflow(editTestModal.test.id, updatedTest);
+            
+            // Update test in local state
+            setTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t));
+            setEditTestModal({show: false, test: null});
+          }
+        }}
+        initialData={editTestModal.test ? {
+          name: editTestModal.test.name,
+          description: editTestModal.test.description,
+          tags: editTestModal.test.tags,
+          suite: editTestModal.test.suite,
+          browserType: editTestModal.test.browserType
+        } : undefined}
+        mode="edit"
       />
     </div>
   );

@@ -27,7 +27,7 @@ import useCanvasStyles from '@/hooks/useCanvasStyles';
 import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
-import SaveDialog from '@/components/test-builder/SaveDialog';
+import TestModal from '@/components/TestModal';
 import UnsavedChangesDialog from '@/components/test-builder/UnsavedChangesDialog';
 import useUnsavedChanges from '@/hooks/useUnsavedChanges';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
@@ -465,6 +465,7 @@ export default function TestBuilder() {
     description: string;
     tags: string[];
     suite: string;
+    browserType: BrowserType;
   }) => {
     try {
       const workflowId = saveWorkflowToStorage({
@@ -476,7 +477,8 @@ export default function TestBuilder() {
         id: loadedWorkflowId || undefined, // Düzenleme modunda mevcut ID'yi kullan
         enableScreenshots,
         enableRecording,
-        headlessMode
+        headlessMode,
+        browserType: data.browserType
       });
       
       setIsSaveDialogOpen(false);
@@ -813,7 +815,7 @@ export default function TestBuilder() {
         onUpdateProperty={updateStepProperty}
       />
 
-      <SaveDialog
+      <TestModal
         isOpen={isSaveDialogOpen}
         onClose={() => {
           setIsSaveDialogOpen(false);
@@ -830,10 +832,12 @@ export default function TestBuilder() {
             name: workflow.name,
             description: workflow.description,
             tags: workflow.tags,
-            suite: workflow.suite
+            suite: workflow.suite,
+            browserType: workflow.browserType
           } : undefined;
         })() : undefined}
         isUpdating={!!loadedWorkflowId}
+        mode={loadedWorkflowId ? 'edit' : 'save'}
       />
 
       <UnsavedChangesDialog

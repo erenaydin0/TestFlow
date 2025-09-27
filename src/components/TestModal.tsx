@@ -1,34 +1,59 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit, X, AlertCircle, Tag, FolderOpen } from 'lucide-react';
+import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
-import { getExistingTags, getExistingSuites, updateWorkflow } from '@/lib/utils';
-import { Test } from '@/types';
+import BrowserSelector from './test-builder/BrowserSelector';
+import { getExistingTags, getExistingSuites } from '@/lib/utils';
+import { BrowserType } from '@/types';
 
-interface EditTestModalProps {
+interface TestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (updatedTest: Test) => void;
-  test: Test | null;
+  onSave: (data: {
+    name: string;
+    description: string;
+    tags: string[];
+    suite: string;
+    browserType: BrowserType;
+  }) => void;
+  initialData?: {
+    name?: string;
+    description?: string;
+    tags?: string[];
+    suite?: string;
+    browserType?: BrowserType;
+    enableScreenshots?: boolean;
+    enableRecording?: boolean;
+    headlessMode?: boolean;
+  };
+  isUpdating?: boolean;
+  mode?: 'save' | 'edit';
+  title?: string;
+  description?: string;
 }
 
-const EditTestModal: React.FC<EditTestModalProps> = ({
+const TestModal: React.FC<TestModalProps> = ({
   isOpen,
   onClose,
-  onUpdate,
-  test
+  onSave,
+  initialData,
+  isUpdating = false,
+  mode = 'save',
+  title,
+  description
 }) => {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [desc, setDesc] = useState('');
   const [tags, setTags] = useState('');
   const [suite, setSuite] = useState('Default');
+  const [browserType, setBrowserType] = useState<BrowserType>('chromium');
   const [errors, setErrors] = useState<string[]>([]);
   const [existingTags, setExistingTags] = useState<string[]>([]);
   const [existingSuites, setExistingSuites] = useState<string[]>([]);
   const hasInitialized = useRef(false);
 
-  // Load existing tags and suites when modal opens
+  // Load existing tags and suites when dialog opens
   useEffect(() => {
     if (isOpen) {
       setExistingTags(getExistingTags());
@@ -36,20 +61,30 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
     }
   }, [isOpen]);
 
-  // Initialize form with test data when modal opens
+  // Initialize form with initial data - only when dialog first opens
   useEffect(() => {
-    if (isOpen && test && !hasInitialized.current) {
-      setName(test.name || '');
-      setDescription(test.description || '');
-      setTags(test.tags?.join(', ') || '');
-      setSuite(test.suite || 'Default');
+    if (isOpen && !hasInitialized.current) {
+      if (initialData) {
+        setName(initialData.name || '');
+        setDesc(initialData.description || '');
+        setTags(initialData.tags?.join(', ') || '');
+        setSuite(initialData.suite || 'Default');
+        setBrowserType(initialData.browserType || 'chromium');
+      } else {
+        // Reset for new workflow
+        setName('');
+        setDesc('');
+        setTags('');
+        setSuite('Default');
+        setBrowserType('chromium');
+      }
       setErrors([]);
       hasInitialized.current = true;
     } else if (!isOpen) {
-      // Reset flag when modal closes
+      // Reset flag when dialog closes
       hasInitialized.current = false;
     }
-  }, [isOpen, test]);
+  }, [isOpen, initialData]);
 
   // Handle escape key
   useEffect(() => {
@@ -74,7 +109,7 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
       newErrors.push('Test adı 100 karakterden uzun olamaz');
     }
 
-    if (description.length > 500) {
+    if (desc.length > 500) {
       newErrors.push('Açıklama 500 karakterden uzun olamaz');
     }
 
@@ -82,8 +117,8 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
     return newErrors.length === 0;
   };
 
-  const handleUpdate = () => {
-    if (!validateForm() || !test) {
+  const handleSave = () => {
+    if (!validateForm()) {
       return;
     }
 
@@ -92,38 +127,30 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0);
 
-    const updatedTest: Test = {
-      ...test,
+    const saveData = {
       name: name.trim(),
-      description: description.trim(),
+      description: desc.trim(),
       tags: tagsArray,
       suite: suite.trim(),
-      updatedAt: new Date()
+      browserType
     };
-
-    // Update in storage
-    const success = updateWorkflow(test.id, {
-      name: updatedTest.name,
-      description: updatedTest.description,
-      tags: updatedTest.tags,
-      suite: updatedTest.suite,
-      updatedAt: updatedTest.updatedAt
-    });
-
-    if (success) {
-      onUpdate(updatedTest);
-      onClose();
-    } else {
-      setErrors(['Test güncellenirken bir hata oluştu']);
-    }
+    onSave(saveData);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleUpdate();
+    handleSave();
   };
 
   if (!isOpen) return null;
+
+  const isEditMode = isUpdating || mode === 'edit';
+  const modalTitle = title || (isEditMode ? 'Test Workflow\'unu Güncelle' : 'Test Workflow\'unu Kaydet');
+  const modalDescription = description || (isEditMode ? 'Mevcut workflow\'u güncelleyin' : 'Workflow\'unuzu daha sonra kullanmak üzere kaydedin');
+  const submitButtonText = isEditMode ? 'Güncelle' : 'Kaydet';
+  const IconComponent = isEditMode ? Edit : Save;
+  const primaryColor = isEditMode ? '#7c3aed' : '#2563eb';
+  const primaryColorHover = isEditMode ? '#6d28d9' : '#1d4ed8';
 
   return (
     <div 
@@ -131,14 +158,13 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
+        width: '100%',
+        height: '100%',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem'
+        zIndex: 10000
       }}
       onClick={onClose}
     >
@@ -173,14 +199,14 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
             <div style={{
               width: '2.5rem',
               height: '2.5rem',
-              backgroundColor: '#7c3aed10',
-              border: '1px solid #7c3aed30',
+              backgroundColor: `${primaryColor}10`,
+              border: `1px solid ${primaryColor}30`,
               borderRadius: '0.5rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Edit size={18} color="#7c3aed" />
+              <IconComponent size={18} color={primaryColor} />
             </div>
             <div>
               <h3 style={{
@@ -189,36 +215,39 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                 color: 'var(--text-primary)',
                 margin: 0
               }}>
-                Test Bilgilerini Düzenle
+                {modalTitle}
               </h3>
               <p style={{
                 fontSize: '0.875rem',
                 color: 'var(--text-secondary)',
                 margin: '0.25rem 0 0 0'
               }}>
-                Test adı, açıklama, etiketler ve grubu güncelleyin
+                {modalDescription}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: 'none',
+              width: '2rem',
+              height: '2rem',
+              backgroundColor: 'transparent',
               border: 'none',
-              color: 'var(--text-secondary)',
+              borderRadius: '0.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '0.5rem',
-              transition: 'all 0.2s'
+              color: 'var(--text-secondary)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -228,30 +257,29 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
             backgroundColor: '#fef2f2',
             border: '1px solid #fecaca',
             borderRadius: '0.5rem',
-            padding: '1rem',
+            padding: '0.75rem',
             marginBottom: '1rem'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              marginBottom: '0.5rem'
+              marginBottom: errors.length > 1 ? '0.5rem' : 0
             }}>
               <AlertCircle size={16} color="#dc2626" />
-              <h4 style={{
+              <span style={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                color: '#dc2626',
-                margin: 0
+                color: '#dc2626'
               }}>
                 Lütfen aşağıdaki hataları düzeltin:
-              </h4>
+              </span>
             </div>
             <ul style={{
               margin: 0,
-              paddingLeft: '1rem',
-              color: '#dc2626',
-              fontSize: '0.875rem'
+              paddingLeft: '1.5rem',
+              fontSize: '0.875rem',
+              color: '#dc2626'
             }}>
               {errors.map((error, index) => (
                 <li key={index}>{error}</li>
@@ -278,7 +306,7 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Test adını girin"
+                placeholder="Test workflow'unuzun adını girin"
                 required
                 style={{
                   width: '100%',
@@ -292,8 +320,8 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                   boxSizing: 'border-box'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#7c3aed';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px #7c3aed20';
+                  e.currentTarget.style.borderColor = primaryColor;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-primary)';
@@ -314,9 +342,9 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                 Açıklama
               </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Test açıklamasını girin"
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                placeholder="Test workflow'unuzun ne yaptığını açıklayın"
                 rows={3}
                 style={{
                   width: '100%',
@@ -332,8 +360,8 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                   fontFamily: 'inherit'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#7c3aed';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px #7c3aed20';
+                  e.currentTarget.style.borderColor = primaryColor;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-primary)';
@@ -363,8 +391,8 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                 placeholder="login, checkout, smoke-test (virgülle ayırın)"
                 multiple={true}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#7c3aed';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px #7c3aed20';
+                  e.currentTarget.style.borderColor = primaryColor;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-primary)';
@@ -377,6 +405,34 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                 margin: '0.25rem 0 0 0'
               }}>
                 Mevcut etiketlerden seçebilir ya da yeni etiket yazabilirsiniz
+              </p>
+            </div>
+
+            {/* Browser Type */}
+            <div>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: 'var(--text-primary)',
+                marginBottom: '0.5rem'
+              }}>
+                <Globe size={14} />
+                Tarayıcı Türü
+              </label>
+              <BrowserSelector
+                selectedBrowser={browserType}
+                onBrowserChange={setBrowserType}
+                disabled={false}
+              />
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                margin: '0.25rem 0 0 0'
+              }}>
+                Test çalıştırılırken kullanılacak tarayıcı türünü seçin
               </p>
             </div>
 
@@ -401,8 +457,8 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
                 placeholder="Test paketinin adı"
                 multiple={false}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#7c3aed';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px #7c3aed20';
+                  e.currentTarget.style.borderColor = primaryColor;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-primary)';
@@ -451,32 +507,36 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
             >
               İptal
             </button>
-            
             <button
               type="submit"
+              disabled={!name.trim()}
               style={{
                 padding: '0.75rem 1rem',
                 border: 'none',
                 borderRadius: '0.5rem',
-                backgroundColor: '#7c3aed',
+                backgroundColor: !name.trim() ? '#9ca3af' : primaryColor,
                 color: 'white',
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                cursor: 'pointer',
+                cursor: !name.trim() ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#6d28d9';
+                if (name.trim()) {
+                  e.currentTarget.style.backgroundColor = primaryColorHover;
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#7c3aed';
+                if (name.trim()) {
+                  e.currentTarget.style.backgroundColor = primaryColor;
+                }
               }}
             >
-              <Edit size={16} />
-              Güncelle
+              <IconComponent size={14} />
+              {submitButtonText}
             </button>
           </div>
         </form>
@@ -485,4 +545,4 @@ const EditTestModal: React.FC<EditTestModalProps> = ({
   );
 };
 
-export default EditTestModal;
+export default TestModal;
