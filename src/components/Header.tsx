@@ -69,6 +69,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const themeOptions = [
     { id: 'light', label: 'Açık', icon: Sun },
     { id: 'dark', label: 'Koyu', icon: Moon },
+    { id: 'system', label: 'Sistem', icon: Monitor },
   ];
 
   // Handle search input changes
@@ -625,7 +626,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   <div style={{ position: 'relative' }}>
                     <select
                       value={theme}
-                      onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
+                      onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
                       style={{
                         padding: '0.25rem 1.5rem 0.25rem 0.5rem',
                         backgroundColor: 'transparent',
