@@ -857,8 +857,7 @@ export default function ReportsPage() {
           <div style={{ 
             display: 'flex', 
               justifyContent: 'space-between', 
-            alignItems: 'center', 
-              marginBottom: '1.5rem',
+            alignItems: 'center',
               paddingBottom: '1rem',
               borderBottom: '1px solid var(--border-primary)'
             }}>
