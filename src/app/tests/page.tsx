@@ -2,60 +2,51 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import { useSidebar } from '@/lib/sidebar-context';
+import PageLayout from '@/components/layout/PageLayout';
+import LoadingErrorState from '@/components/common/LoadingErrorState';
 import { 
-  Play, 
-  Pause, 
-  Edit, 
-  Trash2, 
-  Filter,
   Plus,
-  MoreVertical,
-  Tag,
-  Clock,
   Copy,
   FileText,
-  AlertCircle,
   Download,
   Upload,
-  Search,
   X,
-  Settings,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight,
-  Chrome,
-  Globe
+  ChevronsRight
 } from 'lucide-react';
-import { formatDuration, formatRelativeTime, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportTestWorkflow, migrateTestIds, updateWorkflow } from '@/lib/utils';
-import { Test } from '@/types';
+import { exportTestWorkflow } from '@/lib/utils';
+import { Test, BrowserType } from '@/types';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import MultiSelect from '@/components/MultiSelect';
 import TestModal from '@/components/TestModal';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { BrowserCell, TagsCell, DateCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/lib/browser-context';
-import { exportTestsToCSV, filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
-import { BrowserType } from '@/types';
+import { exportTestsToCSV } from '@/lib/exportUtils';
+import { useTests } from '@/hooks/useTests';
 
 export default function TestsPage() {
-  const { isCollapsed } = useSidebar();
   const browserSettings = useBrowserSettings();
-  const [tests, setTests] = useState<Test[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    tests, 
+    loading, 
+    filteredTests, 
+    filters, 
+    setFilters, 
+    filterOptions, 
+    refresh,
+    deleteTest,
+    duplicateTest,
+    updateTest,
+    bulkDeleteTests,
+    bulkDuplicateTests
+  } = useTests();
+  
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
-  const [filters, setFilters] = useState({
-    search: '',
-    suite: [] as string[],
-    tags: [] as string[],
-    browserType: [] as BrowserType[]
-  });
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [highlightedTestId, setHighlightedTestId] = useState<string | null>(null);
@@ -81,25 +72,6 @@ export default function TestsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useTestNotifications();
-
-  // Load saved workflows
-  useEffect(() => {
-    const loadTests = () => {
-      try {
-        // Önce ID migration'ı çalıştır
-        migrateTestIds();
-        
-        const savedWorkflows = getSavedWorkflows();
-        setTests(savedWorkflows);
-      } catch (error) {
-        console.error('Error loading tests:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTests();
-  }, []);
 
   // Handle URL search parameter
   useEffect(() => {
@@ -129,10 +101,7 @@ export default function TestsPage() {
     }
   }, [searchParams, tests]);
 
-  // Filter tests using common utility
-  const filteredTests = useMemo(() => {
-    return filterTests(tests, filters);
-  }, [tests, filters]);
+  // filteredTests artık useTests hook'undan geliyor
 
   // Sort tests
   const sortedTests = useMemo(() => {
@@ -190,10 +159,7 @@ export default function TestsPage() {
     setCurrentPage(1);
   }, [filters]);
 
-  // Get unique filter options from common utility
-  const filterOptions = useMemo(() => {
-    return getUniqueFilterOptions(tests);
-  }, [tests]);
+  // filterOptions artık useTests hook'undan geliyor
 
   // Define table columns for DataTable
   const columns: Column<Test>[] = [
@@ -394,12 +360,8 @@ export default function TestsPage() {
 
   // Handle test update from modal
   const handleTestUpdate = (updatedTest: Test) => {
-    // Update local state
-    setTests(prevTests => 
-      prevTests.map(test => 
-        test.id === updatedTest.id ? updatedTest : test
-      )
-    );
+    // Update test using hook
+    updateTest(updatedTest.id, updatedTest);
     
     // Show success notification
     notifyTestImported(`${updatedTest.name} güncellendi`, '');
@@ -409,11 +371,8 @@ export default function TestsPage() {
   const handleDuplicateTest = async (testId: string) => {
     try {
       const test = tests.find(t => t.id === testId);
-      const duplicatedId = duplicateWorkflow(testId);
+      const duplicatedId = duplicateTest(testId);
       if (duplicatedId && test) {
-        // Reload tests
-        const updatedTests = getSavedWorkflows();
-        setTests(updatedTests);
         notifyTestDuplicated(test.name, duplicatedId);
       }
     } catch (error) {
@@ -436,10 +395,7 @@ export default function TestsPage() {
 
   const confirmSingleDelete = () => {
     try {
-      if (deleteWorkflow(singleDeleteDialog.testId)) {
-        // Reload tests
-        const updatedTests = getSavedWorkflows();
-        setTests(updatedTests);
+      if (deleteTest(singleDeleteDialog.testId)) {
         setSelectedTests(prev => {
           const newSelection = new Set(prev);
           newSelection.delete(singleDeleteDialog.testId);
@@ -457,21 +413,7 @@ export default function TestsPage() {
     if (selectedTests.size === 0) return;
     
     try {
-      let duplicatedCount = 0;
-      const duplicatedTests: string[] = [];
-      
-      selectedTests.forEach(testId => {
-        const test = tests.find(t => t.id === testId);
-        const duplicatedId = duplicateWorkflow(testId);
-        if (duplicatedId && test) {
-          duplicatedCount++;
-          duplicatedTests.push(test.name);
-        }
-      });
-      
-      // Reload tests
-      const updatedTests = getSavedWorkflows();
-      setTests(updatedTests);
+      const duplicatedCount = bulkDuplicateTests(Array.from(selectedTests));
       setSelectedTests(new Set());
       
       if (duplicatedCount > 0) {
@@ -490,16 +432,7 @@ export default function TestsPage() {
 
   const confirmBulkDelete = () => {
     try {
-      let deletedCount = 0;
-      selectedTests.forEach(testId => {
-        if (deleteWorkflow(testId)) {
-          deletedCount++;
-        }
-      });
-      
-      // Reload tests
-      const updatedTests = getSavedWorkflows();
-      setTests(updatedTests);
+      const deletedCount = bulkDeleteTests(Array.from(selectedTests));
       setSelectedTests(new Set());
       notifyTestDeleted(`${deletedCount} test`, '');
     } catch (error) {
@@ -695,63 +628,22 @@ export default function TestsPage() {
   // Handle import success
   const handleImportSuccess = (importedCount: number) => {
     // Reload tests after successful import
-    const updatedTests = getSavedWorkflows();
-    setTests(updatedTests);
+    refresh();
     setIsImportDialogOpen(false);
     notifyTestImported(`${importedCount} workflow`, '');
   };
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
-        <Sidebar />
-        <div style={{ 
-          flex: 1, 
-          marginLeft: '16rem',
-          paddingTop: '4rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-            <div style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>Yükleniyor...</div>
-            <div style={{ fontSize: '0.875rem' }}>Kaydedilen testler yükleniyor</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
-      <Sidebar />
-      
-      <div style={{ 
-        flex: 1, 
-        marginLeft: isCollapsed ? '4rem' : '16rem',
-        transition: 'margin-left 0.3s ease',
-        paddingTop: '4rem'
-      }}>
-        <Header />
-        
-        <main style={{ padding: '1.5rem' }}>
-          {/* Header with stats */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h1 style={{ 
-                fontSize: '1.875rem', 
-                fontWeight: 'bold', 
-                color: 'var(--text-primary)', 
-                margin: 0 
-            }}>
-              Kayıtlı Testler
-            </h1>
-            <p style={{ 
-                color: 'var(--text-secondary)', 
-                margin: '0.5rem 0 0 0' 
-            }}>
-              Toplam {tests.length} kayıtlı test bulunuyor.
-            </p>
-          </div>
+    <PageLayout
+      title="Kayıtlı Testler"
+      subtitle={`Toplam ${tests.length} kayıtlı test bulunuyor.`}
+    >
+      <LoadingErrorState
+        loading={loading}
+        error={null}
+        loadingMessage="Kaydedilen testler yükleniyor..."
+        onRetry={refresh}
+      >
 
           {/* Tests List */}
           <div className="card">
@@ -1171,8 +1063,7 @@ export default function TestsPage() {
               </div>
             )}
           </div>
-        </main>
-      </div>
+      </LoadingErrorState>
 
       {/* Import Dialog */}
       <ImportDialog
@@ -1221,11 +1112,8 @@ export default function TestsPage() {
               updatedAt: new Date()
             };
             
-            // Update in storage
-            updateWorkflow(editTestModal.test.id, updatedTest);
-            
-            // Update test in local state
-            setTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t));
+            // Update test using hook
+            updateTest(editTestModal.test.id, updatedTest);
             setEditTestModal({show: false, test: null});
           }
         }}
@@ -1238,6 +1126,6 @@ export default function TestsPage() {
         } : undefined}
         mode="edit"
       />
-    </div>
+    </PageLayout>
   );
 } 

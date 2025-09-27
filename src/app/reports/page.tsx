@@ -1,116 +1,85 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import PageLayout from '@/components/layout/PageLayout';
+import LoadingErrorState from '@/components/common/LoadingErrorState';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useSidebar } from '@/lib/sidebar-context';
-import StatusBadge from '@/components/StatusBadge';
 import StatsCards from '@/components/StatsCards';
-import MultiSelect from '@/components/MultiSelect';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { BrowserCell, TagsCell, DateCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } from '@/components/common/TableCells';
 import { 
   Download, 
-  Filter,
-  Calendar,
-  Clock,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
-  FileText,
-  AlertCircle,
-  Play,
   Eye,
   Image,
   Video,
   RefreshCw,
-  Search,
-  ChevronDown,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   X,
-  Tag,
   Trash2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  AlertCircle,
+  FileText,
+  Tag,
   Chrome,
   Globe
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import StatusBadge, { getStatusColor, getStatusText } from '@/components/StatusBadge';
 import { ExecutionResult, BrowserType } from '@/types';
-import { getStatusColor, getStatusText } from '@/components/StatusBadge';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
-import { filterExecutions, getUniqueFilterOptions, exportExecutionsToCSV } from '@/lib/exportUtils';
+import { exportExecutionsToCSV } from '@/lib/exportUtils';
+import { useReports } from '@/hooks/useReports';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
-type SortOrder = 'asc' | 'desc';
-
-interface FilterState {
-  search: string;
-  status?: string;
-  dateRange?: string;
-  suite: string[];
-  tags: string[];
-  browserType: BrowserType[];
-}
 
 export default function ReportsPage() {
   const { isCollapsed } = useSidebar();
-  const [executions, setExecutions] = useState<ExecutionResult[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    executions,
+    filteredExecutions,
+    sortedExecutions,
+    loading,
+    error,
+    stats,
+    filteredStats,
+    filters,
+    setFilters,
+    filterOptions,
+    hasActiveFilters,
+    clearFilters,
+    sortField,
+    sortOrder,
+    handleSort,
+    selectedExecutions,
+    setSelectedExecutions,
+    refresh,
+    deleteExecution,
+    bulkDeleteExecutions
+  } = useReports();
+
   const [selectedExecution, setSelectedExecution] = useState<ExecutionResult | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const searchParams = useSearchParams();
   
   const { notifyTestDeleted, notifyTestFailure } = useTestNotifications();
   
-  // Filtering and sorting state
-  const [sortField, setSortField] = useState<SortField>('startTime');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    status: '',
-    dateRange: '',
-    suite: [],
-    tags: [],
-    browserType: []
-  });
-  const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
   const [highlightedExecutionId, setHighlightedExecutionId] = useState<string | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Fetch executions from backend
-  const fetchExecutions = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:3001/api/executions');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setExecutions(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching executions:', err);
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchExecutions();
-  }, []);
+  // fetchExecutions artık useReports hook'undan geliyor
 
   // Handle URL search parameter
   useEffect(() => {
@@ -188,84 +157,9 @@ export default function ReportsPage() {
     };
   }, [selectedExecution]);
 
-  // Filter executions using common utility
-  const filteredExecutions = useMemo(() => {
-    return filterExecutions(executions, filters);
-  }, [executions, filters]);
+  // filteredExecutions ve sortedExecutions artık useReports hook'undan geliyor
 
-  // Sort executions
-  const sortedExecutions = useMemo(() => {
-    const sorted = [...filteredExecutions];
-    sorted.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortField) {
-        case 'startTime':
-          aValue = new Date(a.startTime).getTime();
-          bValue = new Date(b.startTime).getTime();
-          break;
-        case 'duration':
-          aValue = a.duration || 0;
-          bValue = b.duration || 0;
-          break;
-        case 'workflowName':
-          aValue = a.workflowName.toLowerCase();
-          bValue = b.workflowName.toLowerCase();
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case 'successRate':
-          aValue = a.successRate || 0;
-          bValue = b.successRate || 0;
-          break;
-        case 'suite':
-          aValue = (a.suite || '').toLowerCase();
-          bValue = (b.suite || '').toLowerCase();
-          break;
-        case 'tags':
-          aValue = (a.tags || []).length;
-          bValue = (b.tags || []).length;
-          break;
-        case 'browserType':
-          aValue = a.options?.browserType || 'chromium';
-          bValue = b.options?.browserType || 'chromium';
-          break;
-        default:
-          return 0;
-      }
-
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [filteredExecutions, sortField, sortOrder]);
-
-  // Get unique filter options for executions
-  const filterOptions = useMemo(() => {
-    const suites = new Set<string>();
-    const tags = new Set<string>();
-    const browsers = new Set<BrowserType>();
-    const statuses = new Set<string>();
-
-    executions.forEach(execution => {
-      if (execution.suite) suites.add(execution.suite);
-      execution.tags?.forEach(tag => tags.add(tag));
-      if (execution.options?.browserType) browsers.add(execution.options.browserType);
-      statuses.add(execution.status);
-    });
-
-    return {
-      suites: Array.from(suites).sort(),
-      tags: Array.from(tags).sort(),
-      browserTypes: Array.from(browsers).sort(),
-      statuses: Array.from(statuses).sort()
-    };
-  }, [executions]);
+  // filterOptions artık useReports hook'undan geliyor
 
   // Define table columns for DataTable
   const columns: Column<ExecutionResult>[] = [
@@ -372,41 +266,9 @@ export default function ReportsPage() {
     setCurrentPage(1);
   }, [filters, sortField, sortOrder]);
 
-  // Calculate stats based on filtered results
-  const stats = useMemo(() => {
-    const filtered = sortedExecutions;
-    return {
-      totalExecutions: filtered.length,
-      completedExecutions: filtered.filter(e => e.status === 'completed').length,
-      failedExecutions: filtered.filter(e => e.status === 'failed').length,
-      avgDuration: filtered.length > 0 ? 
-        Math.round(filtered.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / filtered.filter(e => e.duration).length) : 0,
-      successRate: filtered.length > 0 ? 
-        Math.round((filtered.filter(e => e.status === 'completed').length / filtered.length) * 100) : 0
-    };
-  }, [sortedExecutions]);
+  // stats artık useReports hook'undan geliyor (filteredStats olarak)
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('desc');
-    }
-  };
-
-  // handleFilterChange removed - now using direct setFilters in DataFilters component
-
-  const clearFilters = () => {
-    setFilters({
-      search: '',
-      status: '',
-      dateRange: '',
-      suite: [],
-      tags: [],
-      browserType: []
-    });
-  };
+  // handleSort ve clearFilters artık useReports hook'undan geliyor
 
   // Pagination functions
   const goToPage = (page: number) => {
@@ -420,12 +282,7 @@ export default function ReportsPage() {
   const goToPreviousPage = () => goToPage(currentPage - 1);
   const goToNextPage = () => goToPage(currentPage + 1);
 
-  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
-    if (Array.isArray(value)) {
-      return value.length > 0;
-    }
-    return value !== '' && value !== null;
-  });
+  // hasActiveFilters artık useReports hook'undan geliyor
 
 
 
@@ -674,44 +531,44 @@ export default function ReportsPage() {
 
   // Selection functions
   const handleTestSelection = (testId: string, checked: boolean) => {
-    const newSelection = new Set(selectedTests);
+    const newSelection = new Set(selectedExecutions);
     if (checked) {
       newSelection.add(testId);
     } else {
       newSelection.delete(testId);
     }
-    setSelectedTests(newSelection);
+    setSelectedExecutions(newSelection);
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTests(new Set(currentPageExecutions.map(e => e.id)));
+      setSelectedExecutions(new Set(currentPageExecutions.map(e => e.id)));
     } else {
-      setSelectedTests(new Set());
+      setSelectedExecutions(new Set());
     }
   };
 
   const downloadSelectedTests = async () => {
-    if (selectedTests.size === 0) return;
+    if (selectedExecutions.size === 0) return;
     
     try {
       // Import JSZip dynamically
       const JSZip = (await import('jszip')).default;
       const zip = new JSZip();
       
-      const selectedExecutions = sortedExecutions.filter(e => selectedTests.has(e.id));
+      const selectedExecutionsList = sortedExecutions.filter(e => selectedExecutions.has(e.id));
       
       // Create main CSV report
-      const csvContent = createTestCSVReport(selectedExecutions);
+      const csvContent = createTestCSVReport(selectedExecutionsList);
       zip.file('toplu_test_raporu.csv', '\uFEFF' + csvContent);
       
       // Create consolidated steps CSV
-      const allStepsCSV = createBulkStepsCSVReport(selectedExecutions);
+      const allStepsCSV = createBulkStepsCSVReport(selectedExecutionsList);
       zip.file('tum_adim_detaylari.csv', '\uFEFF' + allStepsCSV);
       
       // Add screenshots and videos for each execution
-      for (let execIndex = 0; execIndex < selectedExecutions.length; execIndex++) {
-        const execution = selectedExecutions[execIndex];
+      for (let execIndex = 0; execIndex < selectedExecutionsList.length; execIndex++) {
+        const execution = selectedExecutionsList[execIndex];
         const executionFolder = zip.folder(`${execIndex + 1}_${execution.workflowName.replace(/[^a-zA-Z0-9]/g, '_')}_${execution.id.slice(0, 8)}`);
         
         // Add individual execution reports
@@ -755,14 +612,14 @@ export default function ReportsPage() {
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `CosmicQA_TopluRapor_${new Date().toISOString().split('T')[0]}_${selectedTests.size}test.zip`;
+      a.download = `CosmicQA_TopluRapor_${new Date().toISOString().split('T')[0]}_${selectedExecutions.size}test.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
       // Clear selection
-      setSelectedTests(new Set());
+      setSelectedExecutions(new Set());
       
     } catch (error) {
       console.error('Error creating bulk report package:', error);
@@ -771,31 +628,19 @@ export default function ReportsPage() {
   };
 
   const deleteSelectedTests = async () => {
-    if (selectedTests.size === 0) return;
+    if (selectedExecutions.size === 0) return;
     setShowBulkDeleteDialog(true);
   };
 
   const confirmBulkDelete = async () => {
     try {
-      const deletePromises = Array.from(selectedTests).map(async (testId) => {
-        const response = await fetch(`http://localhost:3001/api/executions/${testId}`, {
-          method: 'DELETE'
-        });
-        if (!response.ok) {
-          throw new Error(`Test ${testId} silinirken hata oluştu`);
-        }
-        return testId;
-      });
-
-      await Promise.all(deletePromises);
-      
-      // Refresh executions list
-      await fetchExecutions();
-      
-      const deletedCount = selectedTests.size;
+      const deletedCount = await bulkDeleteExecutions(Array.from(selectedExecutions));
       
       // Clear selection
-      setSelectedTests(new Set());
+      setSelectedExecutions(new Set());
+      
+      // Close dialog
+      setShowBulkDeleteDialog(false);
       
       notifyTestDeleted(`${deletedCount} test kaydı`, '');
     } catch (error) {
@@ -805,52 +650,18 @@ export default function ReportsPage() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
-      <Sidebar />
-      
-      <div style={{ 
-        flex: 1, 
-        marginLeft: isCollapsed ? '4rem' : '16rem',
-        transition: 'margin-left 0.3s ease',
-        paddingTop: '4rem'
-      }}>
-        <Header />
-        
-        <main style={{ padding: '1.5rem' }}>
-          {/* Header */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '2rem' 
-          }}>
-            <div>
-              <h1 style={{ 
-                fontSize: '1.875rem', 
-                fontWeight: 'bold', 
-                color: 'var(--text-primary)', 
-                margin: 0 
-              }}>
-                Test Sonuçları
-              </h1>
-              <p style={{ 
-                color: 'var(--text-secondary)', 
-                margin: '0.5rem 0 0 0' 
-              }}>
-                Çalıştırılan testlerin detaylı sonuçları
-                {hasActiveFilters && (
-                  <span style={{ color: '#2563eb', marginLeft: '0.5rem' }}>
-                    ({sortedExecutions.length} / {executions.length} sonuç)
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-
-
-
-          {/* Stats Overview */}
-          <StatsCards stats={stats} loading={loading} />
+    <PageLayout
+      title="Test Sonuçları"
+      subtitle={`Çalıştırılan testlerin detaylı sonuçları${hasActiveFilters ? ` (${sortedExecutions.length} / ${executions.length} sonuç)` : ''}`}
+    >
+      <LoadingErrorState
+        loading={loading}
+        error={error}
+        loadingMessage="Test sonuçları yükleniyor..."
+        onRetry={refresh}
+      >
+        {/* Stats Overview */}
+          <StatsCards stats={filteredStats} loading={loading} />
 
           {/* Executions List */}
           <div className="card">
@@ -868,7 +679,7 @@ export default function ReportsPage() {
                   availableOptions={{
                     suites: filterOptions.suites,
                     tags: filterOptions.tags,
-                    browsers: filterOptions.browserTypes,
+                    browsers: filterOptions.browsers,
                     statuses: filterOptions.statuses
                   }}
                   searchPlaceholder="Test adı..."
@@ -878,13 +689,13 @@ export default function ReportsPage() {
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {selectedTests.size > 0 && (
+                {selectedExecutions.size > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ 
                       fontSize: '0.875rem', 
                       color: 'var(--text-secondary)' 
                     }}>
-                      {selectedTests.size} test seçili
+                      {selectedExecutions.size} test seçili
                     </span>
                     <button
                       onClick={downloadSelectedTests}
@@ -923,7 +734,7 @@ export default function ReportsPage() {
                       Sil
                     </button>
                     <button
-                      onClick={() => setSelectedTests(new Set())}
+                      onClick={() => setSelectedExecutions(new Set())}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -989,13 +800,12 @@ export default function ReportsPage() {
                   loading={loading}
                   emptyMessage="Sonuç bulunamadı"
                   selectable={true}
-                  selectedItems={selectedTests}
-                  onSelectionChange={setSelectedTests}
+                  selectedItems={selectedExecutions}
+                  onSelectionChange={setSelectedExecutions}
                   getItemId={(execution) => execution.id}
                   highlightedItemId={highlightedExecutionId}
                   onSort={(field: string, order: 'asc' | 'desc') => {
-                    setSortField(field as SortField);
-                    setSortOrder(order);
+                    handleSort(field as SortField);
                   }}
                   sortField={sortField}
                   sortOrder={sortOrder}
@@ -1160,8 +970,6 @@ export default function ReportsPage() {
               </div>
             )}
                         </div>
-        </main>
-                      </div>
                       
       {/* Execution Details Modal */}
       {selectedExecution && (
@@ -1643,8 +1451,6 @@ export default function ReportsPage() {
               </div>
             )}
           </div>
-      </div>
-      )}
 
       {/* Bulk Delete Confirm Dialog */}
       <ConfirmDialog
@@ -1652,11 +1458,14 @@ export default function ReportsPage() {
         onClose={() => setShowBulkDeleteDialog(false)}
         onConfirm={confirmBulkDelete}
         title="Test Kayıtlarını Sil"
-        message={`${selectedTests.size} test kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        message={`${selectedExecutions.size} test kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"
         cancelText="İptal"
         type="danger"
       />
-    </div>
+      </div>
+      )}
+      </LoadingErrorState>
+    </PageLayout>
   );
 } 

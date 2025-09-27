@@ -1,58 +1,18 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import { useMemo } from 'react';
+import PageLayout from '@/components/layout/PageLayout';
+import LoadingErrorState from '@/components/common/LoadingErrorState';
 import StatsCards from '@/components/StatsCards';
 import { 
   DailyTestResults, 
   TestSuiteDistribution, 
   RecentTests
 } from '@/components/dashboard';
-import { ExecutionResult } from '@/types';
-import { useSidebar } from '@/lib/sidebar-context';
+import { useExecutions } from '@/hooks/useExecutions';
 
 export default function Dashboard() {
-  const [executions, setExecutions] = useState<ExecutionResult[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { isCollapsed } = useSidebar();
-
-  // Fetch executions from backend
-  const fetchExecutions = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:3001/api/executions');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setExecutions(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching executions:', err);
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchExecutions();
-  }, []);
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    return {
-      totalExecutions: executions.length,
-      completedExecutions: executions.filter(e => e.status === 'completed').length,
-      failedExecutions: executions.filter(e => e.status === 'failed').length,
-      avgDuration: executions.length > 0 ? 
-        Math.round(executions.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / executions.filter(e => e.duration).length) : 0,
-      successRate: executions.length > 0 ? 
-        Math.round((executions.filter(e => e.status === 'completed').length / executions.length) * 100) : 0
-    };
-  }, [executions]);
+  const { executions, loading, error, stats, refresh } = useExecutions();
 
   // Process data for charts
   const chartData = useMemo(() => {
@@ -131,47 +91,33 @@ export default function Dashboard() {
   }, [executions]);
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-      <Sidebar />
-      
-      <div 
-        className="flex-1 pt-16" 
-        style={{ 
-          marginLeft: isCollapsed ? '4rem' : '16rem',
-          transition: 'margin-left 0.3s ease'
-        }}
+    <PageLayout>
+      <LoadingErrorState 
+        loading={loading} 
+        error={error} 
+        loadingMessage="Dashboard verileri yükleniyor..."
+        onRetry={refresh}
       >
-        <Header />
+        <StatsCards stats={stats} loading={loading} />
         
-        <main className="p-6">
-          <StatsCards stats={stats} loading={loading} />
-          
-          {error ? (
-            <div className="card" style={{ padding: '2rem', textAlign: 'center', color: '#dc2626' }}>
-              Veriler yüklenirken hata oluştu: {error}
-            </div>
-          ) : (
-            <>
-              {/* İlk satır: Günlük Test Sonuçları + Son Testler */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-                <div className="lg:col-span-8">
-                  <DailyTestResults data={chartData.dailyResults} />
-                </div>
-                <div className="lg:col-span-4">
-                  <RecentTests data={chartData.recentTests} />
-                </div>
-              </div>
-              {/* İkinci satır: Test Dağılımı + Hata Türleri */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <TestSuiteDistribution 
-                  testSuiteData={chartData.testSuiteData} 
-                  browserData={chartData.browserData}
-                />
-              </div>
-            </>
-          )}
-        </main>
-      </div>
-    </div>
+        {/* İlk satır: Günlük Test Sonuçları + Son Testler */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+          <div className="lg:col-span-8">
+            <DailyTestResults data={chartData.dailyResults} />
+          </div>
+          <div className="lg:col-span-4">
+            <RecentTests data={chartData.recentTests} />
+          </div>
+        </div>
+        
+        {/* İkinci satır: Test Dağılımı + Hata Türleri */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <TestSuiteDistribution 
+            testSuiteData={chartData.testSuiteData} 
+            browserData={chartData.browserData}
+          />
+        </div>
+      </LoadingErrorState>
+    </PageLayout>
   );
 } 
