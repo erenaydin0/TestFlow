@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Bell, X, CheckCircle, XCircle, AlertCircle, Info, Trash2, Check, CheckCircle2 } from 'lucide-react';
 import { useNotifications } from '@/lib/notification-context';
+import { useTheme } from '@/lib/theme-context';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
@@ -24,6 +25,7 @@ const colorMap = {
 export function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = useNotifications();
+  const { theme } = useTheme();
   const router = useRouter();
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -50,7 +52,25 @@ export function NotificationPanel() {
       {/* Bell Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+        style={{
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '0.75rem', 
+        padding: '0.5rem 1rem',
+        paddingLeft: '1rem',
+        borderLeft: '1px solid var(--border-primary)',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        borderRadius: '0.5rem',
+        transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
@@ -70,10 +90,22 @@ export function NotificationPanel() {
           />
           
           {/* Panel */}
-          <div className="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+          <div className={`absolute right-0 top-full mt-2 w-96 rounded-lg shadow-lg border z-50 max-h-96 overflow-hidden ${
+            document.documentElement.classList.contains('dark') 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200'
+          }`}>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className={`flex items-center justify-between p-4 border-b ${
+              document.documentElement.classList.contains('dark') 
+                ? 'border-gray-700' 
+                : 'border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold ${
+                document.documentElement.classList.contains('dark') 
+                  ? 'text-white' 
+                  : 'text-gray-900'
+              }`}>
                 Bildirimler
               </h3>
               <div className="flex items-center space-x-2">
@@ -83,7 +115,11 @@ export function NotificationPanel() {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                        className={`p-1 ${
+                          document.documentElement.classList.contains('dark')
+                            ? 'text-gray-400 hover:text-gray-200'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
                         title="Tümünü Okundu İşaretle"
                       >
                         <CheckCircle2 className="h-4 w-4" />
@@ -93,7 +129,11 @@ export function NotificationPanel() {
                     {/* Tümünü Temizle */}
                     <button
                       onClick={clearAllNotifications}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
+                      className={`p-1 ${
+                        document.documentElement.classList.contains('dark')
+                          ? 'text-gray-400 hover:text-gray-200'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
                       title="Tümünü Temizle"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -102,7 +142,11 @@ export function NotificationPanel() {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  className={`${
+                    document.documentElement.classList.contains('dark')
+                      ? 'text-gray-400 hover:text-gray-200'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -112,12 +156,20 @@ export function NotificationPanel() {
             {/* Notifications List */}
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <div className={`p-8 text-center ${
+                  document.documentElement.classList.contains('dark')
+                    ? 'text-gray-400'
+                    : 'text-gray-500'
+                }`}>
                   <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
                   <p>Henüz bildirim yok</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                <div className={`divide-y ${
+                  document.documentElement.classList.contains('dark')
+                    ? 'divide-gray-700'
+                    : 'divide-gray-200'
+                }`}>
                   {notifications.map((notification) => {
                     const Icon = iconMap[notification.type];
                     return (
@@ -125,9 +177,19 @@ export function NotificationPanel() {
                         key={notification.id}
                         className={`p-4 transition-colors ${
                           notification.executionId || notification.testId 
-                            ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer' 
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                        } ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                            ? 'cursor-pointer' 
+                            : ''
+                        } ${
+                          document.documentElement.classList.contains('dark')
+                            ? 'hover:bg-gray-700/50'
+                            : 'hover:bg-gray-50'
+                        } ${
+                          !notification.read 
+                            ? document.documentElement.classList.contains('dark')
+                              ? 'bg-blue-900/20'
+                              : 'bg-blue-50'
+                            : ''
+                        }`}
                         onClick={() => {
                           if (notification.executionId || notification.testId) {
                             handleNotificationClick(notification);
@@ -137,16 +199,32 @@ export function NotificationPanel() {
                         <div className="flex items-start space-x-3">
                           <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${colorMap[notification.type]}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-md font-medium text-gray-900 dark:text-white">
+                            <p className={`text-md font-medium ${
+                              document.documentElement.classList.contains('dark')
+                                ? 'text-white'
+                                : 'text-gray-900'
+                            }`}>
                               {notification.title}
                             </p>
-                            <p className="text-sm text-gray-100 dark:text-gray-100 mt-1">
+                            <p className={`text-sm mt-1 ${
+                              document.documentElement.classList.contains('dark')
+                                ? 'text-gray-100'
+                                : 'text-gray-900'
+                            }`}>
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            <p className={`text-xs mt-1 ${
+                              document.documentElement.classList.contains('dark')
+                                ? 'text-gray-400'
+                                : 'text-gray-600'
+                            }`}>
                               {notification.executionId || notification.testId}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                            <p className={`text-xs mt-2 ${
+                              document.documentElement.classList.contains('dark')
+                                ? 'text-gray-500'
+                                : 'text-gray-500'
+                            }`}>
                               {formatDistanceToNow(notification.timestamp, { 
                                 addSuffix: true,
                                 locale: tr
@@ -161,7 +239,11 @@ export function NotificationPanel() {
                                   e.stopPropagation();
                                   markAsRead(notification.id);
                                 }}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                className={`${
+                                  document.documentElement.classList.contains('dark')
+                                    ? 'text-gray-400 hover:text-gray-200'
+                                    : 'text-gray-400 hover:text-gray-600'
+                                }`}
                                 title="Okundu İşaretle"
                               >
                                 <Check className="h-4 w-4" />
@@ -174,7 +256,11 @@ export function NotificationPanel() {
                                 e.stopPropagation();
                                 removeNotification(notification.id);
                               }}
-                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                              className={`${
+                                document.documentElement.classList.contains('dark')
+                                  ? 'text-gray-400 hover:text-gray-200'
+                                  : 'text-gray-400 hover:text-gray-600'
+                              }`}
                               title="Bildirimi Sil"
                             >
                               <X className="h-4 w-4" />

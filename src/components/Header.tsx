@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown, FileText, BarChart3, Tag, X } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
+import { useSettingsModal } from '@/lib/settings-modal-context';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
@@ -28,6 +29,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { openModal } = useSettingsModal();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userPanelRef = useRef<HTMLDivElement>(null);
@@ -668,29 +670,34 @@ export default function Header({ title, subtitle }: HeaderProps) {
 
               {/* Menu Items */}
               <div style={{ padding: '0.5rem' }}>
-                <button style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: 'transparent',
-                  color: 'var(--text-secondary)',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  transition: 'all 0.2s ease',
-                  width: '100%',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }}>
+                <button 
+                  onClick={() => {
+                    openModal();
+                    setIsUserPanelOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.5rem 0.75rem',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text-secondary)',
+                    border: 'none',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    transition: 'all 0.2s ease',
+                    width: '100%',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}>
                   <Settings size={14} />
                   <span>Ayarlar</span>
                 </button>

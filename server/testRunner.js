@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+const { chromium, firefox, webkit } = require('playwright');
 const { expect } = require('@playwright/test');
 const path = require('path');
 const fs = require('fs-extra');
@@ -20,14 +20,42 @@ class TestRunner {
       viewport = { width: 1280, height: 720 },
       timeout = 30000,
       enableRecording = false,
-      executionId = null
+      executionId = null,
+      browserType = 'chromium'
     } = options;
 
-    console.log('Launching browser in headless mode:', headless);
-    this.browser = await chromium.launch({ 
+    console.log('Launching browser:', browserType, 'in headless mode:', headless);
+    
+    // Browser seçimi
+    let browserEngine;
+    switch (browserType) {
+      case 'firefox':
+        browserEngine = firefox;
+        break;
+      case 'webkit':
+        browserEngine = webkit;
+        break;
+      case 'msedge':
+        // Edge için chromium kullan ama channel belirt
+        browserEngine = chromium;
+        break;
+      case 'chromium':
+      default:
+        browserEngine = chromium;
+        break;
+    }
+    
+    const launchOptions = { 
       headless,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    };
+    
+    // Edge için özel kanal ayarı
+    if (browserType === 'msedge') {
+      launchOptions.channel = 'msedge';
+    }
+    
+    this.browser = await browserEngine.launch(launchOptions);
     
     const contextOptions = {
       viewport
@@ -93,7 +121,8 @@ class TestRunner {
       if (!this.browser) {
         await this.initializeBrowser({
           headless: options.headlessMode || false,
-          enableRecording: options.enableRecording || false
+          enableRecording: options.enableRecording || false,
+          browserType: options.browserType || 'chromium'
         });
       }
 

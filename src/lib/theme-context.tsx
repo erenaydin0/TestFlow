@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
@@ -13,36 +13,65 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('system');
   const [mounted, setMounted] = useState(false);
+
+  // Gerçek tema değerini hesapla (sistem teması için)
+  const getActualTheme = (theme: Theme): 'light' | 'dark' => {
+    if (theme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return theme;
+  };
 
   useEffect(() => {
     // localStorage'dan tema tercihini al
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       setThemeState(savedTheme);
     } else {
-      // Sistem tercihini kontrol et
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setThemeState(systemPrefersDark ? 'dark' : 'light');
+      setThemeState('system');
     }
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (mounted) {
+      const actualTheme = getActualTheme(theme);
+      
       // HTML elementine class ekle
       const root = document.documentElement;
       root.classList.remove('light', 'dark');
-      root.classList.add(theme);
+      root.classList.add(actualTheme);
       
       // localStorage'a kaydet
       localStorage.setItem('theme', theme);
     }
   }, [theme, mounted]);
 
+  // Sistem teması değişikliklerini dinle
+  useEffect(() => {
+    if (mounted && theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      const handleChange = () => {
+        const actualTheme = getActualTheme('system');
+        const root = document.documentElement;
+        root.classList.remove('light', 'dark');
+        root.classList.add(actualTheme);
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [mounted, theme]);
+
   const toggleTheme = () => {
-    setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+    setThemeState(prev => {
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'system';
+      return 'light';
+    });
   };
 
   const setTheme = (newTheme: Theme) => {

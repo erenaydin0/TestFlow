@@ -20,7 +20,8 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { TestStep } from '@/types';
+import { TestStep, BrowserType } from '@/types';
+import BrowserSelector from './BrowserSelector';
 
 interface FloatingToolbarProps {
   // Auto-arrange
@@ -65,6 +66,10 @@ interface FloatingToolbarProps {
   // Headless mode option
   headlessMode?: boolean;
   onToggleHeadless?: () => void;
+  
+  // Browser selection
+  selectedBrowser?: BrowserType;
+  onBrowserChange?: (browser: BrowserType) => void;
 }
 
 export default function FloatingToolbar({
@@ -94,7 +99,9 @@ export default function FloatingToolbar({
   onToggleScreenshots,
   onToggleRecording,
   headlessMode = false,
-  onToggleHeadless
+  onToggleHeadless,
+  selectedBrowser,
+  onBrowserChange
 }: FloatingToolbarProps) {
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -125,6 +132,24 @@ export default function FloatingToolbar({
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
       }}
     >
+      {/* Browser Selector */}
+      {selectedBrowser && onBrowserChange && (
+        <>
+          <BrowserSelector
+            selectedBrowser={selectedBrowser}
+            onBrowserChange={onBrowserChange}
+            disabled={isRunning}
+          />
+          
+          <div style={{
+            width: '1px',
+            height: '2rem',
+            backgroundColor: 'var(--border-primary)',
+            margin: '0 0.25rem'
+          }}></div>
+        </>
+      )}
+
       <button 
         onClick={onRun}
         className="canvas-control"

@@ -1,3 +1,5 @@
+export type BrowserType = 'chromium' | 'firefox' | 'webkit' | 'msedge';
+
 export interface Test {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ export interface Test {
   enableScreenshots?: boolean; // Ekran görüntüsü alma durumu
   enableRecording?: boolean; // Ekran kaydı alma durumu
   headlessMode?: boolean; // Headless mod durumu
+  browserType?: BrowserType; // Tarayıcı türü
 }
 
 export interface TestStep {
@@ -86,6 +89,7 @@ export interface ExecutionResult {
     enableScreenshots: boolean;
     enableRecording: boolean;
     headlessMode: boolean;
+    browserType?: BrowserType;
   };
   steps: ExecutionStepResult[];
   screenshots: string[];

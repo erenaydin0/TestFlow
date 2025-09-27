@@ -75,7 +75,7 @@ export function Toast({ notification, onRemove, index = 0 }: ToastProps) {
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {notification.title}
               </p>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
                 {notification.message}
               </p>
             </div>

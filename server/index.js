@@ -312,7 +312,8 @@ async function executeTestWorkflow(executionId, execution) {
     await testRunner.initializeBrowser({ 
       enableRecording: execution.options.enableRecording, 
       executionId: executionId,
-      headless: execution.options.headlessMode
+      headless: execution.options.headlessMode,
+      browserType: execution.options.browserType || 'chromium'
     });
     
     for (let i = 0; i < execution.steps.length; i++) {

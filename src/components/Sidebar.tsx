@@ -8,10 +8,12 @@ import {
   Workflow,
   Calendar,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 import { BarChart } from 'lucide-react';
 import { useSidebar } from '@/lib/sidebar-context';
+import { useSettingsModal } from '@/lib/settings-modal-context';
 
 interface SidebarProps {
   onNavigationAttempt?: (href: string) => void;
@@ -28,6 +30,7 @@ const navigation = [
 export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const pathname = usePathname();
   const { isCollapsed, setIsCollapsed } = useSidebar();
+  const { openModal } = useSettingsModal();
 
   return (
     <aside style={{ 
@@ -81,6 +84,31 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
               );
             })}
           </ul>
+        </div>
+        
+        {/* Ayarlar Butonu */}
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-primary)' }}>
+          <button
+            onClick={openModal}
+            className="sidebar-item"
+            style={{
+              textDecoration: 'none',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              padding: isCollapsed ? '0.75rem' : '0.75rem 1rem',
+              width: '100%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            title={isCollapsed ? 'Ayarlar' : undefined}
+          >
+            <Settings size={18} />
+            {!isCollapsed && (
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                Ayarlar
+              </span>
+            )}
+          </button>
         </div>
       </nav>
 

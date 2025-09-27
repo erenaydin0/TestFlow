@@ -31,6 +31,9 @@ import SaveDialog from '@/components/test-builder/SaveDialog';
 import UnsavedChangesDialog from '@/components/test-builder/UnsavedChangesDialog';
 import useUnsavedChanges from '@/hooks/useUnsavedChanges';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
+import { useBrowserSettings } from '@/lib/browser-context';
+import BrowserSelector from '@/components/test-builder/BrowserSelector';
+import { BrowserType } from '@/types';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();
@@ -130,6 +133,10 @@ export default function TestBuilder() {
   const [loadedWorkflowName, setLoadedWorkflowName] = useState<string | null>(null);
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
+  
+  // Browser settings
+  const { defaultBrowser, defaultHeadless, defaultRecording, defaultScreenshots } = useBrowserSettings();
+  const [selectedBrowser, setSelectedBrowser] = useState<BrowserType>(defaultBrowser);
 
   // Promise resolver for save operation
   const savePromiseRef = useRef<{
@@ -159,7 +166,15 @@ export default function TestBuilder() {
       });
     }
   });
-  const [headlessMode, setHeadlessMode] = useState(false);
+  const [headlessMode, setHeadlessMode] = useState(defaultHeadless);
+  
+  // Varsayılan ayarları uygula
+  useEffect(() => {
+    setEnableScreenshots(defaultScreenshots);
+    setEnableRecording(defaultRecording);
+    setHeadlessMode(defaultHeadless);
+    setSelectedBrowser(defaultBrowser);
+  }, [defaultScreenshots, defaultRecording, defaultHeadless, defaultBrowser]);
   
   // When save dialog opens, hide unsaved changes dialog
   useEffect(() => {
@@ -536,7 +551,8 @@ export default function TestBuilder() {
           options: {
             enableScreenshots,
             enableRecording,
-            headlessMode
+            headlessMode,
+            browserType: selectedBrowser
           }
         })
       });
@@ -682,6 +698,8 @@ export default function TestBuilder() {
             onToggleHeadless={() => {
               setHeadlessMode(!headlessMode);
             }}
+            selectedBrowser={selectedBrowser}
+            onBrowserChange={setSelectedBrowser}
           />
 
           {/* Floating Actions Panel */}

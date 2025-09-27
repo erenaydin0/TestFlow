@@ -216,7 +216,8 @@ export default function TestsPage() {
           options: {
             enableScreenshots: test.enableScreenshots || false,
             enableRecording: test.enableRecording || false,
-            headlessMode: test.headlessMode || false
+            headlessMode: test.headlessMode || false,
+            browserType: test.browserType || 'chromium'
           }
         })
       });

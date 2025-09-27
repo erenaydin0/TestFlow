@@ -22,6 +22,10 @@
   --chart-warning: #d97706;
   --chart-info: #0891b2;
   --chart-purple: #7c3aed;
+  
+  /* Accent colors */
+  --accent-primary: #2563eb;
+  --accent-secondary: #1d4ed8;
 }
 
 /* Dark theme */
@@ -44,6 +48,10 @@
   --chart-warning: #f59e0b;
   --chart-info: #06b6d4;
   --chart-purple: #8b5cf6;
+  
+  /* Accent colors */
+  --accent-primary: #3b82f6;
+  --accent-secondary: #2563eb;
 }
 
 /* Base styles */

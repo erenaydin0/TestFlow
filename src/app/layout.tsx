@@ -4,7 +4,10 @@ import './globals.css';
 import { ThemeProvider } from '@/lib/theme-context';
 import { NotificationProvider } from '@/lib/notification-context';
 import { SidebarProvider } from '@/lib/sidebar-context';
+import { BrowserProvider } from '@/lib/browser-context';
+import { SettingsModalProvider } from '@/lib/settings-modal-context';
 import { ToastContainer } from '@/components/notifications/ToastContainer';
+import SettingsModalWrapper from '@/components/SettingsModalWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,12 +25,17 @@ export default function RootLayout({
     <html lang="tr">
       <body className={inter.className}>
         <ThemeProvider>
-          <NotificationProvider>
-            <SidebarProvider>
-              {children}
-              <ToastContainer />
-            </SidebarProvider>
-          </NotificationProvider>
+          <BrowserProvider>
+            <NotificationProvider>
+              <SidebarProvider>
+                <SettingsModalProvider>
+                  {children}
+                  <ToastContainer />
+                  <SettingsModalWrapper />
+                </SettingsModalProvider>
+              </SidebarProvider>
+            </NotificationProvider>
+          </BrowserProvider>
         </ThemeProvider>
       </body>
     </html>

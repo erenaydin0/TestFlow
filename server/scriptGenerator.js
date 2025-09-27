@@ -213,16 +213,20 @@ class ScriptGenerator {
     const {
       headless = false,
       viewport = { width: 1280, height: 720 },
-      timeout = 30000
+      timeout = 30000,
+      browserType = 'chromium'
     } = options;
 
+    const browserImports = browserType === 'firefox' ? 'firefox' : 
+                          browserType === 'webkit' ? 'webkit' : 'chromium';
+
     return `
-const { chromium, expect } = require('playwright/test');
+const { ${browserImports}, expect } = require('playwright/test');
 
 async function executeTestSteps(steps, executionId, onStepUpdate) {
-  const browser = await chromium.launch({ 
+  const browser = await ${browserImports}.launch({ 
     headless: ${headless},
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox']${browserType === 'msedge' ? ',\n    channel: "msedge"' : ''}
   });
   
   const context = await browser.newContext({
