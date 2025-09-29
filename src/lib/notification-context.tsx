@@ -5,12 +5,93 @@ import { Notification, NotificationContextType } from '@/types/notifications';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+// localStorage anahtarları
+const NOTIFICATIONS_STORAGE_KEY = 'testflow_notifications';
+const ID_COUNTER_STORAGE_KEY = 'testflow_notification_counter';
+
+// localStorage yardımcı fonksiyonları
+const saveNotificationsToStorage = (notifications: Notification[]) => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+    }
+  } catch (error) {
+    console.warn('Bildirimler localStorage\'a kaydedilemedi:', error);
+  }
+};
+
+const loadNotificationsFromStorage = (): Notification[] => {
+  try {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Date objelerini geri dönüştür
+        return parsed.map((notification: any) => ({
+          ...notification,
+          timestamp: new Date(notification.timestamp)
+        }));
+      }
+    }
+  } catch (error) {
+    console.warn('Bildirimler localStorage\'dan yüklenemedi:', error);
+  }
+  return [];
+};
+
+const saveCounterToStorage = (counter: number) => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ID_COUNTER_STORAGE_KEY, counter.toString());
+    }
+  } catch (error) {
+    console.warn('Sayaç localStorage\'a kaydedilemedi:', error);
+  }
+};
+
+const loadCounterFromStorage = (): number => {
+  try {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(ID_COUNTER_STORAGE_KEY);
+      return stored ? parseInt(stored, 10) : 0;
+    }
+  } catch (error) {
+    console.warn('Sayaç localStorage\'dan yüklenemedi:', error);
+  }
+  return 0;
+};
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Notification[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Counter for unique IDs to prevent duplicates
   const [idCounter, setIdCounter] = useState(0);
+
+  // Component mount edildiğinde localStorage'dan verileri yükle
+  useEffect(() => {
+    const loadedNotifications = loadNotificationsFromStorage();
+    const loadedCounter = loadCounterFromStorage();
+    
+    setNotifications(loadedNotifications);
+    setIdCounter(loadedCounter);
+    setIsInitialized(true);
+  }, []);
+
+  // Bildirimler değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    if (isInitialized) {
+      saveNotificationsToStorage(notifications);
+    }
+  }, [notifications, isInitialized]);
+
+  // Counter değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    if (isInitialized) {
+      saveCounterToStorage(idCounter);
+    }
+  }, [idCounter, isInitialized]);
   
   const generateUniqueId = useCallback((prefix: string) => {
     const timestamp = Date.now();
@@ -91,6 +172,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
+    // localStorage'ı da temizle
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn('localStorage temizlenemedi:', error);
+    }
   }, []);
 
   const markAsRead = useCallback((id: string) => {
