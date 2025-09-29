@@ -546,11 +546,13 @@ export default function TestBuilder() {
   
   const handleRun = useCallback(async () => {
     if (testSteps.length === 0) {
-      notifyTestFailure(loadedWorkflowName || 'Test Builder', '', 'Çalıştırılacak test adımı bulunamadı.');
+      notifyTestFailure(loadedWorkflowName || (loadedWorkflowId ? `Test ${loadedWorkflowId.slice(0, 8)}` : 'Test Builder'), '', 'Çalıştırılacak test adımı bulunamadı.');
       return;
     }
 
-
+    // Get actual test name if workflow is loaded
+    const actualWorkflowName = loadedWorkflowName || 
+      (loadedWorkflowId ? (getWorkflowById(loadedWorkflowId)?.name || `Test ${loadedWorkflowId.slice(0, 8)}`) : 'Test Builder Workflow');
     
     setIsRunning(true);
 
@@ -585,7 +587,7 @@ export default function TestBuilder() {
         },
         body: JSON.stringify({
           workflowId: loadedWorkflowId || 'test-builder',
-          workflowName: loadedWorkflowName || 'Test Builder Workflow',
+          workflowName: actualWorkflowName,
           steps: backendSteps,
           suite: loadedWorkflowName ? 'Saved Tests' : 'Test Builder',
           tags: loadedWorkflowName ? ['saved', 'edited'] : ['manual', 'builder'],
@@ -604,14 +606,14 @@ export default function TestBuilder() {
       }
 
       const data = await response.json();
-      notifyTestStart(loadedWorkflowName || 'Test Builder Workflow', data.executionId);
+      notifyTestStart(actualWorkflowName, data.executionId);
       
       // Optional: Navigate to tests page to see results
       // router.push('/tests');
       
     } catch (error) {
       console.error('Test execution error:', error);
-      notifyTestFailure(loadedWorkflowName || 'Test Builder Workflow', 'failed', error instanceof Error ? error.message : 'Bilinmeyen hata');
+      notifyTestFailure(actualWorkflowName, 'failed', error instanceof Error ? error.message : 'Bilinmeyen hata');
     } finally {
       setIsRunning(false);
     }
