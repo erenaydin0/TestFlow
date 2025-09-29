@@ -8,6 +8,7 @@ interface BrowserSelectorProps {
   selectedBrowser: BrowserType;
   onBrowserChange: (browser: BrowserType) => void;
   disabled?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const browserOptions = [
@@ -20,15 +21,40 @@ const browserOptions = [
 export default function BrowserSelector({ 
   selectedBrowser, 
   onBrowserChange, 
-  disabled = false 
+  disabled = false,
+  size = 'sm'
 }: BrowserSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedOption = browserOptions.find(option => option.value === selectedBrowser);
   const SelectedIconComponent = selectedOption?.icon || Chrome;
 
+  // Size configurations
+  const sizeConfig = {
+    sm: {
+      padding: '0.375rem 0.5rem',
+      fontSize: '0.8rem',
+      minWidth: '90px',
+      iconSize: 14
+    },
+    md: {
+      padding: '0.5rem 0.75rem',
+      fontSize: '0.875rem',
+      minWidth: '120px',
+      iconSize: 16
+    },
+    lg: {
+      padding: '0.625rem 1rem',
+      fontSize: '0.9rem',
+      minWidth: '140px',
+      iconSize: 18
+    }
+  };
+
+  const currentSize = sizeConfig[size];
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -37,16 +63,17 @@ export default function BrowserSelector({
           display: 'flex',
           alignItems: 'center',
           gap: '0.375rem',
-          padding: '0.375rem 0.5rem',
+          padding: currentSize.padding,
           backgroundColor: 'var(--bg-secondary)',
           border: '1px solid var(--border-primary)',
           borderRadius: '0.5rem',
           color: 'var(--text-primary)',
-          fontSize: '0.8rem',
+          fontSize: currentSize.fontSize,
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           transition: 'all 0.2s ease',
-          minWidth: '90px'
+          minWidth: currentSize.minWidth,
+          width: '100%'
         }}
         onMouseEnter={(e) => {
           if (!disabled) {
@@ -60,7 +87,7 @@ export default function BrowserSelector({
         }}
       >
         <SelectedIconComponent 
-          size={14} 
+          size={currentSize.iconSize} 
           style={{ color: selectedOption?.color || '#4285F4' }} 
         />
         <span>{selectedOption?.label || 'Chrome'}</span>
@@ -153,7 +180,7 @@ export default function BrowserSelector({
                   }}
                 >
                   <IconComponent 
-                    size={14} 
+                    size={currentSize.iconSize} 
                     style={{ color: isSelected ? 'white' : option.color }} 
                   />
                   <span>{option.label}</span>

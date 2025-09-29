@@ -174,10 +174,10 @@ const TestModal: React.FC<TestModalProps> = ({
           backgroundColor: 'var(--bg-primary)',
           border: '1px solid var(--border-primary)',
           borderRadius: '1rem',
-          padding: '1.5rem',
-          width: '90%',
-          maxWidth: '500px',
-          maxHeight: '80vh',
+          padding: '1.25rem',
+          width: '95%',
+          maxWidth: '650px',
+          maxHeight: '85vh',
           overflow: 'auto',
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
         }}
@@ -188,8 +188,8 @@ const TestModal: React.FC<TestModalProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '1.5rem',
-          paddingBottom: '1rem',
+          marginBottom: '1.25rem',
+          paddingBottom: '0.75rem',
           borderBottom: '1px solid var(--border-primary)'
         }}>
           <div style={{
@@ -291,8 +291,8 @@ const TestModal: React.FC<TestModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Test Name */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {/* Test Name - Full Width */}
             <div>
               <label style={{
                 display: 'block',
@@ -311,7 +311,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 required
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '0.625rem',
                   border: '1px solid var(--border-primary)',
                   borderRadius: '0.5rem',
                   backgroundColor: 'var(--bg-secondary)',
@@ -331,7 +331,7 @@ const TestModal: React.FC<TestModalProps> = ({
               />
             </div>
 
-            {/* Description */}
+            {/* Description - Full Width */}
             <div>
               <label style={{
                 display: 'block',
@@ -346,10 +346,10 @@ const TestModal: React.FC<TestModalProps> = ({
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
                 placeholder="Test workflow'unuzun ne yaptığını açıklayın"
-                rows={3}
+                rows={2}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '0.625rem',
                   border: '1px solid var(--border-primary)',
                   borderRadius: '0.5rem',
                   backgroundColor: 'var(--bg-secondary)',
@@ -371,7 +371,67 @@ const TestModal: React.FC<TestModalProps> = ({
               />
             </div>
 
-            {/* Tags */}
+             {/* Two Column Layout for Suite and Browser */}
+             <div style={{ 
+               display: 'grid', 
+               gridTemplateColumns: '1fr 1fr',
+               gap: '0.875rem'
+             }}>
+               {/* Suite */}
+               <div>
+                 <label style={{
+                   display: 'flex',
+                   alignItems: 'center',
+                   gap: '0.5rem',
+                   fontSize: '0.875rem',
+                   fontWeight: 500,
+                   color: 'var(--text-primary)',
+                   marginBottom: '0.5rem'
+                 }}>
+                   <FolderOpen size={14} />
+                   Test Paketi
+                 </label>
+                 <AutocompleteInput
+                   value={suite}
+                   onChange={setSuite}
+                   options={existingSuites}
+                   placeholder="Paket adı"
+                   multiple={false}
+                   onFocus={(e) => {
+                     e.currentTarget.style.borderColor = primaryColor;
+                     e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
+                   }}
+                   onBlur={(e) => {
+                     e.currentTarget.style.borderColor = 'var(--border-primary)';
+                     e.currentTarget.style.boxShadow = 'none';
+                   }}
+                 />
+               </div>
+
+               {/* Browser Type */}
+               <div>
+                 <label style={{
+                   display: 'flex',
+                   alignItems: 'center',
+                   gap: '0.5rem',
+                   fontSize: '0.875rem',
+                   fontWeight: 500,
+                   color: 'var(--text-primary)',
+                   marginBottom: '0.5rem'
+                 }}>
+                   <Globe size={14} />
+                   Tarayıcı
+                 </label>
+                 <BrowserSelector
+                   selectedBrowser={browserType}
+                   onBrowserChange={setBrowserType}
+                   disabled={false}
+                   size="lg"
+                 />
+               </div>
+             </div>
+
+            {/* Tags - Full Width */}
             <div>
               <label style={{
                 display: 'flex',
@@ -408,72 +468,6 @@ const TestModal: React.FC<TestModalProps> = ({
                 Mevcut etiketlerden seçebilir ya da yeni etiket yazabilirsiniz
               </p>
             </div>
-
-            {/* Browser Type */}
-            <div>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginBottom: '0.5rem'
-              }}>
-                <Globe size={14} />
-                Tarayıcı Türü
-              </label>
-              <BrowserSelector
-                selectedBrowser={browserType}
-                onBrowserChange={setBrowserType}
-                disabled={false}
-              />
-              <p style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)',
-                margin: '0.25rem 0 0 0'
-              }}>
-                Test çalıştırılırken kullanılacak tarayıcı türünü seçin
-              </p>
-            </div>
-
-            {/* Suite */}
-            <div>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginBottom: '0.5rem'
-              }}>
-                <FolderOpen size={14} />
-                Test Paketi
-              </label>
-              <AutocompleteInput
-                value={suite}
-                onChange={setSuite}
-                options={existingSuites}
-                placeholder="Test paketinin adı"
-                multiple={false}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = primaryColor;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
-              <p style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)',
-                margin: '0.25rem 0 0 0'
-              }}>
-                Mevcut paketlerden seçebilir ya da yeni paket adı yazabilirsiniz
-              </p>
-            </div>
           </div>
 
           {/* Actions */}
@@ -481,8 +475,8 @@ const TestModal: React.FC<TestModalProps> = ({
             align="end"
             spacing="md"
             style={{
-              marginTop: '1.5rem',
-              paddingTop: '1rem',
+              marginTop: '1.25rem',
+              paddingTop: '0.75rem',
               borderTop: '1px solid var(--border-primary)'
             }}
           >
