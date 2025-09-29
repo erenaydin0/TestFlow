@@ -323,10 +323,10 @@ export default function TestsPage() {
           suite: test.suite,
           tags: test.tags,
           options: {
-            enableScreenshots: test.enableScreenshots || browserSettings.defaultScreenshots,
-            enableRecording: test.enableRecording || browserSettings.defaultRecording,
+            enableScreenshots: test.enableScreenshots !== undefined ? test.enableScreenshots : browserSettings.defaultScreenshots,
+            enableRecording: test.enableRecording !== undefined ? test.enableRecording : browserSettings.defaultRecording,
             headlessMode: test.headlessMode !== undefined ? test.headlessMode : browserSettings.defaultHeadless,
-            browserType: test.browserType || browserSettings.defaultBrowser
+            browserType: test.browserType !== undefined ? test.browserType : browserSettings.defaultBrowser
           }
         })
       });

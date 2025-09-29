@@ -639,6 +639,11 @@ export default function TestBuilder() {
         setEnableRecording(workflow.enableRecording || false);
         setHeadlessMode(workflow.headlessMode || false);
         
+        // Load browser settings
+        if (workflow.browserType) {
+          setSelectedBrowser(workflow.browserType);
+        }
+        
         // Reset unsaved changes after workflow is loaded
         setTimeout(() => {
           resetUnsavedChanges();
