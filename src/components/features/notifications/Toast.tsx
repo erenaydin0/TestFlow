@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
+
 import { Notification } from '@/types/notifications';
 
 interface ToastProps {

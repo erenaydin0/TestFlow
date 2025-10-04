@@ -1,4 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 import { getChartColors, getTextColors, getBorderColors, getBgColors } from '@/lib/chartUtils';
 
 interface DailyResult {

@@ -1,5 +1,5 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState } from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface TestSuite {
