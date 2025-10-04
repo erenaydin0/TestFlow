@@ -62,17 +62,17 @@ const TestStepCard: React.FC<TestStepCardProps> = ({
         position: 'absolute',
         left: step.x,
         top: step.y,
-        width: '12rem',
+        width: '11rem',
         padding: '0.75rem',
-        backgroundColor: isMultiSelected ? `${action.color}10` : 'var(--bg-primary)',
-        border: `2px solid ${isSelected ? action.color : isMultiSelected ? action.color : 'var(--border-primary)'}`,
-        borderRadius: '0.5rem',
+        backgroundColor: isMultiSelected ? `${action.color}08` : 'var(--bg-primary)',
+        border: `1px solid ${isSelected ? action.color : isMultiSelected ? action.color : 'var(--border-primary)'}`,
+        borderRadius: '0.375rem',
         cursor: draggedStep === step.id ? 'grabbing' : 'grab',
         boxShadow: isSelected || isMultiSelected
-          ? `0 4px 12px ${action.color}30` 
-          : '0 2px 8px rgba(0,0,0,0.1)',
-        transition: draggedStep === step.id ? 'none' : 'all 0.2s ease',
-        opacity: draggedStep === step.id ? 0.5 : 1,
+          ? `0 2px 8px ${action.color}20` 
+          : '0 1px 3px rgba(0,0,0,0.05)',
+        transition: draggedStep === step.id ? 'none' : 'box-shadow 0.15s ease',
+        opacity: draggedStep === step.id ? 0.6 : 1,
         zIndex: draggedStep === step.id ? 1000 : 5
       }}
     >

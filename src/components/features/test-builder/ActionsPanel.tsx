@@ -25,12 +25,12 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({
         zIndex: 10,
         display: 'flex',
         alignItems: 'center',
-        gap: '0.75rem',
-        padding: '0.75rem 1rem',
+        gap: '0.5rem',
+        padding: '0.5rem 0.75rem',
         backgroundColor: 'var(--bg-primary)',
         border: '1px solid var(--border-primary)',
-        borderRadius: '0.75rem',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        borderRadius: '0.5rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}
     >
       <div style={{ display: 'flex', gap: '0.5rem' }}>

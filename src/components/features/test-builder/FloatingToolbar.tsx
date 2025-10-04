@@ -219,23 +219,35 @@ export default function FloatingToolbar({
         </div>
       </button>
       
+      <ButtonGroup spacing="xs">
       <IconButton
         icon={Magnet}
         variant={snapEnabled ? "primary" : "ghost"}
         size="sm"
         tooltip={snapEnabled ? "Otomatik Sabitlemeyi Kapat" : "Otomatik Sabitlemeyi Aç"}
         onClick={onToggleSnap}
-        style={snapEnabled ? { backgroundColor: '#3b82f620', color: '#3b82f6' } : {}}
+        style={snapEnabled ? { 
+          backgroundColor: 'var(--accent-primary)', 
+          color: 'white',
+          border: '2px solid var(--accent-primary)',
+          boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.2)',
+          animation: 'pulse 2s infinite'
+        } : {}}
       />
       
-      <ButtonGroup spacing="xs">
         <IconButton
           icon={Camera}
           variant={enableScreenshots ? "warning" : "ghost"}
           size="sm"
           tooltip={enableScreenshots ? "Ekran Görüntüsü Almayı Kapat" : "Ekran Görüntüsü Almayı Aç"}
           onClick={() => onToggleScreenshots?.()}
-          style={enableScreenshots ? { backgroundColor: '#9333ea20', color: '#9333ea' } : {}}
+          style={enableScreenshots ? { 
+            backgroundColor: '#f59e0b', 
+            color: 'white',
+            border: '2px solid #f59e0b',
+            boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)',
+            animation: 'pulse 2s infinite'
+          } : {}}
         />
         <IconButton
           icon={Video}
@@ -243,7 +255,13 @@ export default function FloatingToolbar({
           size="sm"
           tooltip={enableRecording ? "Ekran Kaydını Kapat" : "Ekran Kaydını Aç"}
           onClick={() => onToggleRecording?.()}
-          style={enableRecording ? { backgroundColor: '#dc262620', color: '#dc2626' } : {}}
+          style={enableRecording ? { 
+            backgroundColor: '#ef4444', 
+            color: 'white',
+            border: '2px solid #ef4444',
+            boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)',
+            animation: 'pulse 2s infinite'
+          } : {}}
         />
         <IconButton
           icon={headlessMode ? EyeOff : Eye}
@@ -251,7 +269,13 @@ export default function FloatingToolbar({
           size="sm"
           tooltip={headlessMode ? "Görünür Mod (Browser Açık)" : "Gizli Mod (Headless)"}
           onClick={() => onToggleHeadless?.()}
-          style={headlessMode ? { backgroundColor: '#059669', color: '#ffffff' } : {}}
+          style={headlessMode ? { 
+            backgroundColor: '#22c55e', 
+            color: 'white',
+            border: '2px solid #22c55e',
+            boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.2)',
+            animation: 'pulse 2s infinite'
+          } : {}}
         />
       </ButtonGroup>
       
@@ -299,26 +323,48 @@ export default function FloatingToolbar({
       
       {/* Connection mode indicator */}
       {isConnecting && (
-        <div style={{
-          padding: '0.5rem 0.75rem',
-          backgroundColor: connectionType === 'true' ? '#22c55e' : 
-                          connectionType === 'false' ? '#ef4444' : '#3b82f6',
-          color: 'white',
-          borderRadius: '0.5rem',
-          fontSize: '0.75rem',
-          fontWeight: 500,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
+        <div 
+          style={{
+            padding: '0.5rem',
+            backgroundColor: connectionType === 'true' ? '#22c55e' : 
+                            connectionType === 'false' ? '#ef4444' : '#3b82f6',
+            color: 'white',
+            borderRadius: '0.5rem',
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            position: 'relative',
+            cursor: 'help',
+            whiteSpace: 'nowrap',
+            flexShrink: 0
+          }}
+          title={`${connectionType === 'true' ? 'TRUE Dalı' :
+                   connectionType === 'false' ? 'FALSE Dalı' :
+                   'Bağlantı Modu'} - Test adımları arasındaki bağlantı türünü gösterir`}
+        >
           {connectionType === 'true' ? <CheckCircle size={14} /> :
            connectionType === 'false' ? <XCircle size={14} /> :
            <GitBranch size={14} />}
-          {connectionType === 'true' ? 'TRUE Dalı' :
-           connectionType === 'false' ? 'FALSE Dalı' :
-           'Bağlantı Modu'}
+          <span style={{ whiteSpace: 'nowrap' }}>
+            {connectionType === 'true' ? 'TRUE Dalı' :
+             connectionType === 'false' ? 'FALSE Dalı' :
+             'Bağlantı Modu'}
+          </span>
         </div>
       )}
+      
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+          }
+        }
+      `}</style>
     </div>
   );
 } 
