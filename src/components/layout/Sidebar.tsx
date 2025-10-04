@@ -34,17 +34,19 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   return (
     <aside style={{ 
       position: 'fixed',
-      top: '4rem', // Header height
+      top: '4rem',
       left: 0,
-      width: isCollapsed ? '4rem' : '16rem',
-      height: 'calc(100vh - 4rem)', // Full height minus header
+      width: isCollapsed ? '4.5rem' : '15rem',
+      height: 'calc(100vh - 4rem)',
       backgroundColor: 'var(--bg-primary)',
       borderRight: '1px solid var(--border-primary)',
       display: 'flex',
       flexDirection: 'column',
       overflowY: 'auto',
+      overflowX: 'hidden',
       zIndex: 100,
-      transition: 'width 0.3s ease'
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      boxShadow: '2px 0 8px rgba(0, 0, 0, 0.05)'
     }}>
       {/* Navigation */}
       <nav style={{ flex: 1, padding: isCollapsed ? '1.5rem 0.5rem' : '1.5rem 1rem', overflow: 'auto' }}>
