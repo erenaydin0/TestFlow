@@ -324,11 +324,8 @@ export const saveWorkflowToStorage = (workflow: {
       browserType: workflow.browserType || 'chromium'
     };
     
-    // Check for duplicate names (mevcut workflow'un kendisi hariç)
-    const duplicateWorkflow = savedWorkflows.find(w => w.name === workflow.name && w.id !== id);
-    if (duplicateWorkflow) {
-      throw new Error(`"${workflow.name}" adında bir workflow zaten mevcut`);
-    }
+    // ID tabanlı yönetim kullandığımız için isim kontrolü kaldırıldı
+    // Benzersiz ID'ler sayesinde aynı isimde workflow'lar olabilir
     
     savedWorkflows.push(newWorkflow);
     localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(savedWorkflows));
@@ -410,8 +407,20 @@ export const duplicateWorkflow = (id: string, newName?: string): string | null =
       throw new Error('Workflow bulunamadı');
     }
     
+    // Benzersiz isim oluştur
+    const baseName = newName || `${workflow.name} (Kopya)`;
+    const savedWorkflows = getSavedWorkflows();
+    let uniqueName = baseName;
+    let counter = 1;
+    
+    // Aynı isimde workflow var mı kontrol et
+    while (savedWorkflows.some(w => w.name === uniqueName)) {
+      uniqueName = `${baseName} (${counter})`;
+      counter++;
+    }
+    
     const duplicatedWorkflow = {
-      name: newName || `${workflow.name} (Kopya)`,
+      name: uniqueName,
       description: workflow.description,
       steps: workflow.workflow || [],
       tags: workflow.tags,
