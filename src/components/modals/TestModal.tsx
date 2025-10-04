@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react';
+
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import { Button, ButtonGroup } from '@/components/ui';
 import BrowserSelector from '@/components/features/test-builder/BrowserSelector';
-import { getExistingTags, getExistingSuites } from '@/lib/utils';
 import { BrowserType } from '@/types';
+import { getExistingTags, getExistingSuites } from '@/lib/utils';
 
 interface TestModalProps {
   isOpen: boolean;

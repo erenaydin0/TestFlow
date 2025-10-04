@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import PageLayout from '@/components/layout/PageLayout';
-import LoadingErrorState from '@/components/common/LoadingErrorState';
 import { 
   Plus,
   Copy,
@@ -16,18 +14,23 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
-import { exportTestWorkflow } from '@/lib/utils';
-import { Test } from '@/types';
-import ImportDialog from '@/components/features/test-builder/ImportDialog';
-import {ConfirmDialog, TestModal} from '@/components/modals/';
+
+import PageLayout from '@/components/layout/PageLayout';
+import LoadingErrorState from '@/components/common/LoadingErrorState';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import TableCells from '@/components/common/TableCells';
-const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
+import ImportDialog from '@/components/features/test-builder/ImportDialog';
+import { ConfirmDialog, TestModal } from '@/components/modals';
+import { Button, IconButton, ButtonGroup } from '@/components/ui';
+
+import { Test } from '@/types';
+import { exportTestWorkflow } from '@/lib/utils';
+import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTestNotifications, useTests } from '@/hooks/test';
 import { useBrowserSettings } from '@/contexts';
-import { exportTestsToCSV } from '@/lib/exportUtils';
-import { Button, IconButton, ButtonGroup } from '@/components/ui';
+
+const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 
 export default function TestsPage() {
   const browserSettings = useBrowserSettings();

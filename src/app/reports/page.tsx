@@ -2,13 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import PageLayout from '@/components/layout/PageLayout';
-import LoadingErrorState from '@/components/common/LoadingErrorState';
-import { StatsCards } from '@/components/features/dashboard';
-import DataFilters from '@/components/common/DataFilters';
-import DataTable, { Column } from '@/components/common/DataTable';
-import TableCells from '@/components/common/TableCells';
-const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 import { 
   Download, 
   Image,
@@ -26,12 +19,22 @@ import {
   Chrome,
   Globe
 } from 'lucide-react';
+
+import PageLayout from '@/components/layout/PageLayout';
+import LoadingErrorState from '@/components/common/LoadingErrorState';
+import DataFilters from '@/components/common/DataFilters';
+import DataTable, { Column } from '@/components/common/DataTable';
+import TableCells from '@/components/common/TableCells';
+import { StatsCards } from '@/components/features/dashboard';
+import ConfirmDialog from '@/components/modals/ConfirmDialog';
+import { Button, IconButton, ButtonGroup } from '@/components/ui';
+
+import { ExecutionResult } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
-import { ExecutionResult } from '@/types';
-import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { useTestNotifications, useReports } from '@/hooks';
-import { Button, IconButton, ButtonGroup } from '@/components/ui';
+
+const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 

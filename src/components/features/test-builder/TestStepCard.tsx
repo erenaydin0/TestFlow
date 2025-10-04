@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+
 import { TestStep } from '@/types';
 import { getActionByType, ActionType } from '@/lib/actions';
-import {StepHeader, StepContent} from '@/components/features/test-builder/';
+import { StepHeader, StepContent } from '@/components/features/test-builder';
 
 interface TestStepCardProps {
   step: TestStep;

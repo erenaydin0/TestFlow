@@ -1,15 +1,31 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown, FileText, BarChart3, Tag, X } from 'lucide-react';
-import { useTheme } from '@/contexts';
-import { useSettingsModal } from '@/contexts';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
+import { 
+  Bell, 
+  Search, 
+  User, 
+  Settings, 
+  Sun, 
+  Moon, 
+  Monitor, 
+  LogOut, 
+  UserCircle, 
+  TestTube, 
+  ChevronDown, 
+  FileText, 
+  BarChart3, 
+  Tag, 
+  X 
+} from 'lucide-react';
+
 import { NotificationPanel } from '@/components/features/notifications';
-import { useRealtimeNotifications } from '@/hooks/data';
 import { StatusBadge, getStatusText } from '@/components/common';
+import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
+import { useRealtimeNotifications } from '@/hooks/data';
+import { useTheme, useSettingsModal } from '@/contexts';
 
 interface HeaderProps {
   title?: string;

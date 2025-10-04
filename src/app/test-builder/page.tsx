@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Sidebar, Header } from '@/components/layout';
 import { useSearchParams } from 'next/navigation';
-import { useSidebar, useBrowserSettings } from '@/contexts';
 
-import { TestStep, BrowserType } from '@/types';
+import { Sidebar, Header } from '@/components/layout';
 import { 
   FloatingToolbar,
   ActionsPanel,
@@ -18,6 +16,11 @@ import {
   SelectionBox,
   UnsavedChangesDialog
 } from '@/components/features/test-builder';
+import { TestModal } from '@/components/modals';
+
+import { TestStep, BrowserType } from '@/types';
+import { getActionByType } from '@/lib/actions';
+import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
 import { 
   useTestSteps,
   useCopyPaste,
@@ -31,9 +34,7 @@ import {
   useUnsavedChanges,
   useTestNotifications
 } from '@/hooks';
-import { getActionByType } from '@/lib/actions';
-import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
-import { TestModal } from '@/components/modals';
+import { useSidebar, useBrowserSettings } from '@/contexts';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();

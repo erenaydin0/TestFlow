@@ -1,8 +1,5 @@
 'use client';
 
-import { Sidebar, Header } from '@/components/layout';
-import { useSidebar } from '@/contexts';
-import { StatusBadge } from '@/components/common';
 import { 
   Play, 
   Pause, 
@@ -14,7 +11,11 @@ import {
   Settings,
   MoreVertical
 } from 'lucide-react';
+
+import { Sidebar, Header } from '@/components/layout';
+import { StatusBadge } from '@/components/common';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import { useSidebar } from '@/contexts';
 
 // Mock data
 const SCHEDULED_TESTS = [
