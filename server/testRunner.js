@@ -98,7 +98,15 @@ class TestRunner {
 
   async closeBrowser() {
     try {
+      let videoPath = null;
+      
       if (this.context) {
+        // Get video path before closing context
+        if (this.page && this.page.video()) {
+          videoPath = await this.page.video().path();
+          console.log('Video will be saved at:', videoPath);
+        }
+        
         // Close context first to save video
         await this.context.close();
         console.log('Browser context closed, video saved if recording was enabled');
@@ -114,8 +122,11 @@ class TestRunner {
         this.page = null;
         this.currentBrowserType = null; // Reset browser type
       }
+      
+      return videoPath;
     } catch (error) {
       console.error('Error closing browser:', error);
+      return null;
     }
   }
 

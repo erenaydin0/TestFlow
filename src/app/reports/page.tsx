@@ -1302,8 +1302,32 @@ export default function ReportsPage() {
             {/* Screenshots and Video */}
             {(selectedExecution.screenshots.length > 0 || selectedExecution.videoPath) && (
               <div>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Medya Dosyaları</h4>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {/* Video butonu başta */}
+                  {selectedExecution.videoPath && (
+                    <a 
+                      href={`http://localhost:3001${selectedExecution.videoPath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: '#ef444420',
+                        color: '#ef4444',
+                        borderRadius: '0.5rem',
+                        textDecoration: 'none',
+                        fontSize: '0.75rem',
+                        border: '1px solid #ef444440',
+                        fontWeight: 500
+                      }}
+                    >
+                      <Video size={16} />
+                      Video Kaydını İzle
+                    </a>
+                  )}
+                  {/* Screenshot butonları */}
                   {selectedExecution.screenshots.map((screenshot, index) => (
                     <a 
                       key={index}
@@ -1317,36 +1341,17 @@ export default function ReportsPage() {
                         padding: '0.25rem 0.5rem',
                         backgroundColor: '#8b5cf620',
                         color: '#8b5cf6',
-                        borderRadius: '0.25rem',
+                        borderRadius: '0.5rem',
                         textDecoration: 'none',
-                        fontSize: '0.75rem'
+                        fontSize: '0.75rem',
+                        border: '1px solid #8b5cf640',
+                        fontWeight: 500
                       }}
                     >
-                      <Image size={12} />
+                      <Image size={16} />
                       Screenshot {index + 1}
                     </a>
                   ))}
-                  {selectedExecution.videoPath && (
-                    <a 
-                      href={`http://localhost:3001${selectedExecution.videoPath}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.25rem 0.5rem',
-                        backgroundColor: '#ef444420',
-                        color: '#ef4444',
-                        borderRadius: '0.25rem',
-                        textDecoration: 'none',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <Video size={12} />
-                      Video Kaydı
-                    </a>
-                  )}
                 </div>
               </div>
             )}

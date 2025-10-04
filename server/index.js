@@ -406,17 +406,25 @@ async function executeTestWorkflow(executionId, execution) {
     execution.successRate = Math.round((passedSteps / totalSteps) * 100);
     
     // Close browser and save video
-    await testRunner.closeBrowser();
+    const originalVideoPath = await testRunner.closeBrowser();
     
     // Add video path if recording was enabled
-    if (execution.options.enableRecording) {
-      // Check if video file was actually created
-      const videoFilePath = path.join(VIDEOS_DIR, `${executionId}.webm`);
-      if (await fs.pathExists(videoFilePath)) {
-        execution.videoPath = `/videos/${executionId}.webm`;
-        console.log(`Video saved at: ${execution.videoPath}`);
-      } else {
-        console.log(`Video recording was enabled but file not found: ${videoFilePath}`);
+    if (execution.options.enableRecording && originalVideoPath) {
+      try {
+        // Rename video file to match executionId
+        const newVideoPath = path.join(VIDEOS_DIR, `${executionId}.webm`);
+        
+        // Check if original video file exists
+        if (await fs.pathExists(originalVideoPath)) {
+          // Move/rename the file
+          await fs.move(originalVideoPath, newVideoPath, { overwrite: true });
+          execution.videoPath = `/videos/${executionId}.webm`;
+          console.log(`Video renamed from ${originalVideoPath} to ${newVideoPath}`);
+        } else {
+          console.log(`Original video file not found: ${originalVideoPath}`);
+        }
+      } catch (error) {
+        console.error('Error renaming video file:', error);
       }
     }
     
