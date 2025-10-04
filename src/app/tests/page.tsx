@@ -814,7 +814,7 @@ export default function TestsPage() {
                   onSelectionChange={setSelectedTests}
                   getItemId={(test) => test.id}
                   highlightedItemId={highlightedTestId}
-                  onRowClick={(test) => handleEditTest(test.id)}
+                  onRowDoubleClick={(test) => handleEditTest(test.id)}
                   onSort={(field: string, order: 'asc' | 'desc') => {
                     setSortField(field);
                     setSortOrder(order);

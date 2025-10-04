@@ -26,6 +26,7 @@ export interface DataTableProps<T = any> {
   onSelectionChange?: (selectedIds: Set<string>) => void;
   getItemId?: (item: T) => string;
   onRowClick?: (item: T) => void;
+  onRowDoubleClick?: (item: T) => void;
   className?: string;
   allData?: T[]; // Tüm filtrelenmiş veriler için
   highlightedItemId?: string | null;
@@ -44,6 +45,7 @@ const DataTable = <T extends Record<string, any>>({
   onSelectionChange,
   getItemId = (item) => item.id,
   onRowClick,
+  onRowDoubleClick,
   className = '',
   allData,
   highlightedItemId = null
@@ -224,7 +226,7 @@ const DataTable = <T extends Record<string, any>>({
                 id={`item-${itemId}`}
                 style={{
                   borderBottom: '1px solid var(--border-primary)',
-                  cursor: onRowClick ? 'pointer' : 'default',
+                  cursor: (onRowClick || onRowDoubleClick) ? 'pointer' : 'default',
                   transition: 'background-color 0.2s ease',
                   backgroundColor: isHighlighted ? 'var(--bg-tertiary)' : 'transparent'
                 }}
@@ -248,6 +250,17 @@ const DataTable = <T extends Record<string, any>>({
                     return;
                   }
                   onRowClick && onRowClick(item);
+                }}
+                onDoubleClick={(e) => {
+                  // Checkbox, button veya input elementlerine çift tıklanırsa modal açma
+                  const target = e.target as HTMLElement;
+                  if (target.tagName === 'INPUT' || 
+                      target.tagName === 'BUTTON' ||
+                      target.closest('button') ||
+                      target.closest('input')) {
+                    return;
+                  }
+                  onRowDoubleClick && onRowDoubleClick(item);
                 }}
               >
                 {selectable && (
