@@ -29,8 +29,7 @@ import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { ExecutionResult } from '@/types';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
-import { useTestNotifications } from '@/hooks/useTestNotifications';
-import { useReports } from '@/hooks/useReports';
+import { useTestNotifications, useReports } from '@/hooks';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';

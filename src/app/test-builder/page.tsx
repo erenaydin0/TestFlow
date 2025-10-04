@@ -3,9 +3,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Sidebar, Header } from '@/components/layout';
 import { useSearchParams } from 'next/navigation';
-import { useSidebar } from '@/contexts';
+import { useSidebar, useBrowserSettings } from '@/contexts';
 
-import { TestStep } from '@/types';
+import { TestStep, BrowserType } from '@/types';
 import { 
   FloatingToolbar,
   ActionsPanel,
@@ -15,26 +15,25 @@ import {
   TestStepCard,
   DragPreview,
   SnapLines,
-  SelectionBox
+  SelectionBox,
+  UnsavedChangesDialog
 } from '@/components/features/test-builder';
-import useTestSteps from '@/hooks/useTestSteps';
-import useCopyPaste from '@/hooks/useCopyPaste';
-import useSnapToGrid from '@/hooks/useSnapToGrid';
-import useCanvasInteraction from '@/hooks/useCanvasInteraction';
-import useConnections from '@/hooks/useConnections';
-import useSelection from '@/hooks/useSelection';
-import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
-import useCanvasStyles from '@/hooks/useCanvasStyles';
-import useMouseEvents from '@/hooks/useMouseEvents';
+import { 
+  useTestSteps,
+  useCopyPaste,
+  useSnapToGrid,
+  useCanvasInteraction,
+  useConnections,
+  useSelection,
+  useKeyboardShortcuts,
+  useCanvasStyles,
+  useMouseEvents,
+  useUnsavedChanges,
+  useTestNotifications
+} from '@/hooks';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
 import { TestModal } from '@/components/modals';
-import { UnsavedChangesDialog } from '@/components/features/test-builder';
-import useUnsavedChanges from '@/hooks/useUnsavedChanges';
-import { useTestNotifications } from '@/hooks/useTestNotifications';
-import { useBrowserSettings } from '@/contexts';
-import { BrowserSelector } from '@/components/features/test-builder';
-import { BrowserType } from '@/types';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();

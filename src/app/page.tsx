@@ -9,7 +9,7 @@ import {
   TestSuiteDistribution, 
   RecentTests
 } from '@/components/features/dashboard';
-import { useExecutions } from '@/hooks/useExecutions';
+import { useExecutions } from '@/hooks/data';
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
@@ -24,19 +24,19 @@ export default function Dashboard() {
     }).reverse();
 
     const dailyResults = last7Days.map(date => {
-      const dayExecutions = executions.filter(e => 
+      const dayExecutions = executions.filter((e: any) => 
         new Date(e.startTime).toISOString().split('T')[0] === date
       );
       return {
         date,
-        passed: dayExecutions.filter(e => e.status === 'completed').length,
-        failed: dayExecutions.filter(e => e.status === 'failed').length,
+        passed: dayExecutions.filter((e: any) => e.status === 'completed').length,
+        failed: dayExecutions.filter((e: any) => e.status === 'failed').length,
         total: dayExecutions.length
       };
     });
 
     // Test suite distribution
-    const testSuiteData = executions.reduce((acc, execution) => {
+    const testSuiteData = executions.reduce((acc: any, execution: any) => {
       const suite = execution.suite || 'Diğer';
       acc[suite] = (acc[suite] || 0) + 1;
       return acc;
@@ -46,13 +46,13 @@ export default function Dashboard() {
     const colors = ['#2563eb', '#dc2626', '#059669', '#d97706', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b'];
     
     const testSuiteDataWithColors = Object.entries(testSuiteData).map(([name, value], index) => ({
-      name, 
-      value,
+      name,
+      value: value as number,
       color: colors[index % colors.length]
     }));
 
     // Browser distribution
-    const browserData = executions.reduce((acc, execution) => {
+    const browserData = executions.reduce((acc: any, execution: any) => {
       const browser = execution.options?.browserType || 'chromium';
       acc[browser] = (acc[browser] || 0) + 1;
       return acc;
@@ -63,15 +63,15 @@ export default function Dashboard() {
       name: name === 'chromium' ? 'Chrome' : 
             name === 'firefox' ? 'Firefox' : 
             name === 'webkit' ? 'Safari' : name,
-      value,
+      value: value as number,
       color: browserColors[index % browserColors.length]
     }));
 
     // Recent tests (last 5) - map to RecentTest interface
     const recentTests = executions
-      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+      .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
       .slice(0, 5)
-      .map((execution, index) => ({
+      .map((execution: any, index: number) => ({
         id: index,
         executionId: execution.id,
         name: execution.workflowName,

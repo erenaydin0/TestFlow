@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { NotificationPanel } from '@/components/features/notifications';
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useRealtimeNotifications } from '@/hooks/data';
 import { StatusBadge, getStatusText } from '@/components/common';
 
 interface HeaderProps {

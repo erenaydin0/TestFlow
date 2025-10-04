@@ -131,4 +131,4 @@ const useKeyboardShortcuts = ({
   ]);
 };
 
-export default useKeyboardShortcuts; 
+export { useKeyboardShortcuts }; 

@@ -19,15 +19,13 @@ import {
 import { exportTestWorkflow } from '@/lib/utils';
 import { Test } from '@/types';
 import ImportDialog from '@/components/features/test-builder/ImportDialog';
-import ConfirmDialog from '@/components/modals/ConfirmDialog';
-import TestModal from '@/components/modals/TestModal';
+import {ConfirmDialog, TestModal} from '@/components/modals/';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
-import { useTestNotifications } from '@/hooks/useTestNotifications';
+import { useTestNotifications, useTests } from '@/hooks/test';
 import { useBrowserSettings } from '@/contexts';
 import { exportTestsToCSV } from '@/lib/exportUtils';
-import { useTests } from '@/hooks/useTests';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
 export default function TestsPage() {
@@ -78,7 +76,7 @@ export default function TestsPage() {
   useEffect(() => {
     const searchQuery = searchParams.get('search');
     if (searchQuery) {
-      setFilters(prev => ({ ...prev, search: searchQuery }));
+      setFilters((prev: any) => ({ ...prev, search: searchQuery }));
     }
   }, [searchParams]);
 
@@ -269,7 +267,7 @@ export default function TestsPage() {
 
   // Handle run test - Updated to use backend API
   const handleRunTest = async (testId: string) => {
-    const test = tests.find(t => t.id === testId);
+    const test = tests.find((t: any) => t.id === testId);
     if (!test || !test.workflow || test.workflow.length === 0) {
       notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test workflow\'u bulunamadı veya boş.');
       return;
@@ -284,7 +282,7 @@ export default function TestsPage() {
 
     try {
       // Convert frontend steps to backend format
-      const backendSteps = test.workflow.map(step => ({
+      const backendSteps = test.workflow.map((step: any) => ({
         id: step.id,
         type: step.type,
         config: {
@@ -344,7 +342,7 @@ export default function TestsPage() {
 
   // Handle edit test metadata (name, description, tags, suite)
   const handleEditTestMetadata = (testId: string) => {
-    const test = tests.find(t => t.id === testId);
+    const test = tests.find((t: any) => t.id === testId);
     if (test) {
       setEditTestModal({
         show: true,
@@ -365,20 +363,20 @@ export default function TestsPage() {
   // Handle duplicate test
   const handleDuplicateTest = async (testId: string) => {
     try {
-      const test = tests.find(t => t.id === testId);
+      const test = tests.find((t: any) => t.id === testId);
       const duplicatedId = duplicateTest(testId);
       if (duplicatedId && test) {
         notifyTestDuplicated(test.name, duplicatedId);
       }
     } catch (error) {
-      const test = tests.find(t => t.id === testId);
+      const test = tests.find((t: any) => t.id === testId);
       notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test kopyalanırken hata oluştu.');
     }
   };
 
   // Handle delete test
   const handleDeleteTest = (testId: string) => {
-    const test = tests.find(t => t.id === testId);
+    const test = tests.find((t: any) => t.id === testId);
     if (test) {
       setSingleDeleteDialog({
         show: true,
@@ -439,8 +437,8 @@ export default function TestsPage() {
   const handleBulkRun = async () => {
     if (selectedTests.size === 0) return;
     
-    const selectedTestsData = tests.filter(test => selectedTests.has(test.id));
-    const validTests = selectedTestsData.filter(test => test.workflow && test.workflow.length > 0);
+    const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
+    const validTests = selectedTestsData.filter((test: any) => test.workflow && test.workflow.length > 0);
     
     if (validTests.length === 0) {
       notifyTestFailure('Bulk Run', '', 'Seçilen testlerde çalıştırılabilir workflow bulunamadı.');
@@ -448,9 +446,9 @@ export default function TestsPage() {
     }
 
     try {
-      const executionPromises = validTests.map(async (test) => {
+      const executionPromises = validTests.map(async (test: any) => {
         // Convert frontend steps to backend format
-        const backendSteps = test.workflow!.map(step => ({
+        const backendSteps = test.workflow!.map((step: any) => ({
           id: step.id,
           type: step.type,
           config: {
@@ -497,7 +495,7 @@ export default function TestsPage() {
       });
 
       const results = await Promise.all(executionPromises);
-      const executionIds = results.map(r => r.executionId);
+      const executionIds = results.map((r: any) => r.executionId);
       
       notifyTestStart(`${validTests.length} test`, executionIds.join(','));
       
@@ -514,7 +512,7 @@ export default function TestsPage() {
 
   // Handle single test export
   const handleExportTest = (testId: string) => {
-    const test = tests.find(t => t.id === testId);
+    const test = tests.find((t: any) => t.id === testId);
     if (test && test.workflow) {
       try {
         exportTestWorkflow(
@@ -545,7 +543,7 @@ export default function TestsPage() {
       return;
     }
 
-    const selectedTestsData = tests.filter(test => selectedTests.has(test.id));
+    const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
     exportTestsToCSV(selectedTestsData);
     notifyTestImported(`${selectedTestsData.length} test CSV olarak export edildi!`, '');
   };
@@ -556,7 +554,7 @@ export default function TestsPage() {
       return;
     }
 
-    const selectedTestsData = tests.filter(test => selectedTests.has(test.id));
+    const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
     
     if (selectedTestsData.length === 1) {
       // Single test export
@@ -583,7 +581,7 @@ export default function TestsPage() {
         version: '1.1', // Updated version to support browser settings
         exportDate: new Date().toISOString(),
         exportType: 'multiple-workflows',
-        workflows: selectedTestsData.map(test => ({
+        workflows: selectedTestsData.map((test: any) => ({
           name: test.name,
           description: test.description,
           steps: test.workflow || [],

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
 import { Button, ButtonGroup, IconButton } from '@/components/ui';
-import { useTestNotifications } from '@/hooks/useTestNotifications';
+import { useTestNotifications } from '@/hooks/test';
 import { BrowserType } from '@/types';
 
 interface ImportDialogProps {

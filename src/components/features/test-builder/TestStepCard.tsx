@@ -3,8 +3,7 @@
 import React from 'react';
 import { TestStep } from '@/types';
 import { getActionByType, ActionType } from '@/lib/actions';
-import StepHeader from '@/components/features/test-builder/StepHeader';
-import StepContent from '@/components/features/test-builder/StepContent';
+import {StepHeader, StepContent} from '@/components/features/test-builder/';
 
 interface TestStepCardProps {
   step: TestStep;

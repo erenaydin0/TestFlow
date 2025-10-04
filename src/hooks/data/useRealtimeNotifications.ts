@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useWebSocket } from './useWebSocket';
-import { useTestNotifications } from './useTestNotifications';
+import { useWebSocket } from '@/hooks/network';
+import { useTestNotifications } from '@/hooks/test';
 
 export function useRealtimeNotifications() {
   const { 
