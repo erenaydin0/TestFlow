@@ -29,8 +29,8 @@ export default function PageLayout({
       
       <div style={{ 
         flex: 1, 
-        marginLeft: isCollapsed ? '4rem' : '16rem',
-        transition: 'margin-left 0.3s ease',
+        marginLeft: isCollapsed ? '4.5rem' : '15rem',
+        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         paddingTop: '4rem'
       }}>
         <Header />

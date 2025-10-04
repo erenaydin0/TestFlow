@@ -49,7 +49,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
       boxShadow: '2px 0 8px rgba(0, 0, 0, 0.05)'
     }}>
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: isCollapsed ? '1.5rem 0.5rem' : '1.5rem 1rem', overflow: 'auto' }}>
+      <nav style={{ flex: 1, padding: isCollapsed ? '1rem 0.5rem' : '1rem 0.75rem', overflow: 'auto' }}>
         <div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {navigation.map((item) => {
@@ -57,14 +57,17 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
               const isActive = pathname === item.href;
               
               return (
-                <li key={item.name} style={{ marginBottom: '0.25rem' }}>
+                <li key={item.name} style={{ marginBottom: '0.375rem' }}>
                   <Link 
                     href={item.href} 
                     className={`sidebar-item ${isActive ? 'sidebar-item-active' : ''}`}
                     style={{ 
                       textDecoration: 'none',
                       justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      padding: isCollapsed ? '0.75rem' : '0.75rem 1rem'
+                      padding: isCollapsed ? '0.875rem' : '0.875rem 1rem',
+                      borderRadius: '0.5rem',
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}
                     title={isCollapsed ? item.name : undefined}
                     onClick={(e) => {
@@ -74,9 +77,13 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
                       }
                     }}
                   >
-                    <Icon size={18} />
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                     {!isCollapsed && (
-                      <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                      <span style={{ 
+                        fontSize: '0.875rem', 
+                        fontWeight: isActive ? 600 : 500,
+                        letterSpacing: '-0.01em'
+                      }}>
                         {item.name}
                       </span>
                     )}
