@@ -87,12 +87,10 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
       <span style={{
         fontSize: '0.75rem',
         color: 'var(--text-tertiary)',
-        marginLeft: '0.5rem',
         display: 'flex',
         alignItems: 'center',
         gap: '0.25rem'
       }}>
-        <Move size={12} />
         {testStepsCount} Adım
       </span>
     </div>
