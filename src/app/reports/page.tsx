@@ -1348,6 +1348,10 @@ export default function ReportsPage() {
             )}
           </div>
 
+      </div>
+      )}
+      </LoadingErrorState>
+
       {/* Bulk Delete Confirm Dialog */}
       <ConfirmDialog
         isOpen={showBulkDeleteDialog}
@@ -1359,9 +1363,6 @@ export default function ReportsPage() {
         cancelText="İptal"
         type="danger"
       />
-      </div>
-      )}
-      </LoadingErrorState>
     </PageLayout>
   );
 } 
