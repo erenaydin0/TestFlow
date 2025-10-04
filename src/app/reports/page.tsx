@@ -1177,7 +1177,33 @@ export default function ReportsPage() {
                           {step.type}
                         </span>
                       </div>
-                      <StatusBadge status={step.status} size="md" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {/* Screenshot Link - Sol tarafa taşındı */}
+                        {step.screenshot && (
+                          <a 
+                            href={`http://localhost:3001${step.screenshot}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: '#eff6ff',
+                              color: '#2563eb',
+                              textDecoration: 'none',
+                              fontSize: '0.65rem',
+                              borderRadius: '0.25rem',
+                              border: '1px solid #bfdbfe',
+                              fontWeight: 500
+                            }}
+                          >
+                            <Image size={10} />
+                            Ekran Görüntüsü
+                          </a>
+                        )}
+                        <StatusBadge status={step.status} size="md" />
+                      </div>
                     </div>
 
                     {/* Step Config Details */}
@@ -1268,32 +1294,6 @@ export default function ReportsPage() {
                       </div>
                     )}
 
-                    {/* Screenshot Link */}
-                    {step.screenshot && (
-                      <div style={{ marginTop: '0.5rem' }}>
-                        <a 
-                          href={`http://localhost:3001${step.screenshot}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.5rem 0.75rem',
-                            backgroundColor: '#eff6ff',
-                            color: '#2563eb',
-                            textDecoration: 'none',
-                            fontSize: '0.75rem',
-                            borderRadius: '0.375rem',
-                            border: '1px solid #bfdbfe',
-                            fontWeight: 500
-                          }}
-                        >
-                          <Image size={14} />
-                          Ekran Görüntüsünü Aç
-                        </a>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
