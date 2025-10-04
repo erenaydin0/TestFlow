@@ -254,14 +254,6 @@ export default function TestsPage() {
     setSelectedTests(newSelection);
   };
 
-  // Handle select all
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedTests(new Set(currentPageTests.map(test => test.id)));
-    } else {
-      setSelectedTests(new Set());
-    }
-  };
 
   // Pagination functions
   const goToPage = (page: number) => {
@@ -811,6 +803,7 @@ export default function TestsPage() {
               <div>
                 <DataTable
                   data={currentPageTests}
+                  allData={filteredTests}
                   columns={columns}
                   loading={loading}
                   emptyMessage="Test bulunamadı"

@@ -27,6 +27,7 @@ export interface DataTableProps<T = any> {
   getItemId?: (item: T) => string;
   onRowClick?: (item: T) => void;
   className?: string;
+  allData?: T[]; // Tüm filtrelenmiş veriler için
   highlightedItemId?: string | null;
 }
 
@@ -44,6 +45,7 @@ const DataTable = <T extends Record<string, any>>({
   getItemId = (item) => item.id,
   onRowClick,
   className = '',
+  allData,
   highlightedItemId = null
 }: DataTableProps<T>) => {
   const [internalSortField, setInternalSortField] = useState<string>('');
@@ -78,7 +80,9 @@ const DataTable = <T extends Record<string, any>>({
     if (!onSelectionChange) return;
     
     if (checked) {
-      const allIds = new Set(data.map(getItemId));
+      // allData varsa tüm filtrelenmiş verileri seç, yoksa sadece mevcut sayfayı seç
+      const dataToSelect = allData || data;
+      const allIds = new Set(dataToSelect.map(getItemId));
       onSelectionChange(allIds);
     } else {
       onSelectionChange(new Set());
@@ -97,8 +101,9 @@ const DataTable = <T extends Record<string, any>>({
     onSelectionChange(newSelection);
   };
 
-  const isAllSelected = selectable && data.length > 0 && selectedItems.size === data.length;
-  const isIndeterminate = selectable && selectedItems.size > 0 && selectedItems.size < data.length;
+  const dataToCheck = allData || data;
+  const isAllSelected = selectable && dataToCheck.length > 0 && selectedItems.size === dataToCheck.length;
+  const isIndeterminate = selectable && selectedItems.size > 0 && selectedItems.size < dataToCheck.length;
 
   if (loading) {
     return (

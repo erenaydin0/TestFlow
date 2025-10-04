@@ -725,6 +725,7 @@ export default function ReportsPage() {
               <div>
                 <DataTable
                   data={currentPageExecutions}
+                  allData={sortedExecutions}
                   columns={columns}
                   loading={loading}
                   emptyMessage="Sonuç bulunamadı"
