@@ -25,7 +25,7 @@ import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
-import { useBrowserSettings } from '@/lib/browser-context';
+import { useBrowserSettings } from '@/contexts';
 import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTests } from '@/hooks/useTests';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';

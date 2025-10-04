@@ -1,6 +1,6 @@
 'use client';
 
-import { useSettingsModal } from '@/lib/settings-modal-context';
+import { useSettingsModal } from '@/contexts';
 import SettingsModal from './SettingsModal';
 
 export default function SettingsModalWrapper() {

@@ -1,4 +1,4 @@
-import { useNotifications } from '@/lib/notification-context';
+import { useNotifications } from '@/contexts';
 
 export function useTestNotifications() {
   const { addNotification, showToast } = useNotifications();

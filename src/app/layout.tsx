@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/lib/theme-context';
-import { NotificationProvider } from '@/lib/notification-context';
-import { SidebarProvider } from '@/lib/sidebar-context';
-import { BrowserProvider } from '@/lib/browser-context';
-import { SettingsModalProvider } from '@/lib/settings-modal-context';
+import { 
+  ThemeProvider, 
+  NotificationProvider, 
+  SidebarProvider, 
+  BrowserProvider, 
+  SettingsModalProvider 
+} from '@/contexts';
 import { ToastContainer } from '@/components/notifications/ToastContainer';
 import SettingsModalWrapper from '@/components/SettingsModalWrapper';
 

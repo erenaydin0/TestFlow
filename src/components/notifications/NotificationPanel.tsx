@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Bell, X, CheckCircle, XCircle, AlertCircle, Info, Trash2, Check, CheckCircle2 } from 'lucide-react';
-import { useNotifications } from '@/lib/notification-context';
-import { useTheme } from '@/lib/theme-context';
+import { useNotifications } from '@/contexts';
+import { useTheme } from '@/contexts';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';

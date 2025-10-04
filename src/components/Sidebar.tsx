@@ -12,8 +12,7 @@ import {
   Settings,
   FileText
 } from 'lucide-react';
-import { useSidebar } from '@/lib/sidebar-context';
-import { useSettingsModal } from '@/lib/settings-modal-context';
+import { useSidebar, useSettingsModal } from '@/contexts';
 
 interface SidebarProps {
   onNavigationAttempt?: (href: string) => void;

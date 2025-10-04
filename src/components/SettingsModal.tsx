@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, Chrome, Globe, Sun, Moon, Monitor, Settings, Palette, Code } from 'lucide-react';
-import { useTheme } from '@/lib/theme-context';
+import { useTheme, useBrowserSettings } from '@/contexts';
 import { IconButton } from '@/components/ui';
-import { useBrowserSettings } from '@/lib/browser-context';
 
 interface SettingsModalProps {
   isOpen: boolean;

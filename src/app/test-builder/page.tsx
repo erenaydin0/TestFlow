@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useSearchParams } from 'next/navigation';
-import { useSidebar } from '@/lib/sidebar-context';
+import { useSidebar } from '@/contexts';
 
 import { TestStep } from '@/types';
 import FloatingToolbar from '@/components/test-builder/FloatingToolbar';
@@ -31,7 +31,7 @@ import TestModal from '@/components/TestModal';
 import UnsavedChangesDialog from '@/components/test-builder/UnsavedChangesDialog';
 import useUnsavedChanges from '@/hooks/useUnsavedChanges';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
-import { useBrowserSettings } from '@/lib/browser-context';
+import { useBrowserSettings } from '@/contexts';
 import BrowserSelector from '@/components/test-builder/BrowserSelector';
 import { BrowserType } from '@/types';
 

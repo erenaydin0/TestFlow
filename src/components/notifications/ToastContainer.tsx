@@ -1,6 +1,6 @@
 'use client';
 
-import { useNotifications } from '@/lib/notification-context';
+import { useNotifications } from '@/contexts';
 import { Toast } from './Toast';
 
 export function ToastContainer() {

@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Search, User, Settings, Sun, Moon, Monitor, LogOut, UserCircle, TestTube, ChevronDown, FileText, BarChart3, Tag, X } from 'lucide-react';
-import { useTheme } from '@/lib/theme-context';
-import { useSettingsModal } from '@/lib/settings-modal-context';
+import { useTheme } from '@/contexts';
+import { useSettingsModal } from '@/contexts';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
