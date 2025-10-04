@@ -3,7 +3,7 @@
 import { useNotifications } from '@/contexts';
 import { Toast } from './Toast';
 
-export function ToastContainer() {
+function ToastContainer() {
   const { toasts, removeNotification } = useNotifications();
 
   if (toasts.length === 0) return null;
@@ -23,3 +23,5 @@ export function ToastContainer() {
     </div>
   );
 }
+
+export default ToastContainer;

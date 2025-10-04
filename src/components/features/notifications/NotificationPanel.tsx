@@ -22,7 +22,7 @@ const colorMap = {
   info: 'text-blue-500',
 };
 
-export function NotificationPanel() {
+function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = useNotifications();
   const { theme } = useTheme();
@@ -279,3 +279,5 @@ export function NotificationPanel() {
     </div>
   );
 }
+
+export default NotificationPanel;

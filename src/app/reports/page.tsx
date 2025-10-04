@@ -7,7 +7,8 @@ import LoadingErrorState from '@/components/common/LoadingErrorState';
 import { StatsCards } from '@/components/features/dashboard';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
-import { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } from '@/components/common/TableCells';
+import TableCells from '@/components/common/TableCells';
+const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 import { 
   Download, 
   Image,

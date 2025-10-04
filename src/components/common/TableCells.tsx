@@ -11,7 +11,7 @@ interface BrowserCellProps {
   browserType?: BrowserType;
 }
 
-export const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) => {
+const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) => {
   const getBrowserIcon = () => {
     switch(browserType) {
       case 'chromium': return <Chrome size={16} style={{ color: '#4285F4' }} />;
@@ -54,7 +54,7 @@ interface TagsCellProps {
   maxVisible?: number;
 }
 
-export const TagsCell: React.FC<TagsCellProps> = ({ tags = [], maxVisible = 2 }) => {
+const TagsCell: React.FC<TagsCellProps> = ({ tags = [], maxVisible = 2 }) => {
   if (tags.length === 0) {
     return (
       <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
@@ -96,7 +96,7 @@ interface StatusCellProps {
   size?: 'sm' | 'md';
 }
 
-export const StatusCell: React.FC<StatusCellProps> = ({ status, size = 'md' }) => {
+const StatusCell: React.FC<StatusCellProps> = ({ status, size = 'md' }) => {
   return <StatusBadge status={status} size={size} />;
 };
 
@@ -106,7 +106,7 @@ interface DateCellProps {
   format?: 'relative' | 'absolute' | 'time';
 }
 
-export const DateCell: React.FC<DateCellProps> = ({ date, format = 'relative' }) => {
+const DateCell: React.FC<DateCellProps> = ({ date, format = 'relative' }) => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
   let displayText = '';
@@ -137,7 +137,7 @@ interface DurationCellProps {
   duration?: number;
 }
 
-export const DurationCell: React.FC<DurationCellProps> = ({ duration }) => {
+const DurationCell: React.FC<DurationCellProps> = ({ duration }) => {
   if (!duration) {
     return (
       <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
@@ -161,7 +161,7 @@ interface TestNameCellProps {
   id?: string;
 }
 
-export const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) => {
+const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) => {
   const [showCopied, setShowCopied] = React.useState(false);
 
   const handleCopyId = async (e: React.MouseEvent) => {
@@ -251,7 +251,7 @@ interface ActionsCellProps {
   }>;
 }
 
-export const ActionsCell: React.FC<ActionsCellProps> = ({
+const ActionsCell: React.FC<ActionsCellProps> = ({
   onRun,
   onEdit,
   onSettings,
@@ -379,7 +379,7 @@ interface StepCountCellProps {
   count: number;
 }
 
-export const StepCountCell: React.FC<StepCountCellProps> = ({ count }) => {
+const StepCountCell: React.FC<StepCountCellProps> = ({ count }) => {
   return (
     <div style={{
       display: 'flex',
@@ -402,7 +402,7 @@ interface SuccessRateCellProps {
   rate?: number;
 }
 
-export const SuccessRateCell: React.FC<SuccessRateCellProps> = ({ rate }) => {
+const SuccessRateCell: React.FC<SuccessRateCellProps> = ({ rate }) => {
   if (rate === undefined) {
     return (
       <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
@@ -424,4 +424,17 @@ export const SuccessRateCell: React.FC<SuccessRateCellProps> = ({ rate }) => {
       {rate}%
     </span>
   );
+};
+
+// Default exports
+export default {
+  BrowserCell,
+  TagsCell,
+  StatusCell,
+  DateCell,
+  DurationCell,
+  TestNameCell,
+  ActionsCell,
+  StepCountCell,
+  SuccessRateCell
 };

@@ -125,3 +125,5 @@ export function Toast({ notification, onRemove, index = 0 }: ToastProps) {
     </div>
   );
 }
+
+export default Toast;

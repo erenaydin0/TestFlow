@@ -1,4 +1,4 @@
 // Notification components
-export { NotificationPanel } from './NotificationPanel';
-export { Toast } from './Toast';
-export { ToastContainer } from './ToastContainer';
+export { default as NotificationPanel } from './NotificationPanel';
+export { default as Toast } from './Toast';
+export { default as ToastContainer } from './ToastContainer';
