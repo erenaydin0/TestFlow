@@ -100,22 +100,36 @@ function NotificationPanel() {
           />
           
           {/* Panel */}
-          <div className={`absolute right-0 top-full mt-2 w-96 rounded-lg shadow-lg border z-50 max-h-96 overflow-hidden ${
-            document.documentElement.classList.contains('dark') 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          }`}>
+          <div 
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: '100%',
+              marginTop: '0.5rem',
+              width: '24rem',
+              borderRadius: '0.75rem',
+              boxShadow: 'var(--shadow-lg)',
+              border: '1px solid var(--border-primary)',
+              zIndex: 50,
+              maxHeight: '24rem',
+              overflow: 'hidden',
+              backgroundColor: 'var(--bg-primary)'
+            }}
+          >
             {/* Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${
-              document.documentElement.classList.contains('dark') 
-                ? 'border-gray-700' 
-                : 'border-gray-200'
-            }`}>
-              <h3 className={`text-lg font-semibold ${
-                document.documentElement.classList.contains('dark') 
-                  ? 'text-white' 
-                  : 'text-gray-900'
-              }`}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.5rem',
+              borderBottom: '1px solid var(--border-primary)'
+            }}>
+              <h3 style={{
+                fontSize: '1.125rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                marginLeft: '0.3rem'
+              }}>
                 Bildirimler
               </h3>
               <div className="flex items-center space-x-2">
@@ -125,123 +139,150 @@ function NotificationPanel() {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className={`p-1 ${
-                          document.documentElement.classList.contains('dark')
-                            ? 'text-gray-400 hover:text-gray-200'
-                            : 'text-gray-500 hover:text-gray-700'
-                        }`}
+                        style={{
+                          padding: '0.25rem',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          borderRadius: '0.25rem',
+                          transition: 'color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                         title="Tümünü Okundu İşaretle"
                       >
-                        <CheckCircle2 className="h-4 w-4" />
+                        <CheckCircle2 size={16} />
                       </button>
                     )}
                     
                     {/* Tümünü Temizle */}
                     <button
                       onClick={clearAllNotifications}
-                      className={`p-1 ${
-                        document.documentElement.classList.contains('dark')
-                          ? 'text-gray-400 hover:text-gray-200'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
+                      style={{
+                        padding: '0.25rem',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        borderRadius: '0.25rem',
+                        transition: 'color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                       title="Tümünü Temizle"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 size={16} />
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className={`${
-                    document.documentElement.classList.contains('dark')
-                      ? 'text-gray-400 hover:text-gray-200'
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    borderRadius: '0.25rem',
+                    transition: 'color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                 >
-                  <X className="h-5 w-5" />
+                  <X size={20} />
                 </button>
               </div>
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-80 overflow-y-auto">
+            <div style={{ maxHeight: '20rem', overflowY: 'auto' }}>
               {notifications.length === 0 ? (
-                <div className={`p-8 text-center ${
-                  document.documentElement.classList.contains('dark')
-                    ? 'text-gray-400'
-                    : 'text-gray-500'
-                }`}>
-                  <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <div style={{
+                  padding: '2rem',
+                  textAlign: 'center',
+                  color: 'var(--text-tertiary)'
+                }}>
+                  <Bell style={{ 
+                    width: '3rem', 
+                    height: '3rem', 
+                    margin: '0 auto 1rem', 
+                    opacity: 0.3 
+                  }} />
                   <p>Henüz bildirim yok</p>
                 </div>
               ) : (
-                <div className={`divide-y ${
-                  document.documentElement.classList.contains('dark')
-                    ? 'divide-gray-700'
-                    : 'divide-gray-200'
-                }`}>
+                <div style={{
+                  borderTop: '1px solid var(--border-primary)'
+                }}>
                   {notifications.map((notification) => {
                     const Icon = iconMap[notification.type];
                     return (
                       <div
                         key={notification.id}
-                        className={`p-4 transition-colors ${
-                          notification.executionId || notification.testId 
-                            ? 'cursor-pointer' 
-                            : ''
-                        } ${
-                          document.documentElement.classList.contains('dark')
-                            ? 'hover:bg-gray-700/50'
-                            : 'hover:bg-gray-50'
-                        } ${
-                          !notification.read 
-                            ? document.documentElement.classList.contains('dark')
-                              ? 'bg-blue-900/20'
-                              : 'bg-blue-50'
-                            : ''
-                        }`}
+                        style={{
+                          padding: '0.75rem',
+                          cursor: (notification.executionId || notification.testId) ? 'pointer' : 'default',
+                          backgroundColor: !notification.read ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                          borderBottom: '1px solid var(--border-primary)',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = !notification.read 
+                            ? 'rgba(59, 130, 246, 0.15)' 
+                            : 'var(--bg-tertiary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = !notification.read 
+                            ? 'rgba(59, 130, 246, 0.1)' 
+                            : 'transparent';
+                        }}
                         onClick={() => {
                           if (notification.executionId || notification.testId) {
                             handleNotificationClick(notification);
                           }
                         }}
                       >
-                        <div className="flex items-start space-x-3">
-                          <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${colorMap[notification.type]}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-md font-medium ${
-                              document.documentElement.classList.contains('dark')
-                                ? 'text-white'
-                                : 'text-gray-900'
-                            }`}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                          <Icon size={20} className={`mt-0.5 flex-shrink-0 ${colorMap[notification.type]}`} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              fontWeight: 500,
+                              color: 'var(--text-primary)',
+                              margin: 0
+                            }}>
                               {notification.title}
                             </p>
-                            <p className={`text-sm mt-1 ${
-                              document.documentElement.classList.contains('dark')
-                                ? 'text-gray-100'
-                                : 'text-gray-900'
-                            }`}>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              marginTop: '0.25rem',
+                              color: 'var(--text-secondary)',
+                              margin: '0.25rem 0 0 0'
+                            }}>
                               {notification.message}
                             </p>
-                            <p className={`text-xs mt-1 ${
-                              document.documentElement.classList.contains('dark')
-                                ? 'text-gray-400'
-                                : 'text-gray-600'
-                            }`}>
+                            <p style={{
+                              fontSize: '0.75rem',
+                              marginTop: '0.25rem',
+                              color: 'var(--text-tertiary)',
+                              fontFamily: 'monospace',
+                              margin: '0.25rem 0 0 0'
+                            }}>
                               {notification.executionId || notification.testId}
                             </p>
-                            <p className={`text-xs mt-2 ${
-                              document.documentElement.classList.contains('dark')
-                                ? 'text-gray-500'
-                                : 'text-gray-500'
-                            }`}>
+                            <p style={{
+                              fontSize: '0.75rem',
+                              marginTop: '0.5rem',
+                              color: 'var(--text-tertiary)',
+                              margin: '0.5rem 0 0 0'
+                            }}>
                               {formatDistanceToNow(notification.timestamp, { 
                                 addSuffix: true,
                                 locale: tr
                               })}
                             </p>
                           </div>
-                          <div className="flex items-center space-x-1">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                             {/* Okundu İşaretle */}
                             {!notification.read && (
                               <button
@@ -249,14 +290,20 @@ function NotificationPanel() {
                                   e.stopPropagation();
                                   markAsRead(notification.id);
                                 }}
-                                className={`${
-                                  document.documentElement.classList.contains('dark')
-                                    ? 'text-gray-400 hover:text-gray-200'
-                                    : 'text-gray-400 hover:text-gray-600'
-                                }`}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--text-secondary)',
+                                  cursor: 'pointer',
+                                  padding: '0.25rem',
+                                  borderRadius: '0.25rem',
+                                  transition: 'color 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                                 title="Okundu İşaretle"
                               >
-                                <Check className="h-4 w-4" />
+                                <Check size={16} />
                               </button>
                             )}
                             
@@ -266,14 +313,20 @@ function NotificationPanel() {
                                 e.stopPropagation();
                                 removeNotification(notification.id);
                               }}
-                              className={`${
-                                document.documentElement.classList.contains('dark')
-                                  ? 'text-gray-400 hover:text-gray-200'
-                                  : 'text-gray-400 hover:text-gray-600'
-                              }`}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                padding: '0.25rem',
+                                borderRadius: '0.25rem',
+                                transition: 'color 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                               title="Bildirimi Sil"
                             >
-                              <X className="h-4 w-4" />
+                              <X size={16} />
                             </button>
                           </div>
                         </div>
