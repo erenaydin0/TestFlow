@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import { Sidebar, Header } from './';
 import { useSidebar } from '@/contexts';
 
 interface PageLayoutProps {

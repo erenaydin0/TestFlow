@@ -1,9 +1,8 @@
 'use client';
 
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import { Sidebar, Header } from '@/components/layout';
 import { useSidebar } from '@/contexts';
-import StatusBadge from '@/components/StatusBadge';
+import { StatusBadge } from '@/components/common';
 import { 
   Play, 
   Pause, 

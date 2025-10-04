@@ -7,9 +7,9 @@ import { useSettingsModal } from '@/contexts';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
-import { NotificationPanel } from '@/components/notifications/NotificationPanel';
+import { NotificationPanel } from '@/components/features/notifications';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
-import StatusBadge, { getStatusText } from '@/components/StatusBadge';
+import { StatusBadge, getStatusText } from '@/components/common';
 
 interface HeaderProps {
   title?: string;

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
-import StatsCards from '@/components/StatsCards';
+import { StatsCards } from '@/components/features/dashboard';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } from '@/components/common/TableCells';
@@ -26,9 +26,9 @@ import {
   Globe
 } from 'lucide-react';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
-import StatusBadge, { getStatusColor, getStatusText } from '@/components/StatusBadge';
+import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { ExecutionResult } from '@/types';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useReports } from '@/hooks/useReports';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';

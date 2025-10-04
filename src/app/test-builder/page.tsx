@@ -1,21 +1,22 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import { Sidebar, Header } from '@/components/layout';
 import { useSearchParams } from 'next/navigation';
 import { useSidebar } from '@/contexts';
 
 import { TestStep } from '@/types';
-import FloatingToolbar from '@/components/test-builder/FloatingToolbar';
-import ActionsPanel from '@/components/test-builder/ActionsPanel';
-import CanvasControls from '@/components/test-builder/CanvasControls';
-import StepModal from '@/components/test-builder/StepModal';
-import ConnectionRenderer from '@/components/test-builder/ConnectionRenderer';
-import TestStepCard from '@/components/test-builder/TestStepCard';
-import DragPreview from '@/components/test-builder/DragPreview';
-import SnapLines from '@/components/test-builder/SnapLines';
-import SelectionBox from '@/components/test-builder/SelectionBox';
+import { 
+  FloatingToolbar,
+  ActionsPanel,
+  CanvasControls,
+  StepModal,
+  ConnectionRenderer,
+  TestStepCard,
+  DragPreview,
+  SnapLines,
+  SelectionBox
+} from '@/components/features/test-builder';
 import useTestSteps from '@/hooks/useTestSteps';
 import useCopyPaste from '@/hooks/useCopyPaste';
 import useSnapToGrid from '@/hooks/useSnapToGrid';
@@ -27,12 +28,12 @@ import useCanvasStyles from '@/hooks/useCanvasStyles';
 import useMouseEvents from '@/hooks/useMouseEvents';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
-import TestModal from '@/components/TestModal';
-import UnsavedChangesDialog from '@/components/test-builder/UnsavedChangesDialog';
+import { TestModal } from '@/components/modals';
+import { UnsavedChangesDialog } from '@/components/features/test-builder';
 import useUnsavedChanges from '@/hooks/useUnsavedChanges';
 import { useTestNotifications } from '@/hooks/useTestNotifications';
 import { useBrowserSettings } from '@/contexts';
-import BrowserSelector from '@/components/test-builder/BrowserSelector';
+import { BrowserSelector } from '@/components/features/test-builder';
 import { BrowserType } from '@/types';
 
 export default function TestBuilder() {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Chrome, Globe } from 'lucide-react';
-import MultiSelect from '@/components/MultiSelect';
+import { MultiSelect } from './';
 import { Button } from '@/components/ui';
 import { BrowserType } from '@/types';
 

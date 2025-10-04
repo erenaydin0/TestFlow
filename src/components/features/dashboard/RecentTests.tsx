@@ -1,5 +1,5 @@
 import { useRouter } from 'next/navigation';
-import StatusBadge from '@/components/StatusBadge';
+import { StatusBadge } from '@/components/common';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 
 interface RecentTest {

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Chrome, Globe, Trash2, Copy, Download, Play, Edit, Settings } from 'lucide-react';
 import { BrowserType } from '@/types';
-import StatusBadge from '@/components/StatusBadge';
+import { StatusBadge } from './';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 
 // Browser Cell Component

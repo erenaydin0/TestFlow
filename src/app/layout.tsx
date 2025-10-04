@@ -8,8 +8,8 @@ import {
   BrowserProvider, 
   SettingsModalProvider 
 } from '@/contexts';
-import { ToastContainer } from '@/components/notifications/ToastContainer';
-import SettingsModalWrapper from '@/components/SettingsModalWrapper';
+import { ToastContainer } from '@/components/features/notifications';
+import { SettingsModalWrapper } from '@/components/modals';
 
 const inter = Inter({ subsets: ['latin'] });
 

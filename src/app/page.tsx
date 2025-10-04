@@ -3,12 +3,12 @@
 import { useMemo } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
-import StatsCards from '@/components/StatsCards';
 import { 
+  StatsCards,
   DailyTestResults, 
   TestSuiteDistribution, 
   RecentTests
-} from '@/components/dashboard';
+} from '@/components/features/dashboard';
 import { useExecutions } from '@/hooks/useExecutions';
 
 export default function Dashboard() {

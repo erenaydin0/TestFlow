@@ -18,9 +18,9 @@ import {
 } from 'lucide-react';
 import { exportTestWorkflow } from '@/lib/utils';
 import { Test } from '@/types';
-import ImportDialog from '@/components/test-builder/ImportDialog';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import TestModal from '@/components/TestModal';
+import ImportDialog from '@/components/features/test-builder/ImportDialog';
+import ConfirmDialog from '@/components/modals/ConfirmDialog';
+import TestModal from '@/components/modals/TestModal';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } from '@/components/common/TableCells';
