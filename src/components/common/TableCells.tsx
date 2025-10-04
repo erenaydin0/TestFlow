@@ -3,14 +3,11 @@
 import React from 'react';
 import { Chrome, Globe, Trash2, Copy, Download, Play, Edit, Settings } from 'lucide-react';
 
-import { BrowserType } from '@/types';
+import { BrowserType, BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge } from './';
 
 // Browser Cell Component
-interface BrowserCellProps {
-  browserType?: BrowserType;
-}
 
 const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) => {
   const getBrowserIcon = () => {
@@ -50,10 +47,6 @@ const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) =
 };
 
 // Tags Cell Component
-interface TagsCellProps {
-  tags?: string[];
-  maxVisible?: number;
-}
 
 const TagsCell: React.FC<TagsCellProps> = ({ tags = [], maxVisible = 2 }) => {
   if (tags.length === 0) {
@@ -92,10 +85,6 @@ const TagsCell: React.FC<TagsCellProps> = ({ tags = [], maxVisible = 2 }) => {
 };
 
 // Status Cell Component
-interface StatusCellProps {
-  status: string;
-  size?: 'sm' | 'md';
-}
 
 const StatusCell: React.FC<StatusCellProps> = ({ status, size = 'md' }) => {
   return <StatusBadge status={status} size={size} />;
@@ -156,11 +145,6 @@ const DurationCell: React.FC<DurationCellProps> = ({ duration }) => {
 };
 
 // Test Name Cell Component
-interface TestNameCellProps {
-  name: string;
-  description?: string;
-  id?: string;
-}
 
 const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) => {
   const [showCopied, setShowCopied] = React.useState(false);
@@ -234,23 +218,6 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
 };
 
 // Actions Cell Component
-interface ActionsCellProps {
-  onRun?: () => void;
-  onEdit?: () => void;
-  onSettings?: () => void;
-  onDelete?: () => void;
-  onDuplicate?: () => void;
-  onExport?: () => void;
-  onDownload?: () => void;
-  disabled?: boolean;
-  actions?: Array<{
-    icon: React.ReactNode;
-    label: string;
-    onClick: () => void;
-    color?: string;
-    disabled?: boolean;
-  }>;
-}
 
 const ActionsCell: React.FC<ActionsCellProps> = ({
   onRun,

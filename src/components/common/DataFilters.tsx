@@ -5,7 +5,7 @@ import { Search, X, Filter, Chrome, Globe } from 'lucide-react';
 
 import { MultiSelect } from './';
 import { Button } from '@/components/ui';
-import { BrowserType } from '@/types';
+import { BrowserType, TestFilters, ExecutionFilters } from '@/types';
 
 interface FilterState {
   search: string;

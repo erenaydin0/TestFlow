@@ -2,43 +2,11 @@
 
 import React from 'react';
 
-import { TestStep } from '@/types';
+import { TestStep, TestStepCardProps } from '@/types';
 import { getActionByType, ActionType } from '@/lib/actions';
 import { StepHeader, StepContent } from '@/components/features/test-builder';
 
-interface TestStepCardProps {
-  step: TestStep;
-  isSelected: boolean;
-  isMultiSelected: boolean;
-  draggedStep: string | null;
-  selectedStep: TestStep | null;
-  selectedSteps: Set<string>;
-  
-  // Connection props
-  isConnecting: boolean;
-  connectionStart: string | null;
-  connectionType: 'normal' | 'true' | 'false';
-  
-  // Event handlers
-  onStepDragStart: (stepId: string) => void;
-  onDragEnd: () => void;
-  onStepClick: (step: TestStep, ctrlKey: boolean) => void;
-  onDeleteStep: (stepId: string, callback: () => void) => void;
-  onStartConnection: (stepId: string, type?: 'normal' | 'true' | 'false') => void;
-  onEndConnection: (stepId: string, testSteps: TestStep[], setTestSteps: (steps: TestStep[]) => void, saveToHistory: (steps: TestStep[]) => void) => void;
-  
-  // State setters
-  setIsConnecting: (connecting: boolean) => void;
-  setConnectionStart: (start: string | null) => void;
-  setConnectionType: (type: 'normal' | 'true' | 'false') => void;
-  setSelectedSteps: (steps: Set<string>) => void;
-  setSelectedStep: (step: TestStep | null) => void;
-  
-  // Test steps data
-  testSteps: TestStep[];
-  setTestSteps: (steps: TestStep[]) => void;
-  saveToHistory: (steps: TestStep[]) => void;
-}
+// TestStepCardProps is now imported from @/types
 
 const TestStepCard: React.FC<TestStepCardProps> = ({
   step,

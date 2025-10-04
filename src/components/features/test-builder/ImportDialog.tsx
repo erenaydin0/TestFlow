@@ -5,7 +5,7 @@ import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } fr
 import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
 import { Button, ButtonGroup, IconButton } from '@/components/ui';
 import { useTestNotifications } from '@/hooks/test';
-import { BrowserType } from '@/types';
+import { BrowserType, TestFormData } from '@/types';
 
 interface ImportDialogProps {
   isOpen: boolean;

@@ -2,18 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { ExecutionResult } from '@/types';
+import { ExecutionResult, ExecutionStats } from '@/types';
 
 interface UseExecutionsOptions {
   autoFetch?: boolean;
-}
-
-interface ExecutionStats {
-  totalExecutions: number;
-  completedExecutions: number;
-  failedExecutions: number;
-  avgDuration: number;
-  successRate: number;
 }
 
 const useExecutions = (options: UseExecutionsOptions = {}) => {

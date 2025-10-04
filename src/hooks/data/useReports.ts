@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { ExecutionResult, BrowserType } from '@/types';
+import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats } from '@/types';
 import { filterExecutions, getUniqueFilterOptions } from '@/lib/exportUtils';
 import useExecutions from './useExecutions';
 

@@ -24,7 +24,7 @@ import ImportDialog from '@/components/features/test-builder/ImportDialog';
 import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
-import { Test } from '@/types';
+import { Test, TestFormData, TestFilters } from '@/types';
 import { exportTestWorkflow } from '@/lib/utils';
 import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTestNotifications, useTests } from '@/hooks/test';
@@ -1037,10 +1037,10 @@ export default function TestsPage() {
         }}
         initialData={editTestModal.test ? {
           name: editTestModal.test.name,
-          description: editTestModal.test.description,
+          description: editTestModal.test.description || '',
           tags: editTestModal.test.tags,
           suite: editTestModal.test.suite,
-          browserType: editTestModal.test.browserType
+          browserType: editTestModal.test.browserType || 'chromium'
         } : undefined}
         mode="edit"
       />

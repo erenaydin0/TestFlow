@@ -1,5 +1,5 @@
 import { formatDuration, formatRelativeTime } from './utils';
-import { BrowserType, Test, ExecutionResult } from '@/types';
+import { BrowserType, Test, ExecutionResult, TestFilters, ExecutionFilters } from '@/types';
 
 // Common browser name conversion
 export const getBrowserName = (browserType?: BrowserType): string => {

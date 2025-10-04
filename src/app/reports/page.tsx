@@ -29,7 +29,7 @@ import { StatsCards } from '@/components/features/dashboard';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
-import { ExecutionResult } from '@/types';
+import { ExecutionResult, ExecutionFilters, ExecutionStats } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
@@ -218,7 +218,7 @@ export default function ReportsPage() {
       label: 'Etiketler',
       sortable: true,
       render: (value, execution) => (
-        <TagsCell tags={execution.tags} maxVisible={2} />
+        <TagsCell tags={execution.tags || []} maxVisible={2} />
       )
     },
     {

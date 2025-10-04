@@ -20,58 +20,10 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { TestStep, BrowserType } from '@/types';
+import { TestStep, BrowserType, FloatingToolbarProps } from '@/types';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components/ui';
 
-interface FloatingToolbarProps {
-  // Auto-arrange
-  onAutoArrange: () => void;
-  testStepsCount: number;
-  
-  // Snap
-  snapEnabled: boolean;
-  onToggleSnap: () => void;
-  
-  // Undo/Redo
-  onUndo: () => void;
-  onRedo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  
-  // Copy/Paste
-  onCopy: () => void;
-  onPaste: () => void;
-  onDuplicate: () => void;
-  onDeleteSelected: () => void;
-  selectedStepsCount: number;
-  copiedStepsCount: number;
-  
-  // Connection mode
-  isConnecting: boolean;
-  connectionType: 'normal' | 'true' | 'false';
-  
-  // Import/Export
-  onExport: () => void;
-  onImport: (file: File) => void;
-  onSave?: () => void;
-  onRun?: () => void;
-  isRunning?: boolean;
-  
-  // Screenshot and Recording options
-  enableScreenshots?: boolean;
-  enableRecording?: boolean;
-  onToggleScreenshots?: () => void;
-  onToggleRecording?: () => void;
-  
-  // Headless mode option
-  headlessMode?: boolean;
-  onToggleHeadless?: () => void;
-  
-  // Browser selection
-  selectedBrowser?: BrowserType;
-  onBrowserChange?: (browser: BrowserType) => void;
-}
 
 export default function FloatingToolbar({
   onAutoArrange,
@@ -137,8 +89,8 @@ export default function FloatingToolbar({
       {selectedBrowser && onBrowserChange && (
         <>
           <BrowserSelector
-            selectedBrowser={selectedBrowser}
-            onBrowserChange={onBrowserChange}
+            selectedBrowser={selectedBrowser as BrowserType}
+            onBrowserChange={(browser: BrowserType) => onBrowserChange?.(browser)}
             disabled={isRunning}
           />
           

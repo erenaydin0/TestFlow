@@ -2,19 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { Test, BrowserType } from '@/types';
+import { Test, BrowserType, TestFilters, TestFormData } from '@/types';
 import { getSavedWorkflows, deleteWorkflow, duplicateWorkflow, updateWorkflow, migrateTestIds } from '@/lib/utils';
 import { filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
 
 interface UseTestsOptions {
   autoLoad?: boolean;
-}
-
-interface TestFilters {
-  search: string;
-  suite: string[];
-  tags: string[];
-  browserType: BrowserType[];
 }
 
 const useTests = (options: UseTestsOptions = {}) => {

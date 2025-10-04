@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
-import { TestStep, Test, BrowserType } from '@/types';
+import { TestStep, Test, BrowserType, TestFormData } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);

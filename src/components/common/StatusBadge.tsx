@@ -1,6 +1,6 @@
 interface StatusBadgeProps {
   status: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 // Merkezi status yönetimi - tüm renkler ve yazılar burada

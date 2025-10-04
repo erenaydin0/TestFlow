@@ -18,7 +18,7 @@ import {
 } from '@/components/features/test-builder';
 import { TestModal } from '@/components/modals';
 
-import { TestStep, BrowserType } from '@/types';
+import { TestStep, BrowserType, TestFormData, TestFilters } from '@/types';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
 import { 
@@ -139,8 +139,8 @@ export default function TestBuilder() {
   const { defaultBrowser, defaultHeadless, defaultRecording, defaultScreenshots } = useBrowserSettings();
   const [selectedBrowser, setSelectedBrowser] = useState<BrowserType>(defaultBrowser);
   
-  const handleBrowserChange = (browser: BrowserType) => {
-    setSelectedBrowser(browser);
+  const handleBrowserChange = (browser: string) => {
+    setSelectedBrowser(browser as BrowserType);
   };
   
   // Context'teki defaultBrowser değiştiğinde selectedBrowser'ı güncelle (sadece ilk yükleme için)
@@ -866,10 +866,10 @@ export default function TestBuilder() {
           const workflow = getWorkflowById(loadedWorkflowId);
           return workflow ? {
             name: workflow.name,
-            description: workflow.description,
+            description: workflow.description || '',
             tags: workflow.tags,
             suite: workflow.suite,
-            browserType: workflow.browserType
+            browserType: workflow.browserType || 'chromium'
           } : undefined;
         })() : undefined}
         isUpdating={!!loadedWorkflowId}
