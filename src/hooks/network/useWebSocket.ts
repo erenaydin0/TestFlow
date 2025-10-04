@@ -17,7 +17,7 @@ export interface WebSocketHookReturn {
   connect: () => void;
 }
 
-export function useWebSocket(url: string, options?: {
+function useWebSocket(url: string, options?: {
   autoConnect?: boolean;
   reconnectAttempts?: number;
   reconnectInterval?: number;
@@ -188,3 +188,5 @@ export function useWebSocket(url: string, options?: {
     connect
   };
 }
+
+export default useWebSocket;

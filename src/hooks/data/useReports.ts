@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ExecutionResult, BrowserType } from '@/types';
 import { filterExecutions, getUniqueFilterOptions } from '@/lib/exportUtils';
-import { useExecutions } from './useExecutions';
+import useExecutions from './useExecutions';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 type SortOrder = 'asc' | 'desc';
@@ -21,7 +21,7 @@ interface UseReportsOptions {
   autoFetch?: boolean;
 }
 
-export const useReports = (options: UseReportsOptions = {}) => {
+const useReports = (options: UseReportsOptions = {}) => {
   const { autoFetch = true } = options;
   
   // Use base executions hook
@@ -212,3 +212,5 @@ export const useReports = (options: UseReportsOptions = {}) => {
     bulkDeleteExecutions
   };
 };
+
+export default useReports;

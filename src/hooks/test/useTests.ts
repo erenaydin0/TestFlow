@@ -16,7 +16,7 @@ interface TestFilters {
   browserType: BrowserType[];
 }
 
-export const useTests = (options: UseTestsOptions = {}) => {
+const useTests = (options: UseTestsOptions = {}) => {
   const { autoLoad = true } = options;
   
   const [tests, setTests] = useState<Test[]>([]);
@@ -154,3 +154,5 @@ export const useTests = (options: UseTestsOptions = {}) => {
     bulkDuplicateTests
   };
 };
+
+export default useTests;

@@ -1,6 +1,6 @@
 import { useNotifications } from '@/contexts';
 
-export function useTestNotifications() {
+function useTestNotifications() {
   const { addNotification, showToast } = useNotifications();
 
   const notifyTestStart = (testName: string, testId: string) => {
@@ -204,3 +204,5 @@ export function useTestNotifications() {
     notifyWorkflowLoaded
   };
 }
+
+export default useTestNotifications;

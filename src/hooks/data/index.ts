@@ -1,4 +1,4 @@
 // Data hooks
-export { useExecutions } from './useExecutions';
-export { useRealtimeNotifications } from './useRealtimeNotifications';
-export { useReports } from './useReports';
+export { default as useExecutions } from './useExecutions';
+export { default as useRealtimeNotifications } from './useRealtimeNotifications';
+export { default as useReports } from './useReports';

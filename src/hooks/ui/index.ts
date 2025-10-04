@@ -1,2 +1,2 @@
 // UI hooks
-export { useKeyboardShortcuts } from './useKeyboardShortcuts';
+export { default as useKeyboardShortcuts } from './useKeyboardShortcuts';

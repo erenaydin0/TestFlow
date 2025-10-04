@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useWebSocket } from '@/hooks/network';
 import { useTestNotifications } from '@/hooks/test';
 
-export function useRealtimeNotifications() {
+function useRealtimeNotifications() {
   const { 
     notifyExecutionStart, 
     notifyExecutionComplete, 
@@ -247,3 +247,5 @@ export function useRealtimeNotifications() {
     reconnect: connect
   };
 }
+
+export default useRealtimeNotifications;

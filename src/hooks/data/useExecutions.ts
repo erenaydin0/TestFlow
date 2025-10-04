@@ -15,7 +15,7 @@ interface ExecutionStats {
   successRate: number;
 }
 
-export const useExecutions = (options: UseExecutionsOptions = {}) => {
+const useExecutions = (options: UseExecutionsOptions = {}) => {
   const { autoFetch = true } = options;
   
   const [executions, setExecutions] = useState<ExecutionResult[]>([]);
@@ -79,3 +79,5 @@ export const useExecutions = (options: UseExecutionsOptions = {}) => {
     calculateStats
   };
 };
+
+export default useExecutions;
