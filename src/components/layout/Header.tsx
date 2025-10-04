@@ -142,11 +142,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
       zIndex: 1000,
       backgroundColor: 'var(--bg-primary)', 
       borderBottom: '1px solid var(--border-primary)', 
-      padding: '1rem 1.5rem',
-      transition: 'all 0.3s ease',
+      padding: '0.75rem 1.5rem',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       height: '4rem',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      backdropFilter: 'blur(8px)',
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
     }}>
       <div style={{ 
         display: 'grid', 
@@ -164,27 +166,20 @@ export default function Header({ title, subtitle }: HeaderProps) {
             gap: '0.75rem',
             textDecoration: 'none',
             cursor: 'pointer',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
+            marginLeft: '-0.5rem'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.02)';
+            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}>
-            <div style={{ 
-              padding: '0.5rem', 
-              backgroundColor: '#eff6ff', 
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <TestTube size={24} color="#2563eb" />
-            </div>
             <div>
               <h1 style={{ 
-                fontSize: '1.25rem', 
+                fontSize: '1.5rem', 
                 fontWeight: 'bold', 
                 color: 'var(--text-primary)',
                 margin: 0,
@@ -205,12 +200,13 @@ export default function Header({ title, subtitle }: HeaderProps) {
           <div style={{ position: 'relative' }} ref={searchPanelRef}>
             <Search style={{ 
               position: 'absolute', 
-              left: '0.75rem', 
+              left: '1rem', 
               top: '50%', 
               transform: 'translateY(-50%)', 
               color: 'var(--text-tertiary)', 
-              width: '1rem', 
-              height: '1rem' 
+              width: '1.125rem', 
+              height: '1.125rem',
+              strokeWidth: 2
             }} />
             <input
               type="text"
@@ -224,27 +220,30 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 }
               }}
               style={{
-                paddingLeft: '2.5rem',
-                paddingRight: searchQuery ? '2.5rem' : '1rem',
-                paddingTop: '0.5rem',
-                paddingBottom: '0.5rem',
+                paddingLeft: '2.75rem',
+                paddingRight: searchQuery ? '2.75rem' : '1rem',
+                paddingTop: '0.625rem',
+                paddingBottom: '0.625rem',
                 border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
+                borderRadius: '0.75rem',
                 outline: 'none',
                 width: '100%',
-                backgroundColor: 'var(--bg-primary)',
+                backgroundColor: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
                 fontSize: '0.875rem',
-                transition: 'all 0.2s ease'
+                fontWeight: 400,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
               onFocusCapture={(e) => {
-                e.target.style.borderColor = '#2563eb';
-                e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
+                e.target.style.borderColor = 'var(--accent-primary)';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                e.target.style.backgroundColor = 'var(--bg-primary)';
               }}
               onBlurCapture={(e) => {
                 setTimeout(() => {
                 e.target.style.borderColor = 'var(--border-primary)';
                 e.target.style.boxShadow = 'none';
+                e.target.style.backgroundColor = 'var(--bg-secondary)';
                 }, 200);
               }}
             />
