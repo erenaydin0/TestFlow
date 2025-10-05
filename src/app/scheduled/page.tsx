@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { 
   Play, 
   Pause, 
@@ -7,219 +8,175 @@ import {
   Trash2, 
   Plus,
   Clock,
-  Calendar,
-  Settings,
-  MoreVertical
+  Calendar
 } from 'lucide-react';
 
-import { Sidebar, Header } from '@/components/layout';
-import { StatusBadge } from '@/components/common';
+import { PageLayout } from '@/components/layout';
+import { StatusBadge, CosmicSpinner } from '@/components/common';
+import { ScheduleModal } from '@/components/modals';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
-import { useSidebar } from '@/contexts';
-
-// Mock data
-const SCHEDULED_TESTS = [
-  {
-    id: '1',
-    name: 'Daily Login Test',
-    description: 'Her gün çalışan login testi',
-    schedule: '0 9 * * *', // Every day at 9 AM
-    status: 'active',
-    lastRun: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    nextRun: new Date(Date.now() + 22 * 60 * 60 * 1000),
-    duration: 2340,
-    successRate: 98.5,
-    suite: 'Authentication',
-    environment: 'production'
-  },
-  {
-    id: '2',
-    name: 'Weekly E-commerce Test',
-    description: 'Haftalık e-ticaret fonksiyonları testi',
-    schedule: '0 2 * * 1', // Every Monday at 2 AM
-    status: 'active',
-    lastRun: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    nextRun: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-    duration: 8920,
-    successRate: 94.2,
-    suite: 'E-commerce',
-    environment: 'staging'
-  },
-  {
-    id: '3',
-    name: 'Hourly Health Check',
-    description: 'Saatlik sistem sağlık kontrolü',
-    schedule: '0 * * * *', // Every hour
-    status: 'paused',
-    lastRun: new Date(Date.now() - 30 * 60 * 1000),
-    nextRun: new Date(Date.now() + 30 * 60 * 1000),
-    duration: 450,
-    successRate: 99.8,
-    suite: 'System',
-    environment: 'production'
-  },
-  {
-    id: '4',
-    name: 'Monthly Report Generation',
-    description: 'Aylık rapor oluşturma testi',
-    schedule: '0 0 1 * *', // First day of every month at midnight
-    status: 'disabled',
-    lastRun: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-    nextRun: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-    duration: 12000,
-    successRate: 87.3,
-    suite: 'Reports',
-    environment: 'production'
-  }
-];
-
-const UPCOMING_RUNS = [
-  {
-    id: '1',
-    testName: 'Daily Login Test',
-    scheduledTime: new Date(Date.now() + 30 * 60 * 1000),
-    estimatedDuration: 2340,
-    environment: 'production'
-  },
-  {
-    id: '2',
-    testName: 'API Health Check',
-    scheduledTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
-    estimatedDuration: 1200,
-    environment: 'staging'
-  },
-  {
-    id: '3',
-    testName: 'Database Backup Test',
-    scheduledTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
-    estimatedDuration: 5400,
-    environment: 'production'
-  }
-];
+import { useScheduledTests } from '@/hooks/data';
+import { useTests } from '@/hooks/test';
+import { ScheduledTest } from '@/types/test';
 
 function getScheduleDescription(schedule: string): string {
   const scheduleMap: { [key: string]: string } = {
     '0 9 * * *': 'Her gün 09:00',
     '0 2 * * 1': 'Her Pazartesi 02:00',
     '0 * * * *': 'Her saat başı',
-    '0 0 1 * *': 'Her ayın 1\'inde 00:00'
+    '0 0 1 * *': 'Her ayın 1\'inde 00:00',
+    '0 */6 * * *': 'Her 6 saatte bir',
+    '0 0 * * *': 'Her gün 00:00',
+    '0 12 * * *': 'Her gün 12:00'
   };
   return scheduleMap[schedule] || schedule;
 }
 
 export default function ScheduledPage() {
-  const { isCollapsed } = useSidebar();
+  const { 
+    scheduledTests, 
+    upcomingRuns, 
+    loading, 
+    error,
+    filters,
+    setFilters,
+    filteredTests,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    toggleSchedule
+  } = useScheduledTests();
+  const { tests } = useTests();
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<ScheduledTest | undefined>();
   
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
-      <Sidebar />
-      
+    <PageLayout
+      title="Zamanlanmış Testler"
+      subtitle={
+        scheduledTests.length > 0 
+          ? `Zamanlanmış testleri kontrol edin (${filteredTests.length} / ${scheduledTests.length} test)`
+          : 'Zamanlanmış testleri kontrol edin'
+      }
+      headerActions={
+        <button 
+          className="btn-primary" 
+          onClick={() => {
+            setEditingSchedule(undefined);
+            setIsModalOpen(true);
+          }}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem' 
+          }}
+        >
+          <Plus size={16} />
+          Yeni Zamanlama
+        </button>
+      }
+    >
+      {/* Filters */}
       <div style={{ 
-        flex: 1, 
-        marginLeft: isCollapsed ? '4rem' : '16rem',
-        paddingTop: '4rem', // Header height
-        transition: 'margin-left 0.3s ease'
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '1rem',
+        marginBottom: '1.5rem' 
       }}>
-        <Header />
-        <main style={{ padding: '1.5rem' }}>
-          {/* Header */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '2rem' 
-          }}>
-            <div>
-              <h1 style={{ 
-                fontSize: '1.875rem', 
-                fontWeight: 'bold', 
-                color: 'var(--text-primary)', 
-                margin: 0 
-              }}>
-                Zamanlanmış Testler
-              </h1>
-              <p style={{ 
-                color: 'var(--text-secondary)', 
-                margin: '0.5rem 0 0 0' 
-              }}>
-                Zamanlanmış testleri kontrol edin
-                {SCHEDULED_TESTS.length > 0 && (
-                  <span style={{ color: 'var(--status-info)', marginLeft: '0.5rem' }}>
-                    ({SCHEDULED_TESTS.length} / {SCHEDULED_TESTS.length} test)
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
+        <select 
+          value={filters.status[0] || ''}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value ? [e.target.value as any] : [] })}
+          style={{
+            padding: '0.5rem 1rem',
+            border: '1px solid var(--border-primary)',
+            borderRadius: '0.5rem',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="">Tüm Durumlar</option>
+          <option value="active">Aktif</option>
+          <option value="paused">Duraklatılmış</option>
+          <option value="disabled">Devre Dışı</option>
+        </select>
         
-        
-          {/* Actions */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            marginBottom: '1.5rem' 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <select style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-              }}>
-                <option value="">Tüm Durumlar</option>
-                <option value="active">Aktif</option>
-                <option value="paused">Duraklatılmış</option>
-                <option value="disabled">Devre Dışı</option>
-              </select>
-              
-              <select style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer'
-              }}>
-                <option value="">Tüm Ortamlar</option>
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="development">Development</option>
-              </select>
-            </div>
-            
-            <button className="btn-primary" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem' 
-            }}>
-              <Plus size={16} />
-              Yeni Zamanlama
-            </button>
-          </div>
+        <select 
+          value={filters.environment[0] || ''}
+          onChange={(e) => setFilters({ ...filters, environment: e.target.value ? [e.target.value] : [] })}
+          style={{
+            padding: '0.5rem 1rem',
+            border: '1px solid var(--border-primary)',
+            borderRadius: '0.5rem',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="">Tüm Ortamlar</option>
+          <option value="production">Production</option>
+          <option value="staging">Staging</option>
+          <option value="development">Development</option>
+        </select>
+      </div>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '2fr 1fr', 
-            gap: '1.5rem' 
-          }}>
-            {/* Scheduled Tests */}
-            <div className="card">
-              <h3 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)', 
-                margin: '0 0 1rem 0'
-              }}>
-                Zamanlanmış Testler
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {SCHEDULED_TESTS.map((test) => (
+      {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+              <CosmicSpinner size="lg" />
+            </div>
+          ) : error ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '3rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <p style={{ color: 'var(--status-error)', marginBottom: '1rem' }}>{error}</p>
+              <button 
+                className="btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                Yeniden Dene
+              </button>
+            </div>
+          ) : (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '2fr 1fr', 
+              gap: '1.5rem' 
+            }}>
+              {/* Scheduled Tests */}
+              <div className="card">
+                <h3 style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: 600, 
+                  color: 'var(--text-primary)', 
+                  margin: '0 0 1rem 0'
+                }}>
+                  Zamanlanmış Testler
+                </h3>
+                
+                {filteredTests.length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '3rem',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                    <p>Henüz zamanlanmış test yok</p>
+                    <button 
+                      className="btn-primary"
+                      onClick={() => setIsModalOpen(true)}
+                      style={{ marginTop: '1rem' }}
+                    >
+                      İlk Zamanlamayı Oluştur
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {filteredTests.map((test) => (
                   <div 
                     key={test.id} 
                     className="card"
@@ -309,81 +266,98 @@ export default function ScheduledPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {test.status === 'active' ? (
-                          <button style={{ 
-                            padding: '0.5rem', 
-                            color: 'var(--status-warning)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.375rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(217, 119, 6, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}>
+                          <button 
+                            onClick={() => toggleSchedule(test.id)}
+                            style={{ 
+                              padding: '0.5rem', 
+                              color: 'var(--status-warning)', 
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(217, 119, 6, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
                             <Pause size={18} />
                           </button>
                         ) : (
-                          <button style={{ 
-                            padding: '0.5rem', 
-                            color: 'var(--status-success)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.375rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(5, 150, 105, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}>
+                          <button 
+                            onClick={() => toggleSchedule(test.id)}
+                            style={{ 
+                              padding: '0.5rem', 
+                              color: 'var(--status-success)', 
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(5, 150, 105, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
                             <Play size={18} />
                           </button>
                         )}
                         
-                        <button style={{ 
-                          padding: '0.5rem', 
-                          color: 'var(--text-secondary)', 
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                          e.currentTarget.style.color = 'var(--text-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = 'var(--text-secondary)';
-                        }}>
-                          <Settings size={18} />
+                        <button 
+                          onClick={() => {
+                            setEditingSchedule(test);
+                            setIsModalOpen(true);
+                          }}
+                          style={{ 
+                            padding: '0.5rem', 
+                            color: 'var(--text-secondary)', 
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                          }}
+                        >
+                          <Edit size={18} />
                         </button>
                         
-                        <button style={{ 
-                          padding: '0.5rem', 
-                          color: 'var(--text-secondary)', 
-                          backgroundColor: 'transparent',
-                          border: 'none',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                          e.currentTarget.style.color = 'var(--text-primary)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = 'var(--text-secondary)';
-                        }}>
-                          <MoreVertical size={18} />
+                        <button 
+                          onClick={() => {
+                            if (confirm('Bu zamanlamayı silmek istediğinizden emin misiniz?')) {
+                              deleteSchedule(test.id);
+                            }
+                          }}
+                          style={{ 
+                            padding: '0.5rem', 
+                            color: 'var(--status-error)', 
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </div>
@@ -405,7 +379,7 @@ export default function ScheduledPage() {
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                           <span>Süre: </span>
                           <span style={{ color: 'var(--text-secondary)' }}>
-                            {formatDuration(test.duration)}
+                            {formatDuration(test.lastDuration || 0)}
                           </span>
                         </div>
                       </div>
@@ -417,30 +391,41 @@ export default function ScheduledPage() {
                         <span style={{ 
                           fontSize: '0.875rem', 
                           fontWeight: 600,
-                          color: test.successRate >= 95 ? 'var(--status-success)' : test.successRate >= 85 ? 'var(--status-warning)' : 'var(--status-error)'
+                          color: (test.successRate || 0) >= 95 ? 'var(--status-success)' : (test.successRate || 0) >= 85 ? 'var(--status-warning)' : 'var(--status-error)'
                         }}>
-                          {test.successRate}%
+                          {test.successRate || 0}%
                         </span>
                       </div>
                     </div>
                   </div>
-                ))}
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Upcoming Runs */}
-            <div className="card">
-              <h3 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)', 
-                margin: '0 0 1rem 0'
-              }}>
-                Yaklaşan Çalışmalar
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {UPCOMING_RUNS.map((run) => (
+              {/* Upcoming Runs */}
+              <div className="card">
+                <h3 style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: 600, 
+                  color: 'var(--text-primary)', 
+                  margin: '0 0 1rem 0'
+                }}>
+                  Yaklaşan Çalışmalar
+                </h3>
+                
+                {upcomingRuns.length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '2rem',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <Calendar size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
+                    <p style={{ fontSize: '0.875rem' }}>Yaklaşan çalışma yok</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {upcomingRuns.map((run) => (
                   <div 
                     key={run.id}
                     style={{ 
@@ -485,22 +470,41 @@ export default function ScheduledPage() {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-              
-              <div style={{ 
-                marginTop: '1rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid var(--border-primary)'
-              }}>
-                <button className="btn-secondary" style={{ width: '100%' }}>
-                  Tüm Zamanlamaları Görüntüle
-                </button>
+                    ))}
+                  </div>
+                )}
+                
+                {upcomingRuns.length > 0 && (
+                  <div style={{ 
+                    marginTop: '1rem',
+                    paddingTop: '1rem',
+                    borderTop: '1px solid var(--border-primary)'
+                  }}>
+                    <button className="btn-secondary" style={{ width: '100%' }}>
+                      Tüm Zamanlamaları Görüntüle
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </main>
-      </div>
-    </div>
+          )}
+      
+      <ScheduleModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingSchedule(undefined);
+        }}
+        onSave={async (schedule) => {
+          if (editingSchedule) {
+            await updateSchedule(editingSchedule.id, schedule);
+          } else {
+            await createSchedule(schedule);
+          }
+        }}
+        schedule={editingSchedule}
+        tests={tests}
+      />
+    </PageLayout>
   );
 } 
