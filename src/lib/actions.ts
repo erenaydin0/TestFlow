@@ -156,12 +156,53 @@ const baseActions: ActionType[] = [
     isAdvanced: true,
     fields: [
       {
-        key: 'condition',
-        label: 'Koşul',
-        type: 'text',
-        placeholder: '#element, .exists, //div[@class=\'visible\'], [data-visible=\'true\']',
+        key: 'conditionType',
+        label: 'Koşul Türü',
+        type: 'select',
         required: true,
-        description: 'CSS seçici, XPath veya ID kullanarak kontrol edilecek koşul'
+        options: [
+          { value: 'exists', label: 'Element Var' },
+          { value: 'visible', label: 'Element Görünür' },
+          { value: 'hidden', label: 'Element Gizli' },
+          { value: 'text', label: 'Metin Eşit' },
+          { value: 'textContains', label: 'Metin İçerir' },
+          { value: 'value', label: 'Değer Eşit' },
+          { value: 'valueContains', label: 'Değer İçerir' },
+          { value: 'count', label: 'Element Sayısı' },
+          { value: 'url', label: 'URL Eşit' },
+          { value: 'urlContains', label: 'URL İçerir' }
+        ],
+        description: 'Hangi tür koşul kontrolü yapılacağını seçin'
+      },
+      {
+        key: 'selector',
+        label: 'Seçici (Selector)',
+        type: 'text',
+        placeholder: '#element, .class, //div[@data-testid=\'result\'], [data-testid=\'result\']',
+        required: false,
+        description: 'CSS seçici, XPath veya ID (URL kontrolü için gerekli değil)'
+      },
+      {
+        key: 'expectedValue',
+        label: 'Beklenen Değer',
+        type: 'text',
+        placeholder: 'Karşılaştırılacak değer',
+        description: 'Koşulun karşılaştırılacağı değer (metin, sayı veya URL)'
+      },
+      {
+        key: 'operator',
+        label: 'Karşılaştırma Operatörü',
+        type: 'select',
+        required: false,
+        options: [
+          { value: 'equals', label: 'Eşit (=)' },
+          { value: 'notEquals', label: 'Eşit Değil (≠)' },
+          { value: 'greaterThan', label: 'Büyüktür (>)' },
+          { value: 'lessThan', label: 'Küçüktür (<)' },
+          { value: 'greaterOrEqual', label: 'Büyük veya Eşit (≥)' },
+          { value: 'lessOrEqual', label: 'Küçük veya Eşit (≤)' }
+        ],
+        description: 'Sayısal karşılaştırmalar için operatör (sadece count türü için)'
       }
     ]
   }

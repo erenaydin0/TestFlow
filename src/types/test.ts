@@ -42,7 +42,9 @@ export interface TestStep {
   
   // Condition properties
   condition?: string;
+  conditionType?: 'exists' | 'visible' | 'hidden' | 'text' | 'textContains' | 'value' | 'valueContains' | 'count' | 'url' | 'urlContains';
   expectedValue?: string;
+  operator?: 'equals' | 'notEquals' | 'greaterThan' | 'lessThan' | 'greaterOrEqual' | 'lessOrEqual';
   
   // Scroll properties
   direction?: 'top' | 'bottom' | 'left' | 'right';

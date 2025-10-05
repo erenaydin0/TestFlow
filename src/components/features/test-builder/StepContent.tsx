@@ -87,8 +87,11 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
           )}
           {step.type === 'if' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>Koşul: {step.condition || 'Belirtilmedi'}</span>
-              <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem' }}>
+              <span>Tür: {step.conditionType || 'visible'}</span>
+              {step.selector && <span>Element: {step.selector}</span>}
+              {step.expectedValue && <span>Değer: {step.expectedValue}</span>}
+              {step.operator && step.conditionType === 'count' && <span>Operatör: {step.operator}</span>}
+              <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem', marginTop: '0.25rem' }}>
                 <span style={{ 
                   color: step.trueConnection ? '#22c55e' : 'var(--text-tertiary)',
                   display: 'flex',
@@ -162,7 +165,13 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
               {`Değer: ${step.optionValue || 'Belirtilmedi'}`}
             </div>
           )}
-          {step.type === 'if' && step.condition && `Koşul: ${step.condition}`}
+          {step.type === 'if' && (
+            <>
+              {step.conditionType && `Tür: ${step.conditionType}`}
+              {step.selector && `, Element: ${step.selector}`}
+              {step.expectedValue && `, Değer: ${step.expectedValue}`}
+            </>
+          )}
         </div>
       )}
     </div>
