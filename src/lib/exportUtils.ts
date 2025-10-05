@@ -296,6 +296,7 @@ export const filterExecutions = (
     tags: string[];
     browserType: BrowserType[];
     dateRange?: string;
+    specificDate?: string;
   }
 ): ExecutionResult[] => {
   return executions.filter(execution => {
@@ -317,6 +318,14 @@ export const filterExecutions = (
     // Browser filter
     const matchesBrowser = filters.browserType.length === 0 || 
       filters.browserType.includes(execution.options?.browserType || 'chromium');
+
+    // Specific date filter (takes priority over dateRange)
+    if (filters.specificDate) {
+      const executionDate = new Date(execution.startTime);
+      const specificDate = new Date(filters.specificDate);
+      const matchesSpecificDate = executionDate.toDateString() === specificDate.toDateString();
+      return matchesSearch && matchesStatus && matchesSuite && matchesTags && matchesBrowser && matchesSpecificDate;
+    }
 
     // Date range filter
     let matchesDateRange = true;
