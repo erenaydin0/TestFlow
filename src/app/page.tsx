@@ -60,10 +60,11 @@ export default function Dashboard() {
     }, {} as Record<string, number>);
 
     const browserColors = ['#4285f4', '#ff6d01', '#9333ea', '#059669', '#dc2626'];
-    const browserDataWithColors = Object.entries(browserData).map(([name, value], index) => ({
-      name: name === 'chromium' ? 'Chrome' : 
-            name === 'firefox' ? 'Firefox' : 
-            name === 'webkit' ? 'Safari' : name,
+    const browserDataWithColors = Object.entries(browserData).map(([browserType, value], index) => ({
+      name: browserType === 'chromium' ? 'Chrome' : 
+            browserType === 'firefox' ? 'Firefox' : 
+            browserType === 'webkit' ? 'Safari' : browserType,
+      browserType: browserType, // Gerçek browser type'ı sakla
       value: value as number,
       color: browserColors[index % browserColors.length]
     }));
