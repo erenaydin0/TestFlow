@@ -646,6 +646,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                         value: option.id,
                         label: option.label
                       }))}
+                      style={{border: 'none'}}
                     />
                   </div>
                 </div>

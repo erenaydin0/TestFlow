@@ -5,6 +5,7 @@ import { Check, X } from 'lucide-react';
 import { BrowserType } from '@/types';
 import MultiSelect from './MultiSelect';
 import { BrowserSelector } from '@/components/features/test-builder';
+import { useDropdown } from '@/hooks/ui';
 
 interface EditableSuiteCellProps {
   value: string;
@@ -19,49 +20,26 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
   availableSuites,
   onUpdate
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+  const {
+    isOpen,
+    isClosing,
+    dropdownPosition,
+    containerRef,
+    buttonRef,
+    handleClose,
+    handleToggle,
+    getAnimationStyle
+  } = useDropdown({ 
+    animationDuration: 150,
+    onClose: () => setSearchTerm('')
+  });
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
-
-  // Calculate dropdown position when opening
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const dropdownHeight = 250; // Approximate dropdown height
-
-      // If not enough space below but more space above, open upward
-      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
-        setDropdownPosition('top');
-      } else {
-        setDropdownPosition('bottom');
-      }
     }
   }, [isOpen]);
 
@@ -71,8 +49,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
 
   const handleSelect = (suite: string) => {
     onUpdate(testId, suite);
-    setIsOpen(false);
-    setSearchTerm('');
+    handleClose();
   };
 
   return (
@@ -89,7 +66,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
         ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          handleToggle();
         }}
         style={{
           fontSize: '0.875rem',
@@ -135,7 +112,8 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
           borderRadius: '0.5rem',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           zIndex: 1000,
-          width: '100%'
+          width: '100%',
+          ...getAnimationStyle()
         }}>
           <input
             ref={inputRef}
@@ -147,8 +125,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
               if (e.key === 'Enter' && searchTerm.trim()) {
                 handleSelect(searchTerm.trim());
               } else if (e.key === 'Escape') {
-                setIsOpen(false);
-                setSearchTerm('');
+                handleClose();
               }
             }}
             style={{
@@ -241,49 +218,26 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
   availableTags,
   onUpdate
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+  const {
+    isOpen,
+    isClosing,
+    dropdownPosition,
+    containerRef,
+    buttonRef,
+    handleClose,
+    handleToggle: toggleDropdown,
+    getAnimationStyle
+  } = useDropdown({ 
+    animationDuration: 150,
+    onClose: () => setSearchTerm('')
+  });
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
-
-  // Calculate dropdown position when opening
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const dropdownHeight = 300; // Approximate dropdown height
-
-      // If not enough space below but more space above, open upward
-      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
-        setDropdownPosition('top');
-      } else {
-        setDropdownPosition('bottom');
-      }
     }
   }, [isOpen]);
 
@@ -319,7 +273,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
         ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          toggleDropdown();
         }}
       style={{
         display: 'flex',
@@ -400,7 +354,8 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
         borderRadius: '0.5rem',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
         zIndex: 1000,
-        width: '100%'
+        width: '100%',
+        ...getAnimationStyle(200)
       }}>
         {/* Search Input */}
         <input
@@ -413,8 +368,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
             if (e.key === 'Enter') {
               handleAddNew();
             } else if (e.key === 'Escape') {
-              setIsOpen(false);
-              setSearchTerm('');
+              handleClose();
             }
           }}
           style={{

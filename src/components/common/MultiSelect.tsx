@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X, Check, Search } from 'lucide-react';
+import { useDropdown } from '@/hooks/ui';
 
 interface MultiSelectProps {
   options: string[];
@@ -20,24 +21,20 @@ export default function MultiSelect({
   className = "",
   renderOption
 }: MultiSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const {
+    isOpen,
+    isClosing,
+    containerRef: dropdownRef,
+    handleClose,
+    handleToggle,
+    getAnimationStyle
+  } = useDropdown({ 
+    animationDuration: 200,
+    onClose: () => setSearchTerm('')
+  });
 
   // Focus search input when dropdown opens
   useEffect(() => {
@@ -83,7 +80,7 @@ export default function MultiSelect({
       style={{ position: 'relative' }}
     >
       <div
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -152,12 +149,13 @@ export default function MultiSelect({
             right: 0,
             zIndex: 1000,
             backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-primary)',
+            border: '1px solid var(--accent-primary)',
             borderRadius: '0.375rem',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             marginTop: '0.25rem',
             maxHeight: '250px',
-            overflowY: 'hidden'
+            overflowY: 'hidden',
+            ...getAnimationStyle()
           }}
         >
           {/* Search Input */}

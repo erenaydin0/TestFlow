@@ -12,6 +12,7 @@ import {
 import { IconButton } from '@/components/ui';
 import { TestStep } from '@/types';
 import { availableActions, getActionByType, ActionField } from '@/lib/actions';
+import { CustomSelect } from '@/components/common';
 
 // Available actions type
 interface ActionType {
@@ -223,22 +224,23 @@ const StepModal: React.FC<StepModalProps> = ({
 
       case 'select':
         return (
-          <select
+          <CustomSelect
             key={fieldId}
-            id={fieldId}
             value={value as string}
-            onChange={(e) => handleLocalUpdate(field.key, e.target.value)}
-            required={field.required}
-            style={baseStyle}
-            {...focusHandlers}
-          >
-            <option value="">Seçiniz...</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => handleLocalUpdate(field.key, value)}
+            options={field.options?.map(option => ({
+              value: option.value || '',
+              label: option.label || ''
+            })) || []}
+            placeholder="Seçiniz..."
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              fontSize: '0.875rem',
+              outline: 'none',
+              boxSizing: 'border-box',
+              padding: '0.75rem'
+            }}
+          />
         );
 
       case 'checkbox':

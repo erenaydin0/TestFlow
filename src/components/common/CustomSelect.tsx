@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
+import { useDropdown } from '@/hooks/ui';
 
 interface CustomSelectProps {
   value: string;
@@ -9,6 +10,7 @@ interface CustomSelectProps {
   options: { value: string; label: string }[];
   placeholder?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -16,44 +18,19 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   onChange,
   options,
   placeholder = 'Seçiniz',
-  className = ''
+  className = '',
+  style = {}
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  // Calculate dropdown position when opening
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const dropdownHeight = 250; // Approximate dropdown height
-
-      // If not enough space below but more space above, open upward
-      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
-        setDropdownPosition('top');
-      } else {
-        setDropdownPosition('bottom');
-      }
-    }
-  }, [isOpen]);
+  const {
+    isOpen,
+    isClosing,
+    dropdownPosition,
+    containerRef,
+    buttonRef,
+    handleClose,
+    handleToggle,
+    getAnimationStyle
+  } = useDropdown({ animationDuration: 150 });
 
   const selectedOption = options.find(opt => opt.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;
@@ -73,7 +50,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          handleToggle();
         }}
         style={{
           display: 'flex',
@@ -90,7 +67,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           width: '100%',
           boxSizing: 'border-box',
           backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
-          minWidth: '120px'
+          minWidth: '120px',
+          ...style
         }}
         onMouseEnter={(e) => {
           if (!isOpen) {
@@ -129,7 +107,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           zIndex: 1000,
           maxHeight: '250px',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          ...getAnimationStyle(200)
         }}>
           {options.map((option) => {
             const isSelected = option.value === value;
@@ -139,7 +118,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 key={option.value}
                 onClick={() => {
                   onChange(option.value);
-                  setIsOpen(false);
+                  handleClose();
                 }}
                 style={{
                   padding: '0.5rem',
