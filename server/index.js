@@ -23,12 +23,14 @@ const EXECUTIONS_DIR = path.join(__dirname, 'executions');
 const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
 const VIDEOS_DIR = path.join(__dirname, 'videos');
 const SCHEDULED_TESTS_DIR = path.join(__dirname, 'scheduled-tests');
+const TESTS_DIR = path.join(__dirname, 'tests');
 
 // Ensure directories exist
 fs.ensureDirSync(EXECUTIONS_DIR);
 fs.ensureDirSync(SCREENSHOTS_DIR);
 fs.ensureDirSync(VIDEOS_DIR);
 fs.ensureDirSync(SCHEDULED_TESTS_DIR);
+fs.ensureDirSync(TESTS_DIR);
 
 // In-memory storage for active executions
 const activeExecutions = new Map();
@@ -64,17 +66,18 @@ async function executeScheduledTest(schedule) {
   console.log(`🚀 Zamanlanmış test başlatılıyor: ${schedule.name}`);
   
   try {
-    // Test workflow'unu yükle
-    const testsDataPath = path.join(__dirname, '../src/data/tests.json');
-    let testWorkflow = null;
+    // Test workflow'unu backend'den yükle
+    const testPath = path.join(TESTS_DIR, `${schedule.testId}.json`);
     
-    if (await fs.pathExists(testsDataPath)) {
-      const testsData = await fs.readJson(testsDataPath);
-      testWorkflow = testsData.find(t => t.id === schedule.testId);
+    if (!await fs.pathExists(testPath)) {
+      console.error(`❌ Test bulunamadı: ${schedule.testId}`);
+      return null;
     }
     
+    const testWorkflow = await fs.readJson(testPath);
+    
     if (!testWorkflow || !testWorkflow.workflow || testWorkflow.workflow.length === 0) {
-      console.error(`❌ Test workflow bulunamadı: ${schedule.testId}`);
+      console.error(`❌ Test workflow boş: ${schedule.testId}`);
       return null;
     }
     
@@ -713,8 +716,11 @@ app.post('/api/scheduled-tests', async (req, res) => {
     };
     
     // Calculate next run time based on cron expression
-    // For now, just set it to 1 hour from now as a placeholder
-    schedule.nextRun = new Date(Date.now() + 60 * 60 * 1000);
+    if (testScheduler) {
+      schedule.nextRun = testScheduler.calculateNextRun(schedule.schedule);
+    } else {
+      schedule.nextRun = new Date(Date.now() + 60 * 60 * 1000);
+    }
     
     await fs.writeJson(path.join(SCHEDULED_TESTS_DIR, `${scheduleId}.json`), schedule);
     
@@ -750,6 +756,13 @@ app.put('/api/scheduled-tests/:id', async (req, res) => {
         updatedAt: new Date()
       };
       
+      // Eğer schedule değiştiyse nextRun'ı yeniden hesapla
+      if (req.body.schedule && req.body.schedule !== existingSchedule.schedule) {
+        if (testScheduler) {
+          updatedSchedule.nextRun = testScheduler.calculateNextRun(updatedSchedule.schedule);
+        }
+      }
+      
       await fs.writeJson(schedulePath, updatedSchedule);
       
       // Scheduler'ı güncelle
@@ -769,6 +782,135 @@ app.put('/api/scheduled-tests/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating scheduled test:', error);
     res.status(500).json({ error: 'Failed to update scheduled test' });
+  }
+});
+
+// Get all tests
+app.get('/api/tests', async (req, res) => {
+  try {
+    const files = await fs.readdir(TESTS_DIR);
+    const tests = [];
+    
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const testPath = path.join(TESTS_DIR, file);
+          const test = await fs.readJson(testPath);
+          tests.push(test);
+        } catch (error) {
+          console.error(`Error reading test file ${file}:`, error);
+        }
+      }
+    }
+    
+    // Sort by updatedAt (newest first)
+    tests.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+    
+    res.json(tests);
+  } catch (error) {
+    console.error('Error getting tests:', error);
+    res.status(500).json({ error: 'Failed to get tests' });
+  }
+});
+
+// Get single test
+app.get('/api/tests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const testPath = path.join(TESTS_DIR, `${id}.json`);
+    
+    if (await fs.pathExists(testPath)) {
+      const test = await fs.readJson(testPath);
+      res.json(test);
+    } else {
+      res.status(404).json({ error: 'Test not found' });
+    }
+  } catch (error) {
+    console.error('Error getting test:', error);
+    res.status(500).json({ error: 'Failed to get test' });
+  }
+});
+
+// Create or update test
+app.post('/api/tests', async (req, res) => {
+  try {
+    const testData = req.body;
+    const testId = testData.id || uuidv4();
+    
+    const test = {
+      ...testData,
+      id: testId,
+      updatedAt: new Date(),
+      createdAt: testData.createdAt || new Date()
+    };
+    
+    await fs.writeJson(path.join(TESTS_DIR, `${testId}.json`), test);
+    
+    broadcast({
+      type: 'test:saved',
+      test
+    });
+    
+    res.json(test);
+  } catch (error) {
+    console.error('Error saving test:', error);
+    res.status(500).json({ error: 'Failed to save test' });
+  }
+});
+
+// Update test
+app.put('/api/tests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const testPath = path.join(TESTS_DIR, `${id}.json`);
+    
+    if (await fs.pathExists(testPath)) {
+      const existingTest = await fs.readJson(testPath);
+      const updatedTest = {
+        ...existingTest,
+        ...req.body,
+        id, // Preserve ID
+        updatedAt: new Date()
+      };
+      
+      await fs.writeJson(testPath, updatedTest);
+      
+      broadcast({
+        type: 'test:updated',
+        test: updatedTest
+      });
+      
+      res.json(updatedTest);
+    } else {
+      res.status(404).json({ error: 'Test not found' });
+    }
+  } catch (error) {
+    console.error('Error updating test:', error);
+    res.status(500).json({ error: 'Failed to update test' });
+  }
+});
+
+// Delete test
+app.delete('/api/tests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const testPath = path.join(TESTS_DIR, `${id}.json`);
+    
+    if (await fs.pathExists(testPath)) {
+      await fs.remove(testPath);
+      
+      broadcast({
+        type: 'test:deleted',
+        testId: id
+      });
+      
+      res.json({ success: true, message: 'Test deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Test not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting test:', error);
+    res.status(500).json({ error: 'Failed to delete test' });
   }
 });
 

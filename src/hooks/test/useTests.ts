@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Test, BrowserType, TestFilters, TestFormData } from '@/types';
-import { getSavedWorkflows, deleteWorkflow, duplicateWorkflow, updateWorkflow, migrateTestIds } from '@/lib/utils';
 import { filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
 
 interface UseTestsOptions {
@@ -15,6 +14,7 @@ const useTests = (options: UseTestsOptions = {}) => {
   
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TestFilters>({
     search: '',
     suite: [],
@@ -22,21 +22,24 @@ const useTests = (options: UseTestsOptions = {}) => {
     browserType: []
   });
 
-  // Load tests from localStorage
-  const loadTests = () => {
+  // Load tests from backend
+  const loadTests = useCallback(async () => {
     try {
       setLoading(true);
-      // Önce ID migration'ı çalıştır
-      migrateTestIds();
+      setError(null);
       
-      const savedWorkflows = getSavedWorkflows();
-      setTests(savedWorkflows);
-    } catch (error) {
-      console.error('Error loading tests:', error);
+      const response = await fetch('http://localhost:3001/api/tests');
+      if (!response.ok) throw new Error('Testler yüklenemedi');
+      
+      const data = await response.json();
+      setTests(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      console.error('Testler yüklenirken hata:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Auto load on mount
   useEffect(() => {
@@ -56,72 +59,94 @@ const useTests = (options: UseTestsOptions = {}) => {
   }, [tests]);
 
   // Delete test
-  const deleteTest = (testId: string): boolean => {
+  const deleteTest = async (testId: string): Promise<boolean> => {
     try {
-      const success = deleteWorkflow(testId);
-      if (success) {
-        loadTests(); // Reload tests after deletion
-      }
-      return success;
+      const response = await fetch(`http://localhost:3001/api/tests/${testId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Test silinemedi');
+      
+      await loadTests();
+      return true;
     } catch (error) {
-      console.error('Error deleting test:', error);
+      console.error('Test silinirken hata:', error);
       return false;
     }
   };
 
   // Duplicate test
-  const duplicateTest = (testId: string): string | null => {
+  const duplicateTest = async (testId: string): Promise<string | null> => {
     try {
-      const duplicatedId = duplicateWorkflow(testId);
-      if (duplicatedId) {
-        loadTests(); // Reload tests after duplication
-      }
-      return duplicatedId;
+      const test = tests.find(t => t.id === testId);
+      if (!test) return null;
+      
+      const duplicatedTest = {
+        ...test,
+        id: undefined, // Backend yeni ID oluşturacak
+        name: `${test.name} (Kopya)`,
+        createdAt: undefined,
+        updatedAt: undefined
+      };
+      
+      const response = await fetch('http://localhost:3001/api/tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(duplicatedTest)
+      });
+      
+      if (!response.ok) throw new Error('Test kopyalanamadı');
+      
+      const newTest = await response.json();
+      await loadTests();
+      return newTest.id;
     } catch (error) {
-      console.error('Error duplicating test:', error);
+      console.error('Test kopyalanırken hata:', error);
       return null;
     }
   };
 
   // Update test
-  const updateTest = (testId: string, updatedTest: Test): boolean => {
+  const updateTest = async (testId: string, updatedTest: Test): Promise<boolean> => {
     try {
-      updateWorkflow(testId, updatedTest);
-      setTests(prev => prev.map(t => t.id === testId ? updatedTest : t));
+      const response = await fetch(`http://localhost:3001/api/tests/${testId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTest)
+      });
+      
+      if (!response.ok) throw new Error('Test güncellenemedi');
+      
+      const updated = await response.json();
+      setTests(prev => prev.map(t => t.id === testId ? updated : t));
       return true;
     } catch (error) {
-      console.error('Error updating test:', error);
+      console.error('Test güncellenirken hata:', error);
       return false;
     }
   };
 
   // Bulk delete tests
-  const bulkDeleteTests = (testIds: string[]): number => {
+  const bulkDeleteTests = async (testIds: string[]): Promise<number> => {
     let deletedCount = 0;
-    testIds.forEach(testId => {
-      if (deleteWorkflow(testId)) {
+    
+    for (const testId of testIds) {
+      if (await deleteTest(testId)) {
         deletedCount++;
       }
-    });
-    
-    if (deletedCount > 0) {
-      loadTests(); // Reload tests after bulk deletion
     }
     
     return deletedCount;
   };
 
   // Bulk duplicate tests
-  const bulkDuplicateTests = (testIds: string[]): number => {
+  const bulkDuplicateTests = async (testIds: string[]): Promise<number> => {
     let duplicatedCount = 0;
-    testIds.forEach(testId => {
-      if (duplicateWorkflow(testId)) {
+    
+    for (const testId of testIds) {
+      if (await duplicateTest(testId)) {
         duplicatedCount++;
       }
-    });
-    
-    if (duplicatedCount > 0) {
-      loadTests(); // Reload tests after bulk duplication
     }
     
     return duplicatedCount;
@@ -135,6 +160,7 @@ const useTests = (options: UseTestsOptions = {}) => {
   return {
     tests,
     loading,
+    error,
     filteredTests,
     filters,
     setFilters,

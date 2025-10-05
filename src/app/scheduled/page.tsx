@@ -16,7 +16,6 @@ import { StatusBadge, CosmicSpinner } from '@/components/common';
 import { ScheduleModal } from '@/components/modals';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { useScheduledTests } from '@/hooks/data';
-import { useTests } from '@/hooks/test';
 import { ScheduledTest } from '@/types/test';
 
 function getScheduleDescription(schedule: string): string {
@@ -46,7 +45,6 @@ export default function ScheduledPage() {
     deleteSchedule,
     toggleSchedule
   } = useScheduledTests();
-  const { tests } = useTests();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduledTest | undefined>();
@@ -101,25 +99,6 @@ export default function ScheduledPage() {
           <option value="active">Aktif</option>
           <option value="paused">Duraklatılmış</option>
           <option value="disabled">Devre Dışı</option>
-        </select>
-        
-        <select 
-          value={filters.environment[0] || ''}
-          onChange={(e) => setFilters({ ...filters, environment: e.target.value ? [e.target.value] : [] })}
-          style={{
-            padding: '0.5rem 1rem',
-            border: '1px solid var(--border-primary)',
-            borderRadius: '0.5rem',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            outline: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="">Tüm Ortamlar</option>
-          <option value="production">Production</option>
-          <option value="staging">Staging</option>
-          <option value="development">Development</option>
         </select>
       </div>
 
@@ -258,7 +237,13 @@ export default function ScheduledPage() {
                               margin: 0,
                               fontWeight: 500
                             }}>
-                              {formatRelativeTime(test.nextRun)}
+                              {test.nextRun ? new Date(test.nextRun).toLocaleString('tr-TR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : '-'}
                             </p>
                           </div>
                         </div>
@@ -411,80 +396,110 @@ export default function ScheduledPage() {
                   color: 'var(--text-primary)', 
                   margin: '0 0 1rem 0'
                 }}>
-                  Yaklaşan Çalışmalar
+                  Yaklaşan Testler
                 </h3>
                 
-                {upcomingRuns.length === 0 ? (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '2rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <Calendar size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
-                    <p style={{ fontSize: '0.875rem' }}>Yaklaşan çalışma yok</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {upcomingRuns.map((run) => (
-                  <div 
-                    key={run.id}
-                    style={{ 
-                      padding: '0.75rem',
-                      backgroundColor: 'var(--bg-secondary)',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border-primary)'
-                    }}
-                  >
-                    <h4 style={{ 
-                      fontSize: '0.875rem', 
-                      fontWeight: 600, 
-                      color: 'var(--text-primary)',
-                      margin: '0 0 0.5rem 0'
-                    }}>
-                      {run.testName}
-                    </h4>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Clock size={12} color="var(--text-tertiary)" />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {formatRelativeTime(run.scheduledTime)}
-                        </span>
+                {(() => {
+                  // Aktif zamanlamaları nextRun'a göre sırala ve ilk 5'ini al
+                  const upcoming = scheduledTests
+                    .filter(s => s.enabled && s.status === 'active' && s.nextRun)
+                    .sort((a, b) => new Date(a.nextRun!).getTime() - new Date(b.nextRun!).getTime())
+                    .slice(0, 5);
+                  
+                  if (upcoming.length === 0) {
+                    return (
+                      <div style={{ 
+                        textAlign: 'center', 
+                        padding: '2rem',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        <Calendar size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
+                        <p style={{ fontSize: '0.875rem' }}>Yaklaşan test yok</p>
                       </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ 
-                          width: '0.75rem', 
-                          height: '0.75rem', 
-                          backgroundColor: run.environment === 'production' ? 'var(--status-success)' : 'var(--status-warning)',
-                          borderRadius: '50%',
-                          display: 'inline-block'
-                        }}></span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {run.environment}
-                        </span>
-                      </div>
-                      
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                        Tahmini süre: {formatDuration(run.estimatedDuration)}
-                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {upcoming.map((schedule) => (
+                        <div 
+                          key={schedule.id}
+                          style={{ 
+                            padding: '0.75rem',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderRadius: '0.5rem',
+                            border: '1px solid var(--border-primary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onClick={() => {
+                            setEditingSchedule(schedule);
+                            setIsModalOpen(true);
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--primary)';
+                            e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--border-primary)';
+                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                          }}
+                        >
+                          <div style={{ 
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'space-between',
+                            marginBottom: '0.5rem'
+                          }}>
+                            <h4 style={{ 
+                              fontSize: '0.875rem', 
+                              fontWeight: 600, 
+                              color: 'var(--text-primary)',
+                              margin: 0,
+                              flex: 1
+                            }}>
+                              {schedule.name}
+                            </h4>
+                            <span style={{
+                              fontSize: '0.625rem',
+                              padding: '0.125rem 0.375rem',
+                              backgroundColor: 'var(--bg-tertiary)',
+                              color: 'var(--text-tertiary)',
+                              borderRadius: '0.25rem',
+                              textTransform: 'uppercase',
+                              fontWeight: 600,
+                              letterSpacing: '0.05em'
+                            }}>
+                              {schedule.suite}
+                            </span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Clock size={12} color="var(--text-tertiary)" />
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                                {schedule.nextRun ? new Date(schedule.nextRun).toLocaleString('tr-TR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : '-'}
+                              </span>
+                            </div>
+                            
+                            <div style={{ 
+                              fontSize: '0.7rem', 
+                              color: 'var(--text-tertiary)',
+                              marginTop: '0.125rem'
+                            }}>
+                              {getScheduleDescription(schedule.schedule)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                    ))}
-                  </div>
-                )}
-                
-                {upcomingRuns.length > 0 && (
-                  <div style={{ 
-                    marginTop: '1rem',
-                    paddingTop: '1rem',
-                    borderTop: '1px solid var(--border-primary)'
-                  }}>
-                    <button className="btn-secondary" style={{ width: '100%' }}>
-                      Tüm Zamanlamaları Görüntüle
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -503,7 +518,6 @@ export default function ScheduledPage() {
           }
         }}
         schedule={editingSchedule}
-        tests={tests}
       />
     </PageLayout>
   );

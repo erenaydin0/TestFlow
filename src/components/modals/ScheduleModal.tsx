@@ -10,7 +10,6 @@ interface ScheduleModalProps {
   onClose: () => void;
   onSave: (schedule: Partial<ScheduledTest>) => void;
   schedule?: ScheduledTest;
-  tests: Test[];
 }
 
 const FREQUENCY_OPTIONS: { value: ScheduleFrequency; label: string; description: string }[] = [
@@ -26,7 +25,9 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
   label: `${i.toString().padStart(2, '0')}:00`
 }));
 
-export function ScheduleModal({ isOpen, onClose, onSave, schedule, tests }: ScheduleModalProps) {
+export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleModalProps) {
+  const [tests, setTests] = useState<Test[]>([]);
+  const [loadingTests, setLoadingTests] = useState(false);
   const [selectedTest, setSelectedTest] = useState(schedule?.testId || '');
   const [frequency, setFrequency] = useState<ScheduleFrequency>(schedule?.frequency || 'daily');
   
@@ -39,6 +40,80 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule, tests }: Sche
   const [customInterval, setCustomInterval] = useState<number>(6); // Özel için - saat aralığı
   const [customType, setCustomType] = useState<'hours' | 'interval'>('hours'); // Özel tip
   const [cronExpression, setCronExpression] = useState('0 9 * * *');
+
+  // Testleri yükle
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const loadTests = async () => {
+      try {
+        setLoadingTests(true);
+        const response = await fetch('http://localhost:3001/api/tests');
+        if (!response.ok) throw new Error('Testler yüklenemedi');
+        const data = await response.json();
+        setTests(data);
+      } catch (error) {
+        console.error('Testler yüklenirken hata:', error);
+      } finally {
+        setLoadingTests(false);
+      }
+    };
+    
+    loadTests();
+  }, [isOpen]);
+
+  // Schedule değiştiğinde form'u güncelle
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    if (schedule) {
+      setSelectedTest(schedule.testId);
+      setFrequency(schedule.frequency);
+      setCronExpression(schedule.schedule);
+      
+      // Cron'dan değerleri parse et
+      const parts = schedule.schedule.split(' ');
+      if (parts.length >= 5) {
+        const [min, hr, day, month, weekday] = parts;
+        
+        if (schedule.frequency === 'daily' || schedule.frequency === 'weekly' || schedule.frequency === 'monthly') {
+          setMinute(min);
+          setHour(hr);
+        }
+        
+        if (schedule.frequency === 'weekly' && weekday !== '*') {
+          setSelectedDays(weekday.split(',').map(d => parseInt(d)));
+        }
+        
+        if (schedule.frequency === 'monthly' && day !== '*') {
+          setSelectedMonthDays(day.split(',').map(d => parseInt(d)));
+        }
+        
+        if (schedule.frequency === 'custom') {
+          if (hr.includes(',')) {
+            setCustomType('hours');
+            setSelectedHours(hr.split(',').map(h => parseInt(h)));
+          } else if (hr.includes('/')) {
+            setCustomType('interval');
+            const interval = parseInt(hr.split('/')[1]);
+            setCustomInterval(interval);
+          }
+        }
+      }
+    } else {
+      // Reset form
+      setSelectedTest('');
+      setFrequency('daily');
+      setHour('09');
+      setMinute('00');
+      setSelectedDays([1]);
+      setSelectedMonthDays([1]);
+      setSelectedHours([9]);
+      setCustomInterval(6);
+      setCustomType('hours');
+      setCronExpression('0 9 * * *');
+    }
+  }, [schedule, isOpen]);
 
   // Cron ifadesini otomatik oluştur
   useEffect(() => {

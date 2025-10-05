@@ -20,7 +20,7 @@ import { TestModal } from '@/components/modals';
 
 import { TestStep, BrowserType, TestFormData, TestFilters } from '@/types';
 import { getActionByType } from '@/lib/actions';
-import { exportTestWorkflow, importTestWorkflow, validateWorkflow, saveWorkflowToStorage, getWorkflowById } from '@/lib/utils';
+import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/lib/utils';
 import { 
   useTestSteps,
   useCopyPaste,
@@ -489,7 +489,7 @@ export default function TestBuilder() {
   }, [testSteps]);
 
   // Handle save from dialog
-  const handleSaveFromDialog = useCallback((data: {
+  const handleSaveFromDialog = useCallback(async (data: {
     name: string;
     description: string;
     tags: string[];
@@ -497,27 +497,52 @@ export default function TestBuilder() {
     browserType: BrowserType;
   }) => {
     try {
-      const workflowId = saveWorkflowToStorage({
+      const testData = {
         name: data.name,
         description: data.description,
-        steps: testSteps,
+        workflow: testSteps,
         tags: data.tags,
         suite: data.suite,
-        id: loadedWorkflowId || undefined, // Düzenleme modunda mevcut ID'yi kullan
         enableScreenshots,
         enableRecording,
         headlessMode,
-        browserType: data.browserType
-      });
+        browserType: data.browserType,
+        isExecutable: true,
+        status: '',
+        duration: 0
+      };
+
+      let workflowId: string;
       
-      setIsSaveDialogOpen(false);
-      
+      // Backend'e kaydet
       if (loadedWorkflowId) {
+        // Güncelleme
+        const response = await fetch(`http://localhost:3001/api/tests/${loadedWorkflowId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testData)
+        });
+        
+        if (!response.ok) throw new Error('Test güncellenemedi');
+        const updated = await response.json();
+        workflowId = updated.id;
         notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
       } else {
+        // Yeni kayıt
+        const response = await fetch('http://localhost:3001/api/tests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testData)
+        });
+        
+        if (!response.ok) throw new Error('Test kaydedilemedi');
+        const saved = await response.json();
+        workflowId = saved.id;
+        setLoadedWorkflowId(workflowId);
         notifyTestSaved(data.name, workflowId);
-        setLoadedWorkflowId(workflowId); // Yeni kaydedilen workflow'u track et
       }
+      
+      setIsSaveDialogOpen(false);
       
       // Mark as saved for unsaved changes tracking
       markAsSaved();
@@ -527,10 +552,6 @@ export default function TestBuilder() {
         savePromiseRef.current.resolve();
         savePromiseRef.current = null;
       }
-      
-      // Optional: Clear current workspace or keep it
-      // setTestSteps([]);
-      // clearSelection();
     } catch (error) {
       notifyTestFailure('Test Kaydetme', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
       
@@ -553,7 +574,7 @@ export default function TestBuilder() {
 
     // Get actual test name if workflow is loaded
     const actualWorkflowName = loadedWorkflowName || 
-      (loadedWorkflowId ? (getWorkflowById(loadedWorkflowId)?.name || `Test ${loadedWorkflowId.slice(0, 8)}`) : 'Test Builder Workflow');
+      (loadedWorkflowId ? `Test ${loadedWorkflowId.slice(0, 8)}` : 'Test Builder Workflow');
     
     setIsRunning(true);
 
@@ -634,42 +655,53 @@ export default function TestBuilder() {
     console.log('useEffect çalıştı:', { loadWorkflowId, loadedWorkflowId });
     
     if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
-      const workflow = getWorkflowById(loadWorkflowId);
-      if (workflow && workflow.workflow) {
-        console.log('Workflow yükleniyor:', workflow.name);
-        setTestSteps(workflow.workflow);
-        setLoadedWorkflowId(loadWorkflowId);
-        setLoadedWorkflowName(workflow.name);
-        
-        // Load screenshot and recording settings
-        setEnableScreenshots(workflow.enableScreenshots || false);
-        setEnableRecording(workflow.enableRecording || false);
-        setHeadlessMode(workflow.headlessMode || false);
-        
-        // Load browser settings
-        if (workflow.browserType) {
-          setSelectedBrowser(workflow.browserType);
-        }
-        
-        // Reset unsaved changes after workflow is loaded
-        setTimeout(() => {
-          resetUnsavedChanges();
-        }, 0);
-        
-        // Show success message only if not shown before for this workflow
-        const notificationKey = `loaded-${loadWorkflowId}`;
-        if (!shownNotifications.current.has(notificationKey)) {
-          console.log('Bildirim gösteriliyor:', workflow.name);
-          shownNotifications.current.add(notificationKey);
-          setTimeout(() => {
-            notifyWorkflowLoaded(workflow.name);
-          }, 100);
-        } else {
-          console.log('Bildirim zaten gösterildi, tekrar gösterilmiyor');
-        }
-      } else {
-        notifyTestFailure('Test Builder Workflow', '', 'Workflow bulunamadı veya geçersiz!');
-      }
+      // Backend'den workflow yükle
+      fetch(`http://localhost:3001/api/tests/${loadWorkflowId}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Test bulunamadı');
+          return response.json();
+        })
+        .then(workflow => {
+          if (workflow && workflow.workflow) {
+            console.log('Workflow yükleniyor:', workflow.name);
+            setTestSteps(workflow.workflow);
+            setLoadedWorkflowId(loadWorkflowId);
+            setLoadedWorkflowName(workflow.name);
+            
+            // Load screenshot and recording settings
+            setEnableScreenshots(workflow.enableScreenshots || false);
+            setEnableRecording(workflow.enableRecording || false);
+            setHeadlessMode(workflow.headlessMode || false);
+            
+            // Load browser settings
+            if (workflow.browserType) {
+              setSelectedBrowser(workflow.browserType);
+            }
+            
+            // Reset unsaved changes after workflow is loaded
+            setTimeout(() => {
+              resetUnsavedChanges();
+            }, 0);
+            
+            // Show success message only if not shown before for this workflow
+            const notificationKey = `loaded-${loadWorkflowId}`;
+            if (!shownNotifications.current.has(notificationKey)) {
+              console.log('Bildirim gösteriliyor:', workflow.name);
+              shownNotifications.current.add(notificationKey);
+              setTimeout(() => {
+                notifyWorkflowLoaded(workflow.name);
+              }, 100);
+            } else {
+              console.log('Bildirim zaten gösterildi, tekrar gösterilmiyor');
+            }
+          } else {
+            notifyTestFailure('Test Builder Workflow', '', 'Workflow bulunamadı veya geçersiz!');
+          }
+        })
+        .catch(error => {
+          console.error('Workflow yükleme hatası:', error);
+          notifyTestFailure('Test Builder Workflow', '', 'Workflow yüklenemedi!');
+        });
     }
     
     // Clear notification tracking when no workflow is loaded
@@ -868,16 +900,13 @@ export default function TestBuilder() {
           }
         }}
         onSave={handleSaveFromDialog}
-        initialData={loadedWorkflowId ? (() => {
-          const workflow = getWorkflowById(loadedWorkflowId);
-          return workflow ? {
-            name: workflow.name,
-            description: workflow.description || '',
-            tags: workflow.tags,
-            suite: workflow.suite,
-            browserType: workflow.browserType || 'chromium'
-          } : undefined;
-        })() : undefined}
+        initialData={loadedWorkflowId && loadedWorkflowName ? {
+          name: loadedWorkflowName,
+          description: '',
+          tags: [],
+          suite: 'Default',
+          browserType: selectedBrowser
+        } : undefined}
         isUpdating={!!loadedWorkflowId}
         mode={loadedWorkflowId ? 'edit' : 'save'}
       />

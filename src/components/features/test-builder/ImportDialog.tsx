@@ -258,25 +258,35 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       }
 
       try {
-        // Save the workflow with actual steps data
-        saveWorkflowToStorage({
-          name: preview.name,
-          description: preview.description,
-          steps: workflowData.steps || [],
-          tags: preview.tags,
-          suite: preview.suite,
-          browserType: preview.browserType,
-          enableScreenshots: preview.enableScreenshots,
-          enableRecording: preview.enableRecording,
-          headlessMode: preview.headlessMode
+        // Backend'e kaydet
+        const response = await fetch('http://localhost:3001/api/tests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: preview.name,
+            description: preview.description,
+            workflow: workflowData.steps || [],
+            tags: preview.tags,
+            suite: preview.suite,
+            browserType: preview.browserType,
+            enableScreenshots: preview.enableScreenshots,
+            enableRecording: preview.enableRecording,
+            headlessMode: preview.headlessMode,
+            isExecutable: true,
+            status: '',
+            duration: 0
+          })
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Test kaydedilemedi');
+        }
+
         success++;
       } catch (error) {
-        if (error instanceof Error && error.message.includes('zaten mevcut')) {
-          skipped++;
-        } else {
-          failed++;
-        }
+        console.error('Test import hatası:', error);
+        failed++;
       }
     }
 

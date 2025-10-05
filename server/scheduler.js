@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { Cron } = require('croner');
 const fs = require('fs-extra');
 const path = require('path');
 
@@ -112,9 +113,21 @@ class TestScheduler {
   }
 
   calculateNextRun(cronExpression) {
-    // Basit bir hesaplama - gerçek bir cron parser kullanılabilir
-    // Şimdilik 1 saat sonra olarak ayarla
-    return new Date(Date.now() + 60 * 60 * 1000);
+    try {
+      // Croner kullanarak sonraki çalışma zamanını hesapla
+      const job = new Cron(cronExpression, { timezone: 'Europe/Istanbul' });
+      const nextRun = job.nextRun();
+      
+      if (nextRun) {
+        return new Date(nextRun);
+      }
+      
+      // Fallback: 1 saat sonra
+      return new Date(Date.now() + 60 * 60 * 1000);
+    } catch (error) {
+      console.error('Sonraki çalışma zamanı hesaplanamadı:', error);
+      return new Date(Date.now() + 60 * 60 * 1000);
+    }
   }
 
   async retryTest(schedule, attempt = 1) {
