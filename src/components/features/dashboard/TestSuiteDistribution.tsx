@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { ArrowRight } from 'lucide-react';
 
 interface TestSuite {
   name: string;
@@ -14,6 +13,7 @@ interface BrowserDistribution {
   name: string;
   value: number;
   color: string;
+  browserType?: string; // Gerçek browser type değeri (chromium, firefox, webkit, msedge)
 }
 
 interface TestSuiteDistributionProps {
@@ -46,6 +46,19 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     setLegendPage(0);
+  };
+
+  // Item'a tıklandığında ilgili sayfaya filtre ile yönlendir
+  const handleItemClick = (item: TestSuite | BrowserDistribution) => {
+    if (currentPage === 0) {
+      // Test Grubu Dağılımı - Reports sayfasına yönlendir
+      router.push(`/reports?suite=${encodeURIComponent(item.name)}`);
+    } else {
+      // Tarayıcı Dağılımı - Reports sayfasına yönlendir
+      // browserType varsa onu kullan, yoksa name'i kullan
+      const browserValue = (item as BrowserDistribution).browserType || item.name;
+      router.push(`/reports?browser=${encodeURIComponent(browserValue)}`);
+    }
   };
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -89,30 +102,7 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
           {pages[currentPage].title}
         </h3>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push(pages[currentPage].link)}
-            className="flex items-center gap-1 text-sm font-medium transition-colors duration-200"
-            style={{ 
-              color: 'var(--accent-primary)',
-              padding: '0.375rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid var(--accent-primary)',
-              backgroundColor: 'transparent'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--accent-primary)';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--accent-primary)';
-            }}
-          >
-            Detaylar
-            <ArrowRight size={14} />
-          </button>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => handlePageChange(currentPage === 0 ? 1 : 0)}
             disabled={currentPage === 0}
@@ -147,7 +137,6 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
           >
             <ChevronRightIcon className="w-5 h-5" />
           </button>
-          </div>
         </div>
       </div>
       <div className="flex flex-col md:flex-row gap-8 items-center">
@@ -195,16 +184,19 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
               return (
                 <div 
                   key={startIndex + index} 
-                  className="flex items-center justify-between p-2 rounded-lg transition-all duration-200"
+                  onClick={() => handleItemClick(item)}
+                  className="flex items-center justify-between p-2 rounded-lg transition-all duration-200 cursor-pointer"
                   style={{ 
                     backgroundColor: 'var(--bg-secondary)',
                     border: '1px solid var(--border-primary)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                    e.currentTarget.style.transform = 'translateX(4px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                    e.currentTarget.style.transform = 'translateX(0)';
                   }}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
