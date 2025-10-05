@@ -9,6 +9,8 @@ import {
   Download,
   Upload,
   X,
+  Play,
+  Trash2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -706,7 +708,7 @@ export default function TestsPage() {
                 />
               </div>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 {/* Import/Export Buttons */}
                 {selectedTests.size > 0 && (
                   <>
@@ -729,6 +731,7 @@ export default function TestsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        icon={Play}
                         onClick={handleBulkRun}
                         style={{ color: '#059669', borderColor: '#059669' }}
                       >
@@ -746,6 +749,7 @@ export default function TestsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        icon={Trash2}
                         onClick={handleBulkDelete}
                         style={{ color: '#dc2626', borderColor: '#dc2626' }}
                       >
@@ -753,11 +757,10 @@ export default function TestsPage() {
                       </Button>
                     </ButtonGroup>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       icon={Download}
                       onClick={handleBulkExport}
-                      style={{ color: '#2563eb', borderColor: '#2563eb' }}
                     >
                       Dışa Aktar
                     </Button>
