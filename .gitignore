@@ -40,5 +40,6 @@ next-env.d.ts
 /server/screenshots/
 /server/videos/
 /server/node_modules/
+/server/scheduled-tests/
 
 .cursor
