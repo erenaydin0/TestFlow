@@ -297,6 +297,8 @@ export const filterExecutions = (
     browserType: BrowserType[];
     dateRange?: string;
     specificDate?: string;
+    startDate?: string;
+    endDate?: string;
   }
 ): ExecutionResult[] => {
   return executions.filter(execution => {
@@ -319,19 +321,33 @@ export const filterExecutions = (
     const matchesBrowser = filters.browserType.length === 0 || 
       filters.browserType.includes(execution.options?.browserType || 'chromium');
 
-    // Specific date filter (takes priority over dateRange)
+    // Date filtering logic
+    const executionDate = new Date(execution.startTime);
+    executionDate.setHours(0, 0, 0, 0); // Normalize to start of day
+    
+    // Custom date range filter (highest priority)
+    if (filters.startDate && filters.endDate) {
+      const startDate = new Date(filters.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      const matchesCustomRange = executionDate >= startDate && executionDate <= endDate;
+      return matchesSearch && matchesStatus && matchesSuite && matchesTags && matchesBrowser && matchesCustomRange;
+    }
+
+    // Specific date filter (second priority)
     if (filters.specificDate) {
-      const executionDate = new Date(execution.startTime);
       const specificDate = new Date(filters.specificDate);
+      specificDate.setHours(0, 0, 0, 0);
       const matchesSpecificDate = executionDate.toDateString() === specificDate.toDateString();
       return matchesSearch && matchesStatus && matchesSuite && matchesTags && matchesBrowser && matchesSpecificDate;
     }
 
-    // Date range filter
+    // Old date range filter (backward compatibility)
     let matchesDateRange = true;
     if (filters.dateRange) {
-      const executionDate = new Date(execution.startTime);
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
       
