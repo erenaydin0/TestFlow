@@ -79,13 +79,15 @@ export default function ReportsPage() {
     const searchQuery = searchParams.get('search');
     const suiteParam = searchParams.get('suite');
     const browserParam = searchParams.get('browser');
+    const dateParam = searchParams.get('date');
     
-    if (searchQuery || suiteParam || browserParam) {
+    if (searchQuery || suiteParam || browserParam || dateParam) {
       setFilters(prev => ({
         ...prev,
         ...(searchQuery && { search: searchQuery }),
         ...(suiteParam && { suite: [suiteParam] }),
-        ...(browserParam && { browserType: [browserParam as BrowserType] })
+        ...(browserParam && { browserType: [browserParam as BrowserType] }),
+        ...(dateParam && { specificDate: dateParam, dateRange: '' }) // specificDate gelince dateRange'i temizle
       }));
     }
   }, [searchParams]);
