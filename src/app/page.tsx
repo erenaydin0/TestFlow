@@ -7,13 +7,16 @@ import {
   StatsCards,
   DailyTestResults, 
   TestSuiteDistribution, 
-  RecentTests
+  RecentTests,
+  UpcomingTests
 } from '@/components/features/dashboard';
 import { useExecutions } from '@/hooks/data';
+import { useScheduledTests } from '@/hooks/data';
 import { getConsistentColorFromString } from '@/lib/colorUtils';
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
+  const { scheduledTests, loading: scheduledLoading } = useScheduledTests();
   const [dateRange, setDateRange] = useState(14);
 
   // Process data for charts
@@ -135,12 +138,22 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* İkinci satır: Test Dağılımı + Hata Türleri */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TestSuiteDistribution 
-            testSuiteData={chartData.testSuiteData} 
-            browserData={chartData.browserData}
-          />
+        {/* İkinci satır: Son Testler altında Yaklaşan Testler */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+          <div className="lg:col-span-8">
+            <TestSuiteDistribution 
+              testSuiteData={chartData.testSuiteData} 
+              browserData={chartData.browserData}
+            />
+          </div>
+          <div className="lg:col-span-4">
+            <UpcomingTests 
+              scheduledTests={scheduledTests}
+              loading={scheduledLoading}
+              maxItems={5}
+              showViewAll={true}
+            />
+          </div>
         </div>
       </LoadingErrorState>
     </PageLayout>

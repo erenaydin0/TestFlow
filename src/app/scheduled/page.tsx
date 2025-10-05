@@ -14,6 +14,7 @@ import {
 import { PageLayout } from '@/components/layout';
 import { StatusBadge, CosmicSpinner } from '@/components/common';
 import { ScheduleModal } from '@/components/modals';
+import { UpcomingTests } from '@/components/features/dashboard';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { useScheduledTests } from '@/hooks/data';
 import { ScheduledTest } from '@/types/test';
@@ -389,118 +390,16 @@ export default function ScheduledPage() {
               </div>
 
               {/* Upcoming Runs */}
-              <div className="card">
-                <h3 style={{ 
-                  fontSize: '1.125rem', 
-                  fontWeight: 600, 
-                  color: 'var(--text-primary)', 
-                  margin: '0 0 1rem 0'
-                }}>
-                  Yaklaşan Testler
-                </h3>
-                
-                {(() => {
-                  // Aktif zamanlamaları nextRun'a göre sırala ve ilk 5'ini al
-                  const upcoming = scheduledTests
-                    .filter(s => s.enabled && s.status === 'active' && s.nextRun)
-                    .sort((a, b) => new Date(a.nextRun!).getTime() - new Date(b.nextRun!).getTime())
-                    .slice(0, 5);
-                  
-                  if (upcoming.length === 0) {
-                    return (
-                      <div style={{ 
-                        textAlign: 'center', 
-                        padding: '2rem',
-                        color: 'var(--text-secondary)'
-                      }}>
-                        <Calendar size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
-                        <p style={{ fontSize: '0.875rem' }}>Yaklaşan test yok</p>
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {upcoming.map((schedule) => (
-                        <div 
-                          key={schedule.id}
-                          style={{ 
-                            padding: '0.75rem',
-                            backgroundColor: 'var(--bg-secondary)',
-                            borderRadius: '0.5rem',
-                            border: '1px solid var(--border-primary)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onClick={() => {
-                            setEditingSchedule(schedule);
-                            setIsModalOpen(true);
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--primary)';
-                            e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.05)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--border-primary)';
-                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                          }}
-                        >
-                          <div style={{ 
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            justifyContent: 'space-between',
-                            marginBottom: '0.5rem'
-                          }}>
-                            <h4 style={{ 
-                              fontSize: '0.875rem', 
-                              fontWeight: 600, 
-                              color: 'var(--text-primary)',
-                              margin: 0,
-                              flex: 1
-                            }}>
-                              {schedule.name}
-                            </h4>
-                            <span style={{
-                              fontSize: '0.625rem',
-                              padding: '0.125rem 0.375rem',
-                              backgroundColor: 'var(--bg-tertiary)',
-                              color: 'var(--text-tertiary)',
-                              borderRadius: '0.25rem',
-                              textTransform: 'uppercase',
-                              fontWeight: 600,
-                              letterSpacing: '0.05em'
-                            }}>
-                              {schedule.suite}
-                            </span>
-                          </div>
-                          
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <Clock size={12} color="var(--text-tertiary)" />
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                                {schedule.nextRun ? new Date(schedule.nextRun).toLocaleString('tr-TR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                }) : '-'}
-                              </span>
-                            </div>
-                            
-                            <div style={{ 
-                              fontSize: '0.7rem', 
-                              color: 'var(--text-tertiary)',
-                              marginTop: '0.125rem'
-                            }}>
-                              {getScheduleDescription(schedule.schedule)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
+              <UpcomingTests 
+                scheduledTests={scheduledTests}
+                loading={loading}
+                maxItems={5}
+                showViewAll={false}
+                onTestClick={(schedule) => {
+                  setEditingSchedule(schedule);
+                  setIsModalOpen(true);
+                }}
+              />
             </div>
           )}
       
