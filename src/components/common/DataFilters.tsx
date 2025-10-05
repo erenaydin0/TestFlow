@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Chrome, Globe } from 'lucide-react';
 
-import { MultiSelect } from './';
+import { MultiSelect, CustomSelect } from './';
 import { Button } from '@/components/ui';
 import { BrowserType, TestFilters, ExecutionFilters } from '@/types';
 
@@ -141,49 +141,34 @@ const DataFilters: React.FC<DataFiltersProps> = ({
 
         {/* Status Filter */}
         {showStatus && availableOptions.statuses && (
-          <select
+          <CustomSelect
             value={filters.status || ''}
-            onChange={(e) => updateFilter('status', e.target.value)}
-            style={{
-              padding: '0.5rem',
-              border: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              outline: 'none'
-            }}
-          >
-            <option value="">Tüm Durumlar</option>
-            {availableOptions.statuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => updateFilter('status', value)}
+            options={[
+              { value: '', label: 'Tüm Durumlar' },
+              ...availableOptions.statuses.map(status => ({
+                value: status,
+                label: status
+              }))
+            ]}
+            placeholder="Tüm Durumlar"
+          />
         )}
 
         {/* Date Range */}
         {showDateRange && (
-          <select
+          <CustomSelect
             value={filters.dateRange || ''}
-            onChange={(e) => updateFilter('dateRange', e.target.value)}
-            style={{
-              padding: '0.5rem',
-              border: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              outline: 'none'
-            }}
-          >
-            <option value="">Tüm Tarihler</option>
-            <option value="today">Bugün</option>
-            <option value="yesterday">Dün</option>
-            <option value="last7days">Son 7 Gün</option>
-            <option value="last30days">Son 30 Gün</option>
-          </select>
+            onChange={(value) => updateFilter('dateRange', value)}
+            options={[
+              { value: '', label: 'Tüm Tarihler' },
+              { value: 'today', label: 'Bugün' },
+              { value: 'yesterday', label: 'Dün' },
+              { value: 'last7days', label: 'Son 7 Gün' },
+              { value: 'last30days', label: 'Son 30 Gün' }
+            ]}
+            placeholder="Tüm Tarihler"
+          />
         )}
 
         {/* Suite Filter */}
@@ -264,51 +249,32 @@ const DataFilters: React.FC<DataFiltersProps> = ({
 
         {/* Status Filter */}
         {showStatus && availableOptions.statuses && (
-          <select
+          <CustomSelect
             value={filters.status || ''}
-            onChange={(e) => updateFilter('status', e.target.value)}
-            style={{
-              padding: '0.375rem 0.5rem',
-              border: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.75rem',
-              minWidth: '120px',
-              outline: 'none'
-            }}
-          >
-            <option value="">Tüm Durumlar</option>
-            {availableOptions.statuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => updateFilter('status', value)}
+            options={[
+              { value: 'completed', label: 'Başarılı' },
+              { value: 'failed', label: 'Başarısız' },
+            ]}
+            placeholder="Tüm Durumlar"
+            className="min-w-[150px]"
+          />
         )}
 
         {/* Date Range */}
         {showDateRange && (
-          <select
+          <CustomSelect
             value={filters.dateRange || ''}
-            onChange={(e) => updateFilter('dateRange', e.target.value)}
-            style={{
-              padding: '0.375rem 0.5rem',
-              border: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.75rem',
-              minWidth: '120px',
-              outline: 'none'
-            }}
-          >
-            <option value="">Tüm Tarihler</option>
-            <option value="today">Bugün</option>
-            <option value="yesterday">Dün</option>
-            <option value="last7days">Son 7 Gün</option>
-            <option value="last30days">Son 30 Gün</option>
-          </select>
+            onChange={(value) => updateFilter('dateRange', value)}
+            options={[
+              { value: 'today', label: 'Bugün' },
+              { value: 'yesterday', label: 'Dün' },
+              { value: 'last7days', label: 'Son 7 Gün' },
+              { value: 'last30days', label: 'Son 30 Gün' }
+            ]}
+            placeholder="Tüm Tarihler"
+            className="min-w-[150px]"
+          />
         )}
 
         {/* Suite Filter */}
@@ -317,7 +283,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           selectedValues={filters.suite}
           onChange={(values) => updateFilter('suite', values)}
           placeholder="Tüm Test Grupları"
-          className="min-w-[120px]"
+          className="min-w-[150px]"
         />
 
         {/* Tags Filter */}
@@ -326,7 +292,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           selectedValues={filters.tags}
           onChange={(values) => updateFilter('tags', values)}
           placeholder="Tüm Etiketler"
-          className="min-w-[120px]"
+          className="min-w-[150px]"
         />
 
         {/* Browser Filter */}
@@ -335,7 +301,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           selectedValues={filters.browserType}
           onChange={(values) => updateFilter('browserType', values)}
           placeholder="Tüm Tarayıcılar"
-          className="min-w-[120px]"
+          className="min-w-[150px]"
           renderOption={(browser) => {
             const option = browserOptions.find(opt => opt.value === browser);
             if (!option) return browser;
@@ -353,10 +319,11 @@ const DataFilters: React.FC<DataFiltersProps> = ({
         {hasActiveFilters && (
           <Button
             variant="outline"
-            size="sm"
+            size="xs"
             icon={X}
             onClick={clearAllFilters}
-            style={{ marginLeft: 'auto' }}
+            className="min-w-[150px]"
+            style={{ margin: '0' }}
           >
             Filtreleri Temizle
           </Button>
