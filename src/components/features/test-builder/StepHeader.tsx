@@ -108,19 +108,19 @@ const StepHeader: React.FC<StepHeaderProps> = ({
                 cursor: 'pointer',
                 color: isConnecting && connectionStart === step.id && connectionType === 'true'
                   ? 'white' 
-                  : '#22c55e',
+                  : 'var(--status-success)',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
                 if (!(isConnecting && connectionStart === step.id && connectionType === 'true')) {
                   e.currentTarget.style.backgroundColor = 'var(--status-success-bg)';
-                  e.currentTarget.style.color = '#16a34a';
+                  e.currentTarget.style.color = 'var(--status-success-hover)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!(isConnecting && connectionStart === step.id && connectionType === 'true')) {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#22c55e';
+                  e.currentTarget.style.color = 'var(--status-success)';
                 }
               }}
               title={isConnecting && connectionStart === step.id && connectionType === 'true'
@@ -149,26 +149,26 @@ const StepHeader: React.FC<StepHeaderProps> = ({
               style={{
                 padding: '0.25rem',
                 backgroundColor: isConnecting && connectionStart === step.id && connectionType === 'false'
-                  ? '#ef4444' 
+                  ? 'var(--status-error)' 
                   : 'transparent',
                 border: 'none',
                 borderRadius: '0.25rem',
                 cursor: 'pointer',
                 color: isConnecting && connectionStart === step.id && connectionType === 'false'
                   ? 'white' 
-                  : '#ef4444',
+                  : 'var(--status-error)',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
                 if (!(isConnecting && connectionStart === step.id && connectionType === 'false')) {
                   e.currentTarget.style.backgroundColor = 'var(--status-error-bg)';
-                  e.currentTarget.style.color = '#dc2626';
+                  e.currentTarget.style.color = 'var(--status-error-hover)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!(isConnecting && connectionStart === step.id && connectionType === 'false')) {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#ef4444';
+                  e.currentTarget.style.color = 'var(--status-error)';
                 }
               }}
               title={isConnecting && connectionStart === step.id && connectionType === 'false'
@@ -201,7 +201,7 @@ const StepHeader: React.FC<StepHeaderProps> = ({
             style={{
               padding: '0.25rem',
               backgroundColor: isConnecting && connectionStart === step.id 
-                ? '#3b82f6' 
+                ? 'var(--status-info)' 
                 : 'transparent',
               border: 'none',
               borderRadius: '0.25rem',
@@ -214,7 +214,7 @@ const StepHeader: React.FC<StepHeaderProps> = ({
             onMouseEnter={(e) => {
               if (!(isConnecting && connectionStart === step.id)) {
                 e.currentTarget.style.backgroundColor = 'var(--status-info-bg)';
-                e.currentTarget.style.color = '#3b82f6';
+                e.currentTarget.style.color = 'var(--status-info)';
               }
             }}
             onMouseLeave={(e) => {
@@ -256,8 +256,8 @@ const StepHeader: React.FC<StepHeaderProps> = ({
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#fee2e2';
-            e.currentTarget.style.color = '#dc2626';
+            e.currentTarget.style.backgroundColor = 'var(--status-error-bg)';
+            e.currentTarget.style.color = 'var(--status-error)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
