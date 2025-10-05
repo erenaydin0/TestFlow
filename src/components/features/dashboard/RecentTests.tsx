@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
 
 import { StatusBadge } from '@/components/common';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
@@ -28,9 +29,33 @@ export default function RecentTests({ data }: RecentTestsProps) {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-        Son Testler
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Son Testler
+        </h3>
+        <button
+          onClick={() => router.push('/reports')}
+          className="flex items-center gap-1 text-sm font-medium transition-colors duration-200"
+          style={{ 
+            color: 'var(--accent-primary)',
+            padding: '0.375rem 0.75rem',
+            borderRadius: '0.375rem',
+            border: '1px solid var(--accent-primary)',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--accent-primary)';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--accent-primary)';
+          }}
+        >
+          Tümünü Göster
+          <ArrowRight size={14} />
+        </button>
+      </div>
       {data.length === 0 ? (
         <div className="text-center py-8" style={{ color: 'var(--text-secondary)' }}>
           <p>Henüz test çalıştırılmamış</p>
