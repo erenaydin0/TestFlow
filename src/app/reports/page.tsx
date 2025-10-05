@@ -167,16 +167,25 @@ export default function ReportsPage() {
       key: 'status',
       label: 'Durum',
       sortable: true,
-      align: 'center',
       width: '100px',
       render: (value, execution) => (
         <StatusCell status={execution.status} size="sm" />
       )
     },
     {
+      key: 'successRate',
+      label: 'Başarı',
+      sortable: true,
+      width: '100px',
+      render: (value, execution) => (
+        <SuccessRateCell rate={execution.successRate} />
+      )
+    },
+    {
       key: 'startTime',
       label: 'Başlangıç',
       sortable: true,
+      width: '150px',
       render: (value, execution) => (
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           {formatRelativeTime(execution.startTime)}
@@ -194,18 +203,9 @@ export default function ReportsPage() {
       )
     },
     {
-      key: 'successRate',
-      label: 'Başarı',
-      sortable: true,
-      align: 'center',
-      width: '80px',
-      render: (value, execution) => (
-        <SuccessRateCell rate={execution.successRate} />
-      )
-    },
-    {
       key: 'suite',
       label: 'Test Grubu',
+      width: '200px',
       sortable: true,
       render: (value) => (
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
@@ -217,6 +217,7 @@ export default function ReportsPage() {
       key: 'tags',
       label: 'Etiketler',
       sortable: true,
+      width: '250px',
       render: (value, execution) => (
         <TagsCell tags={execution.tags || []} maxVisible={2} />
       )
@@ -235,7 +236,6 @@ export default function ReportsPage() {
       key: 'actions',
       label: 'Rapor',
       sortable: false,
-      align: 'center',
       width: '80px',
       render: (value, execution) => (
         <ActionsCell

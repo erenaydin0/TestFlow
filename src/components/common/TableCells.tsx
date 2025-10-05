@@ -196,7 +196,7 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
               transition: 'color 0.2s ease',
               fontWeight: showCopied ? 600 : 400
             }}
-            title={`${id} (Kopyalamak için tıklayın)`}
+            title={`${id}`}
             onClick={handleCopyId}
             onMouseEnter={(e) => {
               if (!showCopied) {
@@ -209,7 +209,7 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
               }
             }}
           >
-            {showCopied ? 'Kopyalandı! ✓' : `ID: ${id.slice(0, 12)}...`}
+            {showCopied ? 'Kopyalandı! ✓' : `ID: ${id.slice(0, 50)}`}
           </div>
         </div>
       )}
@@ -302,7 +302,6 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
       display: 'flex', 
       alignItems: 'center', 
       gap: '0.5rem',
-      justifyContent: 'flex-end'
     }}>
       {allActions.map((action, index) => (
         <button

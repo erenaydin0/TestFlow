@@ -149,7 +149,8 @@ const DataTable = <T extends Record<string, any>>({
       <table style={{ 
         width: '100%', 
         borderCollapse: 'collapse',
-        backgroundColor: 'var(--bg-primary)'
+        backgroundColor: 'var(--bg-primary)',
+        tableLayout: 'fixed'
       }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
@@ -157,7 +158,9 @@ const DataTable = <T extends Record<string, any>>({
               <th style={{ 
                 padding: '0.75rem', 
                 textAlign: 'left', 
-                width: '40px',
+                width: '50px',
+                minWidth: '50px',
+                maxWidth: '50px',
                 color: 'var(--text-secondary)',
                 fontSize: '0.875rem',
                 fontWeight: 500
@@ -228,7 +231,8 @@ const DataTable = <T extends Record<string, any>>({
                   borderBottom: '1px solid var(--border-primary)',
                   cursor: (onRowClick || onRowDoubleClick) ? 'pointer' : 'default',
                   transition: 'background-color 0.2s ease',
-                  backgroundColor: isHighlighted ? 'var(--bg-tertiary)' : 'transparent'
+                  backgroundColor: isHighlighted ? 'var(--bg-tertiary)' : 'transparent',
+                  position: 'relative'
                 }}
                 onMouseEnter={(e) => {
                   if (!isHighlighted) {
@@ -264,7 +268,12 @@ const DataTable = <T extends Record<string, any>>({
                 }}
               >
                 {selectable && (
-                  <td style={{ padding: '0.75rem' }}>
+                  <td style={{ 
+                    padding: '0.75rem',
+                    width: '50px',
+                    minWidth: '50px',
+                    maxWidth: '50px'
+                  }}>
                     <input
                       type="checkbox"
                       checked={isSelected}

@@ -20,6 +20,7 @@ import LoadingErrorState from '@/components/common/LoadingErrorState';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import TableCells from '@/components/common/TableCells';
+import { EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from '@/components/common';
 import ImportDialog from '@/components/features/test-builder/ImportDialog';
 import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
@@ -75,6 +76,28 @@ export default function TestsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useTestNotifications();
+
+  // Handle inline updates
+  const handleUpdateSuite = (testId: string, suite: string) => {
+    const test = tests.find((t: any) => t.id === testId);
+    if (test) {
+      updateTest(testId, { ...test, suite });
+    }
+  };
+
+  const handleUpdateTags = (testId: string, tags: string[]) => {
+    const test = tests.find((t: any) => t.id === testId);
+    if (test) {
+      updateTest(testId, { ...test, tags });
+    }
+  };
+
+  const handleUpdateBrowser = (testId: string, browserType: any) => {
+    const test = tests.find((t: any) => t.id === testId);
+    if (test) {
+      updateTest(testId, { ...test, browserType });
+    }
+  };
 
   // Handle URL search parameter
   useEffect(() => {
@@ -170,6 +193,7 @@ export default function TestsPage() {
       key: 'name',
       label: 'Test Adı',
       sortable: true,
+      width: '300px',
       render: (value, test) => (
         <TestNameCell 
           name={test.name} 
@@ -178,12 +202,53 @@ export default function TestsPage() {
         />
       )
     },
+
+    {
+      key: 'suite',
+      label: 'Test Grubu',
+      sortable: true,
+      width: '150px',
+      render: (value, test) => (
+        <EditableSuiteCell
+          value={value}
+          testId={test.id}
+          availableSuites={filterOptions.suites}
+          onUpdate={handleUpdateSuite}
+        />
+      )
+    },
+    {
+      key: 'tags',
+      label: 'Etiketler',
+      sortable: true,
+      width: '200px',
+      render: (value, test) => (
+        <EditableTagsCell
+          tags={test.tags}
+          testId={test.id}
+          availableTags={filterOptions.tags}
+          onUpdate={handleUpdateTags}
+        />
+      )
+    },
+    {
+      key: 'browserType',
+      label: 'Tarayıcı',
+      sortable: true,
+      width: '100px',
+      render: (value, test) => (
+        <EditableBrowserCell
+          browserType={test.browserType || 'chromium'}
+          testId={test.id}
+          onUpdate={handleUpdateBrowser}
+        />
+      )
+    },
     {
       key: 'stepCount',
       label: 'Adım Sayısı',
       sortable: true,
-      align: 'center',
-      width: '120px',
+      width: '100px',
       render: (value, test) => (
         <StepCountCell count={test.workflow?.length || 0} />
       )
@@ -192,6 +257,7 @@ export default function TestsPage() {
       key: 'createdAt',
       label: 'Oluşturulma',
       sortable: true,
+      width: '100px',
       render: (value, test) => (
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           {test.createdAt ? new Date(test.createdAt).toLocaleDateString('tr-TR') : '-'}
@@ -199,38 +265,9 @@ export default function TestsPage() {
       )
     },
     {
-      key: 'suite',
-      label: 'Test Grubu',
-      sortable: true,
-      render: (value) => (
-        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {value || '-'}
-        </span>
-      )
-    },
-    {
-      key: 'tags',
-      label: 'Etiketler',
-      sortable: true,
-      render: (value, test) => (
-        <TagsCell tags={test.tags} maxVisible={2} />
-      )
-    },
-    {
-      key: 'browserType',
-      label: 'Tarayıcı',
-      sortable: true,
-      align: 'center',
-      width: '120px',
-      render: (value, test) => (
-        <BrowserCell browserType={test.browserType} />
-      )
-    },
-    {
       key: 'actions',
       label: 'İşlemler',
       sortable: false,
-      align: 'right',
       width: '200px',
       render: (value, test) => (
         <ActionsCell
