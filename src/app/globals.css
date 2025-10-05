@@ -61,6 +61,8 @@
   --bg-tertiary: #1d1823;
   --bg-hover: #221d28;
   --bg-active: #2a2430;
+
+  --bg-primary-transparent: rgba(13, 10, 15, 0.5);
   
   /* Text Colors */
   --text-primary: #ebe8ec;
@@ -219,7 +221,7 @@ body {
 
 /* Dark mode card improvements - Cosmic glow */
 .dark .card {
-  background-color: var(--bg-primary);
+  background-color: var(--bg-primary-transparent);
   border: 1px solid var(--border-secondary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   position: relative;
