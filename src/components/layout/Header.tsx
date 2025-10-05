@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/features/notifications';
-import { StatusBadge, getStatusText } from '@/components/common';
+import { CustomSelect, StatusBadge, getStatusText } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { useRealtimeNotifications } from '@/hooks/data';
 import { useTheme, useSettingsModal } from '@/contexts';
@@ -639,47 +639,14 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   
                   {/* Compact Theme Dropdown */}
                   <div style={{ position: 'relative' }}>
-                    <select
+                    <CustomSelect
                       value={theme}
-                      onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
-                      style={{
-                        padding: '0.25rem 1.5rem 0.25rem 0.5rem',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '0.25rem',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        appearance: 'none',
-                        transition: 'all 0.2s ease',
-                        minWidth: '5rem',
-                        outline: 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.target as HTMLSelectElement).style.backgroundColor = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.target as HTMLSelectElement).style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      {themeOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    {/* Custom dropdown arrow */}
-                    <div style={{
-                      position: 'absolute',
-                      right: '0.375rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      pointerEvents: 'none',
-                      color: 'var(--text-tertiary)'
-                    }}>
-                      <ChevronDown size={12} />
-                    </div>
+                      onChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}
+                      options={themeOptions.map((option) => ({
+                        value: option.id,
+                        label: option.label
+                      }))}
+                    />
                   </div>
                 </div>
               </div>
