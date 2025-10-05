@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/features/notifications';
-import { CustomSelect, StatusBadge, getStatusText } from '@/components/common';
+import { CustomSelect, StatusBadge, getStatusText, CosmicLogo } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { useRealtimeNotifications } from '@/hooks/data';
 import { useTheme, useSettingsModal } from '@/contexts';
@@ -177,13 +177,18 @@ export default function Header({ title, subtitle }: HeaderProps) {
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
           }}>
+            <CosmicLogo size={36} animated={true} />
             <div>
               <h1 style={{ 
                 fontSize: '1.5rem', 
                 fontWeight: 'bold', 
                 color: 'var(--text-primary)',
                 margin: 0,
-                lineHeight: 1
+                lineHeight: 1,
+                background: 'linear-gradient(135deg, var(--status-primary) 0%, var(--status-purple) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
               }}>
                 CosmicQA
               </h1>
@@ -576,7 +581,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 justifyContent: 'center',
                 border: '2px solid var(--border-primary)'
               }}>
-                <User size={16} color="#2563eb" />
+                <User size={16} color="var(--status-info)" />
               </div>
             </button>
 
@@ -600,7 +605,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   justifyContent: 'center',
                   border: '2px solid var(--border-primary)'
                 }}>
-                  <UserCircle size={20} color="#2563eb" />
+                  <UserCircle size={20} color="var(--status-info)" />
                 </div>
                 <div>
                   <p style={{ 
@@ -692,7 +697,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   gap: '0.75rem',
                   padding: '0.5rem 0.75rem',
                   backgroundColor: 'transparent',
-                  color: '#ef4444',
+                  color: 'var(--status-error)',
                   border: 'none',
                   borderRadius: '0.375rem',
                   cursor: 'pointer',
