@@ -94,3 +94,56 @@ export interface TestStats {
   avgDuration: number;
   successRate: number;
 }
+
+// Scheduled Test Types
+export type ScheduleStatus = 'active' | 'paused' | 'disabled';
+export type ScheduleFrequency = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
+
+export interface ScheduledTest extends BaseEntity {
+  testId: string;
+  name: string;
+  description: string;
+  schedule: string; // Cron expression
+  frequency: ScheduleFrequency;
+  status: ScheduleStatus;
+  lastRun?: Date;
+  nextRun?: Date;
+  lastDuration?: number;
+  successRate?: number;
+  suite: string;
+  environment: 'production' | 'staging' | 'development';
+  enabled: boolean;
+  notifyOnFailure?: boolean;
+  notifyOnSuccess?: boolean;
+  retryOnFailure?: boolean;
+  maxRetries?: number;
+}
+
+export interface ScheduledTestFormData extends BaseFormData {
+  testId: string;
+  name: string;
+  description: string;
+  schedule: string;
+  frequency: ScheduleFrequency;
+  environment: 'production' | 'staging' | 'development';
+  notifyOnFailure: boolean;
+  notifyOnSuccess: boolean;
+  retryOnFailure: boolean;
+  maxRetries: number;
+}
+
+export interface ScheduledTestFilters {
+  search: string;
+  status: ScheduleStatus[];
+  environment: string[];
+  suite: string[];
+}
+
+export interface UpcomingRun {
+  id: string;
+  scheduledTestId: string;
+  testName: string;
+  scheduledTime: Date;
+  estimatedDuration: number;
+  environment: string;
+}
