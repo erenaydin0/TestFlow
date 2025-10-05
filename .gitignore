@@ -41,5 +41,6 @@ next-env.d.ts
 /server/videos/
 /server/node_modules/
 /server/scheduled-tests/
+/server/tests/
 
 .cursor
