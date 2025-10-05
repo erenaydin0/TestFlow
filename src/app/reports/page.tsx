@@ -29,7 +29,7 @@ import { StatsCards } from '@/components/features/dashboard';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
-import { ExecutionResult, ExecutionFilters, ExecutionStats } from '@/types';
+import { ExecutionResult, ExecutionFilters, ExecutionStats, BrowserType } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
@@ -77,10 +77,15 @@ export default function ReportsPage() {
   // Handle URL search parameter
   useEffect(() => {
     const searchQuery = searchParams.get('search');
-    if (searchQuery) {
+    const suiteParam = searchParams.get('suite');
+    const browserParam = searchParams.get('browser');
+    
+    if (searchQuery || suiteParam || browserParam) {
       setFilters(prev => ({
         ...prev,
-        search: searchQuery
+        ...(searchQuery && { search: searchQuery }),
+        ...(suiteParam && { suite: [suiteParam] }),
+        ...(browserParam && { browserType: [browserParam as BrowserType] })
       }));
     }
   }, [searchParams]);
