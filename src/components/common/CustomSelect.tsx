@@ -27,6 +27,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     dropdownPosition,
     containerRef,
     buttonRef,
+    dropdownRef,
     handleClose,
     handleToggle,
     getAnimationStyle
@@ -93,23 +94,26 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          ...(dropdownPosition === 'top' 
-            ? { bottom: '100%', marginBottom: '0.25rem' }
-            : { top: '100%', marginTop: '0.25rem' }
-          ),
-          left: 0,
-          right: 0,
-          backgroundColor: 'var(--bg-primary)',
-          border: '1px solid var(--accent-primary)',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          zIndex: 1000,
-          maxHeight: '250px',
-          overflowY: 'auto',
-          ...getAnimationStyle(200)
-        }}>
+        <div 
+          ref={dropdownRef}
+          style={{
+            position: 'absolute',
+            ...(dropdownPosition === 'top' 
+              ? { bottom: '100%', marginBottom: '0.25rem' }
+              : { top: '100%', marginTop: '0.25rem' }
+            ),
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--accent-primary)',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1000,
+            maxHeight: '250px',
+            overflowY: 'auto',
+            ...getAnimationStyle(200)
+          }}
+        >
           {options.map((option) => {
             const isSelected = option.value === value;
             

@@ -27,7 +27,10 @@ export default function MultiSelect({
   const {
     isOpen,
     isClosing,
-    containerRef: dropdownRef,
+    dropdownPosition,
+    containerRef,
+    buttonRef,
+    dropdownRef: dropdownContentRef,
     handleClose,
     handleToggle,
     getAnimationStyle
@@ -75,11 +78,12 @@ export default function MultiSelect({
 
   return (
     <div 
-      ref={dropdownRef}
+      ref={containerRef}
       className={`relative ${className}`}
       style={{ position: 'relative' }}
     >
       <div
+        ref={buttonRef}
         onClick={handleToggle}
         style={{
           display: 'flex',
@@ -142,9 +146,13 @@ export default function MultiSelect({
 
       {isOpen && (
         <div
+          ref={dropdownContentRef}
           style={{
             position: 'absolute',
-            top: '100%',
+            ...(dropdownPosition === 'top' 
+              ? { bottom: '100%', marginBottom: '0.25rem' }
+              : { top: '100%', marginTop: '0.25rem' }
+            ),
             left: 0,
             right: 0,
             zIndex: 1000,
@@ -152,7 +160,6 @@ export default function MultiSelect({
             border: '1px solid var(--accent-primary)',
             borderRadius: '0.375rem',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            marginTop: '0.25rem',
             maxHeight: '250px',
             overflowY: 'hidden',
             ...getAnimationStyle()

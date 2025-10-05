@@ -29,6 +29,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
     dropdownPosition,
     containerRef,
     buttonRef,
+    dropdownRef,
     handleClose,
     handleToggle,
     getAnimationStyle
@@ -99,22 +100,25 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          ...(dropdownPosition === 'top' 
-            ? { bottom: '100%', marginBottom: '0.25rem' }
-            : { top: '100%', marginTop: '0.25rem' }
-          ),
-          left: 0,
-          right: 0,
-          backgroundColor: 'var(--bg-primary)',
-          border: '1px solid var(--accent-primary)',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          zIndex: 1000,
-          width: '100%',
-          ...getAnimationStyle()
-        }}>
+        <div 
+          ref={dropdownRef}
+          style={{
+            position: 'absolute',
+            ...(dropdownPosition === 'top' 
+              ? { bottom: '100%', marginBottom: '0.25rem' }
+              : { top: '100%', marginTop: '0.25rem' }
+            ),
+            left: 0,
+            right: 0,
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--accent-primary)',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1000,
+            width: '100%',
+            ...getAnimationStyle()
+          }}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -179,7 +183,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
                     padding: '0.5rem',
                     cursor: 'pointer',
                     fontSize: '0.875rem',
-                    color: 'var(--text-primary)',
+                    color: suite === value ? 'white' : 'var(--text-primary)',
                     backgroundColor: suite === value ? 'var(--accent-primary)' : 'transparent',
                     borderBottom: '1px solid var(--border-primary)'
                   }}
@@ -227,6 +231,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
     dropdownPosition,
     containerRef,
     buttonRef,
+    dropdownRef,
     handleClose,
     handleToggle: toggleDropdown,
     getAnimationStyle
@@ -341,22 +346,25 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
 
     {/* Dropdown */}
     {isOpen && (
-      <div style={{
-        position: 'absolute',
-        ...(dropdownPosition === 'top' 
-          ? { bottom: '100%', marginBottom: '0.25rem' }
-          : { top: '100%', marginTop: '0.25rem' }
-        ),
-        left: 0,
-        right: 0,
-        backgroundColor: 'var(--bg-primary)',
-        border: '1px solid var(--accent-primary)',
-        borderRadius: '0.5rem',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        zIndex: 1000,
-        width: '100%',
-        ...getAnimationStyle(200)
-      }}>
+      <div 
+        ref={dropdownRef}
+        style={{
+          position: 'absolute',
+          ...(dropdownPosition === 'top' 
+            ? { bottom: '100%', marginBottom: '0.25rem' }
+            : { top: '100%', marginTop: '0.25rem' }
+          ),
+          left: 0,
+          right: 0,
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--accent-primary)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          width: '100%',
+          ...getAnimationStyle(200)
+        }}
+      >
         {/* Search Input */}
         <input
           ref={inputRef}
