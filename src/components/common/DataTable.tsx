@@ -232,7 +232,7 @@ const DataTable = <T extends Record<string, any>>({
                   cursor: (onRowClick || onRowDoubleClick) ? 'pointer' : 'default',
                   transition: 'background-color 0.2s ease',
                   backgroundColor: isHighlighted ? 'var(--bg-tertiary)' : 'transparent',
-                  position: 'relative'
+                  position: 'relative',
                 }}
                 onMouseEnter={(e) => {
                   if (!isHighlighted) {

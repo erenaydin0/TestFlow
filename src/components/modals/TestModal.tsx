@@ -403,6 +403,9 @@ const TestModal: React.FC<TestModalProps> = ({
                    onBrowserChange={setBrowserType}
                    disabled={false}
                    size="lg"
+                   style={{
+                    backgroundColor: 'var(--bg-secondary)'
+                   }}
                  />
                </div>
              </div>

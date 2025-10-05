@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Globe, Chrome } from 'lucide-react';
 import { BrowserType } from '@/types';
 
 interface BrowserSelectorProps {
@@ -9,25 +8,26 @@ interface BrowserSelectorProps {
   onBrowserChange: (browser: BrowserType) => void;
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  style?: React.CSSProperties;
 }
 
 const browserOptions = [
-  { value: 'chromium' as BrowserType, label: 'Chrome', icon: Chrome, color: '#4285F4' },    
-  { value: 'firefox' as BrowserType, label: 'Firefox', icon: Globe, color: '#FF7139' },
-  { value: 'webkit' as BrowserType, label: 'Safari', icon: Globe, color: '#007AFF' },
-  { value: 'msedge' as BrowserType, label: 'Edge', icon: Globe, color: '#0078D4' }
+  { value: 'chromium' as BrowserType, label: 'Chrome' },    
+  { value: 'firefox' as BrowserType, label: 'Firefox' },
+  { value: 'webkit' as BrowserType, label: 'Safari' },
+  { value: 'msedge' as BrowserType, label: 'Edge' }
 ];
 
 export default function BrowserSelector({ 
   selectedBrowser, 
   onBrowserChange, 
   disabled = false,
-  size = 'sm'
+  size = 'sm',
+  style = {}
 }: BrowserSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedOption = browserOptions.find(option => option.value === selectedBrowser);
-  const SelectedIconComponent = selectedOption?.icon || Chrome;
 
   // Size configurations
   const sizeConfig = {
@@ -64,8 +64,6 @@ export default function BrowserSelector({
           alignItems: 'center',
           gap: '0.375rem',
           padding: currentSize.padding,
-          backgroundColor: 'var(--bg-secondary)',
-          border: '1px solid var(--border-primary)',
           borderRadius: '0.5rem',
           color: 'var(--text-primary)',
           fontSize: currentSize.fontSize,
@@ -73,7 +71,8 @@ export default function BrowserSelector({
           opacity: disabled ? 0.6 : 1,
           transition: 'all 0.2s ease',
           minWidth: currentSize.minWidth,
-          width: '100%'
+          width: '100%',
+          ...style
         }}
         onMouseEnter={(e) => {
           if (!disabled) {
@@ -82,14 +81,10 @@ export default function BrowserSelector({
         }}
         onMouseLeave={(e) => {
           if (!disabled) {
-            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+            e.currentTarget.style.backgroundColor = '';
           }
         }}
       >
-        <SelectedIconComponent 
-          size={currentSize.iconSize} 
-          style={{ color: selectedOption?.color || '#4285F4' }} 
-        />
         <span>{selectedOption?.label || 'Chrome'}</span>
         <svg 
           width="10" 
@@ -135,7 +130,7 @@ export default function BrowserSelector({
               left: 0,
               right: 0,
               marginTop: '0.25rem',
-              backgroundColor: 'var(--bg-secondary)',
+              backgroundColor: 'var(--bg-primary)',
               border: '1px solid var(--border-primary)',
               borderRadius: '0.5rem',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -144,7 +139,6 @@ export default function BrowserSelector({
             }}
           >
             {browserOptions.map((option) => {
-              const IconComponent = option.icon;
               const isSelected = option.value === selectedBrowser;
               
               return (
@@ -160,7 +154,7 @@ export default function BrowserSelector({
                     alignItems: 'center',
                     gap: '0.5rem',
                     width: '100%',
-                    padding: '0.75rem',
+                    padding: '0.5rem',
                     backgroundColor: isSelected ? 'var(--accent-primary)' : 'transparent',
                     color: isSelected ? 'white' : 'var(--text-primary)',
                     border: 'none',
@@ -179,28 +173,7 @@ export default function BrowserSelector({
                     }
                   }}
                 >
-                  <IconComponent 
-                    size={currentSize.iconSize} 
-                    style={{ color: isSelected ? 'white' : option.color }} 
-                  />
                   <span>{option.label}</span>
-                  {isSelected && (
-                    <svg 
-                      width="14" 
-                      height="14" 
-                      viewBox="0 0 16 16" 
-                      fill="none"
-                      style={{ marginLeft: 'auto' }}
-                    >
-                      <path 
-                        d="M13.5 4.5L6 12L2.5 8.5" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
                 </button>
               );
             })}
