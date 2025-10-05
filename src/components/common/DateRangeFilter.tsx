@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { tr } from 'date-fns/locale/tr';
-import { Calendar, X } from 'lucide-react';
+import { Calendar, ChevronDown, X } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
 
 // Türkçe locale'i kaydet
@@ -116,13 +116,15 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
         onClick={() => setShowCalendar(!showCalendar)}
         className="flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200"
         style={{
-          backgroundColor: (start || end) ? 'var(--accent-primary)' : 'transparent',
+          backgroundColor: (start || end) ? 'var(--accent-primary)' : 'var(--bg-primary)',
           border: '1px solid var(--border-primary)',
+          borderRadius: '0.5rem',
           color: (start || end) ? 'white' : 'var(--text-secondary)'
         }}
       >
         <Calendar size={16} />
         <span style={{ minWidth: '120px', textAlign: 'left' }}>{formatDateRange()}</span>
+        <ChevronDown size={16} />
       </button>
 
       {/* Calendar Popup */}
