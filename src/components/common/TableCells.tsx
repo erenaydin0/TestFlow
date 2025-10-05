@@ -12,11 +12,11 @@ import { StatusBadge } from './';
 const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) => {
   const getBrowserIcon = () => {
     switch(browserType) {
-      case 'chromium': return <Chrome size={16} style={{ color: '#4285F4' }} />;
-      case 'firefox': return <Globe size={16} style={{ color: '#FF7139' }} />;
-      case 'webkit': return <Globe size={16} style={{ color: '#007AFF' }} />;
-      case 'msedge': return <Globe size={16} style={{ color: '#0078D4' }} />;
-      default: return <Chrome size={16} style={{ color: '#4285F4' }} />;
+      case 'chromium': return <Chrome size={16} style={{ color: 'var(--status-info)' }} />;
+      case 'firefox': return <Globe size={16} style={{ color: 'var(--status-warning)' }} />;
+      case 'webkit': return <Globe size={16} style={{ color: 'var(--status-info)' }} />;
+      case 'msedge': return <Globe size={16} style={{ color: 'var(--status-info)' }} />;
+      default: return <Chrome size={16} style={{ color: 'var(--status-info)' }} />;
     }
   };
 
@@ -191,7 +191,7 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
           <div 
             style={{ 
               fontSize: '0.7rem', 
-              color: showCopied ? '#059669' : 'var(--text-tertiary)',
+              color: showCopied ? 'var(--status-success)' : 'var(--text-tertiary)',
               fontFamily: 'monospace',
               marginTop: '0.25rem',
               cursor: 'pointer',
@@ -246,7 +246,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
       icon: <Play size={14} />,
       label: 'Çalıştır',
       onClick: onRun,
-      color: '#059669'
+      color: 'var(--status-success)'
     });
   }
   if (onEdit) {
@@ -294,7 +294,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
       icon: <Trash2 size={14} />,
       label: 'Sil',
       onClick: onDelete,
-      color: '#dc2626'
+      color: 'var(--status-error)'
     });
   }
 
@@ -381,9 +381,9 @@ const SuccessRateCell: React.FC<SuccessRateCellProps> = ({ rate }) => {
   }
 
   const getColor = () => {
-    if (rate >= 80) return '#059669';
-    if (rate >= 50) return '#f59e0b';
-    return '#dc2626';
+    if (rate >= 80) return 'var(--status-success)';
+    if (rate >= 50) return 'var(--status-warning)';
+    return 'var(--status-error)';
   };
 
   return (

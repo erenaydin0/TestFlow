@@ -36,10 +36,10 @@ interface DataFiltersProps {
 }
 
 const browserOptions = [
-  { value: 'chromium' as BrowserType, label: 'Chrome', icon: Chrome, color: '#4285F4' },
-  { value: 'firefox' as BrowserType, label: 'Firefox', icon: Globe, color: '#FF7139' },
-  { value: 'webkit' as BrowserType, label: 'Safari', icon: Globe, color: '#007AFF' },
-  { value: 'msedge' as BrowserType, label: 'Edge', icon: Globe, color: '#0078D4' }
+  { value: 'chromium' as BrowserType, label: 'Chrome', icon: Chrome, color: 'var(--status-info)' },
+  { value: 'firefox' as BrowserType, label: 'Firefox', icon: Globe, color: 'var(--status-warning)' },
+  { value: 'webkit' as BrowserType, label: 'Safari', icon: Globe, color: 'var(--status-info)' },
+  { value: 'msedge' as BrowserType, label: 'Edge', icon: Globe, color: 'var(--status-info)' }
 ];
 
 const DataFilters: React.FC<DataFiltersProps> = ({

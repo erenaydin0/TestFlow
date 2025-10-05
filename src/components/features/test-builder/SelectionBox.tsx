@@ -19,7 +19,7 @@ interface SelectionBoxProps {
 const SelectionBox: React.FC<SelectionBoxProps> = ({
   selectionBox,
   fillColor = "rgba(59, 130, 246, 0.1)",
-  strokeColor = "#3b82f6",
+  strokeColor = "var(--color-selected)",
   strokeWidth = 1,
   strokeDasharray = "4,4",
   opacity = 0.8

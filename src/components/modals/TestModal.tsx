@@ -238,7 +238,7 @@ const TestModal: React.FC<TestModalProps> = ({
         {/* Error Messages */}
         {errors.length > 0 && (
           <div style={{
-            backgroundColor: '#fef2f2',
+            backgroundColor: 'var(--status-error-bg)',
             border: '1px solid #fecaca',
             borderRadius: '0.5rem',
             padding: '0.75rem',

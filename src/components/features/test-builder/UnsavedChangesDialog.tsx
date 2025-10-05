@@ -70,7 +70,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
               width: '20px',
               height: '20px',
               borderRadius: '50%',
-              backgroundColor: '#f59e0b',
+              backgroundColor: 'var(--status-warning)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -127,7 +127,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             size="sm"
             disabled={isInSavingMode}
             onClick={onDiscard}
-            style={{ color: '#ef4444', borderColor: '#ef4444' }}
+            style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)' }}
           >
             Kaydetme
           </Button>

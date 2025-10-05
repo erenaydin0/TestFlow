@@ -569,7 +569,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
               <div style={{ 
                 width: '2rem', 
                 height: '2rem', 
-                backgroundColor: '#eff6ff', 
+                backgroundColor: 'var(--status-info-bg)', 
                 borderRadius: '50%', 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -593,7 +593,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 <div style={{ 
                   width: '2.5rem', 
                   height: '2.5rem', 
-                  backgroundColor: '#eff6ff', 
+                  backgroundColor: 'var(--status-info-bg)', 
                   borderRadius: '50%', 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -702,7 +702,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   textAlign: 'left'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fef2f2';
+                  e.currentTarget.style.backgroundColor = 'var(--status-error-bg)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';

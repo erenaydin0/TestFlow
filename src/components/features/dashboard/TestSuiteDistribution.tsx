@@ -99,8 +99,8 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
               <span 
                 style={{ 
                   fontWeight: '600', 
-                  color: successRate >= 80 ? '#059669' : 
-                         successRate >= 50 ? '#d97706' : '#dc2626'
+                  color: successRate >= 80 ? 'var(--status-success)' : 
+                         successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
                 }}
               >
                 %{successRate}
@@ -240,8 +240,8 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
                             <span 
                               className="font-semibold"
                               style={{ 
-                                color: item.successRate >= 80 ? '#059669' : 
-                                       item.successRate >= 50 ? '#d97706' : '#dc2626'
+                                color: item.successRate >= 80 ? 'var(--status-success)' : 
+                                       item.successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
                               }}
                             >
                               %{item.successRate} başarı

@@ -3,23 +3,23 @@ interface StatusBadgeProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-// Merkezi status yönetimi - tüm renkler ve yazılar burada
+// Cosmic status yönetimi - tüm renkler ve yazılar burada
 const STATUS_CONFIG = {
-  completed: { color: '#059669', text: 'Başarılı' },
-  failed: { color: '#dc2626', text: 'Başarısız' },
-  running: { color: '#d97706', text: 'Çalışıyor' },
-  queued: { color: '#6b7280', text: 'Sırada' },
-  cancelled: { color: '#9ca3af', text: 'İptal Edildi' },
-  passed: { color: '#059669', text: 'Başarılı' },
-  pending: { color: '#6b7280', text: 'Beklemede' },
-  active: { color: '#059669', text: 'Aktif' },
-  paused: { color: '#d97706', text: 'Duraklatıldı' },
-  disabled: { color: '#6b7280', text: 'Devre Dışı' }
+  completed: { color: 'var(--status-success)', text: 'Başarılı' },
+  failed: { color: 'var(--status-error)', text: 'Başarısız' },
+  running: { color: 'var(--status-warning)', text: 'Çalışıyor' },
+  queued: { color: 'var(--text-secondary)', text: 'Sırada' },
+  cancelled: { color: 'var(--text-secondary)', text: 'İptal Edildi' },
+  passed: { color: 'var(--status-success)', text: 'Başarılı' },
+  pending: { color: 'var(--text-secondary)', text: 'Beklemede' },
+  active: { color: 'var(--status-success)', text: 'Aktif' },
+  paused: { color: 'var(--status-warning)', text: 'Duraklatıldı' },
+  disabled: { color: 'var(--text-secondary)', text: 'Devre Dışı' }
 } as const;
 
 // Export edilebilir utility fonksiyonlar
 export const getStatusColor = (status: string): string => {
-  return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.color || '#6b7280';
+  return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.color || 'var(--text-secondary)';
 };
 
 export const getStatusText = (status: string): string => {
@@ -33,7 +33,7 @@ export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
   }
 
   const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
-  const color = config?.color || '#6b7280';
+  const color = config?.color || 'var(--text-secondary)';
   const text = config?.text || status;
 
   return (

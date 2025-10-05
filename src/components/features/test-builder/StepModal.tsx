@@ -121,8 +121,8 @@ const StepModal: React.FC<StepModalProps> = ({
 
     const focusHandlers = {
       onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        e.currentTarget.style.borderColor = action?.color || '#3b82f6';
-        e.currentTarget.style.boxShadow = `0 0 0 3px ${action?.color || '#3b82f6'}20`;
+        e.currentTarget.style.borderColor = action?.color || 'var(--color-selected)';
+        e.currentTarget.style.boxShadow = `0 0 0 3px ${action?.color || 'var(--color-selected)'}20`;
       },
       onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         e.currentTarget.style.borderColor = 'var(--border-primary)';
@@ -157,10 +157,10 @@ const StepModal: React.FC<StepModalProps> = ({
             readOnly
             style={{
               ...baseStyle,
-              backgroundColor: isCapturing ? '#fef3c7' : 'var(--bg-secondary)',
-              color: isCapturing ? '#92400e' : 'var(--text-primary)',
+              backgroundColor: isCapturing ? 'var(--color-capture)' : 'var(--bg-secondary)',
+              color: isCapturing ? 'var(--status-warning-hover)' : 'var(--text-primary)',
               cursor: 'pointer',
-              border: isCapturing ? '2px solid #f59e0b' : '1px solid var(--border-primary)'
+              border: isCapturing ? '2px solid var(--status-warning)' : '1px solid var(--border-primary)'
             }}
             autoFocus={isCapturing}
           />
@@ -458,7 +458,7 @@ const StepModal: React.FC<StepModalProps> = ({
                 >
                   {field.label}
                   {isFieldRequired && (
-                    <span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>*</span>
+                    <span style={{ color: 'var(--status-error)', marginLeft: '0.25rem' }}>*</span>
                   )}
                 </label>
                 {renderField(field)}

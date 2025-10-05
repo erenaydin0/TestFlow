@@ -18,18 +18,22 @@ const iconMap = {
   info: Info,
 };
 
-const colorMap = {
-  success: 'bg-green-500 border-green-600',
-  error: 'bg-red-500 border-red-600',
-  warning: 'bg-yellow-500 border-yellow-600',
-  info: 'bg-blue-500 border-blue-600',
+const getIconStyle = (type: 'success' | 'error' | 'warning' | 'info') => {
+  switch (type) {
+    case 'success': return { backgroundColor: 'var(--status-success)', borderColor: 'var(--status-success)' };
+    case 'error': return { backgroundColor: 'var(--status-error)', borderColor: 'var(--status-error)' };
+    case 'warning': return { backgroundColor: 'var(--status-warning)', borderColor: 'var(--status-warning)' };
+    case 'info': return { backgroundColor: 'var(--status-info)', borderColor: 'var(--status-info)' };
+  }
 };
 
-const bgColorMap = {
-  success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-  error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-  warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
-  info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+const getBgStyle = (type: 'success' | 'error' | 'warning' | 'info') => {
+  switch (type) {
+    case 'success': return { backgroundColor: 'var(--status-success-bg)', borderColor: 'var(--status-success)' };
+    case 'error': return { backgroundColor: 'var(--status-error-bg)', borderColor: 'var(--status-error)' };
+    case 'warning': return { backgroundColor: 'var(--status-warning-bg)', borderColor: 'var(--status-warning)' };
+    case 'info': return { backgroundColor: 'var(--status-info-bg)', borderColor: 'var(--status-info)' };
+  }
 };
 
 export function Toast({ notification, onRemove, index = 0 }: ToastProps) {
@@ -56,37 +60,84 @@ export function Toast({ notification, onRemove, index = 0 }: ToastProps) {
 
   return (
     <div
-      className={`
-        transform transition-all duration-300 ease-in-out pointer-events-auto
-        ${isVisible && !isRemoving ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'}
-        w-full shadow-lg rounded-lg overflow-hidden backdrop-blur-sm
-        ${bgColorMap[notification.type]} border
-      `}
       style={{
-        transformOrigin: 'top right'
+        transform: isVisible && !isRemoving ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.95)',
+        opacity: isVisible && !isRemoving ? 1 : 0,
+        transition: 'all 300ms ease-in-out',
+        pointerEvents: 'auto',
+        width: '100%',
+        boxShadow: 'var(--shadow-lg)',
+        borderRadius: '0.5rem',
+        overflow: 'hidden',
+        backdropFilter: 'blur(4px)',
+        border: '1px solid',
+        transformOrigin: 'top right',
+        ...getBgStyle(notification.type)
       }}
     >
-      <div className="relative">
-        <div className="p-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 mt-0.5">
-              <Icon className={`h-5 w-5 text-white rounded-full p-0.5 ${colorMap[notification.type]}`} />
+      <div style={{ position: 'relative' }}>
+        <div style={{ padding: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <div style={{ flexShrink: 0, marginTop: '0.125rem' }}>
+              <Icon 
+                size={20} 
+                style={{ 
+                  color: 'white', 
+                  borderRadius: '9999px', 
+                  padding: '0.125rem',
+                  ...getIconStyle(notification.type)
+                }} 
+              />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ 
+                fontSize: '0.875rem', 
+                fontWeight: 600, 
+                color: 'var(--text-primary)', 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                margin: 0
+              }}>
                 {notification.title}
               </p>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
+              <p style={{ 
+                marginTop: '0.25rem', 
+                fontSize: '0.875rem', 
+                color: 'var(--text-primary)',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                margin: '0.25rem 0 0 0'
+              }}>
                 {notification.message}
               </p>
             </div>
-            <div className="flex-shrink-0">
+            <div style={{ flexShrink: 0 }}>
               <button
-                className="inline-flex p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                style={{
+                  display: 'inline-flex',
+                  padding: '0.25rem',
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
                 onClick={handleRemove}
               >
-                <span className="sr-only">Kapat</span>
-                <X className="h-4 w-4" />
+                <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Kapat</span>
+                <X size={16} />
               </button>
             </div>
           </div>
@@ -94,13 +145,22 @@ export function Toast({ notification, onRemove, index = 0 }: ToastProps) {
         
         {/* Progress bar */}
         {notification.autoClose && notification.duration && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-600">
+          <div style={{ 
+            position: 'absolute', 
+            bottom: 0, 
+            left: 0, 
+            right: 0, 
+            height: '0.25rem', 
+            backgroundColor: 'var(--bg-tertiary)' 
+          }}>
             <div
-              className={`h-full ${colorMap[notification.type]} transition-all ease-linear`}
               style={{
+                height: '100%',
+                transition: 'all ease-linear',
                 animation: `shrink ${notification.duration}ms linear`,
                 animationFillMode: 'forwards',
-                transformOrigin: 'left center'
+                transformOrigin: 'left center',
+                ...getIconStyle(notification.type)
               }}
             />
           </div>
@@ -115,12 +175,6 @@ export function Toast({ notification, onRemove, index = 0 }: ToastProps) {
           to {
             transform: scaleX(0);
           }
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
         }
       `}</style>
     </div>

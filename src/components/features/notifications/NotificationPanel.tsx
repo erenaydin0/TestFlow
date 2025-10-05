@@ -25,11 +25,13 @@ const iconMap = {
   info: Info,
 };
 
-const colorMap = {
-  success: 'text-green-500',
-  error: 'text-red-500',
-  warning: 'text-yellow-500',
-  info: 'text-blue-500',
+const getColorStyle = (type: 'success' | 'error' | 'warning' | 'info') => {
+  switch (type) {
+    case 'success': return { color: 'var(--status-success)' };
+    case 'error': return { color: 'var(--status-error)' };
+    case 'warning': return { color: 'var(--status-warning)' };
+    case 'info': return { color: 'var(--status-info)' };
+  }
 };
 
 function NotificationPanel() {
@@ -84,7 +86,20 @@ function NotificationPanel() {
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span style={{
+            position: 'absolute',
+            top: '-0.25rem',
+            right: '-0.25rem',
+            backgroundColor: 'var(--status-error)',
+            color: 'white',
+            fontSize: '0.75rem',
+            borderRadius: '9999px',
+            height: '1.25rem',
+            width: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -222,18 +237,18 @@ function NotificationPanel() {
                         style={{
                           padding: '0.75rem',
                           cursor: (notification.executionId || notification.testId) ? 'pointer' : 'default',
-                          backgroundColor: !notification.read ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                          backgroundColor: !notification.read ? 'var(--status-info-bg)' : 'transparent',
                           borderBottom: '1px solid var(--border-primary)',
                           transition: 'background-color 0.2s ease'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = !notification.read 
-                            ? 'rgba(59, 130, 246, 0.15)' 
+                            ? 'var(--status-info-bg)' 
                             : 'var(--bg-tertiary)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.backgroundColor = !notification.read 
-                            ? 'rgba(59, 130, 246, 0.1)' 
+                            ? 'var(--status-info-bg)' 
                             : 'transparent';
                         }}
                         onClick={() => {
@@ -243,7 +258,7 @@ function NotificationPanel() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                          <Icon size={20} className={`mt-0.5 flex-shrink-0 ${colorMap[notification.type]}`} />
+                          <Icon size={20} style={{ marginTop: '0.125rem', flexShrink: 0, ...getColorStyle(notification.type) }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{
                               fontSize: '0.875rem',

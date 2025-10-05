@@ -709,7 +709,7 @@ export default function TestsPage() {
                         size="sm"
                         icon={Play}
                         onClick={handleBulkRun}
-                        style={{ color: '#059669', borderColor: '#059669' }}
+                        style={{ color: 'var(--status-success)', borderColor: 'var(--status-success)' }}
                       >
                         Çalıştır
                       </Button>
@@ -718,7 +718,7 @@ export default function TestsPage() {
                         size="sm"
                         icon={Copy}
                         onClick={handleBulkDuplicate}
-                        style={{ color: '#7c3aed', borderColor: '#7c3aed' }}
+                        style={{ color: 'var(--status-purple)', borderColor: 'var(--status-purple)' }}
                       >
                         Kopyala
                       </Button>
@@ -727,7 +727,7 @@ export default function TestsPage() {
                         size="sm"
                         icon={Trash2}
                         onClick={handleBulkDelete}
-                        style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                        style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)' }}
                       >
                         Sil
                       </Button>
@@ -934,7 +934,7 @@ export default function TestsPage() {
                                 height: '2rem',
                                 border: '1px solid var(--border-primary)',
                                 borderRadius: '0.375rem',
-                                backgroundColor: i === currentPage ? '#2563eb' : 'var(--bg-primary)',
+                                backgroundColor: i === currentPage ? 'var(--color-selected)' : 'var(--bg-primary)',
                                 color: i === currentPage ? 'white' : 'var(--text-primary)',
                                 cursor: 'pointer',
                                 fontSize: '0.875rem',

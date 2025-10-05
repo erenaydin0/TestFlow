@@ -45,6 +45,7 @@ export interface ActionType {
   title: string;
   icon: React.ComponentType<{ size?: number; color?: string }>;
   color: string;
+  borderColor: string;
   description: string;
   category: ActionCategory;
   fields: ActionField[];
@@ -58,7 +59,8 @@ const baseActions: ActionType[] = [
     type: 'navigate',
     title: 'Sayfa Git',
     icon: Link,
-    color: '#2563eb',
+    color: 'var(--status-info)',
+    borderColor: 'var(--status-info)',
     description: 'Belirtilen URL\'e git',
     category: 'navigation',
     fields: [
@@ -76,7 +78,8 @@ const baseActions: ActionType[] = [
     type: 'click',
     title: 'Tıkla',
     icon: MousePointer,
-    color: '#059669',
+    color: 'var(--status-success)',
+    borderColor: 'var(--status-success)',
     description: 'Element\'e tıkla',
     category: 'interaction',
     fields: [
@@ -94,7 +97,8 @@ const baseActions: ActionType[] = [
     type: 'input',
     title: 'Metin Gir',
     icon: Type,
-    color: '#dc2626',
+    color: 'var(--status-error)',
+    borderColor: 'var(--status-error)',
     description: 'Input alanına metin gir',
     category: 'input',
     fields: [
@@ -120,7 +124,8 @@ const baseActions: ActionType[] = [
     type: 'wait',
     title: 'Bekle',
     icon: Clock,
-    color: '#d97706',
+    color: 'var(--status-warning)',
+    borderColor: 'var(--status-warning)',
     description: 'Belirtilen süre bekle',
     category: 'utility',
     fields: [
@@ -141,7 +146,8 @@ const baseActions: ActionType[] = [
     type: 'refresh',
     title: 'Yenile',
     icon: RefreshCw,
-    color: '#7c3aed',
+    color: 'var(--status-purple)',
+    borderColor: 'var(--status-purple)',
     description: 'Sayfayı yenile',
     category: 'navigation',
     fields: []
@@ -150,7 +156,8 @@ const baseActions: ActionType[] = [
     type: 'if',
     title: 'Koşul',
     icon: GitBranch,
-    color: '#db2777',
+    color: 'var(--status-error)',
+    borderColor: 'var(--status-error)',
     description: 'Koşullu işlem',
     category: 'advanced',
     isAdvanced: true,
@@ -214,7 +221,8 @@ const extendedActions: ActionType[] = [
     type: 'verify',
     title: 'Doğrula',
     icon: CheckCircle,
-    color: '#16a34a',
+    color: 'var(--status-success)',
+    borderColor: 'var(--status-success)',
     description: 'Elementin varlığını veya içeriğini doğrula',
     category: 'validation',
     fields: [
@@ -257,7 +265,8 @@ const extendedActions: ActionType[] = [
     type: 'scroll',
     title: 'Kaydır',
     icon: Scroll,
-    color: '#0891b2',
+    color: 'var(--status-info)',
+    borderColor: 'var(--status-info)',
     description: 'Sayfayı veya elementi kaydır',
     category: 'interaction',
     fields: [
@@ -298,7 +307,8 @@ const extendedActions: ActionType[] = [
     type: 'hover',
     title: 'Üzerine Gel',
     icon: MousePointer2,
-    color: '#ea580c',
+    color: 'var(--status-warning)',
+    borderColor: 'var(--status-warning)',
     description: 'Elementin üzerine gel (hover)',
     category: 'interaction',
     fields: [
@@ -316,7 +326,8 @@ const extendedActions: ActionType[] = [
     type: 'key',
     title: 'Tuş Bas',
     icon: Keyboard,
-    color: '#7c2d12',
+    color: 'var(--status-error)',
+    borderColor: 'var(--status-error)',
     description: 'Klavye tuşuna bas',
     category: 'input',
     fields: [
@@ -341,7 +352,8 @@ const extendedActions: ActionType[] = [
     type: 'dropdown',
     title: 'Dropdown Seç',
     icon: ChevronDown,
-    color: '#0d9488',
+    color: 'var(--status-success)',
+    borderColor: 'var(--status-success)',
     description: 'Dropdown menüden seçim yap',
     category: 'input',
     fields: [
@@ -386,7 +398,7 @@ export const getActionByType = (type: string): ActionType | undefined => {
 };
 
 export const getActionColor = (type: string): string => {
-  return getActionByType(type)?.color || '#6b7280';
+  return getActionByType(type)?.color || 'var(--text-secondary)';
 };
 
 export const getActionTitle = (type: string): string => {

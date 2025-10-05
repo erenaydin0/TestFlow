@@ -346,14 +346,14 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             <div style={{
               width: '2.5rem',
               height: '2.5rem',
-              backgroundColor: '#2563eb10',
-              border: '1px solid #2563eb30',
+              backgroundColor: 'var(--status-primary-bg)',
+              border: '1px solid var(--border-primary)',
               borderRadius: '0.5rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Upload size={18} color="#2563eb" />
+              <Upload size={18} style={{ color: 'var(--status-primary)' }} />
             </div>
             <div>
               <h3 style={{
@@ -404,7 +404,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             <div style={{ 
               width: '4rem', 
               height: '4rem', 
-              backgroundColor: '#059669', 
+              backgroundColor: 'var(--status-success)', 
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -467,9 +467,9 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                     {preview.isValid ? (
-                      <CheckCircle size={16} color="#059669" />
+                      <CheckCircle size={16} style={{ color: 'var(--status-success)' }} />
                     ) : (
-                      <AlertCircle size={16} color="#dc2626" />
+                      <AlertCircle size={16} style={{ color: 'var(--status-error)' }} />
                     )}
                     <span style={{ 
                       fontWeight: 500, 
@@ -481,7 +481,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                     {preview.willOverwrite && (
                       <span style={{
                         fontSize: '0.75rem',
-                        color: '#f59e0b',
+                        color: 'var(--status-warning)',
                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         padding: '0.125rem 0.5rem',
                         borderRadius: '0.25rem',
@@ -544,7 +544,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                     <div style={{ 
                       marginTop: '0.5rem',
                       fontSize: '0.75rem',
-                      color: '#dc2626'
+                      color: 'var(--status-error)'
                     }}>
                       {preview.errors.map((error, i) => (
                         <div key={i}>• {error}</div>
@@ -579,7 +579,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           <div>
             <div
               style={{
-                border: `2px dashed ${dragActive ? '#2563eb' : 'var(--border-primary)'}`,
+                border: `2px dashed ${dragActive ? 'var(--color-selected)' : 'var(--border-primary)'}`,
                 borderRadius: '0.75rem',
                 padding: '3rem 2rem',
                 textAlign: 'center',
@@ -650,7 +650,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <Info size={16} color="#3b82f6" />
+              <Info size={16} style={{ color: 'var(--status-info)' }} />
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 <strong>Desteklenen formatlar:</strong> Test Builder export dosyaları, çoklu workflow export dosyaları
               </div>

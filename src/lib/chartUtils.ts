@@ -1,34 +1,34 @@
 export const getChartColors = () => {
   if (typeof window === 'undefined') {
-    // Server-side rendering için default değerler
+    // Server-side rendering için cosmic default değerler
     return {
-      primary: '#2563eb',
-      success: '#059669',
-      error: '#dc2626',
-      warning: '#d97706',
-      info: '#0891b2',
-      purple: '#7c3aed',
+      primary: '#D07E47',
+      success: '#88b87a',
+      error: '#d87575',
+      warning: '#e89558',
+      info: '#6b9bd1',
+      purple: '#a66794',
     };
   }
 
   const computedStyle = getComputedStyle(document.documentElement);
   
   return {
-    primary: computedStyle.getPropertyValue('--chart-primary').trim(),
-    success: computedStyle.getPropertyValue('--chart-success').trim(),
-    error: computedStyle.getPropertyValue('--chart-error').trim(),
-    warning: computedStyle.getPropertyValue('--chart-warning').trim(),
-    info: computedStyle.getPropertyValue('--chart-info').trim(),
-    purple: computedStyle.getPropertyValue('--chart-purple').trim(),
+    primary: computedStyle.getPropertyValue('--status-primary').trim(),
+    success: computedStyle.getPropertyValue('--status-success').trim(),
+    error: computedStyle.getPropertyValue('--status-error').trim(),
+    warning: computedStyle.getPropertyValue('--status-warning').trim(),
+    info: computedStyle.getPropertyValue('--status-info').trim(),
+    purple: computedStyle.getPropertyValue('--status-purple').trim(),
   };
 };
 
 export const getTextColors = () => {
   if (typeof window === 'undefined') {
     return {
-      primary: '#111827',
-      secondary: '#6b7280',
-      tertiary: '#9ca3af',
+      primary: '#2a2520',
+      secondary: '#6b5d52',
+      tertiary: '#9a8a7d',
     };
   }
 
@@ -44,8 +44,8 @@ export const getTextColors = () => {
 export const getBorderColors = () => {
   if (typeof window === 'undefined') {
     return {
-      primary: '#e5e7eb',
-      secondary: '#d1d5db',
+      primary: '#e8e3df',
+      secondary: '#d4ccc4',
     };
   }
 
@@ -61,8 +61,8 @@ export const getBgColors = () => {
   if (typeof window === 'undefined') {
     return {
       primary: '#ffffff',
-      secondary: '#f9fafb',
-      tertiary: '#f3f4f6',
+      secondary: '#faf9f8',
+      tertiary: '#f5f3f1',
     };
   }
 

@@ -132,7 +132,7 @@ const DragPreview: React.FC<DragPreviewProps> = ({
                     {draggedStepData.condition && `Koşul: ${draggedStepData.condition}`}
                     <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.6rem' }}>
                       <span style={{ 
-                        color: draggedStepData.trueConnection ? '#22c55e' : 'var(--text-tertiary)',
+                        color: draggedStepData.trueConnection ? 'var(--status-success)' : 'var(--text-tertiary)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.25rem'
@@ -141,7 +141,7 @@ const DragPreview: React.FC<DragPreviewProps> = ({
                         TRUE: {draggedStepData.trueConnection ? '✓' : 'Bağlı değil'}
                       </span>
                       <span style={{ 
-                        color: draggedStepData.falseConnection ? '#ef4444' : 'var(--text-tertiary)',
+                        color: draggedStepData.falseConnection ? 'var(--status-error)' : 'var(--text-tertiary)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.25rem'

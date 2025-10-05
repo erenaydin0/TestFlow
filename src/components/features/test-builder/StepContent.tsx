@@ -93,7 +93,7 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
               {step.operator && step.conditionType === 'count' && <span>Operatör: {step.operator}</span>}
               <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem', marginTop: '0.25rem' }}>
                 <span style={{ 
-                  color: step.trueConnection ? '#22c55e' : 'var(--text-tertiary)',
+                  color: step.trueConnection ? 'var(--status-success)' : 'var(--text-tertiary)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.25rem'
@@ -102,7 +102,7 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
                   TRUE: {step.trueConnection ? '✓' : 'Bağlı değil'}
                 </span>
                 <span style={{ 
-                  color: step.falseConnection ? '#ef4444' : 'var(--text-tertiary)',
+                  color: step.falseConnection ? 'var(--status-error)' : 'var(--text-tertiary)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.25rem'

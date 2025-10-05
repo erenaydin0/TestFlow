@@ -118,21 +118,21 @@ const useConnections = (): UseConnectionsReturn => {
     switch (type) {
       case 'true':
         return { 
-          color: '#22c55e', // Green for true connections
+          color: 'var(--status-success)', // Green for true connections
           strokeWidth: 2.5,
           opacity: 0.8,
           label: 'TRUE'
         };
       case 'false':
         return { 
-          color: '#ef4444', // Red for false connections
+          color: 'var(--status-error)', // Red for false connections
           strokeWidth: 2.5,
           opacity: 0.8,
           label: 'FALSE'
         };
       default:
         return { 
-          color: '#6b7280', // Gray for normal connections
+          color: 'var(--text-secondary)', // Gray for normal connections
           strokeWidth: 2,
           opacity: 0.7,
           label: ''

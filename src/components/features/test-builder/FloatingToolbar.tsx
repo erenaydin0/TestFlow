@@ -242,7 +242,7 @@ export default function FloatingToolbar({
           tooltip={enableScreenshots ? "Ekran Görüntüsü Almayı Kapat" : "Ekran Görüntüsü Almayı Aç"}
           onClick={() => onToggleScreenshots?.()}
           style={enableScreenshots ? { 
-            backgroundColor: '#f59e0b', 
+            backgroundColor: 'var(--status-warning)', 
             color: 'white',
             border: '2px solid #f59e0b',
             boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)',
@@ -256,7 +256,7 @@ export default function FloatingToolbar({
           tooltip={enableRecording ? "Ekran Kaydını Kapat" : "Ekran Kaydını Aç"}
           onClick={() => onToggleRecording?.()}
           style={enableRecording ? { 
-            backgroundColor: '#ef4444', 
+            backgroundColor: 'var(--status-error)', 
             color: 'white',
             border: '2px solid #ef4444',
             boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)',
@@ -270,7 +270,7 @@ export default function FloatingToolbar({
           tooltip={headlessMode ? "Görünür Mod (Browser Açık)" : "Gizli Mod (Headless)"}
           onClick={() => onToggleHeadless?.()}
           style={headlessMode ? { 
-            backgroundColor: '#22c55e', 
+            backgroundColor: 'var(--status-success)', 
             color: 'white',
             border: '2px solid #22c55e',
             boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.2)',

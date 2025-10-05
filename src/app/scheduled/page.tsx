@@ -144,7 +144,7 @@ export default function ScheduledPage() {
               }}>
                 Zamanlanmış testleri kontrol edin
                 {SCHEDULED_TESTS.length > 0 && (
-                  <span style={{ color: '#2563eb', marginLeft: '0.5rem' }}>
+                  <span style={{ color: 'var(--status-info)', marginLeft: '0.5rem' }}>
                     ({SCHEDULED_TESTS.length} / {SCHEDULED_TESTS.length} test)
                   </span>
                 )}
@@ -311,7 +311,7 @@ export default function ScheduledPage() {
                         {test.status === 'active' ? (
                           <button style={{ 
                             padding: '0.5rem', 
-                            color: '#d97706', 
+                            color: 'var(--status-warning)', 
                             backgroundColor: 'transparent',
                             border: 'none',
                             borderRadius: '0.375rem',
@@ -329,7 +329,7 @@ export default function ScheduledPage() {
                         ) : (
                           <button style={{ 
                             padding: '0.5rem', 
-                            color: '#059669', 
+                            color: 'var(--status-success)', 
                             backgroundColor: 'transparent',
                             border: 'none',
                             borderRadius: '0.375rem',
@@ -417,7 +417,7 @@ export default function ScheduledPage() {
                         <span style={{ 
                           fontSize: '0.875rem', 
                           fontWeight: 600,
-                          color: test.successRate >= 95 ? '#059669' : test.successRate >= 85 ? '#d97706' : '#dc2626'
+                          color: test.successRate >= 95 ? 'var(--status-success)' : test.successRate >= 85 ? 'var(--status-warning)' : 'var(--status-error)'
                         }}>
                           {test.successRate}%
                         </span>
@@ -471,7 +471,7 @@ export default function ScheduledPage() {
                         <span style={{ 
                           width: '0.75rem', 
                           height: '0.75rem', 
-                          backgroundColor: run.environment === 'production' ? '#059669' : '#d97706',
+                          backgroundColor: run.environment === 'production' ? 'var(--status-success)' : 'var(--status-warning)',
                           borderRadius: '50%',
                           display: 'inline-block'
                         }}></span>

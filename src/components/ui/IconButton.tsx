@@ -44,7 +44,7 @@ const IconButton: React.FC<IconButtonProps> = ({
       case 'primary':
         return {
           ...baseStyles,
-          backgroundColor: '#2563eb',
+          backgroundColor: 'var(--status-primary)',
           color: 'white'
         };
       case 'secondary':
@@ -57,20 +57,20 @@ const IconButton: React.FC<IconButtonProps> = ({
       case 'success':
         return {
           ...baseStyles,
-          backgroundColor: '#059669',
-          color: 'white'
+          backgroundColor: 'var(--status-success)',
+          color: 'var(--text-primary)'
         };
       case 'danger':
         return {
           ...baseStyles,
-          backgroundColor: '#dc2626',
-          color: 'white'
+          backgroundColor: 'var(--status-error)',
+          color: 'var(--text-primary)'
         };
       case 'warning':
         return {
           ...baseStyles,
-          backgroundColor: '#f59e0b',
-          color: 'white'
+          backgroundColor: 'var(--status-warning)',
+          color: 'var(--text-primary)'
         };
       case 'ghost':
         return {
@@ -131,15 +131,15 @@ const IconButton: React.FC<IconButtonProps> = ({
   const getHoverStyles = (variant: IconButtonVariant) => {
     switch (variant) {
       case 'primary':
-        return { backgroundColor: '#1d4ed8' };
+        return { backgroundColor: 'var(--status-primary-hover)' };
       case 'secondary':
         return { backgroundColor: 'var(--bg-tertiary)' };
       case 'success':
-        return { backgroundColor: '#047857' };
+        return { backgroundColor: 'var(--status-success-hover)' };
       case 'danger':
-        return { backgroundColor: '#b91c1c' };
+        return { backgroundColor: 'var(--status-error-hover)' };
       case 'warning':
-        return { backgroundColor: '#d97706' };
+        return { backgroundColor: 'var(--status-warning-hover)' };
       case 'ghost':
         return { backgroundColor: 'var(--bg-tertiary)' };
       default:

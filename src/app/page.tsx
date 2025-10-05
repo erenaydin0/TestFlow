@@ -10,6 +10,7 @@ import {
   RecentTests
 } from '@/components/features/dashboard';
 import { useExecutions } from '@/hooks/data';
+import { getConsistentColorFromString } from '@/lib/colorUtils';
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
@@ -49,16 +50,14 @@ export default function Dashboard() {
       return acc;
     }, {} as Record<string, { total: number; passed: number }>);
 
-    // Colors for test suites
-    const colors = ['#2563eb', '#dc2626', '#059669', '#d97706', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b'];
-    
-    const testSuiteDataWithColors = Object.entries(testSuiteData).map(([name, data], index) => {
+    // Her test grubu için tutarlı renk üret (aynı isim her zaman aynı rengi alır)
+    const testSuiteDataWithColors = Object.entries(testSuiteData).map(([name, data]) => {
       const suiteData = data as { total: number; passed: number };
       return {
         name,
         value: suiteData.total,
         successRate: suiteData.total > 0 ? Math.round((suiteData.passed / suiteData.total) * 100) : 0,
-        color: colors[index % colors.length]
+        color: getConsistentColorFromString(name)
       };
     });
 
@@ -75,17 +74,18 @@ export default function Dashboard() {
       return acc;
     }, {} as Record<string, { total: number; passed: number }>);
 
-    const browserColors = ['#4285f4', '#ff6d01', '#9333ea', '#059669', '#dc2626'];
-    const browserDataWithColors = Object.entries(browserData).map(([browserType, data], index) => {
+    // Her tarayıcı için tutarlı renk üret
+    const browserDataWithColors = Object.entries(browserData).map(([browserType, data]) => {
       const browserStats = data as { total: number; passed: number };
+      const displayName = browserType === 'chromium' ? 'Chrome' : 
+                          browserType === 'firefox' ? 'Firefox' : 
+                          browserType === 'webkit' ? 'Safari' : browserType;
       return {
-        name: browserType === 'chromium' ? 'Chrome' : 
-              browserType === 'firefox' ? 'Firefox' : 
-              browserType === 'webkit' ? 'Safari' : browserType,
+        name: displayName,
         browserType: browserType, // Gerçek browser type'ı sakla
         value: browserStats.total,
         successRate: browserStats.total > 0 ? Math.round((browserStats.passed / browserStats.total) * 100) : 0,
-        color: browserColors[index % browserColors.length]
+        color: getConsistentColorFromString(browserType)
       };
     });
 

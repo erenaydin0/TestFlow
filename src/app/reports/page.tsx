@@ -741,7 +741,7 @@ export default function ReportsPage() {
                 justifyContent: 'center', 
                 alignItems: 'center', 
                 padding: '2rem',
-                color: '#dc2626'
+                color: 'var(--status-error)'
               }}>
                 <AlertCircle size={24} />
                 <span style={{ marginLeft: '0.5rem' }}>Hata: {error}</span>
@@ -875,7 +875,7 @@ export default function ReportsPage() {
                                   height: '2rem',
                                   border: '1px solid var(--border-primary)',
                                   borderRadius: '0.375rem',
-                                  backgroundColor: i === currentPage ? '#2563eb' : 'var(--bg-primary)',
+                                  backgroundColor: i === currentPage ? 'var(--color-selected)' : 'var(--bg-primary)',
                                   color: i === currentPage ? 'white' : 'var(--text-primary)',
                                   cursor: 'pointer',
                                   fontSize: '0.875rem',
@@ -997,7 +997,7 @@ export default function ReportsPage() {
                     <span style={{
                       fontSize: '1rem',
                       fontWeight: 600,
-                      color: selectedExecution.successRate >= 80 ? '#059669' : selectedExecution.successRate >= 50 ? '#f59e0b' : '#dc2626'
+                      color: selectedExecution.successRate >= 80 ? 'var(--status-success)' : selectedExecution.successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
                     }}>
                       {selectedExecution.successRate}%
                     </span>
@@ -1053,11 +1053,11 @@ export default function ReportsPage() {
                       const browserType = selectedExecution.options?.browserType || 'chromium';
                       const getBrowserIcon = () => {
                         switch(browserType) {
-                          case 'chromium': return <Chrome size={14} style={{ color: '#4285F4' }} />;
-                          case 'firefox': return <Globe size={14} style={{ color: '#FF7139' }} />;
-                          case 'webkit': return <Globe size={14} style={{ color: '#007AFF' }} />;
-                          case 'msedge': return <Globe size={14} style={{ color: '#0078D4' }} />;
-                          default: return <Chrome size={14} style={{ color: '#4285F4' }} />;
+                          case 'chromium': return <Chrome size={14} style={{ color: 'var(--status-info)' }} />;
+                          case 'firefox': return <Globe size={14} style={{ color: 'var(--status-warning)' }} />;
+                          case 'webkit': return <Globe size={14} style={{ color: 'var(--status-info)' }} />;
+                          case 'msedge': return <Globe size={14} style={{ color: 'var(--status-info)' }} />;
+                          default: return <Chrome size={14} style={{ color: 'var(--status-info)' }} />;
                         }
                       };
                       const getBrowserName = () => {
@@ -1119,9 +1119,9 @@ export default function ReportsPage() {
                       <span style={{
                         fontSize: '0.75rem',
                         padding: '0.125rem 0.5rem',
-                        backgroundColor: '#f3f4f6',
+                        backgroundColor: 'var(--bg-tertiary)',
                         borderRadius: '0.375rem',
-                        border: '1px solid #d1d5db'
+                        border: '1px solid var(--border-secondary)'
                       }}>
                         Headless
                       </span>
@@ -1133,10 +1133,10 @@ export default function ReportsPage() {
                         gap: '0.25rem',
                         fontSize: '0.75rem',
                         padding: '0.125rem 0.5rem',
-                        backgroundColor: '#ecfdf5',
-                        color: '#059669',
+                        backgroundColor: 'var(--status-success-bg)',
+                        color: 'var(--status-success)',
                         borderRadius: '0.375rem',
-                        border: '1px solid #a7f3d0'
+                        border: '1px solid var(--status-success)'
                       }}>
                         <Image size={10} />
                         Screenshots
@@ -1149,10 +1149,10 @@ export default function ReportsPage() {
                         gap: '0.25rem',
                         fontSize: '0.75rem',
                         padding: '0.125rem 0.5rem',
-                        backgroundColor: '#fef2f2',
-                        color: '#dc2626',
+                        backgroundColor: 'var(--status-error-bg)',
+                        color: 'var(--status-error)',
                         borderRadius: '0.375rem',
-                        border: '1px solid #fecaca'
+                        border: '1px solid var(--status-error)'
                       }}>
                         <Video size={10} />
                         Recording
@@ -1191,7 +1191,7 @@ export default function ReportsPage() {
                     backgroundColor: 'var(--bg-secondary)',
                     borderRadius: '0.75rem',
                     borderLeft: `4px solid ${getStatusColor(step.status)}`,
-                    border: step.status === 'failed' ? '1px solid #dc2626' : '1px solid var(--border-primary)'
+                    border: step.status === 'failed' ? '1px solid var(--status-error)' : '1px solid var(--border-primary)'
                   }}>
                     {/* Step Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -1312,18 +1312,18 @@ export default function ReportsPage() {
                     {step.error && (
                       <div style={{ 
                         padding: '0.75rem',
-                        backgroundColor: '#fef2f2',
-                        border: '1px solid #fecaca',
+                        backgroundColor: 'var(--status-error-bg)',
+                        border: '1px solid var(--status-error)',
                         borderRadius: '0.5rem',
                         marginBottom: '0.5rem'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                          <AlertCircle size={14} color="#dc2626" />
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#dc2626' }}>
+                          <AlertCircle size={14} style={{ color: 'var(--status-error)' }} />
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--status-error)' }}>
                             Hata Detayı
                           </span>
                         </div>
-                        <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>
+                        <p style={{ color: 'var(--status-error)', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>
                           {step.error}
                         </p>
                       </div>
@@ -1349,12 +1349,12 @@ export default function ReportsPage() {
                         alignItems: 'center',
                         gap: '0.25rem',
                         padding: '0.25rem 0.5rem',
-                        backgroundColor: '#ef444420',
-                        color: '#ef4444',
+                        backgroundColor: 'var(--status-error-bg)',
+                        color: 'var(--status-error)',
                         borderRadius: '0.5rem',
                         textDecoration: 'none',
                         fontSize: '0.75rem',
-                        border: '1px solid #ef444440',
+                        border: '1px solid var(--status-error)',
                         fontWeight: 500
                       }}
                     >
@@ -1374,12 +1374,12 @@ export default function ReportsPage() {
                         alignItems: 'center',
                         gap: '0.25rem',
                         padding: '0.25rem 0.5rem',
-                        backgroundColor: '#8b5cf620',
-                        color: '#8b5cf6',
+                        backgroundColor: 'var(--status-purple-bg)',
+                        color: 'var(--status-purple)',
                         borderRadius: '0.5rem',
                         textDecoration: 'none',
                         fontSize: '0.75rem',
-                        border: '1px solid #8b5cf640',
+                        border: '1px solid var(--status-purple)',
                         fontWeight: 500
                       }}
                     >

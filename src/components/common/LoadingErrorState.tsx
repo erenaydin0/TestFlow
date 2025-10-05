@@ -60,12 +60,12 @@ export default function LoadingErrorState({
         alignItems: 'center',
         gap: '1rem'
       }}>
-        <AlertCircle size={48} color="#dc2626" />
+        <AlertCircle size={48} style={{ color: 'var(--status-error)' }} />
         <div>
           <h3 style={{ 
             fontSize: '1.125rem', 
             fontWeight: 600, 
-            color: '#dc2626',
+            color: 'var(--status-error)',
             margin: '0 0 0.5rem 0'
           }}>
             {errorTitle}

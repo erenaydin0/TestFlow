@@ -4,54 +4,104 @@
 
 /* Cosmic Light Theme */
 :root {
+  /* Background Colors */
   --bg-primary: #ffffff;
   --bg-secondary: #faf9f8;
   --bg-tertiary: #f5f3f1;
+  --bg-hover: #f5f3f1;
+  --bg-active: #e8e3df;
+  
+  /* Text Colors */
   --text-primary: #2a2520;
   --text-secondary: #6b5d52;
   --text-tertiary: #9a8a7d;
+  
+  /* Border Colors */
   --border-primary: #e8e3df;
   --border-secondary: #d4ccc4;
+  
+  /* Shadow */
   --shadow: 0 1px 2px rgba(101, 73, 54, 0.06);
   --shadow-lg: 0 4px 6px rgba(101, 73, 54, 0.08);
   
-  /* Cosmic Chart colors */
-  --chart-primary: #D07E47;
-  --chart-success: #a66794;
-  --chart-error: #c96d5f;
-  --chart-warning: #D89558;
+  /* Status Colors */
+  --status-primary: #D07E47;
+  --status-primary-hover: #c96d3d;
+  --status-success: #88b87a;
+  --status-success-hover: #76a668;
+  --status-error: #d87575;
+  --status-error-hover: #c96363;
+  --status-warning: #e89558;
+  --status-warning-hover: #d88446;
+  --status-info: #6b9bd1;
+  --status-purple: #a66794;
   
-  /* Accent colors */
+  /* Status Background (Light) */
+  --status-primary-bg: #fef5ed;
+  --status-success-bg: #f0fdf4;
+  --status-error-bg: #fef2f2;
+  --status-warning-bg: #fef3c7;
+  --status-info-bg: #eff6ff;
+  --status-purple-bg: #f9f0f6;
+  
+  /* Accent Colors */
   --accent-primary: #D07E47;
   --accent-secondary: #a66794;
+  
+  /* Semantic Colors */
+  --color-capture: #fef3c7;
+  --color-selected: #D07E47;
 }
 
 /* Cosmic Dark Theme */
 .dark {
+  /* Background Colors */
   --bg-primary: #0d0a0f;
   --bg-secondary: #15111a;
   --bg-tertiary: #1d1823;
+  --bg-hover: #221d28;
+  --bg-active: #2a2430;
+  
+  /* Text Colors */
   --text-primary: #ebe8ec;
   --text-secondary: #b8adb5;
   --text-tertiary: #8a7d85;
+  
+  /* Border Colors */
   --border-primary: #2a2430;
   --border-secondary: #3d3540;
+  
+  /* Shadow */
   --shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
   
-  /* Cosmic Chart colors for dark mode */
-  --chart-primary: #e89558;
-  --chart-success: #b87aa6;
-  --chart-error: #d88575;
-  --chart-warning: #e89558;
+  /* Status Colors */
+  --status-primary: #e89558;
+  --status-primary-hover: #f5a76a;
+  --status-success: #9bc98d;
+  --status-success-hover: #aed59f;
+  --status-error: #e58585;
+  --status-error-hover: #f09797;
+  --status-warning: #f5a76a;
+  --status-warning-hover: #f7b87c;
+  --status-info: #7daee0;
+  --status-purple: #b87aa6;
   
-  /* Accent colors */
+  /* Status Background (Dark) */
+  --status-primary-bg: rgba(232, 149, 88, 0.1);
+  --status-success-bg: rgba(136, 184, 122, 0.1);
+  --status-error-bg: rgba(216, 117, 117, 0.1);
+  --status-warning-bg: rgba(232, 149, 88, 0.1);
+  --status-info-bg: rgba(107, 155, 209, 0.1);
+  --status-purple-bg: rgba(166, 103, 148, 0.1);
+  
+  /* Accent Colors */
   --accent-primary: #e89558;
   --accent-secondary: #b87aa6;
   
-  /* Additional dark mode specific colors */
-  --bg-hover: #221d28;
-  --bg-active: #2a2430;
+  /* Semantic Colors */
+  --color-capture: rgba(232, 149, 88, 0.15);
+  --color-selected: #e89558;
 }
 
 /* Minimal Base styles */
@@ -63,6 +113,31 @@ body {
   font-size: 14px;
   font-weight: 400;
   transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+/* Cosmic stars effect for dark mode */
+.dark body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(1px 1px at 20% 30%, rgba(232, 149, 88, 0.3), transparent),
+    radial-gradient(1px 1px at 60% 70%, rgba(184, 122, 166, 0.3), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(232, 149, 88, 0.2), transparent),
+    radial-gradient(1px 1px at 80% 10%, rgba(184, 122, 166, 0.2), transparent),
+    radial-gradient(1px 1px at 90% 60%, rgba(232, 149, 88, 0.2), transparent),
+    radial-gradient(1px 1px at 33% 90%, rgba(184, 122, 166, 0.2), transparent),
+    radial-gradient(1px 1px at 15% 70%, rgba(232, 149, 88, 0.15), transparent),
+    radial-gradient(1px 1px at 70% 40%, rgba(184, 122, 166, 0.15), transparent);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%;
+  background-position: 0% 0%, 40% 60%, 50% 50%, 80% 10%, 90% 60%, 33% 90%, 15% 70%, 70% 40%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
 }
 
 /* Minimal Component styles */
@@ -74,11 +149,44 @@ body {
   border: none;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.15s ease;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
 }
 
 .btn-primary:hover {
   background-color: #c96d3d;
+  box-shadow: 0 4px 12px rgba(208, 126, 71, 0.3);
+}
+
+.btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.dark .btn-primary {
+  background: linear-gradient(135deg, #e89558 0%, #b87aa6 100%);
+  box-shadow: 0 2px 8px rgba(232, 149, 88, 0.2);
+}
+
+.dark .btn-primary:hover {
+  box-shadow: 
+    0 4px 16px rgba(232, 149, 88, 0.4),
+    0 0 20px rgba(184, 122, 166, 0.2);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -109,16 +217,39 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Dark mode card improvements */
+/* Dark mode card improvements - Cosmic glow */
 .dark .card {
   background-color: var(--bg-primary);
   border: 1px solid var(--border-secondary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.dark .card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(232, 149, 88, 0.1), rgba(184, 122, 166, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .dark .card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(232, 149, 88, 0.05),
+    0 0 40px rgba(184, 122, 166, 0.03);
   border-color: var(--border-secondary);
+}
+
+.dark .card:hover::before {
+  opacity: 1;
 }
 
 .sidebar-item {
@@ -169,14 +300,16 @@ body {
 }
 
 .dark .sidebar-item-active {
-  background: linear-gradient(90deg, rgba(232, 149, 88, 0.12) 0%, transparent 100%);
+  background: linear-gradient(90deg, rgba(232, 149, 88, 0.12) 0%, rgba(184, 122, 166, 0.05) 100%);
   color: #e89558;
   font-weight: 600;
+  box-shadow: 0 0 15px rgba(232, 149, 88, 0.1);
 }
 
 .dark .sidebar-item-active::before {
-  background: #e89558;
+  background: linear-gradient(180deg, #e89558 0%, #b87aa6 100%);
   height: 100%;
+  box-shadow: 0 0 8px rgba(232, 149, 88, 0.4);
 }
 
 .dark .sidebar-item:hover {
@@ -286,9 +419,12 @@ body {
 .dark .canvas-background {
   background-color: var(--bg-secondary);
   background-image: 
+    radial-gradient(circle at 15% 20%, rgba(232, 149, 88, 0.05) 0%, transparent 25%),
+    radial-gradient(circle at 85% 80%, rgba(184, 122, 166, 0.05) 0%, transparent 25%),
+    radial-gradient(circle at 50% 50%, rgba(208, 126, 71, 0.03) 0%, transparent 50%),
     linear-gradient(rgba(232, 149, 88, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(184, 122, 166, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 20px 20px, 20px 20px;
 }
 
 /* Smooth transitions for all elements */
@@ -326,6 +462,36 @@ body {
   }
   100% {
     opacity: 1;
+  }
+}
+
+/* Cosmic animations */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes cosmicGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(232, 149, 88, 0.2), 0 0 10px rgba(184, 122, 166, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(232, 149, 88, 0.4), 0 0 20px rgba(184, 122, 166, 0.2);
   }
 }
 

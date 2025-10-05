@@ -51,9 +51,9 @@ const Button: React.FC<ButtonProps> = ({
       case 'primary':
         return {
           ...baseStyles,
-          backgroundColor: '#2563eb',
-          color: 'white',
-          border: '1px solid #2563eb'
+          backgroundColor: 'var(--status-primary)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--accent-primary)'
         };
       case 'secondary':
         return {
@@ -65,23 +65,23 @@ const Button: React.FC<ButtonProps> = ({
       case 'success':
         return {
           ...baseStyles,
-          backgroundColor: '#059669',
+          backgroundColor: 'var(--status-success)',
           color: 'white',
-          border: '1px solid #059669'
+          border: '1px solid var(--status-success)'
         };
       case 'danger':
         return {
           ...baseStyles,
-          backgroundColor: '#dc2626',
+          backgroundColor: 'var(--status-error)',
           color: 'white',
-          border: '1px solid #dc2626'
+          border: '1px solid var(--status-error)'
         };
       case 'warning':
         return {
           ...baseStyles,
-          backgroundColor: '#f59e0b',
+          backgroundColor: 'var(--status-warning)',
           color: 'white',
-          border: '1px solid #f59e0b'
+          border: '1px solid var(--status-warning)'
         };
       case 'ghost':
         return {
@@ -150,15 +150,27 @@ const Button: React.FC<ButtonProps> = ({
   const getHoverStyles = (variant: ButtonVariant) => {
     switch (variant) {
       case 'primary':
-        return { backgroundColor: '#1d4ed8' };
+        return { 
+          backgroundColor: 'var(--status-primary-hover)',
+          boxShadow: '0 4px 12px var(--status-primary-bg)'
+        };
       case 'secondary':
         return { backgroundColor: 'var(--bg-tertiary)' };
       case 'success':
-        return { backgroundColor: '#047857' };
+        return { 
+          backgroundColor: 'var(--status-success-hover)',
+          boxShadow: '0 4px 12px var(--status-success-bg)'
+        };
       case 'danger':
-        return { backgroundColor: '#b91c1c' };
+        return { 
+          backgroundColor: 'var(--status-error-hover)',
+          boxShadow: '0 4px 12px var(--status-error-bg)'
+        };
       case 'warning':
-        return { backgroundColor: '#d97706' };
+        return { 
+          backgroundColor: 'var(--status-warning-hover)',
+          boxShadow: '0 4px 12px var(--status-warning-bg)'
+        };
       case 'ghost':
         return { backgroundColor: 'var(--bg-tertiary)' };
       case 'outline':

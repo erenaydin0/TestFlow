@@ -229,7 +229,7 @@ export default function MultiSelect({
                 >
                   <span>{renderOption ? renderOption(option) : option}</span>
                   {selectedValues.includes(option) && (
-                    <Check size={14} style={{ color: '#10b981' }} />
+                    <Check size={14} style={{ color: 'var(--status-success)' }} />
                   )}
                 </div>
               ))
