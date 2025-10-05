@@ -208,7 +208,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
               left: '1rem', 
               top: '50%', 
               transform: 'translateY(-50%)', 
-              color: 'var(--text-tertiary)', 
+              color: 'var(--accent-primary)', 
               width: '1.125rem', 
               height: '1.125rem',
               strokeWidth: 2
