@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Chrome, Globe, Sun, Moon, Monitor, Settings, Palette, Code } from 'lucide-react';
+import { X, Sun, Moon, Monitor, Settings, Palette, Code } from 'lucide-react';
 import { useTheme, useBrowserSettings } from '@/contexts';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
@@ -11,10 +11,10 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type TabType = 'general' | 'browser' | 'appearance';
+type TabType = 'browser' | 'appearance';
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('general');
+  const [activeTab, setActiveTab] = useState<TabType>('browser');
   const { theme, setTheme } = useTheme();
   const { 
     defaultBrowser, 
@@ -32,10 +32,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   });
 
   const browserOptions = [
-    { value: 'chromium', label: 'Chrome/Chromium', icon: Chrome },
-    { value: 'firefox', label: 'Firefox', icon: Globe },
-    { value: 'webkit', label: 'Safari/WebKit', icon: Globe },
-    { value: 'msedge', label: 'Microsoft Edge', icon: Globe }
+    { value: 'chromium', label: 'Chrome/Chromium' },
+    { value: 'firefox', label: 'Firefox' },
+    { value: 'webkit', label: 'Safari/WebKit' },
+    { value: 'msedge', label: 'Microsoft Edge' }
   ];
 
   const themeOptions = [
@@ -45,7 +45,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   ];
 
   const tabs = [
-    { id: 'general' as TabType, label: 'Genel', icon: Settings },
     { id: 'browser' as TabType, label: 'Tarayıcı', icon: Code },
     { id: 'appearance' as TabType, label: 'Görünüm', icon: Palette }
   ];
@@ -81,115 +80,24 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     };
   }, [isOpen, onClose, activeTab, tabs]);
 
-  // Tab içeriklerini render eden fonksiyonlar
-  const renderGeneralSettings = () => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '1rem',
-          backgroundColor: 'var(--bg-tertiary)',
-          borderRadius: '0.5rem',
-          border: '1px solid var(--border-primary)'
-        }}>
-          <div>
-            <h4 style={{
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: 'var(--text-primary)',
-              margin: 0
-            }}>
-              Otomatik Kaydetme
-            </h4>
-            <p style={{
-              fontSize: '0.75rem',
-              color: '#6b7280',
-              margin: '0.25rem 0 0 0'
-            }}>
-              Test ayarlarını otomatik olarak kaydet
-            </p>
-          </div>
-          <label style={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'pointer'
-          }}>
-            <input
-              type="checkbox"
-              defaultChecked={true}
-              style={{
-                width: '1.125rem',
-                height: '1.125rem',
-                accentColor: '#3b82f6',
-                cursor: 'pointer'
-              }}
-            />
-          </label>
-        </div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '1rem',
-          backgroundColor: 'var(--bg-tertiary)',
-          borderRadius: '0.5rem',
-          border: '1px solid var(--border-primary)'
-        }}>
-          <div>
-            <h4 style={{
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: 'var(--text-primary)',
-              margin: 0
-            }}>
-              Bildirimler
-            </h4>
-            <p style={{
-              fontSize: '0.75rem',
-              color: '#6b7280',
-              margin: '0.25rem 0 0 0'
-            }}>
-              Test tamamlandığında bildirim göster
-            </p>
-          </div>
-          <label style={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'pointer'
-          }}>
-            <input
-              type="checkbox"
-              defaultChecked={true}
-              style={{
-                width: '1.125rem',
-                height: '1.125rem',
-                accentColor: '#3b82f6',
-                cursor: 'pointer'
-              }}
-            />
-          </label>
-        </div>
-      </div>
-  );
 
   const renderBrowserSettings = () => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Varsayılan Tarayıcı */}
         <div>
           <label style={{
             display: 'block',
             fontSize: '0.875rem',
-            fontWeight: '500',
+            fontWeight: '600',
             color: 'var(--text-primary)',
-            marginBottom: '0.5rem'
+            marginBottom: '0.75rem'
           }}>
             Varsayılan Tarayıcı
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
             {browserOptions.map((browser) => {
-              const Icon = browser.icon;
+              const Icon = browser;
               const isSelected = defaultBrowser === browser.value;
               
               return (
@@ -222,7 +130,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     }
                   }}
                 >
-                  <Icon size={16} />
                   {browser.label}
                 </button>
               );
@@ -231,7 +138,17 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
 
         {/* Test Seçenekleri */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+        <div>
+          <label style={{
+            display: 'block',
+            fontSize: '0.875rem',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            marginBottom: '0.75rem'
+          }}>
+            Test Seçenekleri
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
           <label style={{
             display: 'flex',
             alignItems: 'center',
@@ -313,8 +230,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             backgroundColor: 'var(--bg-tertiary)',
             borderRadius: '0.5rem',
             border: '1px solid var(--border-primary)',
-            transition: 'all 0.2s ease',
-            gridColumn: 'span 2'
+            transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
@@ -340,6 +256,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               Ekran Görüntüleri
             </span>
           </label>
+          </div>
         </div>
       </div>
   );
@@ -438,23 +355,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* Header */}
           <div style={{
             padding: '1.5rem',
-            borderBottom: '1px solid var(--border-primary)'
+            borderBottom: '1px solid var(--border-primary)',
+            height: '73px',
+            display: 'flex',
+            alignItems: 'center',
+            boxSizing: 'border-box'
           }}>
             <h2 style={{
               fontSize: '1.25rem',
               fontWeight: '600',
               color: 'var(--text-primary)',
-              margin: 0
+              margin: 0,
+              lineHeight: 1
             }}>
               Ayarlar
             </h2>
-            <p style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-secondary)',
-              margin: '0.25rem 0 0 0'
-            }}>
-              Uygulama ayarlarını yönetin
-            </p>
           </div>
 
           {/* Navigation */}
@@ -521,7 +436,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '1.5rem',
-            borderBottom: '1px solid var(--border-primary)'
+            borderBottom: '1px solid var(--border-primary)',
+            height: '73px',
+            boxSizing: 'border-box'
           }}>
             <div>
               <h3 style={{
@@ -531,7 +448,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 margin: 0,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                lineHeight: 1
               }}>
                 {(() => {
                   const currentTab = tabs.find(tab => tab.id === activeTab);
@@ -560,7 +478,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             padding: '1.5rem',
             overflow: 'auto'
           }}>
-            {activeTab === 'general' && renderGeneralSettings()}
             {activeTab === 'browser' && renderBrowserSettings()}
             {activeTab === 'appearance' && renderAppearanceSettings()}
           </div>
