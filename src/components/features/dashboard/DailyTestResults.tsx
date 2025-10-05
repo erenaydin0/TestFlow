@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calendar } from 'lucide-react';
 
@@ -19,6 +20,7 @@ interface DailyTestResultsProps {
 type DateRange = 7 | 14 | 30 | 60;
 
 export default function DailyTestResults({ data, onDateRangeChange }: DailyTestResultsProps) {
+  const router = useRouter();
   const [selectedRange, setSelectedRange] = useState<DateRange>(14);
   const colors = getChartColors();
   const textColors = getTextColors();
@@ -35,6 +37,10 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
   const handleRangeChange = (range: DateRange) => {
     setSelectedRange(range);
     onDateRangeChange?.(range);
+  };
+
+  const handleDateClick = (date: string) => {
+    router.push(`/reports?date=${date}`);
   };
 
   return (
@@ -65,7 +71,16 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
       </div>
       <div className="h-[360px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 50 }}>
+          <AreaChart 
+            data={data} 
+            margin={{ top: 10, right: 30, left: 0, bottom: 50 }}
+            onClick={(e: any) => {
+              if (e && e.activeLabel) {
+                handleDateClick(e.activeLabel);
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={borderColors.primary} />
             <XAxis 
               dataKey="date" 
