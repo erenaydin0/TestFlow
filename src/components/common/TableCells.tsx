@@ -173,8 +173,8 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
         fontSize: '0.875rem',
         marginBottom: description ? '0.25rem' : 0
       }}>
-        {name.slice(0, 50)}
-        {name.length > 50 && '...'}
+        {name.slice(0, 40)}
+        {name.length > 40 && '...'}
       </div>
       {description && (
         <div style={{ 
@@ -182,8 +182,8 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
           color: 'var(--text-secondary)',
           lineHeight: 1.3
         }}>
-          {description.slice(0, 50)}
-          {description.length > 50 && '...'}
+          {description.slice(0, 40)}
+          {description.length > 40 && '...'}
         </div>
       )}
       {id && (
@@ -211,8 +211,8 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
               }
             }}
           >
-            {showCopied ? 'Kopyalandı! ✓' : `ID: ${id.slice(0, 50)}`}
-            {id.length > 50 && '...'}
+            {showCopied ? 'Kopyalandı! ✓' : `ID: ${id.slice(0, 40)}`}
+            {id.length > 40 && '...'}
           </div>
         </div>
       )}
