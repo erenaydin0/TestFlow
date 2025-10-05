@@ -117,8 +117,8 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
         className="flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200"
         style={{
           backgroundColor: (start || end) ? 'var(--accent-primary)' : 'transparent',
-          color: (start || end) ? 'white' : 'var(--text-secondary)',
-          border: `1px solid ${(start || end) ? 'var(--accent-primary)' : 'var(--border-primary)'}`
+          border: '1px solid var(--border-primary)',
+          color: (start || end) ? 'white' : 'var(--text-secondary)'
         }}
       >
         <Calendar size={16} />

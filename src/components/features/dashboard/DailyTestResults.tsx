@@ -60,7 +60,7 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
                 style={{
                   backgroundColor: selectedRange === range.value ? 'var(--accent-primary)' : 'transparent',
                   color: selectedRange === range.value ? 'white' : textColors.secondary,
-                  border: `1px solid ${selectedRange === range.value ? 'var(--accent-primary)' : borderColors.primary}`
+                  border: '1px solid var(--border-primary)'
                 }}
               >
                 {range.label}

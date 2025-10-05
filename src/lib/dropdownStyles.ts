@@ -18,7 +18,7 @@ export const getDropdownContainerStyle = (
 ): CSSProperties => {
   const baseStyles: CSSProperties = {
     backgroundColor: 'var(--bg-primary)',
-    border: '1px solid var(--accent-primary)',
+    border: '1px solid var(--border-primary)',
     borderRadius: '0.5rem',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
     zIndex: 1000,

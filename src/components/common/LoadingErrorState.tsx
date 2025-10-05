@@ -34,7 +34,7 @@ export default function LoadingErrorState({
             width: '2rem', 
             height: '2rem', 
             border: '2px solid var(--border-primary)',
-            borderTop: '2px solid var(--accent-primary)',
+            borderTop: '2px solid var(--border-primary)',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 1rem'
@@ -84,7 +84,7 @@ export default function LoadingErrorState({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.5rem 1rem',
-                backgroundColor: 'var(--accent-primary)',
+                backgroundColor: 'var(--border-primary)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.375rem',

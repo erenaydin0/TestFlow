@@ -2,56 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Minimal Light theme */
+/* Cosmic Light Theme */
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --bg-secondary: #faf9f8;
+  --bg-tertiary: #f5f3f1;
+  --text-primary: #2a2520;
+  --text-secondary: #6b5d52;
+  --text-tertiary: #9a8a7d;
+  --border-primary: #e8e3df;
+  --border-secondary: #d4ccc4;
+  --shadow: 0 1px 2px rgba(101, 73, 54, 0.06);
+  --shadow-lg: 0 4px 6px rgba(101, 73, 54, 0.08);
   
-  /* Minimal Chart colors */
-  --chart-primary: #3b82f6;
-  --chart-success: #10b981;
-  --chart-error: #ef4444;
-  --chart-warning: #f59e0b;
+  /* Cosmic Chart colors */
+  --chart-primary: #D07E47;
+  --chart-success: #a66794;
+  --chart-error: #c96d5f;
+  --chart-warning: #D89558;
   
   /* Accent colors */
-  --accent-primary: #3b82f6;
-  --accent-secondary: #1e40af;
+  --accent-primary: #D07E47;
+  --accent-secondary: #a66794;
 }
 
-/* Modern Dark theme - Improved */
+/* Cosmic Dark Theme */
 .dark {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-tertiary: #9ca3af;
-  --border-primary: #1f2937;
-  --border-secondary: #374151;
+  --bg-primary: #0d0a0f;
+  --bg-secondary: #15111a;
+  --bg-tertiary: #1d1823;
+  --text-primary: #ebe8ec;
+  --text-secondary: #b8adb5;
+  --text-tertiary: #8a7d85;
+  --border-primary: #2a2430;
+  --border-secondary: #3d3540;
   --shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
   
-  /* Vibrant Chart colors for dark mode */
-  --chart-primary: #60a5fa;
-  --chart-success: #34d399;
-  --chart-error: #f87171;
-  --chart-warning: #fbbf24;
+  /* Cosmic Chart colors for dark mode */
+  --chart-primary: #e89558;
+  --chart-success: #b87aa6;
+  --chart-error: #d88575;
+  --chart-warning: #e89558;
   
-  /* Accent colors - More vibrant */
-  --accent-primary: #3b82f6;
-  --accent-secondary: #2563eb;
+  /* Accent colors */
+  --accent-primary: #e89558;
+  --accent-secondary: #b87aa6;
   
   /* Additional dark mode specific colors */
-  --bg-hover: #1f2937;
-  --bg-active: #374151;
+  --bg-hover: #221d28;
+  --bg-active: #2a2430;
 }
 
 /* Minimal Base styles */
@@ -67,7 +67,7 @@ body {
 
 /* Minimal Component styles */
 .btn-primary {
-  background-color: #2563eb;
+  background-color: #D07E47;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -78,7 +78,7 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: #1d4ed8;
+  background-color: #c96d3d;
 }
 
 .btn-secondary {
@@ -169,13 +169,13 @@ body {
 }
 
 .dark .sidebar-item-active {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%);
-  color: #60a5fa;
+  background: linear-gradient(90deg, rgba(232, 149, 88, 0.12) 0%, transparent 100%);
+  color: #e89558;
   font-weight: 600;
 }
 
 .dark .sidebar-item-active::before {
-  background: #60a5fa;
+  background: #e89558;
   height: 100%;
 }
 
@@ -186,7 +186,7 @@ body {
 
 .dark .sidebar-item:hover::before {
   height: 60%;
-  background: #60a5fa;
+  background: #e89558;
 }
 
 /* User panel styles */
@@ -228,13 +228,13 @@ body {
 }
 
 .theme-option.active {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: #fef5ed;
+  color: #c96d3d;
 }
 
 .dark .theme-option.active {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background-color: rgba(232, 149, 88, 0.12);
+  color: #e89558;
 }
 
 .dark .theme-option:hover {
@@ -286,8 +286,8 @@ body {
 .dark .canvas-background {
   background-color: var(--bg-secondary);
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(232, 149, 88, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 122, 166, 0.03) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 

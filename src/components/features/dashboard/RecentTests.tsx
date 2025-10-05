@@ -40,7 +40,7 @@ export default function RecentTests({ data }: RecentTestsProps) {
             color: 'var(--accent-primary)',
             padding: '0.375rem 0.75rem',
             borderRadius: '0.375rem',
-            border: '1px solid var(--accent-primary)',
+            border: '1px solid var(--border-primary)',
             backgroundColor: 'transparent'
           }}
           onMouseEnter={(e) => {

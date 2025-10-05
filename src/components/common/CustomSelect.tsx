@@ -70,7 +70,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           padding: '0.375rem 0.5rem',
           borderRadius: '0.5rem',
           transition: 'all 0.2s ease',
-          border: isOpen ? '1px solid var(--accent-primary)' : '1px solid var(--border-primary)',
+          border: '1px solid var(--border-primary)',
           width: '100%',
           boxSizing: 'border-box',
           backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'var(--bg-primary)',

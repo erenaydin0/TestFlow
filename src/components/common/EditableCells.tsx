@@ -79,7 +79,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
           padding: '0.375rem 0.5rem',
           borderRadius: '0.5rem',
           transition: 'all 0.2s ease',
-          border: isOpen ? '1px solid var(--accent-primary)' : '1px solid transparent',
+          border: isOpen ? '1px solid var(--border-primary)' : '1px solid transparent',
           display: 'block',
           width: '100%',
           boxSizing: 'border-box',
@@ -283,7 +283,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
         transition: 'all 0.2s ease',
         minHeight: '1.75rem',
         alignItems: 'center',
-        border: isOpen ? '1px solid var(--accent-primary)' : '1px solid transparent',
+        border: isOpen ? '1px solid var(--border-primary)' : '1px solid transparent',
         width: '100%',
         boxSizing: 'border-box',
         backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'transparent'
