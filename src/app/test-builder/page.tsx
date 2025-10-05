@@ -571,14 +571,20 @@ export default function TestBuilder() {
           target: step.selector, // Alternative selector name
           duration: step.duration,
           condition: step.condition,
+          conditionType: step.conditionType, // For IF actions
           expectedValue: step.expectedValue,
+          operator: step.operator, // For IF actions
           verificationType: step.verificationType, // For verify actions
           direction: step.direction,
           amount: step.amount,
           filename: step.filename,
           key: step.key,
           optionType: step.optionType, // For dropdown actions
-          optionValue: step.optionValue // For dropdown actions
+          optionValue: step.optionValue, // For dropdown actions
+          // Connection properties for flow control
+          connections: step.connections,
+          trueConnection: step.trueConnection, // For IF TRUE branch
+          falseConnection: step.falseConnection // For IF FALSE branch
         }
       }));
       const response = await fetch('http://localhost:3001/api/execute', {

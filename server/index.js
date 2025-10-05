@@ -312,7 +312,55 @@ async function executeTestWorkflow(executionId, execution) {
       browserType: execution.options.browserType || 'chromium'
     });
     
-    for (let i = 0; i < execution.steps.length; i++) {
+    // Build step map for conditional navigation
+    const stepMap = new Map();
+    execution.steps.forEach((step, index) => {
+      stepMap.set(step.stepId, index);
+    });
+    
+    // Find start step (step with no incoming connections)
+    const hasIncomingConnection = new Set();
+    execution.steps.forEach(step => {
+      // Check normal connections
+      if (step.config.connections) {
+        step.config.connections.forEach(targetId => hasIncomingConnection.add(targetId));
+      }
+      // Check IF connections
+      if (step.config.trueConnection) {
+        hasIncomingConnection.add(step.config.trueConnection);
+      }
+      if (step.config.falseConnection) {
+        hasIncomingConnection.add(step.config.falseConnection);
+      }
+    });
+    
+    // Find start step index
+    let startIndex = 0;
+    for (let idx = 0; idx < execution.steps.length; idx++) {
+      if (!hasIncomingConnection.has(execution.steps[idx].stepId)) {
+        startIndex = idx;
+        break;
+      }
+    }
+    
+    console.log(`Starting execution from step ${startIndex}: ${execution.steps[startIndex].stepId}`);
+    
+    // Track visited steps to prevent infinite loops
+    const visitedSteps = new Set();
+    const maxIterations = execution.steps.length * 10; // Safety limit
+    let iterations = 0;
+    
+    let i = startIndex;
+    while (i < execution.steps.length && iterations < maxIterations) {
+      iterations++;
+      
+      // Check for infinite loop
+      const stepKey = `${i}-${iterations}`;
+      if (visitedSteps.has(execution.steps[i].stepId) && iterations > execution.steps.length) {
+        console.warn(`Possible infinite loop detected at step ${i}`);
+        break;
+      }
+      visitedSteps.add(execution.steps[i].stepId);
       const step = execution.steps[i];
       
       if (execution.status === 'cancelled') {
@@ -363,10 +411,46 @@ async function executeTestWorkflow(executionId, execution) {
           progress: execution.progress
         });
         
+        // Handle IF step conditional navigation
+        if (step.type === 'if' && result.conditionResult !== undefined) {
+          const nextStepId = result.conditionResult 
+            ? step.config.trueConnection 
+            : step.config.falseConnection;
+          
+          if (nextStepId && stepMap.has(nextStepId)) {
+            i = stepMap.get(nextStepId);
+            console.log(`IF condition ${result.conditionResult ? 'TRUE' : 'FALSE'}: jumping to step ${i} (${nextStepId})`);
+            continue;
+          } else {
+            // No connection defined, stop execution
+            console.log(`IF step has no ${result.conditionResult ? 'TRUE' : 'FALSE'} connection, ending execution`);
+            break;
+          }
+        }
+        
+        // Handle normal connections (non-IF steps)
+        if (step.config.connections && step.config.connections.length > 0) {
+          const nextStepId = step.config.connections[0]; // Take first connection
+          if (stepMap.has(nextStepId)) {
+            i = stepMap.get(nextStepId);
+            console.log(`Following connection to step ${i} (${nextStepId})`);
+            continue;
+          }
+        }
+        
         // If step failed and it's critical, stop execution
         if (!result.success && step.config.critical !== false) {
           execution.status = 'failed';
           execution.error = `Step ${i + 1} failed: ${result.error}`;
+          break;
+        }
+        
+        // No connections found, try next sequential step
+        i++;
+        
+        // If we've reached the end or next step doesn't exist, stop
+        if (i >= execution.steps.length) {
+          console.log('Reached end of workflow');
           break;
         }
         

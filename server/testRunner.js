@@ -213,7 +213,8 @@ class TestRunner {
           break;
           
         case 'if':
-          await this.executeIf(step.config);
+          stepResult.conditionResult = await this.executeIf(step.config);
+          stepResult.logs.push(`Condition result: ${stepResult.conditionResult ? 'TRUE' : 'FALSE'}`);
           break;
           
         default:
@@ -592,21 +593,125 @@ class TestRunner {
   }
 
   async executeIf(config) {
-    const rawCondition = config.condition || config.selector || '';
-    if (!rawCondition) {
-      throw new Error('If action requires a condition selector');
-    }
+    const conditionType = config.conditionType || 'visible';
+    const rawSelector = config.selector || config.condition || '';
+    const expectedValue = config.expectedValue || '';
+    const operator = config.operator || 'equals';
     
-    const condition = this.normalizeSelector(rawCondition);
-    console.log(`Checking condition: ${rawCondition} -> normalized: ${condition}`);
+    console.log(`Checking condition: type=${conditionType}, selector=${rawSelector}, expectedValue=${expectedValue}, operator=${operator}`);
     
     try {
-      // Check if element exists and is visible
-      await this.page.waitForSelector(condition, { state: 'visible', timeout: 5000 });
-      console.log('Condition is TRUE - element found and visible');
-      return true;
+      // URL kontrolü
+      if (conditionType === 'url' || conditionType === 'urlContains') {
+        const currentUrl = this.page.url();
+        if (conditionType === 'url') {
+          return currentUrl === expectedValue;
+        } else {
+          return currentUrl.includes(expectedValue);
+        }
+      }
+      
+      // Selector gerekli kontroller
+      if (!rawSelector) {
+        throw new Error('If action requires a selector for non-URL conditions');
+      }
+      
+      const selector = this.normalizeSelector(rawSelector);
+      const locator = this.page.locator(selector);
+      
+      switch (conditionType) {
+        case 'exists':
+          // Element var mı?
+          const count = await locator.count();
+          return count > 0;
+          
+        case 'visible':
+          // Element görünür mü?
+          try {
+            await locator.first().waitFor({ state: 'visible', timeout: 5000 });
+            return true;
+          } catch {
+            return false;
+          }
+          
+        case 'hidden':
+          // Element gizli mi?
+          try {
+            await locator.first().waitFor({ state: 'hidden', timeout: 5000 });
+            return true;
+          } catch {
+            return false;
+          }
+          
+        case 'text':
+          // Metin eşit mi?
+          try {
+            const text = await locator.first().textContent();
+            return text?.trim() === expectedValue.trim();
+          } catch {
+            return false;
+          }
+          
+        case 'textContains':
+          // Metin içeriyor mu?
+          try {
+            const text = await locator.first().textContent();
+            return text?.includes(expectedValue) || false;
+          } catch {
+            return false;
+          }
+          
+        case 'value':
+          // Input değeri eşit mi?
+          try {
+            const value = await locator.first().inputValue();
+            return value === expectedValue;
+          } catch {
+            return false;
+          }
+          
+        case 'valueContains':
+          // Input değeri içeriyor mu?
+          try {
+            const value = await locator.first().inputValue();
+            return value.includes(expectedValue);
+          } catch {
+            return false;
+          }
+          
+        case 'count':
+          // Element sayısı kontrolü
+          const elementCount = await locator.count();
+          const expected = parseInt(expectedValue);
+          
+          switch (operator) {
+            case 'equals':
+              return elementCount === expected;
+            case 'notEquals':
+              return elementCount !== expected;
+            case 'greaterThan':
+              return elementCount > expected;
+            case 'lessThan':
+              return elementCount < expected;
+            case 'greaterOrEqual':
+              return elementCount >= expected;
+            case 'lessOrEqual':
+              return elementCount <= expected;
+            default:
+              return elementCount === expected;
+          }
+          
+        default:
+          // Varsayılan: element görünür mü?
+          try {
+            await locator.first().waitFor({ state: 'visible', timeout: 5000 });
+            return true;
+          } catch {
+            return false;
+          }
+      }
     } catch (error) {
-      console.log('Condition is FALSE - element not found or not visible');
+      console.log(`Condition check error: ${error.message}`);
       return false;
     }
   }
