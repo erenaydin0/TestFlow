@@ -51,9 +51,6 @@ module.exports = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
-        'twinkle': 'twinkle 3s ease-in-out infinite',
-        'float': 'float 6s ease-in-out infinite',
-        'cosmic-glow': 'cosmicGlow 4s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -63,22 +60,6 @@ module.exports = {
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        twinkle: {
-          '0%, 100%': { opacity: '0.3', transform: 'scale(1)' },
-          '50%': { opacity: '1', transform: 'scale(1.2)' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        cosmicGlow: {
-          '0%, 100%': { 
-            boxShadow: '0 0 5px rgba(232, 149, 88, 0.2), 0 0 10px rgba(184, 122, 166, 0.1)' 
-          },
-          '50%': { 
-            boxShadow: '0 0 10px rgba(232, 149, 88, 0.4), 0 0 20px rgba(184, 122, 166, 0.2)' 
-          },
         },
       },
     },

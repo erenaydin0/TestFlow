@@ -465,36 +465,7 @@ body {
   }
 }
 
-/* Cosmic animations */
-@keyframes twinkle {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes cosmicGlow {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(232, 149, 88, 0.2), 0 0 10px rgba(184, 122, 166, 0.1);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(232, 149, 88, 0.4), 0 0 20px rgba(184, 122, 166, 0.2);
-  }
-}
-
+/* Modal animations */
 @keyframes modalSlideIn {
   0% {
     opacity: 0;
