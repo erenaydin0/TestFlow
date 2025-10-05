@@ -752,14 +752,20 @@ export default function TestsPage() {
                   >
                     İçe Aktar
                   </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={Plus}
+                  <button 
+                    className="btn-primary" 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      padding: '0.375rem 0.75rem',
+                      fontSize: '0.875rem'
+                    }}
                     onClick={handleCreateNewTest}
                   >
+                    <Plus size={16} />
                     Yeni Test
-                  </Button>
+                  </button>
                 </ButtonGroup>
               </div>
             </div>
