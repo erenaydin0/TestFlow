@@ -9,6 +9,7 @@ interface BrowserSelectorProps {
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
   style?: React.CSSProperties;
+  useFixedPosition?: boolean; // Tablo içinde kullanım için
 }
 
 const browserOptions = [
@@ -23,7 +24,8 @@ export default function BrowserSelector({
   onBrowserChange, 
   disabled = false,
   size = 'sm',
-  style = {}
+  style = {},
+  useFixedPosition = false
 }: BrowserSelectorProps) {
   return (
     <div style={{ width: '100%', opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto', ...style }}>
@@ -33,6 +35,7 @@ export default function BrowserSelector({
         options={browserOptions}
         placeholder="Chrome"
         style={{border: 'none', backgroundColor: 'transparent'}}
+        useFixedPosition={useFixedPosition}
       />
     </div>
   );

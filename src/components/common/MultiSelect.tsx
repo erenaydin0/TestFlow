@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X, Check, Search } from 'lucide-react';
 import { useDropdown } from '@/hooks/ui';
+import { getDropdownContainerStyle, getDropdownOptionHandlers } from '@/lib/dropdownStyles';
 
 interface MultiSelectProps {
   options: string[];
@@ -148,20 +149,11 @@ export default function MultiSelect({
         <div
           ref={dropdownContentRef}
           style={{
-            position: 'absolute',
-            ...(dropdownPosition === 'top' 
-              ? { bottom: '100%', marginBottom: '0.25rem' }
-              : { top: '100%', marginTop: '0.25rem' }
-            ),
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--accent-primary)',
-            borderRadius: '0.375rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            maxHeight: '250px',
-            overflowY: 'hidden',
+            ...getDropdownContainerStyle(dropdownPosition, {
+              borderRadius: '0.375rem',
+              maxHeight: '250px',
+              overflowY: 'hidden'
+            }),
             ...getAnimationStyle()
           }}
         >
@@ -233,16 +225,7 @@ export default function MultiSelect({
                     color: 'var(--text-primary)',
                     borderBottom: '1px solid var(--border-primary)'
                   }}
-                  onMouseEnter={(e) => {
-                    if (!selectedValues.includes(option)) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!selectedValues.includes(option)) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                  }}
+                  {...getDropdownOptionHandlers(selectedValues.includes(option))}
                 >
                   <span>{renderOption ? renderOption(option) : option}</span>
                   {selectedValues.includes(option) && (

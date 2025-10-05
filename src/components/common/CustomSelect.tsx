@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { useDropdown } from '@/hooks/ui';
+import { getDropdownContainerStyle, getDropdownOptionHandlers, getButtonHoverHandlers } from '@/lib/dropdownStyles';
 
 interface CustomSelectProps {
   value: string;
@@ -11,6 +11,7 @@ interface CustomSelectProps {
   placeholder?: string;
   className?: string;
   style?: React.CSSProperties;
+  useFixedPosition?: boolean; // Tablo içinde kullanım için
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -19,19 +20,24 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   options,
   placeholder = 'Seçiniz',
   className = '',
-  style = {}
+  style = {},
+  useFixedPosition = false
 }) => {
   const {
     isOpen,
     isClosing,
     dropdownPosition,
+    fixedPosition,
     containerRef,
     buttonRef,
     dropdownRef,
     handleClose,
     handleToggle,
     getAnimationStyle
-  } = useDropdown({ animationDuration: 150 });
+  } = useDropdown({ 
+    animationDuration: 150,
+    useFixedPosition
+  });
 
   const selectedOption = options.find(opt => opt.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;
@@ -71,16 +77,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           minWidth: '120px',
           ...style
         }}
-        onMouseEnter={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-          }
-        }}
+        {...getButtonHoverHandlers(isOpen)}
       >
         <span style={{ flex: 1 }}>{displayText}</span>
         <ChevronDown 
@@ -97,20 +94,15 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         <div 
           ref={dropdownRef}
           style={{
-            position: 'absolute',
-            ...(dropdownPosition === 'top' 
-              ? { bottom: '100%', marginBottom: '0.25rem' }
-              : { top: '100%', marginTop: '0.25rem' }
+            ...getDropdownContainerStyle(
+              dropdownPosition, 
+              {
+                maxHeight: '250px',
+                overflowY: 'auto',
+                width: fixedPosition?.width
+              },
+              fixedPosition
             ),
-            left: 0,
-            right: 0,
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--accent-primary)',
-            borderRadius: '0.5rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            zIndex: 1000,
-            maxHeight: '250px',
-            overflowY: 'auto',
             ...getAnimationStyle(200)
           }}
         >
@@ -135,16 +127,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   justifyContent: 'space-between',
                   transition: 'background-color 0.2s ease'
                 }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
+                {...getDropdownOptionHandlers(isSelected)}
               >
                 <span style={{ color: isSelected ? 'white' : 'var(--text-primary)' }}>
                   {option.label}

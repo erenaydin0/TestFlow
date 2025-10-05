@@ -1,36 +1,41 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface UseDropdownOptions {
   animationDuration?: number;
   onClose?: () => void;
+  useFixedPosition?: boolean; // Tablo içinde kullanım için
 }
 
+const SAFE_MARGIN = 20; // Dropdown için güvenlik marjı
+
 export const useDropdown = (options: UseDropdownOptions = {}) => {
-  const { animationDuration = 150, onClose } = options;
+  const { animationDuration = 150, onClose, useFixedPosition = false } = options;
 
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
+  const [fixedPosition, setFixedPosition] = useState<{ top?: number; left: number; width: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
+      setFixedPosition(null);
       onClose?.();
     }, animationDuration);
-  };
+  }, [animationDuration, onClose]);
 
-  const handleToggle = () => {
+  const handleToggle = useCallback(() => {
     if (isOpen) {
       handleClose();
     } else {
       setIsOpen(true);
     }
-  };
+  }, [isOpen, handleClose]);
 
   // Click outside handler
   useEffect(() => {
@@ -46,81 +51,116 @@ export const useDropdown = (options: UseDropdownOptions = {}) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Calculate dropdown position
-  const calculatePosition = () => {
-    if (buttonRef.current && dropdownRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const dropdownHeight = dropdownRef.current.offsetHeight;
-      const spaceBelow = window.innerHeight - buttonRect.bottom;
-      const spaceAbove = buttonRect.top;
+  const calculatePosition = useCallback(() => {
+    if (!buttonRef.current || !dropdownRef.current) return;
 
-      // Güvenli bir margin ekle (20px)
-      const safeMargin = 20;
-      const requiredSpace = dropdownHeight + safeMargin;
-      
-      // Sayfanın scroll edilebilir yüksekliğini kontrol et
-      const documentHeight = document.documentElement.scrollHeight;
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const viewportBottom = scrollTop + window.innerHeight;
-      const spaceToDocumentEnd = documentHeight - viewportBottom;
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = dropdownRef.current.offsetHeight;
+    const spaceBelow = window.innerHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    const requiredSpace = dropdownHeight + SAFE_MARGIN;
 
-      // Dropdown'ı aşağıda açmak için yeterli alan var mı kontrol et
-      // Eğer dropdown açıldığında sayfa scroll olacaksa (document sonuna yakınsa), yukarıda aç
-      const willCausePageScroll = spaceToDocumentEnd < requiredSpace;
+    // Fixed position için koordinatları hesapla
+    if (useFixedPosition) {
+      const left = buttonRect.left;
+      const width = buttonRect.width;
       
-      if (willCausePageScroll && spaceAbove >= requiredSpace) {
+      if (spaceBelow >= requiredSpace) {
+        setDropdownPosition('bottom');
+        setFixedPosition({
+          top: buttonRect.bottom + 4, // 0.25rem margin
+          left,
+          width
+        });
+      } else if (spaceAbove >= requiredSpace) {
         setDropdownPosition('top');
-      } else if (spaceBelow >= requiredSpace) {
+        setFixedPosition({
+          top: buttonRect.top - dropdownHeight - 4, // 0.25rem margin
+          left,
+          width
+        });
+      } else {
+        // Daha fazla alan olan tarafı seç
+        if (spaceBelow >= spaceAbove) {
+          setDropdownPosition('bottom');
+          setFixedPosition({
+            top: buttonRect.bottom + 4,
+            left,
+            width
+          });
+        } else {
+          setDropdownPosition('top');
+          setFixedPosition({
+            top: buttonRect.top - dropdownHeight - 4,
+            left,
+            width
+          });
+        }
+      }
+    } else {
+      // Absolute position için sadece yön belirle
+      if (spaceBelow >= requiredSpace) {
         setDropdownPosition('bottom');
       } else if (spaceAbove >= requiredSpace) {
         setDropdownPosition('top');
       } else {
-        // Her iki tarafta da yeterli alan yoksa, daha fazla alan olan tarafı seç
-        if (spaceBelow >= spaceAbove) {
-          setDropdownPosition('bottom');
-        } else {
-          setDropdownPosition('top');
-        }
+        setDropdownPosition(spaceBelow >= spaceAbove ? 'bottom' : 'top');
       }
     }
-  };
+  }, [useFixedPosition]);
 
+  // Dropdown açıldığında pozisyonu hesapla
   useEffect(() => {
-    if (isOpen) {
-      // Dropdown'ın DOM'a eklenmesini bekle ve pozisyonu hesapla
-      const checkAndCalculate = () => {
-        if (dropdownRef.current) {
-          calculatePosition();
-        } else {
-          // Henüz ref set edilmediyse tekrar dene
-          requestAnimationFrame(checkAndCalculate);
-        }
-      };
-      
-      requestAnimationFrame(checkAndCalculate);
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
 
-  const getAnimationStyle = (fadeInDuration?: number) => ({
+    const checkAndCalculate = () => {
+      if (dropdownRef.current) {
+        calculatePosition();
+      } else {
+        requestAnimationFrame(checkAndCalculate);
+      }
+    };
+    
+    requestAnimationFrame(checkAndCalculate);
+  }, [isOpen, calculatePosition]);
+
+  // Scroll ve resize olaylarında pozisyonu güncelle (fixed position için)
+  useEffect(() => {
+    if (!isOpen || !useFixedPosition) return;
+
+    const handleUpdate = () => {
+      calculatePosition();
+    };
+
+    window.addEventListener('scroll', handleUpdate, true); // capture phase
+    window.addEventListener('resize', handleUpdate);
+
+    return () => {
+      window.removeEventListener('scroll', handleUpdate, true);
+      window.removeEventListener('resize', handleUpdate);
+    };
+  }, [isOpen, useFixedPosition, calculatePosition]);
+
+  const getAnimationStyle = useCallback((fadeInDuration?: number) => ({
     animation: isClosing 
       ? `fadeOut ${animationDuration}ms ease-in forwards` 
       : `fadeInScale ${fadeInDuration || animationDuration}ms ease-out forwards`,
     transformOrigin: dropdownPosition === 'top' ? 'bottom' : 'top'
-  });
+  }), [isClosing, animationDuration, dropdownPosition]);
 
   return {
     isOpen,
     isClosing,
     dropdownPosition,
+    fixedPosition,
     containerRef,
     buttonRef,
     dropdownRef,
     handleClose,
     handleToggle,
-    setIsOpen,
-    calculatePosition,
     getAnimationStyle
   };
 };

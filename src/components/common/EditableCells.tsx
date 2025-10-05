@@ -6,6 +6,7 @@ import { BrowserType } from '@/types';
 import MultiSelect from './MultiSelect';
 import { BrowserSelector } from '@/components/features/test-builder';
 import { useDropdown } from '@/hooks/ui';
+import { getDropdownContainerStyle } from '@/lib/dropdownStyles';
 
 interface EditableSuiteCellProps {
   value: string;
@@ -27,6 +28,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
     isOpen,
     isClosing,
     dropdownPosition,
+    fixedPosition,
     containerRef,
     buttonRef,
     dropdownRef,
@@ -35,7 +37,8 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
     getAnimationStyle
   } = useDropdown({ 
     animationDuration: 150,
-    onClose: () => setSearchTerm('')
+    onClose: () => setSearchTerm(''),
+    useFixedPosition: true // Tablo içinde kullanım için
   });
 
   useEffect(() => {
@@ -103,19 +106,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
         <div 
           ref={dropdownRef}
           style={{
-            position: 'absolute',
-            ...(dropdownPosition === 'top' 
-              ? { bottom: '100%', marginBottom: '0.25rem' }
-              : { top: '100%', marginTop: '0.25rem' }
-            ),
-            left: 0,
-            right: 0,
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--accent-primary)',
-            borderRadius: '0.5rem',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            zIndex: 1000,
-            width: '100%',
+            ...getDropdownContainerStyle(dropdownPosition, { width: fixedPosition?.width || '100%' }, fixedPosition),
             ...getAnimationStyle()
           }}
         >
@@ -229,6 +220,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
     isOpen,
     isClosing,
     dropdownPosition,
+    fixedPosition,
     containerRef,
     buttonRef,
     dropdownRef,
@@ -237,7 +229,8 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
     getAnimationStyle
   } = useDropdown({ 
     animationDuration: 150,
-    onClose: () => setSearchTerm('')
+    onClose: () => setSearchTerm(''),
+    useFixedPosition: true // Tablo içinde kullanım için
   });
 
   useEffect(() => {
@@ -349,19 +342,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
       <div 
         ref={dropdownRef}
         style={{
-          position: 'absolute',
-          ...(dropdownPosition === 'top' 
-            ? { bottom: '100%', marginBottom: '0.25rem' }
-            : { top: '100%', marginTop: '0.25rem' }
-          ),
-          left: 0,
-          right: 0,
-          backgroundColor: 'var(--bg-primary)',
-          border: '1px solid var(--accent-primary)',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          zIndex: 1000,
-          width: '100%',
+          ...getDropdownContainerStyle(dropdownPosition, { width: fixedPosition?.width || '100%' }, fixedPosition),
           ...getAnimationStyle(200)
         }}
       >
@@ -515,6 +496,7 @@ export const EditableBrowserCell: React.FC<EditableBrowserCellProps> = ({
         onBrowserChange={handleChange}
         disabled={false}
         size="sm"
+        useFixedPosition={true}
       />
     </div>
   );
