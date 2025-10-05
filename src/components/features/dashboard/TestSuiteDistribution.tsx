@@ -7,6 +7,7 @@ interface TestSuite {
   name: string;
   value: number;
   color: string;
+  successRate?: number; // Başarı oranı (%)
 }
 
 interface BrowserDistribution {
@@ -14,6 +15,7 @@ interface BrowserDistribution {
   value: number;
   color: string;
   browserType?: string; // Gerçek browser type değeri (chromium, firefox, webkit, msedge)
+  successRate?: number; // Başarı oranı (%)
 }
 
 interface TestSuiteDistributionProps {
@@ -64,6 +66,7 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
     if (active && payload && payload.length) {
       const data = payload[0];
       const percentage = ((data.value / totalValue) * 100).toFixed(1);
+      const successRate = data.payload.successRate;
       
       return (
         <div 
@@ -86,10 +89,24 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
             <span style={{ color: 'var(--text-secondary)' }}>Toplam:</span>
             <span style={{ fontWeight: '600' }}>{data.value}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
             <span style={{ color: 'var(--text-secondary)' }}>Oran:</span>
             <span style={{ fontWeight: '600', color: data.payload.color }}>%{percentage}</span>
           </div>
+          {successRate !== undefined && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Başarı:</span>
+              <span 
+                style={{ 
+                  fontWeight: '600', 
+                  color: successRate >= 80 ? '#059669' : 
+                         successRate >= 50 ? '#d97706' : '#dc2626'
+                }}
+              >
+                %{successRate}
+              </span>
+            </div>
+          )}
         </div>
       );
     }
@@ -213,10 +230,24 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
                         {item.name}
                       </div>
                       <div 
-                        className="text-xs" 
+                        className="text-xs flex items-center gap-1.5" 
                         style={{ color: 'var(--text-secondary)' }}
                       >
-                        {item.value} {currentPage === 0 ? 'test' : 'çalıştırma'}
+                        <span>{item.value} {currentPage === 0 ? 'test' : 'çalıştırma'}</span>
+                        {item.successRate !== undefined && (
+                          <>
+                            <span>•</span>
+                            <span 
+                              className="font-semibold"
+                              style={{ 
+                                color: item.successRate >= 80 ? '#059669' : 
+                                       item.successRate >= 50 ? '#d97706' : '#dc2626'
+                              }}
+                            >
+                              %{item.successRate} başarı
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

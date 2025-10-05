@@ -36,38 +36,58 @@ export default function Dashboard() {
       };
     });
 
-    // Test suite distribution
+    // Test suite distribution with success rate
     const testSuiteData = executions.reduce((acc: any, execution: any) => {
       const suite = execution.suite || 'Diğer';
-      acc[suite] = (acc[suite] || 0) + 1;
+      if (!acc[suite]) {
+        acc[suite] = { total: 0, passed: 0 };
+      }
+      acc[suite].total += 1;
+      if (execution.status === 'completed') {
+        acc[suite].passed += 1;
+      }
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, { total: number; passed: number }>);
 
     // Colors for test suites
     const colors = ['#2563eb', '#dc2626', '#059669', '#d97706', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b'];
     
-    const testSuiteDataWithColors = Object.entries(testSuiteData).map(([name, value], index) => ({
-      name,
-      value: value as number,
-      color: colors[index % colors.length]
-    }));
+    const testSuiteDataWithColors = Object.entries(testSuiteData).map(([name, data], index) => {
+      const suiteData = data as { total: number; passed: number };
+      return {
+        name,
+        value: suiteData.total,
+        successRate: suiteData.total > 0 ? Math.round((suiteData.passed / suiteData.total) * 100) : 0,
+        color: colors[index % colors.length]
+      };
+    });
 
-    // Browser distribution
+    // Browser distribution with success rate
     const browserData = executions.reduce((acc: any, execution: any) => {
       const browser = execution.options?.browserType || 'chromium';
-      acc[browser] = (acc[browser] || 0) + 1;
+      if (!acc[browser]) {
+        acc[browser] = { total: 0, passed: 0 };
+      }
+      acc[browser].total += 1;
+      if (execution.status === 'completed') {
+        acc[browser].passed += 1;
+      }
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, { total: number; passed: number }>);
 
     const browserColors = ['#4285f4', '#ff6d01', '#9333ea', '#059669', '#dc2626'];
-    const browserDataWithColors = Object.entries(browserData).map(([browserType, value], index) => ({
-      name: browserType === 'chromium' ? 'Chrome' : 
-            browserType === 'firefox' ? 'Firefox' : 
-            browserType === 'webkit' ? 'Safari' : browserType,
-      browserType: browserType, // Gerçek browser type'ı sakla
-      value: value as number,
-      color: browserColors[index % browserColors.length]
-    }));
+    const browserDataWithColors = Object.entries(browserData).map(([browserType, data], index) => {
+      const browserStats = data as { total: number; passed: number };
+      return {
+        name: browserType === 'chromium' ? 'Chrome' : 
+              browserType === 'firefox' ? 'Firefox' : 
+              browserType === 'webkit' ? 'Safari' : browserType,
+        browserType: browserType, // Gerçek browser type'ı sakla
+        value: browserStats.total,
+        successRate: browserStats.total > 0 ? Math.round((browserStats.passed / browserStats.total) * 100) : 0,
+        color: browserColors[index % browserColors.length]
+      };
+    });
 
     // Recent tests (last 5) - map to RecentTest interface
     const recentTests = executions
