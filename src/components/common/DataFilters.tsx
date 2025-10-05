@@ -14,6 +14,7 @@ interface FilterState {
   tags: string[];
   browserType: BrowserType[];
   dateRange?: string;
+  specificDate?: string; // Belirli bir tarih (YYYY-MM-DD formatında)
 }
 
 interface DataFiltersProps {
@@ -70,7 +71,8 @@ const DataFilters: React.FC<DataFiltersProps> = ({
       suite: [],
       tags: [],
       browserType: [],
-      dateRange: ''
+      dateRange: '',
+      specificDate: ''
     });
   };
 
@@ -80,7 +82,8 @@ const DataFilters: React.FC<DataFiltersProps> = ({
     filters.suite.length > 0 ||
     filters.tags.length > 0 ||
     filters.browserType.length > 0 ||
-    filters.dateRange;
+    filters.dateRange ||
+    filters.specificDate;
 
   return (
     <div className={`data-filters ${className}`}>
@@ -157,18 +160,61 @@ const DataFilters: React.FC<DataFiltersProps> = ({
 
         {/* Date Range */}
         {showDateRange && (
-          <CustomSelect
-            value={filters.dateRange || ''}
-            onChange={(value) => updateFilter('dateRange', value)}
-            options={[
-              { value: '', label: 'Tüm Tarihler' },
-              { value: 'today', label: 'Bugün' },
-              { value: 'yesterday', label: 'Dün' },
-              { value: 'last7days', label: 'Son 7 Gün' },
-              { value: 'last30days', label: 'Son 30 Gün' }
-            ]}
-            placeholder="Tüm Tarihler"
-          />
+          <>
+            <CustomSelect
+              value={filters.dateRange || ''}
+              onChange={(value) => {
+                updateFilter('dateRange', value);
+                if (value) updateFilter('specificDate', ''); // dateRange seçilince specificDate'i temizle
+              }}
+              options={[
+                { value: '', label: 'Tüm Tarihler' },
+                { value: 'today', label: 'Bugün' },
+                { value: 'yesterday', label: 'Dün' },
+                { value: 'last7days', label: 'Son 7 Gün' },
+                { value: 'last30days', label: 'Son 30 Gün' }
+              ]}
+              placeholder="Tüm Tarihler"
+            />
+            
+            {/* Specific Date Input */}
+            {filters.specificDate && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                padding: '0.5rem 0.75rem',
+                backgroundColor: 'var(--bg-secondary)',
+                border: '1px solid var(--accent-primary)',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                color: 'var(--text-primary)'
+              }}>
+                <span style={{ fontWeight: '500' }}>
+                  {new Date(filters.specificDate).toLocaleDateString('tr-TR', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </span>
+                <button
+                  onClick={() => updateFilter('specificDate', '')}
+                  style={{ 
+                    padding: '0.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'transparent',
+                    border: 'none'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Suite Filter */}
