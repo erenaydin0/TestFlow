@@ -14,6 +14,8 @@ interface ReportFilters {
   status?: string;
   dateRange?: string;
   specificDate?: string;
+  startDate?: string;
+  endDate?: string;
   suite: string[];
   tags: string[];
   browserType: BrowserType[];
@@ -35,6 +37,8 @@ const useReports = (options: UseReportsOptions = {}) => {
     status: '',
     dateRange: '',
     specificDate: '',
+    startDate: '',
+    endDate: '',
     suite: [],
     tags: [],
     browserType: []
@@ -147,6 +151,8 @@ const useReports = (options: UseReportsOptions = {}) => {
       status: '',
       dateRange: '',
       specificDate: '',
+      startDate: '',
+      endDate: '',
       suite: [],
       tags: [],
       browserType: []
