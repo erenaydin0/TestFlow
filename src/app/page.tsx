@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
 import { 
@@ -13,17 +13,18 @@ import { useExecutions } from '@/hooks/data';
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
+  const [dateRange, setDateRange] = useState(14);
 
   // Process data for charts
   const chartData = useMemo(() => {
-    // Daily results from last 7 days
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    // Daily results based on selected date range
+    const days = Array.from({ length: dateRange }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
       return date.toISOString().split('T')[0];
     }).reverse();
 
-    const dailyResults = last7Days.map(date => {
+    const dailyResults = days.map(date => {
       const dayExecutions = executions.filter((e: any) => 
         new Date(e.startTime).toISOString().split('T')[0] === date
       );
@@ -88,7 +89,7 @@ export default function Dashboard() {
       browserData: browserDataWithColors,
       recentTests
     };
-  }, [executions]);
+  }, [executions, dateRange]);
 
   return (
     <PageLayout>
@@ -103,7 +104,10 @@ export default function Dashboard() {
         {/* İlk satır: Günlük Test Sonuçları + Son Testler */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
           <div className="lg:col-span-8">
-            <DailyTestResults data={chartData.dailyResults} />
+            <DailyTestResults 
+              data={chartData.dailyResults} 
+              onDateRangeChange={setDateRange}
+            />
           </div>
           <div className="lg:col-span-4">
             <RecentTests data={chartData.recentTests} />
