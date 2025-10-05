@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, Chrome, Globe } from 'lucide-react';
 
 import { MultiSelect, CustomSelect } from './';
+import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components/ui';
 import { BrowserType, TestFilters, ExecutionFilters } from '@/types';
 
@@ -15,6 +16,8 @@ interface FilterState {
   browserType: BrowserType[];
   dateRange?: string;
   specificDate?: string; // Belirli bir tarih (YYYY-MM-DD formatında)
+  startDate?: string; // Tarih aralığı başlangıcı
+  endDate?: string; // Tarih aralığı bitişi
 }
 
 interface DataFiltersProps {
@@ -72,7 +75,9 @@ const DataFilters: React.FC<DataFiltersProps> = ({
       tags: [],
       browserType: [],
       dateRange: '',
-      specificDate: ''
+      specificDate: '',
+      startDate: '',
+      endDate: ''
     });
   };
 
@@ -83,7 +88,9 @@ const DataFilters: React.FC<DataFiltersProps> = ({
     filters.tags.length > 0 ||
     filters.browserType.length > 0 ||
     filters.dateRange ||
-    filters.specificDate;
+    filters.specificDate ||
+    filters.startDate ||
+    filters.endDate;
 
   return (
     <div className={`data-filters ${className}`}>
@@ -158,63 +165,30 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           />
         )}
 
-        {/* Date Range */}
+        {/* Date Range Filter */}
         {showDateRange && (
-          <>
-            <CustomSelect
-              value={filters.dateRange || ''}
-              onChange={(value) => {
-                updateFilter('dateRange', value);
-                if (value) updateFilter('specificDate', ''); // dateRange seçilince specificDate'i temizle
-              }}
-              options={[
-                { value: '', label: 'Tüm Tarihler' },
-                { value: 'today', label: 'Bugün' },
-                { value: 'yesterday', label: 'Dün' },
-                { value: 'last7days', label: 'Son 7 Gün' },
-                { value: 'last30days', label: 'Son 30 Gün' }
-              ]}
-              placeholder="Tüm Tarihler"
-            />
-            
-            {/* Specific Date Input */}
-            {filters.specificDate && (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem',
-                padding: '0.5rem 0.75rem',
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--accent-primary)',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                color: 'var(--text-primary)'
-              }}>
-                <span style={{ fontWeight: '500' }}>
-                  {new Date(filters.specificDate).toLocaleDateString('tr-TR', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                </span>
-                <button
-                  onClick={() => updateFilter('specificDate', '')}
-                  style={{ 
-                    padding: '0.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'var(--text-secondary)',
-                    backgroundColor: 'transparent',
-                    border: 'none'
-                  }}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-          </>
+          <DateRangeFilter
+            startDate={filters.startDate || filters.specificDate}
+            endDate={filters.endDate || filters.specificDate}
+            onDateChange={(start, end) => {
+              onFiltersChange({
+                ...filters,
+                startDate: start,
+                endDate: end,
+                specificDate: start === end ? start : '', // Tek gün seçilirse specificDate'e de koy
+                dateRange: '' // Eski dateRange'i temizle
+              });
+            }}
+            onClear={() => {
+              onFiltersChange({
+                ...filters,
+                startDate: '',
+                endDate: '',
+                specificDate: '',
+                dateRange: ''
+              });
+            }}
+          />
         )}
 
         {/* Suite Filter */}
@@ -303,23 +277,33 @@ const DataFilters: React.FC<DataFiltersProps> = ({
               { value: 'failed', label: 'Başarısız' },
             ]}
             placeholder="Tüm Durumlar"
-            className="min-w-[150px]"
+            className="min-w-[120px]"
           />
         )}
 
-        {/* Date Range */}
+        {/* Date Range Filter */}
         {showDateRange && (
-          <CustomSelect
-            value={filters.dateRange || ''}
-            onChange={(value) => updateFilter('dateRange', value)}
-            options={[
-              { value: 'today', label: 'Bugün' },
-              { value: 'yesterday', label: 'Dün' },
-              { value: 'last7days', label: 'Son 7 Gün' },
-              { value: 'last30days', label: 'Son 30 Gün' }
-            ]}
-            placeholder="Tüm Tarihler"
-            className="min-w-[150px]"
+          <DateRangeFilter
+            startDate={filters.startDate || filters.specificDate}
+            endDate={filters.endDate || filters.specificDate}
+            onDateChange={(start, end) => {
+              onFiltersChange({
+                ...filters,
+                startDate: start,
+                endDate: end,
+                specificDate: start === end ? start : '',
+                dateRange: ''
+              });
+            }}
+            onClear={() => {
+              onFiltersChange({
+                ...filters,
+                startDate: '',
+                endDate: '',
+                specificDate: '',
+                dateRange: ''
+              });
+            }}
           />
         )}
 
