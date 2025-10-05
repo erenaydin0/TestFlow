@@ -8,6 +8,7 @@ import { Button, ButtonGroup } from '@/components/ui';
 import BrowserSelector from '@/components/features/test-builder/BrowserSelector';
 import { BrowserType, TestFormData, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/lib/utils';
+import { useModal } from '@/hooks/ui';
 
 
 const TestModal: React.FC<TestModalProps> = ({
@@ -29,6 +30,10 @@ const TestModal: React.FC<TestModalProps> = ({
   const [existingTags, setExistingTags] = useState<string[]>([]);
   const [existingSuites, setExistingSuites] = useState<string[]>([]);
   const hasInitialized = useRef(false);
+
+  const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
+    animationDuration: 200
+  });
 
   // Load existing tags and suites when dialog opens
   useEffect(() => {
@@ -119,7 +124,7 @@ const TestModal: React.FC<TestModalProps> = ({
     handleSave();
   };
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   const isEditMode = isUpdating || mode === 'edit';
   const modalTitle = title || (isEditMode ? 'Test Workflow\'unu Güncelle' : 'Test Workflow\'unu Kaydet');
@@ -141,7 +146,8 @@ const TestModal: React.FC<TestModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 10000
+        zIndex: 10000,
+        ...getOverlayStyle()
       }}
       onClick={onClose}
     >
@@ -155,7 +161,8 @@ const TestModal: React.FC<TestModalProps> = ({
           maxWidth: '650px',
           maxHeight: '85vh',
           overflow: 'auto',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          ...getModalStyle()
         }}
         onClick={(e) => e.stopPropagation()}
       >

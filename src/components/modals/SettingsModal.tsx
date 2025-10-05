@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Chrome, Globe, Sun, Moon, Monitor, Settings, Palette, Code } from 'lucide-react';
 import { useTheme, useBrowserSettings } from '@/contexts';
 import { IconButton } from '@/components/ui';
+import { useModal } from '@/hooks/ui';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,6 +26,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     defaultScreenshots,
     setDefaultScreenshots
   } = useBrowserSettings();
+
+  const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
+    animationDuration: 200
+  });
 
   const browserOptions = [
     { value: 'chromium', label: 'Chrome/Chromium', icon: Chrome },
@@ -384,7 +389,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       </div>
   );
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   return (
     <div 
@@ -399,7 +404,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '1rem'
+        padding: '1rem',
+        ...getOverlayStyle()
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -416,7 +422,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           height: '600px',
           overflow: 'hidden',
           position: 'relative',
-          display: 'flex'
+          display: 'flex',
+          ...getModalStyle()
         }}
       >
         {/* Sidebar */}

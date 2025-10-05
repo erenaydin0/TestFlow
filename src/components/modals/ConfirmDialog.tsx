@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Button, ButtonGroup } from '@/components/ui';
+import { useModal } from '@/hooks/ui';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -24,7 +25,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelText = 'İptal',
   type = 'warning'
 }) => {
-  if (!isOpen) return null;
+  const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
+    animationDuration: 200
+  });
+
+  if (!isVisible) return null;
 
   const handleConfirm = () => {
     onConfirm();
@@ -54,6 +59,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
+        ...getOverlayStyle()
       }}
       onClick={onClose}
     >
@@ -67,6 +73,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           width: '90%',
           maxHeight: '90vh',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          ...getModalStyle()
         }}
         onClick={(e) => e.stopPropagation()}
       >
