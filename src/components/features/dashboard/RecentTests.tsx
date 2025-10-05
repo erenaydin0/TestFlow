@@ -28,7 +28,7 @@ export default function RecentTests({ data }: RecentTestsProps) {
   };
 
   return (
-    <div className="card">
+    <div className="card h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
           Son Testler
@@ -57,11 +57,11 @@ export default function RecentTests({ data }: RecentTestsProps) {
         </button>
       </div>
       {data.length === 0 ? (
-        <div className="text-center py-8" style={{ color: 'var(--text-secondary)' }}>
+        <div className="text-center py-8 flex-1 flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
           <p>Henüz test çalıştırılmamış</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+        <div className="space-y-3 flex-1 overflow-y-auto">
           {data.map((test) => (
             <div 
               key={test.id} 
