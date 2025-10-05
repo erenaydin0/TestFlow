@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   Download, 
   Image,
@@ -65,6 +65,7 @@ export default function ReportsPage() {
   const [selectedExecution, setSelectedExecution] = useState<ExecutionResult | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const { notifyTestDeleted, notifyTestFailure } = useTestNotifications();
   
@@ -80,14 +81,22 @@ export default function ReportsPage() {
     const suiteParam = searchParams.get('suite');
     const browserParam = searchParams.get('browser');
     const dateParam = searchParams.get('date');
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
     
-    if (searchQuery || suiteParam || browserParam || dateParam) {
+    if (searchQuery || suiteParam || browserParam || dateParam || startDateParam || endDateParam) {
       setFilters(prev => ({
         ...prev,
         ...(searchQuery && { search: searchQuery }),
         ...(suiteParam && { suite: [suiteParam] }),
         ...(browserParam && { browserType: [browserParam as BrowserType] }),
-        ...(dateParam && { specificDate: dateParam, dateRange: '' }) // specificDate gelince dateRange'i temizle
+        ...(dateParam && { specificDate: dateParam, dateRange: '', startDate: '', endDate: '' }), // Tek tarih
+        ...(startDateParam && endDateParam && { 
+          startDate: startDateParam, 
+          endDate: endDateParam, 
+          specificDate: '', 
+          dateRange: '' 
+        }) // Tarih aralığı
       }));
     }
   }, [searchParams]);
@@ -642,7 +651,26 @@ export default function ReportsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <DataFilters
                   filters={filters}
-                  onFiltersChange={setFilters}
+                  onFiltersChange={(newFilters) => {
+                    setFilters(newFilters);
+                    
+                    // URL'i güncelle
+                    const params = new URLSearchParams();
+                    if (newFilters.search) params.set('search', newFilters.search);
+                    if (newFilters.status) params.set('status', newFilters.status);
+                    if (newFilters.suite.length > 0) params.set('suite', newFilters.suite.join(','));
+                    if (newFilters.tags.length > 0) params.set('tags', newFilters.tags.join(','));
+                    if (newFilters.browserType.length > 0) params.set('browser', newFilters.browserType.join(','));
+                    if (newFilters.startDate && newFilters.endDate) {
+                      params.set('startDate', newFilters.startDate);
+                      params.set('endDate', newFilters.endDate);
+                    } else if (newFilters.specificDate) {
+                      params.set('date', newFilters.specificDate);
+                    }
+                    
+                    const queryString = params.toString();
+                    router.push(queryString ? `/reports?${queryString}` : '/reports', { scroll: false });
+                  }}
                   availableOptions={{
                     suites: filterOptions.suites,
                     tags: filterOptions.tags,
