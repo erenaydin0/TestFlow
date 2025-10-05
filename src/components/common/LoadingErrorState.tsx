@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import CosmicSpinner from './CosmicSpinner';
 
 interface LoadingErrorStateProps {
   loading: boolean;
@@ -29,23 +30,7 @@ export default function LoadingErrorState({
         minHeight: '200px',
         textAlign: 'center'
       }}>
-        <div>
-          <div style={{ 
-            width: '2rem', 
-            height: '2rem', 
-            border: '2px solid var(--border-primary)',
-            borderTop: '2px solid var(--border-primary)',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 1rem'
-          }} />
-          <div style={{ 
-            fontSize: '1.125rem', 
-            color: 'var(--text-secondary)' 
-          }}>
-            {loadingMessage}
-          </div>
-        </div>
+        <CosmicSpinner size="lg" message={loadingMessage} />
       </div>
     );
   }
