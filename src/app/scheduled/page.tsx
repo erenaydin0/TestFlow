@@ -378,7 +378,7 @@ export default function ScheduledPage() {
               </div>
 
               {/* Upcoming Runs */}
-              <div style={{ height: '600px' }}>
+              <div>
                 <UpcomingTests 
                   scheduledTests={scheduledTests}
                   loading={loading}

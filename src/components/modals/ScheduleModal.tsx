@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Clock, Calendar } from 'lucide-react';
 import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
 import { Button } from '@/components/ui';
+import { CustomSelect } from '@/components/common';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -234,9 +235,11 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
     }}>
       <div className="card" style={{
         width: '90%',
-        maxWidth: '600px',
-        maxHeight: '90vh',
-        overflow: 'auto'
+        maxWidth: '900px',
+        height: '600px',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}>
         <div style={{
           display: 'flex',
@@ -269,49 +272,53 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Test Seçimi */}
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: '0.75rem'
-            }}>
-              Hangi testi zamanlamak istiyorsunuz?
-            </label>
-            <select
-              value={selectedTest}
-              onChange={(e) => setSelectedTest(e.target.value)}
-              required
-              disabled={!!schedule}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px solid var(--border-primary)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9375rem',
-                outline: 'none',
-                cursor: 'pointer',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-              onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-primary)'}
-            >
-              <option value="">Test Seçin</option>
-              {tests.map(test => (
-                <option key={test.id} value={test.id}>
-                  {test.name} ({test.suite})
-                </option>
-              ))}
-            </select>
-          </div>
+        <form onSubmit={handleSubmit} style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          flex: 1,
+          minHeight: 0
+        }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '2rem',
+            flex: 1,
+            overflow: 'auto',
+            minHeight: 0
+          }}>
+            {/* Sol Kolon */}
+            <div>
+              {/* Test Seçimi */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  marginBottom: '0.75rem'
+                }}>
+                  Hangi testi zamanlamak istiyorsunuz?
+                </label>
+                <CustomSelect
+                  value={selectedTest}
+                  onChange={(value) => setSelectedTest(value)}
+                  options={[
+                    { value: '', label: 'Test Seçin' },
+                    ...tests.map(test => ({
+                      value: test.id,
+                      label: `${test.name} (${test.suite})`
+                    }))
+                  ]}
+                  placeholder="Test Seçin"
+                  style={{
+                    opacity: schedule ? 0.6 : 1,
+                    pointerEvents: schedule ? 'none' : 'auto'
+                  }}
+                />
+              </div>
 
-          {/* Frekans Seçimi */}
-          <div style={{ marginBottom: '2rem' }}>
+              {/* Frekans Seçimi */}
+              <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
               display: 'block',
               fontSize: '0.875rem',
@@ -323,8 +330,8 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
             </label>
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: '0.75rem' 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+              gap: '0.5rem' 
             }}>
               {FREQUENCY_OPTIONS.map(opt => (
                 <button
@@ -332,14 +339,16 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                   type="button"
                   onClick={() => setFrequency(opt.value)}
                   style={{
-                    padding: '1rem',
-                    border: `2px solid ${frequency === opt.value ? 'var(--primary)' : 'var(--border-primary)'}`,
-                    borderRadius: '0.5rem',
-                    backgroundColor: frequency === opt.value ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-secondary)',
+                    padding: '0.625rem 0.75rem',
+                    border: `2px solid ${frequency === opt.value ? 'var(--border-secondary)' : 'var(--border-primary)'}`,
+                    borderRadius: '0.375rem',
+                    backgroundColor: frequency === opt.value ? 'var(--accent-primary)' : 'var(--bg-secondary)',
                     color: frequency === opt.value ? 'var(--primary)' : 'var(--text-primary)',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    fontWeight: 600,
+                    fontSize: '0.875rem'
                   }}
                   onMouseEnter={(e) => {
                     if (frequency !== opt.value) {
@@ -352,16 +361,18 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     }
                   }}
                 >
-                  <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{opt.label}</div>
-                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{opt.description}</div>
+                  {opt.label}
                 </button>
               ))}
             </div>
           </div>
+            </div>
 
+            {/* Sağ Kolon */}
+            <div>
           {/* Saat Seçimi - Hourly hariç */}
           {frequency !== 'hourly' && frequency !== 'custom' && (
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <label style={{
                 display: 'block',
                 fontSize: '0.875rem',
@@ -426,7 +437,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
 
           {/* Haftalık - Gün Seçimi */}
           {frequency === 'weekly' && (
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <label style={{
                 display: 'block',
                 fontSize: '0.875rem',
@@ -437,43 +448,69 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                 <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
                 Hangi günler?
               </label>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {[
-                  { value: 1, label: 'Pzt' },
-                  { value: 2, label: 'Sal' },
-                  { value: 3, label: 'Çar' },
-                  { value: 4, label: 'Per' },
-                  { value: 5, label: 'Cum' },
-                  { value: 6, label: 'Cmt' },
-                  { value: 0, label: 'Paz' }
-                ].map(day => (
-                  <button
-                    key={day.value}
-                    type="button"
-                    onClick={() => toggleDay(day.value)}
-                    style={{
-                      flex: 1,
-                      minWidth: '60px',
-                      padding: '0.75rem',
-                      border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
-                      borderRadius: '0.5rem',
-                      backgroundColor: selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--bg-secondary)',
-                      color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {day.label}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {/* Hafta içi günler */}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {[
+                    { value: 1, label: 'Pzt' },
+                    { value: 2, label: 'Sal' },
+                    { value: 3, label: 'Çar' },
+                    { value: 4, label: 'Per' },
+                    { value: 5, label: 'Cum' }
+                  ].map(day => (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => toggleDay(day.value)}
+                      style={{
+                        flex: 1,
+                        padding: '0.75rem',
+                        border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
+                        borderRadius: '0.5rem',
+                        backgroundColor: selectedDays.includes(day.value) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                        color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {day.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Hafta sonu günler */}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {[
+                    { value: 6, label: 'Cmt' },
+                    { value: 0, label: 'Paz' }
+                  ].map(day => (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => toggleDay(day.value)}
+                      style={{
+                        flex: 1,
+                        padding: '0.75rem',
+                        border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
+                        borderRadius: '0.5rem',
+                        backgroundColor: selectedDays.includes(day.value) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                        color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {day.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* Aylık - Gün Seçimi */}
           {frequency === 'monthly' && (
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <label style={{
                 display: 'block',
                 fontSize: '0.875rem',
@@ -487,9 +524,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '0.5rem',
-                maxHeight: '200px',
-                overflowY: 'auto',
+                gap: '0.35rem',
                 padding: '0.5rem',
                 border: '1px solid var(--border-primary)',
                 borderRadius: '0.5rem'
@@ -500,15 +535,16 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     type="button"
                     onClick={() => toggleMonthDay(day)}
                     style={{
-                      padding: '0.5rem',
+                      padding: '0.25rem',
                       border: `2px solid ${selectedMonthDays.includes(day) ? 'var(--primary)' : 'var(--border-primary)'}`,
-                      borderRadius: '0.375rem',
-                      backgroundColor: selectedMonthDays.includes(day) ? 'var(--primary)' : 'var(--bg-secondary)',
+                      borderRadius: '0.25rem',
+                      backgroundColor: selectedMonthDays.includes(day) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
                       color: selectedMonthDays.includes(day) ? 'white' : 'var(--text-primary)',
                       cursor: 'pointer',
-                      fontSize: '0.875rem',
+                      fontSize: '0.75rem',
                       fontWeight: 600,
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      minHeight: '28px'
                     }}
                   >
                     {day}
@@ -520,7 +556,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
 
           {/* Özel Zamanlama */}
           {frequency === 'custom' && (
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               {/* Özel Tip Seçimi */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
@@ -541,7 +577,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                       padding: '0.75rem',
                       border: `2px solid ${customType === 'hours' ? 'var(--primary)' : 'var(--border-primary)'}`,
                       borderRadius: '0.5rem',
-                      backgroundColor: customType === 'hours' ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-secondary)',
+                      backgroundColor: customType === 'hours' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
                       color: customType === 'hours' ? 'var(--primary)' : 'var(--text-primary)',
                       cursor: 'pointer',
                       fontWeight: 600,
@@ -558,7 +594,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                       padding: '0.75rem',
                       border: `2px solid ${customType === 'interval' ? 'var(--primary)' : 'var(--border-primary)'}`,
                       borderRadius: '0.5rem',
-                      backgroundColor: customType === 'interval' ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-secondary)',
+                      backgroundColor: customType === 'interval' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
                       color: customType === 'interval' ? 'var(--primary)' : 'var(--text-primary)',
                       cursor: 'pointer',
                       fontWeight: 600,
@@ -586,10 +622,10 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(6, 1fr)',
-                    gap: '0.5rem',
-                    maxHeight: '280px',
+                    gap: '0.375rem',
+                    maxHeight: '200px',
                     overflowY: 'auto',
-                    padding: '0.75rem',
+                    padding: '0.5rem',
                     border: '1px solid var(--border-primary)',
                     borderRadius: '0.5rem',
                     backgroundColor: 'var(--bg-secondary)'
@@ -600,13 +636,13 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                         type="button"
                         onClick={() => toggleHour(value)}
                         style={{
-                          padding: '0.625rem',
+                          padding: '0.5rem',
                           border: `2px solid ${selectedHours.includes(value) ? 'var(--primary)' : 'var(--border-primary)'}`,
-                          borderRadius: '0.375rem',
-                          backgroundColor: selectedHours.includes(value) ? 'var(--primary)' : 'var(--bg-primary)',
+                          borderRadius: '0.25rem',
+                          backgroundColor: selectedHours.includes(value) ? 'var(--accent-primary)' : 'var(--bg-primary)',
                           color: selectedHours.includes(value) ? 'white' : 'var(--text-primary)',
                           cursor: 'pointer',
-                          fontSize: '0.8125rem',
+                          fontSize: '0.75rem',
                           fontWeight: 600,
                           transition: 'all 0.2s'
                         }}
@@ -646,7 +682,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                           padding: '1rem',
                           border: `2px solid ${customInterval === interval ? 'var(--primary)' : 'var(--border-primary)'}`,
                           borderRadius: '0.5rem',
-                          backgroundColor: customInterval === interval ? 'var(--primary)' : 'var(--bg-secondary)',
+                          backgroundColor: customInterval === interval ? 'var(--accent-primary)' : 'var(--bg-secondary)',
                           color: customInterval === interval ? 'white' : 'var(--text-primary)',
                           cursor: 'pointer',
                           fontWeight: 600,
@@ -665,56 +701,43 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
               )}
             </div>
           )}
-
-          {/* Özet */}
-          <div style={{ 
-            marginBottom: '2rem',
-            padding: '1rem',
-            backgroundColor: 'var(--bg-tertiary)',
-            borderRadius: '0.5rem',
-            border: '1px solid var(--border-primary)'
-          }}>
-            <div style={{ 
-              fontSize: '0.75rem', 
-              fontWeight: 600,
-              color: 'var(--text-tertiary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '0.5rem'
-            }}>
-              Zamanlama Özeti
-            </div>
-            <div style={{ 
-              fontSize: '0.9375rem', 
-              color: 'var(--text-primary)',
-              fontWeight: 500
-            }}>
-              {getCronDescription()}
-            </div>
-            <div style={{ 
-              fontSize: '0.75rem', 
-              color: 'var(--text-tertiary)',
-              marginTop: '0.5rem',
-              fontFamily: 'monospace'
-            }}>
-              Cron: {cronExpression}
             </div>
           </div>
 
-          {/* Butonlar */}
+          {/* Butonlar ve Özet */}
           <div style={{
             display: 'flex',
-            gap: '0.75rem',
-            justifyContent: 'flex-end',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
             paddingTop: '1rem',
-            borderTop: '1px solid var(--border-primary)'
+            marginTop: 'auto',
+            borderTop: '1px solid var(--border-primary)',
+            flexShrink: 0
           }}>
-            <Button variant="secondary" onClick={onClose} type="button">
-              İptal
-            </Button>
-            <Button variant="primary" type="submit">
-              {schedule ? 'Güncelle' : 'Oluştur'}
-            </Button>
+            {/* Sol: Zamanlama Özeti */}
+            <div style={{ 
+              fontSize: '0.875rem', 
+              color: 'var(--text-primary)',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flex: 1
+            }}>
+              <Clock size={16} style={{ color: 'var(--primary)' }} />
+              {getCronDescription()}
+            </div>
+            
+            {/* Sağ: Butonlar */}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Button variant="secondary" onClick={onClose} type="button">
+                İptal
+              </Button>
+              <Button variant="primary" type="submit">
+                {schedule ? 'Güncelle' : 'Oluştur'}
+              </Button>
+            </div>
           </div>
         </form>
       </div>
