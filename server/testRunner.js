@@ -403,8 +403,28 @@ class TestRunner {
     const expectedValue = config.expectedValue || config.text || '';
     const verificationType = config.verificationType || 'text';
     
-    if (!rawSelector) {
+    // URL kontrolü için selector gerekmez
+    if (!rawSelector && verificationType !== 'url' && verificationType !== 'urlContains') {
       throw new Error('Verify action requires a selector');
+    }
+
+    // URL kontrolü
+    if (verificationType === 'url' || verificationType === 'urlContains') {
+      const currentUrl = this.page.url();
+      console.log(`Verifying URL: ${currentUrl} (${verificationType})`);
+      
+      if (verificationType === 'url') {
+        // Tam URL eşleşmesi
+        if (currentUrl !== expectedValue) {
+          throw new Error(`URL mismatch: expected "${expectedValue}", got "${currentUrl}"`);
+        }
+      } else if (verificationType === 'urlContains') {
+        // URL içerir kontrolü
+        if (!currentUrl.includes(expectedValue)) {
+          throw new Error(`URL does not contain "${expectedValue}": got "${currentUrl}"`);
+        }
+      }
+      return;
     }
 
     const selector = this.normalizeSelector(rawSelector);

@@ -59,7 +59,7 @@ export interface TestStep {
   optionValue?: string;
   
   // Verification properties
-  verificationType?: 'text' | 'contains' | 'value' | 'visible' | 'hidden' | 'enabled' | 'disabled';
+  verificationType?: 'text' | 'contains' | 'value' | 'visible' | 'hidden' | 'enabled' | 'disabled' | 'url' | 'urlContains';
   
   // Connection properties
   connections?: string[];

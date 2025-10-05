@@ -48,9 +48,18 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
           {step.type === 'refresh' && 'Sayfa yenileme'}
           {step.type === 'verify' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>Element: {step.selector || 'Belirtilmedi'}</span>
-              <span>Tür: {step.verificationType || 'Belirtilmedi'}</span>
-              {step.expectedValue && <span>Değer: {step.expectedValue}</span>}
+              {(step.verificationType === 'url' || step.verificationType === 'urlContains') ? (
+                <>
+                  <span>Tür: {step.verificationType === 'url' ? 'URL Kontrolü' : 'URL İçerir'}</span>
+                  {step.expectedValue && <span>Beklenen: {step.expectedValue}</span>}
+                </>
+              ) : (
+                <>
+                  <span>Element: {step.selector || 'Belirtilmedi'}</span>
+                  <span>Tür: {step.verificationType || 'Belirtilmedi'}</span>
+                  {step.expectedValue && <span>Değer: {step.expectedValue}</span>}
+                </>
+              )}
             </div>
           )}
           {step.type === 'scroll' && (
@@ -118,9 +127,18 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
           {step.type === 'refresh' && 'Sayfa yenileme'}
           {step.type === 'verify' && (
             <div>
-              {step.selector && `Element: ${step.selector}`}
-              {step.verificationType && `, Tür: ${step.verificationType}`}
-              {step.expectedValue && `, Değer: ${step.expectedValue}`}
+              {(step.verificationType === 'url' || step.verificationType === 'urlContains') ? (
+                <>
+                  {step.verificationType && `Tür: ${step.verificationType === 'url' ? 'URL Kontrolü' : 'URL İçerir'}`}
+                  {step.expectedValue && `, Beklenen: ${step.expectedValue}`}
+                </>
+              ) : (
+                <>
+                  {step.selector && `Element: ${step.selector}`}
+                  {step.verificationType && `, Tür: ${step.verificationType}`}
+                  {step.expectedValue && `, Değer: ${step.expectedValue}`}
+                </>
+              )}
             </div>
           )}
           {step.type === 'scroll' && (

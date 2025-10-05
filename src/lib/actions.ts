@@ -182,8 +182,8 @@ const extendedActions: ActionType[] = [
         label: 'Seçici (Selector)',
         type: 'text',
         placeholder: '#element, .class, //div[@data-testid=\'result\'], [data-testid=\'result\']',
-        required: true,
-        description: 'CSS seçici, XPath veya ID kullanarak doğrulanacak element'
+        required: false,
+        description: 'CSS seçici, XPath veya ID kullanarak doğrulanacak element (URL kontrolü için gerekli değil)'
       },
       {
         key: 'verificationType',
@@ -193,6 +193,8 @@ const extendedActions: ActionType[] = [
         options: [
           { value: 'text', label: 'Metin İçeriği' },
           { value: 'contains', label: 'Metin İçerir' },
+          { value: 'url', label: 'URL Kontrolü' },
+          { value: 'urlContains', label: 'URL İçerir' },
           { value: 'value', label: 'Input Değeri' },
           { value: 'visible', label: 'Görünür' },
           { value: 'hidden', label: 'Gizli' },
@@ -205,8 +207,8 @@ const extendedActions: ActionType[] = [
         key: 'expectedValue',
         label: 'Beklenen Değer',
         type: 'text',
-        placeholder: 'Beklenen metin veya değer',
-        description: 'Elementin sahip olması beklenen değer (sadece metin türü doğrulamalar için gerekli)'
+        placeholder: 'Beklenen metin, değer veya URL',
+        description: 'Elementin veya sayfanın sahip olması beklenen değer'
       }
     ]
   },

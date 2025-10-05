@@ -439,36 +439,42 @@ const StepModal: React.FC<StepModalProps> = ({
           </div>
 
           {/* Dynamic fields based on action configuration */}
-          {action.fields.map((field) => (
-            <div key={field.key}>
-              <label 
-                htmlFor={`field-${field.key}`}
-                style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  marginBottom: '0.5rem'
-                }}
-              >
-                {field.label}
-                {field.required && (
-                  <span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>*</span>
+          {action.fields.map((field) => {
+            // Selector URL kontrolü için opsiyonel
+            const isUrlVerification = localStep?.verificationType === 'url' || localStep?.verificationType === 'urlContains';
+            const isFieldRequired = field.key === 'selector' && isUrlVerification ? false : field.required;
+            
+            return (
+              <div key={field.key}>
+                <label 
+                  htmlFor={`field-${field.key}`}
+                  style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'var(--text-primary)',
+                    marginBottom: '0.5rem'
+                  }}
+                >
+                  {field.label}
+                  {isFieldRequired && (
+                    <span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>*</span>
+                  )}
+                </label>
+                {renderField(field)}
+                {field.description && (
+                  <p style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)',
+                    margin: '0.25rem 0 0 0',
+                    opacity: 0.8
+                  }}>
+                    {field.description}
+                  </p>
                 )}
-              </label>
-              {renderField(field)}
-              {field.description && (
-                <p style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--text-secondary)',
-                  margin: '0.25rem 0 0 0',
-                  opacity: 0.8
-                }}>
-                  {field.description}
-                </p>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

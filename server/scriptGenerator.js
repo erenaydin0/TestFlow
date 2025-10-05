@@ -102,6 +102,15 @@ class ScriptGenerator {
     const expectedValue = config.expectedValue || config.text || '';
     const verificationType = config.verificationType || 'text';
     
+    // URL kontrolü
+    if (verificationType === 'url') {
+      return `if (page.url() !== '${this.escapeString(expectedValue)}') { throw new Error(\`URL mismatch: expected "${this.escapeString(expectedValue)}", got "\${page.url()}"\`); }`;
+    }
+    
+    if (verificationType === 'urlContains') {
+      return `if (!page.url().includes('${this.escapeString(expectedValue)}')) { throw new Error(\`URL does not contain "${this.escapeString(expectedValue)}": got "\${page.url()}"\`); }`;
+    }
+    
     if (!selector) {
       return `throw new Error('Verify action requires a selector');`;
     }
@@ -117,6 +126,10 @@ class ScriptGenerator {
         return `await expect(page.locator('${this.escapeString(selector)}')).toBeEnabled();`;
       case 'disabled':
         return `await expect(page.locator('${this.escapeString(selector)}')).toBeDisabled();`;
+      case 'contains':
+        return `await expect(page.locator('${this.escapeString(selector)}')).toContainText('${this.escapeString(expectedValue)}');`;
+      case 'value':
+        return `await expect(page.locator('${this.escapeString(selector)}')).toHaveValue('${this.escapeString(expectedValue)}');`;
       default:
         return `await expect(page.locator('${this.escapeString(selector)}')).toHaveText('${this.escapeString(expectedValue)}');`;
     }
