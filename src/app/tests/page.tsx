@@ -62,10 +62,6 @@ export default function TestsPage() {
     testId: '',
     testName: ''
   });
-  const [editTestModal, setEditTestModal] = useState<{show: boolean; test: Test | null}>({
-    show: false,
-    test: null
-  });
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -275,7 +271,6 @@ export default function TestsPage() {
         <ActionsCell
           onRun={() => handleRunTest(test.id)}
           onEdit={() => handleEditTest(test.id)}
-          onSettings={() => handleEditTestMetadata(test.id)}
           onDuplicate={() => handleDuplicateTest(test.id)}
           onExport={() => handleExportTest(test.id)}
           onDelete={() => handleDeleteTest(test.id)}
@@ -383,25 +378,6 @@ export default function TestsPage() {
     router.push(`/test-builder?load=${testId}`);
   };
 
-  // Handle edit test metadata (name, description, tags, suite)
-  const handleEditTestMetadata = (testId: string) => {
-    const test = tests.find((t: any) => t.id === testId);
-    if (test) {
-      setEditTestModal({
-        show: true,
-        test: test
-      });
-    }
-  };
-
-  // Handle test update from modal
-  const handleTestUpdate = (updatedTest: Test) => {
-    // Update test using hook
-    updateTest(updatedTest.id, updatedTest);
-    
-    // Show success notification
-    notifyTestImported(`${updatedTest.name} güncellendi`, '');
-  };
 
   // Handle duplicate test
   const handleDuplicateTest = async (testId: string) => {
@@ -1054,36 +1030,6 @@ export default function TestsPage() {
         type="danger"
       />
 
-      {/* Edit Test Modal */}
-      <TestModal
-        isOpen={editTestModal.show}
-        onClose={() => setEditTestModal({show: false, test: null})}
-        onSave={(data) => {
-          if (editTestModal.test) {
-            const updatedTest = {
-              ...editTestModal.test,
-              name: data.name,
-              description: data.description,
-              tags: data.tags,
-              suite: data.suite,
-              browserType: data.browserType,
-              updatedAt: new Date()
-            };
-            
-            // Update test using hook
-            updateTest(editTestModal.test.id, updatedTest);
-            setEditTestModal({show: false, test: null});
-          }
-        }}
-        initialData={editTestModal.test ? {
-          name: editTestModal.test.name,
-          description: editTestModal.test.description || '',
-          tags: editTestModal.test.tags,
-          suite: editTestModal.test.suite,
-          browserType: editTestModal.test.browserType || 'chromium'
-        } : undefined}
-        mode="edit"
-      />
     </PageLayout>
   );
 } 
