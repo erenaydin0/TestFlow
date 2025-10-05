@@ -8,6 +8,7 @@ const path = require('path');
 
 const TestRunner = require('./testRunner');
 const ScriptGenerator = require('./scriptGenerator');
+const TestScheduler = require('./scheduler');
 
 const app = express();
 const server = createServer(app);
@@ -21,17 +22,22 @@ app.use(express.json());
 const EXECUTIONS_DIR = path.join(__dirname, 'executions');
 const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
 const VIDEOS_DIR = path.join(__dirname, 'videos');
+const SCHEDULED_TESTS_DIR = path.join(__dirname, 'scheduled-tests');
 
 // Ensure directories exist
 fs.ensureDirSync(EXECUTIONS_DIR);
 fs.ensureDirSync(SCREENSHOTS_DIR);
 fs.ensureDirSync(VIDEOS_DIR);
+fs.ensureDirSync(SCHEDULED_TESTS_DIR);
 
 // In-memory storage for active executions
 const activeExecutions = new Map();
 
 // WebSocket connections
 const clients = new Set();
+
+// Test Scheduler instance
+let testScheduler = null;
 
 // WebSocket connection handling
 wss.on('connection', (ws) => {
@@ -51,6 +57,85 @@ function broadcast(data) {
       client.send(JSON.stringify(data));
     }
   });
+}
+
+// Execute scheduled test function
+async function executeScheduledTest(schedule) {
+  console.log(`🚀 Zamanlanmış test başlatılıyor: ${schedule.name}`);
+  
+  try {
+    // Test workflow'unu yükle
+    const testsDataPath = path.join(__dirname, '../src/data/tests.json');
+    let testWorkflow = null;
+    
+    if (await fs.pathExists(testsDataPath)) {
+      const testsData = await fs.readJson(testsDataPath);
+      testWorkflow = testsData.find(t => t.id === schedule.testId);
+    }
+    
+    if (!testWorkflow || !testWorkflow.workflow || testWorkflow.workflow.length === 0) {
+      console.error(`❌ Test workflow bulunamadı: ${schedule.testId}`);
+      return null;
+    }
+    
+    // Execution ID oluştur
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
+    const executionId = `scheduled-${schedule.testId.slice(0, 8)}-${timestamp}`;
+    
+    // Execution objesi oluştur
+    const execution = {
+      id: executionId,
+      workflowId: schedule.testId,
+      workflowName: schedule.name,
+      status: 'queued',
+      startTime: new Date(),
+      suite: schedule.suite,
+      tags: ['scheduled'],
+      options: {
+        enableScreenshots: false,
+        enableRecording: false,
+        headlessMode: true,
+        browserType: 'chromium'
+      },
+      steps: testWorkflow.workflow.map(step => ({
+        stepId: step.id,
+        type: step.type,
+        status: 'pending',
+        config: step
+      })),
+      screenshots: [],
+      logs: [],
+      progress: 0,
+      scheduledTestId: schedule.id
+    };
+    
+    activeExecutions.set(executionId, execution);
+    
+    // Execution'ı kaydet
+    await fs.writeJson(path.join(EXECUTIONS_DIR, `${executionId}.json`), execution);
+    
+    // Broadcast başlangıç
+    broadcast({
+      type: 'execution:scheduled',
+      executionId,
+      execution,
+      scheduleName: schedule.name
+    });
+    
+    console.log(`✅ Zamanlanmış test başlatıldı: ${executionId} (${execution.steps.length} adım)`);
+    
+    // Test'i asenkron olarak çalıştır (blocking olmadan)
+    setImmediate(() => {
+      executeTestWorkflow(executionId, execution).catch(error => {
+        console.error(`❌ Zamanlanmış test çalıştırma hatası (${executionId}):`, error);
+      });
+    });
+    
+    return executionId;
+  } catch (error) {
+    console.error('Zamanlanmış test çalıştırma hatası:', error);
+    throw error;
+  }
 }
 
 // API Routes
@@ -551,27 +636,217 @@ async function executeTestWorkflow(executionId, execution) {
   }
 }
 
+// Scheduled Tests API
+
+// Get all scheduled tests
+app.get('/api/scheduled-tests', async (req, res) => {
+  try {
+    const files = await fs.readdir(SCHEDULED_TESTS_DIR);
+    const scheduledTests = [];
+    
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const schedulePath = path.join(SCHEDULED_TESTS_DIR, file);
+          const schedule = await fs.readJson(schedulePath);
+          scheduledTests.push(schedule);
+        } catch (error) {
+          console.error(`Error reading schedule file ${file}:`, error);
+        }
+      }
+    }
+    
+    // Sort by nextRun
+    scheduledTests.sort((a, b) => new Date(a.nextRun) - new Date(b.nextRun));
+    
+    // Calculate upcoming runs
+    const upcomingRuns = scheduledTests
+      .filter(s => s.enabled && s.status === 'active')
+      .slice(0, 5)
+      .map(s => ({
+        id: uuidv4(),
+        scheduledTestId: s.id,
+        testName: s.name,
+        scheduledTime: s.nextRun,
+        estimatedDuration: s.lastDuration || 0,
+        environment: s.environment
+      }));
+    
+    res.json({ scheduledTests, upcomingRuns });
+  } catch (error) {
+    console.error('Error getting scheduled tests:', error);
+    res.status(500).json({ error: 'Failed to get scheduled tests' });
+  }
+});
+
+// Get single scheduled test
+app.get('/api/scheduled-tests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schedulePath = path.join(SCHEDULED_TESTS_DIR, `${id}.json`);
+    
+    if (await fs.pathExists(schedulePath)) {
+      const schedule = await fs.readJson(schedulePath);
+      res.json(schedule);
+    } else {
+      res.status(404).json({ error: 'Scheduled test not found' });
+    }
+  } catch (error) {
+    console.error('Error getting scheduled test:', error);
+    res.status(500).json({ error: 'Failed to get scheduled test' });
+  }
+});
+
+// Create scheduled test
+app.post('/api/scheduled-tests', async (req, res) => {
+  try {
+    const scheduleData = req.body;
+    const scheduleId = uuidv4();
+    
+    const schedule = {
+      id: scheduleId,
+      ...scheduleData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      enabled: true,
+      status: 'active'
+    };
+    
+    // Calculate next run time based on cron expression
+    // For now, just set it to 1 hour from now as a placeholder
+    schedule.nextRun = new Date(Date.now() + 60 * 60 * 1000);
+    
+    await fs.writeJson(path.join(SCHEDULED_TESTS_DIR, `${scheduleId}.json`), schedule);
+    
+    // Scheduler'a ekle
+    if (testScheduler) {
+      testScheduler.scheduleTest(schedule);
+    }
+    
+    broadcast({
+      type: 'schedule:created',
+      schedule
+    });
+    
+    res.json(schedule);
+  } catch (error) {
+    console.error('Error creating scheduled test:', error);
+    res.status(500).json({ error: 'Failed to create scheduled test' });
+  }
+});
+
+// Update scheduled test
+app.put('/api/scheduled-tests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schedulePath = path.join(SCHEDULED_TESTS_DIR, `${id}.json`);
+    
+    if (await fs.pathExists(schedulePath)) {
+      const existingSchedule = await fs.readJson(schedulePath);
+      const updatedSchedule = {
+        ...existingSchedule,
+        ...req.body,
+        id, // Preserve ID
+        updatedAt: new Date()
+      };
+      
+      await fs.writeJson(schedulePath, updatedSchedule);
+      
+      // Scheduler'ı güncelle
+      if (testScheduler) {
+        await testScheduler.reloadSchedule(id);
+      }
+      
+      broadcast({
+        type: 'schedule:updated',
+        schedule: updatedSchedule
+      });
+      
+      res.json(updatedSchedule);
+    } else {
+      res.status(404).json({ error: 'Scheduled test not found' });
+    }
+  } catch (error) {
+    console.error('Error updating scheduled test:', error);
+    res.status(500).json({ error: 'Failed to update scheduled test' });
+  }
+});
+
+// Delete scheduled test
+app.delete('/api/scheduled-tests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schedulePath = path.join(SCHEDULED_TESTS_DIR, `${id}.json`);
+    
+    if (await fs.pathExists(schedulePath)) {
+      // Scheduler'dan kaldır
+      if (testScheduler) {
+        testScheduler.unscheduleTest(id);
+      }
+      
+      await fs.remove(schedulePath);
+      
+      broadcast({
+        type: 'schedule:deleted',
+        scheduleId: id
+      });
+      
+      res.json({ message: 'Scheduled test deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Scheduled test not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting scheduled test:', error);
+    res.status(500).json({ error: 'Failed to delete scheduled test' });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     activeExecutions: activeExecutions.size,
-    connectedClients: clients.size
+    connectedClients: clients.size,
+    activeSchedules: testScheduler ? testScheduler.getScheduleCount() : 0
   });
 });
 
 // Start server
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 CosmicQA Backend Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔌 WebSocket server ready for connections`);
+  
+  // Initialize Test Scheduler
+  testScheduler = new TestScheduler(executeScheduledTest, SCHEDULED_TESTS_DIR);
+  await testScheduler.initialize();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('Shutting down server...');
+  
+  // Stop all scheduled tasks
+  if (testScheduler) {
+    testScheduler.stopAll();
+  }
+  
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\nShutting down server...');
+  
+  // Stop all scheduled tasks
+  if (testScheduler) {
+    testScheduler.stopAll();
+  }
+  
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
