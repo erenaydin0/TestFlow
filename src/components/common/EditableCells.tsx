@@ -19,99 +19,185 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
   availableSuites,
   onUpdate
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value || '');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
     }
-  }, [isEditing]);
 
-  const handleSave = () => {
-    onUpdate(testId, editValue);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditValue(value || '');
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSave();
-    } else if (e.key === 'Escape') {
-      handleCancel();
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const filteredSuites = availableSuites.filter(suite =>
+    suite.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (suite: string) => {
+    onUpdate(testId, suite);
+    setIsOpen(false);
+    setSearchTerm('');
   };
 
-  if (isEditing) {
+  if (isOpen) {
     return (
       <div 
         ref={containerRef}
+        onClick={(e) => e.stopPropagation()}
         style={{ 
           position: 'relative',
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.25rem' 
+          zIndex: 100,
+          width: '100%'
         }}
       >
-        <input
-          ref={inputRef}
-          type="text"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleSave}
-          list={`suites-${testId}`}
-          style={{
-            padding: '0.25rem 0.5rem',
-            border: '1px solid var(--accent-primary)',
-            borderRadius: '0.25rem',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            fontSize: '0.875rem',
-            outline: 'none',
-            width: '100%',
-            minWidth: '120px'
-          }}
-        />
-        <datalist id={`suites-${testId}`}>
-          {availableSuites.map((suite) => (
-            <option key={suite} value={suite} />
-          ))}
-        </datalist>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--accent-primary)',
+          borderRadius: '0.375rem',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          width: '100%'
+        }}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Ara veya yeni ekle..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchTerm.trim()) {
+                handleSelect(searchTerm.trim());
+              } else if (e.key === 'Escape') {
+                setIsOpen(false);
+                setSearchTerm('');
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              border: 'none',
+              borderBottom: '1px solid var(--border-primary)',
+              borderRadius: '0.375rem 0.375rem 0 0',
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              outline: 'none'
+            }}
+          />
+          <div style={{
+            maxHeight: '150px',
+            overflowY: 'auto'
+          }}>
+            {searchTerm && !filteredSuites.includes(searchTerm) && (
+              <div
+                onClick={() => handleSelect(searchTerm)}
+                style={{
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  color: 'var(--accent-primary)',
+                  borderBottom: '1px solid var(--border-primary)',
+                  fontWeight: 500
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                + "{searchTerm}" ekle
+              </div>
+            )}
+            {filteredSuites.length === 0 && !searchTerm ? (
+              <div style={{
+                padding: '0.75rem',
+                textAlign: 'center',
+                color: 'var(--text-tertiary)',
+                fontSize: '0.875rem'
+              }}>
+                Test grubu bulunamadı
+              </div>
+            ) : (
+              filteredSuites.map((suite) => (
+                <div
+                  key={suite}
+                  onClick={() => handleSelect(suite)}
+                  style={{
+                    padding: '0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-primary)',
+                    backgroundColor: suite === value ? 'var(--bg-tertiary)' : 'transparent',
+                    borderBottom: '1px solid var(--border-primary)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (suite !== value) {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (suite !== value) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  {suite}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <span
+    <div
       onClick={(e) => {
         e.stopPropagation();
-        setIsEditing(true);
+        setIsOpen(true);
       }}
       style={{
         fontSize: '0.875rem',
-        color: 'var(--text-secondary)',
+        color: value ? 'var(--text-primary)' : 'var(--text-tertiary)',
         cursor: 'pointer',
-        padding: '0.25rem 0.5rem',
+        padding: '0.375rem 0.5rem',
         borderRadius: '0.25rem',
-        transition: 'background-color 0.2s ease'
+        transition: 'all 0.2s ease',
+        border: '1px solid transparent',
+        display: 'block',
+        width: '100%',
+        boxSizing: 'border-box'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+        e.currentTarget.style.borderColor = 'var(--border-primary)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.borderColor = 'transparent';
       }}
     >
-      {value || '-'}
-    </span>
+      {value || 'Grup seç'}
+    </div>
   );
 };
 
@@ -128,31 +214,193 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
   availableTags,
   onUpdate
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = (newTags: string[]) => {
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const filteredTags = availableTags.filter(tag =>
+    tag.toLowerCase().includes(searchTerm.toLowerCase()) && !tags.includes(tag)
+  );
+
+  const handleToggleTag = (tag: string) => {
+    const newTags = tags.includes(tag)
+      ? tags.filter(t => t !== tag)
+      : [...tags, tag];
     onUpdate(testId, newTags);
   };
 
-  if (isEditing) {
+  const handleAddNew = () => {
+    if (searchTerm.trim() && !tags.includes(searchTerm.trim())) {
+      onUpdate(testId, [...tags, searchTerm.trim()]);
+      setSearchTerm('');
+    }
+  };
+
+  if (isOpen) {
     return (
       <div 
         ref={containerRef}
         onClick={(e) => e.stopPropagation()}
-        onMouseLeave={() => setIsEditing(false)}
         style={{ 
           position: 'relative',
-          minWidth: '200px',
-          zIndex: 100
+          zIndex: 100,
+          width: '100%'
         }}
       >
-        <MultiSelect
-          options={availableTags}
-          selectedValues={tags}
-          onChange={handleChange}
-          placeholder="Etiket seçin"
-        />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--accent-primary)',
+          borderRadius: '0.375rem',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          width: '100%'
+        }}>
+          {/* Search Input */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Ara veya yeni ekle..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleAddNew();
+              } else if (e.key === 'Escape') {
+                setIsOpen(false);
+                setSearchTerm('');
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              border: 'none',
+              borderBottom: '1px solid var(--border-primary)',
+              borderRadius: '0.375rem 0.375rem 0 0',
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              outline: 'none'
+            }}
+          />
+
+          {/* Selected Tags */}
+          {tags.length > 0 && (
+            <div style={{
+              padding: '0.5rem',
+              borderBottom: '1px solid var(--border-primary)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.25rem'
+            }}>
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  onClick={() => handleToggleTag(tag)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.25rem 0.5rem',
+                    backgroundColor: 'var(--accent-primary)',
+                    color: 'white',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  {'#' + tag}
+                  <X size={12} />
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Available Tags */}
+          <div style={{
+            maxHeight: '150px',
+            overflowY: 'auto'
+          }}>
+            {searchTerm && !availableTags.includes(searchTerm) && !tags.includes(searchTerm) && (
+              <div
+                onClick={handleAddNew}
+                style={{
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  color: 'var(--accent-primary)',
+                  borderBottom: '1px solid var(--border-primary)',
+                  fontWeight: 500
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                + "{searchTerm}" ekle
+              </div>
+            )}
+            {filteredTags.length === 0 && !searchTerm ? (
+              <div style={{
+                padding: '0.75rem',
+                textAlign: 'center',
+                color: 'var(--text-tertiary)',
+                fontSize: '0.875rem'
+              }}>
+                {tags.length === 0 ? 'Etiket bulunamadı' : 'Tüm etiketler seçildi'}
+              </div>
+            ) : (
+              filteredTags.map((tag) => (
+                <div
+                  key={tag}
+                  onClick={() => handleToggleTag(tag)}
+                  style={{
+                    padding: '0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-primary)',
+                    borderBottom: '1px solid var(--border-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  {'#' + tag}
+                  <Check size={14} style={{ color: 'var(--accent-primary)', opacity: 0.5 }} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -161,23 +409,29 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
     <div
       onClick={(e) => {
         e.stopPropagation();
-        setIsEditing(true);
+        setIsOpen(true);
       }}
       style={{
         display: 'flex',
         flexWrap: 'wrap',
         gap: '0.25rem',
         cursor: 'pointer',
-        padding: '0.25rem',
+        padding: '0.375rem 0.5rem',
         borderRadius: '0.25rem',
-        transition: 'background-color 0.2s ease',
-        minHeight: '1.5rem'
+        transition: 'all 0.2s ease',
+        minHeight: '1.75rem',
+        alignItems: 'center',
+        border: '1px solid transparent',
+        width: '100%',
+        boxSizing: 'border-box'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+        e.currentTarget.style.borderColor = 'var(--border-primary)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.borderColor = 'transparent';
       }}
     >
       {tags.length === 0 ? (
@@ -185,34 +439,34 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
           Etiket ekle
         </span>
       ) : (
-        tags.slice(0, 2).map((tag) => (
-          <span
-            key={tag}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '0.125rem 0.5rem',
-              backgroundColor: 'var(--bg-tertiary)',
-              borderRadius: '0.25rem',
-              fontSize: '0.75rem',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-primary)'
-            }}
-          >
-            {tag}
-          </span>
-        ))
-      )}
-      {tags.length > 2 && (
-        <span
-          style={{
-            fontSize: '0.75rem',
-            color: 'var(--text-secondary)',
-            padding: '0.125rem 0.5rem'
-          }}
-        >
-          +{tags.length - 2}
-        </span>
+        <>
+          {tags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.75rem',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {'#' + tag}
+            </span>
+          ))}
+          {tags.length > 3 && (
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                fontWeight: 500
+              }}
+            >
+              +{tags.length - 3}
+            </span>
+          )}
+        </>
       )}
     </div>
   );
