@@ -3,6 +3,7 @@
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduledTest } from '@/types/test';
+import { getScheduleDescription } from '@/lib/utils';
 
 interface UpcomingTestsProps {
   scheduledTests: ScheduledTest[];
@@ -10,51 +11,6 @@ interface UpcomingTestsProps {
   maxItems?: number;
   showViewAll?: boolean;
   onTestClick?: (schedule: ScheduledTest) => void;
-}
-
-function getScheduleDescription(schedule: string): string {
-  const scheduleMap: { [key: string]: string } = {
-    '0 9 * * *': 'Her gün 09:00',
-    '0 2 * * 1': 'Her Pazartesi 02:00',
-    '0 0 * * 0': 'Her Pazar 00:00',
-    '0 */6 * * *': 'Her 6 saatte bir',
-    '0 0 1 * *': 'Her ayın 1\'inde',
-  };
-
-  if (scheduleMap[schedule]) {
-    return scheduleMap[schedule];
-  }
-
-  // Cron parse et
-  const parts = schedule.split(' ');
-  if (parts.length >= 5) {
-    const [min, hour, day, month, weekday] = parts;
-    
-    // Saatlik
-    if (hour.includes('/')) {
-      const interval = hour.split('/')[1];
-      return `Her ${interval} saatte bir`;
-    }
-    
-    // Günlük
-    if (hour !== '*' && day === '*' && weekday === '*') {
-      return `Her gün ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
-    }
-    
-    // Haftalık
-    if (weekday !== '*') {
-      const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-      const dayNames = weekday.split(',').map(d => days[parseInt(d)]).join(', ');
-      return `${dayNames} ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
-    }
-    
-    // Aylık
-    if (day !== '*') {
-      return `Her ayın ${day}. günü ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
-    }
-  }
-
-  return schedule;
 }
 
 export default function UpcomingTests({ 

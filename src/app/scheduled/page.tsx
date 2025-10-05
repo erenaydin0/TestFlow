@@ -15,22 +15,9 @@ import { PageLayout } from '@/components/layout';
 import { StatusBadge, CosmicSpinner } from '@/components/common';
 import { ScheduleModal } from '@/components/modals';
 import { UpcomingTests } from '@/components/features/dashboard';
-import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, getScheduleDescription } from '@/lib/utils';
 import { useScheduledTests } from '@/hooks/data';
 import { ScheduledTest } from '@/types/test';
-
-function getScheduleDescription(schedule: string): string {
-  const scheduleMap: { [key: string]: string } = {
-    '0 9 * * *': 'Her gün 09:00',
-    '0 2 * * 1': 'Her Pazartesi 02:00',
-    '0 * * * *': 'Her saat başı',
-    '0 0 1 * *': 'Her ayın 1\'inde 00:00',
-    '0 */6 * * *': 'Her 6 saatte bir',
-    '0 0 * * *': 'Her gün 00:00',
-    '0 12 * * *': 'Her gün 12:00'
-  };
-  return scheduleMap[schedule] || schedule;
-}
 
 export default function ScheduledPage() {
   const { 
@@ -125,7 +112,8 @@ export default function ScheduledPage() {
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: '2fr 1fr', 
-              gap: '1.5rem' 
+              gap: '1.5rem',
+              alignItems: 'start'
             }}>
               {/* Scheduled Tests */}
               <div className="card">
@@ -390,16 +378,18 @@ export default function ScheduledPage() {
               </div>
 
               {/* Upcoming Runs */}
-              <UpcomingTests 
-                scheduledTests={scheduledTests}
-                loading={loading}
-                maxItems={5}
-                showViewAll={false}
-                onTestClick={(schedule) => {
-                  setEditingSchedule(schedule);
-                  setIsModalOpen(true);
-                }}
-              />
+              <div style={{ height: '600px' }}>
+                <UpcomingTests 
+                  scheduledTests={scheduledTests}
+                  loading={loading}
+                  maxItems={5}
+                  showViewAll={false}
+                  onTestClick={(schedule) => {
+                    setEditingSchedule(schedule);
+                    setIsModalOpen(true);
+                  }}
+                />
+              </div>
             </div>
           )}
       

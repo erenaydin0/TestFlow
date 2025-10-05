@@ -30,6 +30,73 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
+// Get schedule description from cron expression
+export function getScheduleDescription(schedule: string): string {
+  const scheduleMap: { [key: string]: string } = {
+    '0 9 * * *': 'Her gün 09:00',
+    '0 2 * * 1': 'Her Pazartesi 02:00',
+    '0 0 * * 0': 'Her Pazar 00:00',
+    '0 */6 * * *': 'Her 6 saatte bir',
+    '0 0 1 * *': 'Her ayın 1\'inde',
+    '0 * * * *': 'Her saat başı',
+    '0 0 * * *': 'Her gün 00:00',
+    '0 12 * * *': 'Her gün 12:00'
+  };
+
+  if (scheduleMap[schedule]) {
+    return scheduleMap[schedule];
+  }
+
+  // Cron parse et
+  const parts = schedule.split(' ');
+  if (parts.length >= 5) {
+    const [min, hour, day, month, weekday] = parts;
+    
+    // Saatlik - belirli saatlerde
+    if (hour.includes(',') && !hour.includes('*') && !hour.includes('/')) {
+      const hours = hour.split(',').map(h => `${h.padStart(2, '0')}:${min.padStart(2, '0')}`).join(', ');
+      return `Her gün saat ${hours}`;
+    }
+    
+    // Saatlik - belirli aralıklarla
+    if (hour.includes('/')) {
+      const interval = hour.split('/')[1];
+      return `Her ${interval} saatte bir`;
+    }
+    
+    // Dakikalık
+    if (min.includes('/') && hour === '*') {
+      const interval = min.split('/')[1];
+      return `Her ${interval} dakikada bir`;
+    }
+    
+    // Günlük
+    if (hour !== '*' && !hour.includes('/') && !hour.includes(',') && day === '*' && weekday === '*') {
+      return `Her gün ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+    }
+    
+    // Haftalık
+    if (weekday !== '*') {
+      const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+      const dayNames = weekday.split(',').map(d => days[parseInt(d)]).join(', ');
+      return `${dayNames} ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+    }
+    
+    // Aylık
+    if (day !== '*' && !day.includes(',')) {
+      return `Her ayın ${day}. günü ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+    }
+    
+    // Aylık - birden fazla gün
+    if (day.includes(',')) {
+      const days = day.split(',').join(', ');
+      return `Her ayın ${days}. günleri ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+    }
+  }
+
+  return schedule;
+}
+
 export function formatRelativeTime(date: Date | string | null | undefined): string {
   if (!date) {
     return 'Bilinmiyor';
