@@ -121,6 +121,12 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
           borderRadius: '0.5rem',
           color: (start || end) ? 'white' : 'var(--text-secondary)'
         }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+        }}
       >
         <Calendar size={16} />
         <span style={{ minWidth: '120px', textAlign: 'left' }}>{formatDateRange()}</span>
