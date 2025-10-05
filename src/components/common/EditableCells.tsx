@@ -21,7 +21,9 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,6 +48,23 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
     }
   }, [isOpen]);
 
+  // Calculate dropdown position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 250; // Approximate dropdown height
+
+      // If not enough space below but more space above, open upward
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition('top');
+      } else {
+        setDropdownPosition('bottom');
+      }
+    }
+  }, [isOpen]);
+
   const filteredSuites = availableSuites.filter(suite =>
     suite.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -56,25 +75,64 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
     setSearchTerm('');
   };
 
-  if (isOpen) {
-    return (
-      <div 
-        ref={containerRef}
-        onClick={(e) => e.stopPropagation()}
-        style={{ 
-          position: 'relative',
-          zIndex: 100,
-          width: '100%'
+  return (
+    <div 
+      ref={containerRef}
+      onClick={(e) => e.stopPropagation()}
+      style={{ 
+        position: 'relative',
+        width: '100%'
+      }}
+    >
+      {/* Display Button */}
+      <div
+        ref={buttonRef}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        style={{
+          fontSize: '0.875rem',
+          color: value ? 'var(--text-primary)' : 'var(--text-tertiary)',
+          cursor: 'pointer',
+          padding: '0.375rem 0.5rem',
+          borderRadius: '0.5rem',
+          transition: 'all 0.2s ease',
+          border: isOpen ? '1px solid var(--accent-primary)' : '1px solid transparent',
+          display: 'block',
+          width: '100%',
+          boxSizing: 'border-box',
+          backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'transparent'
+        }}
+        onMouseEnter={(e) => {
+          if (!isOpen) {
+            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+            e.currentTarget.style.borderColor = 'var(--border-primary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isOpen) {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
+          }
         }}
       >
+        {value || 'Grup seç'}
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (
         <div style={{
           position: 'absolute',
-          top: 0,
+          ...(dropdownPosition === 'top' 
+            ? { bottom: '100%', marginBottom: '0.25rem' }
+            : { top: '100%', marginTop: '0.25rem' }
+          ),
           left: 0,
           right: 0,
           backgroundColor: 'var(--bg-primary)',
           border: '1px solid var(--accent-primary)',
-          borderRadius: '0.375rem',
+          borderRadius: '0.5rem',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           zIndex: 1000,
           width: '100%'
@@ -98,7 +156,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
               padding: '0.5rem',
               border: 'none',
               borderBottom: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem 0.375rem 0 0',
+              borderRadius: '0.5rem 0.5rem 0 0',
               backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-primary)',
               fontSize: '0.875rem',
@@ -145,12 +203,12 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
                     cursor: 'pointer',
                     fontSize: '0.875rem',
                     color: 'var(--text-primary)',
-                    backgroundColor: suite === value ? 'var(--bg-tertiary)' : 'transparent',
+                    backgroundColor: suite === value ? 'var(--accent-primary)' : 'transparent',
                     borderBottom: '1px solid var(--border-primary)'
                   }}
                   onMouseEnter={(e) => {
                     if (suite !== value) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -165,38 +223,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
             )}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        setIsOpen(true);
-      }}
-      style={{
-        fontSize: '0.875rem',
-        color: value ? 'var(--text-primary)' : 'var(--text-tertiary)',
-        cursor: 'pointer',
-        padding: '0.375rem 0.5rem',
-        borderRadius: '0.25rem',
-        transition: 'all 0.2s ease',
-        border: '1px solid transparent',
-        display: 'block',
-        width: '100%',
-        boxSizing: 'border-box'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-        e.currentTarget.style.borderColor = 'var(--border-primary)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'transparent';
-        e.currentTarget.style.borderColor = 'transparent';
-      }}
-    >
-      {value || 'Grup seç'}
+      )}
     </div>
   );
 };
@@ -216,7 +243,9 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -241,6 +270,23 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
     }
   }, [isOpen]);
 
+  // Calculate dropdown position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 300; // Approximate dropdown height
+
+      // If not enough space below but more space above, open upward
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition('top');
+      } else {
+        setDropdownPosition('bottom');
+      }
+    }
+  }, [isOpen]);
+
   const filteredTags = availableTags.filter(tag =>
     tag.toLowerCase().includes(searchTerm.toLowerCase()) && !tags.includes(tag)
   );
@@ -259,179 +305,48 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
     }
   };
 
-  if (isOpen) {
-    return (
-      <div 
-        ref={containerRef}
-        onClick={(e) => e.stopPropagation()}
-        style={{ 
-          position: 'relative',
-          zIndex: 100,
-          width: '100%'
-        }}
-      >
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: 'var(--bg-primary)',
-          border: '1px solid var(--accent-primary)',
-          borderRadius: '0.375rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          zIndex: 1000,
-          width: '100%'
-        }}>
-          {/* Search Input */}
-          <input
-            ref={inputRef}
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Ara veya yeni ekle..."
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleAddNew();
-              } else if (e.key === 'Escape') {
-                setIsOpen(false);
-                setSearchTerm('');
-              }
-            }}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              border: 'none',
-              borderBottom: '1px solid var(--border-primary)',
-              borderRadius: '0.375rem 0.375rem 0 0',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              outline: 'none'
-            }}
-          />
-
-          {/* Selected Tags */}
-          {tags.length > 0 && (
-            <div style={{
-              padding: '0.5rem',
-              borderBottom: '1px solid var(--border-primary)',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '0.25rem'
-            }}>
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  onClick={() => handleToggleTag(tag)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: 'var(--accent-primary)',
-                    color: 'white',
-                    borderRadius: '0.25rem',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    transition: 'opacity 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                >
-                  {'#' + tag}
-                  <X size={12} />
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Available Tags */}
-          <div style={{
-            maxHeight: '150px',
-            overflowY: 'auto'
-          }}>
-            {searchTerm && !availableTags.includes(searchTerm) && !tags.includes(searchTerm) && (
-              <div
-                onClick={handleAddNew}
-                style={{
-                  padding: '0.5rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  color: 'var(--accent-primary)',
-                  borderBottom: '1px solid var(--border-primary)',
-                  fontWeight: 500
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                + "{searchTerm}" ekle
-              </div>
-            )}
-            {filteredTags.length === 0 && !searchTerm ? (
-              <div style={{
-                padding: '0.75rem',
-                textAlign: 'center',
-                color: 'var(--text-tertiary)',
-                fontSize: '0.875rem'
-              }}>
-                {tags.length === 0 ? 'Etiket bulunamadı' : 'Tüm etiketler seçildi'}
-              </div>
-            ) : (
-              filteredTags.map((tag) => (
-                <div
-                  key={tag}
-                  onClick={() => handleToggleTag(tag)}
-                  style={{
-                    padding: '0.5rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    color: 'var(--text-primary)',
-                    borderBottom: '1px solid var(--border-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  {'#' + tag}
-                  <Check size={14} style={{ color: 'var(--accent-primary)', opacity: 0.5 }} />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        setIsOpen(true);
+    <div 
+      ref={containerRef}
+      onClick={(e) => e.stopPropagation()}
+      style={{ 
+        position: 'relative',
+        width: '100%'
       }}
+    >
+      {/* Display Button */}
+      <div
+        ref={buttonRef}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
       style={{
         display: 'flex',
         flexWrap: 'wrap',
         gap: '0.25rem',
         cursor: 'pointer',
         padding: '0.375rem 0.5rem',
-        borderRadius: '0.25rem',
+        borderRadius: '0.5rem',
         transition: 'all 0.2s ease',
         minHeight: '1.75rem',
         alignItems: 'center',
-        border: '1px solid transparent',
+        border: isOpen ? '1px solid var(--accent-primary)' : '1px solid transparent',
         width: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'transparent'
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-        e.currentTarget.style.borderColor = 'var(--border-primary)';
+        if (!isOpen) {
+          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+          e.currentTarget.style.borderColor = 'var(--border-primary)';
+        }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'transparent';
-        e.currentTarget.style.borderColor = 'transparent';
+        if (!isOpen) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.borderColor = 'transparent';
+        }
       }}
     >
       {tags.length === 0 ? (
@@ -469,6 +384,145 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
         </>
       )}
     </div>
+
+    {/* Dropdown */}
+    {isOpen && (
+      <div style={{
+        position: 'absolute',
+        ...(dropdownPosition === 'top' 
+          ? { bottom: '100%', marginBottom: '0.25rem' }
+          : { top: '100%', marginTop: '0.25rem' }
+        ),
+        left: 0,
+        right: 0,
+        backgroundColor: 'var(--bg-primary)',
+        border: '1px solid var(--accent-primary)',
+        borderRadius: '0.5rem',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        zIndex: 1000,
+        width: '100%'
+      }}>
+        {/* Search Input */}
+        <input
+          ref={inputRef}
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Ara veya yeni ekle..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleAddNew();
+            } else if (e.key === 'Escape') {
+              setIsOpen(false);
+              setSearchTerm('');
+            }
+          }}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            border: 'none',
+            borderBottom: '1px solid var(--border-primary)',
+            borderRadius: '0.5rem 0.5rem 0 0',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            fontSize: '0.875rem',
+            outline: 'none'
+          }}
+        />
+
+        {/* Selected Tags */}
+        {tags.length > 0 && (
+          <div style={{
+            padding: '0.5rem',
+            borderBottom: '1px solid var(--border-primary)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.25rem'
+          }}>
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                onClick={() => handleToggleTag(tag)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  padding: '0.25rem 0.5rem',
+                  backgroundColor: 'var(--accent-primary)',
+                  color: 'white',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                {'#' + tag}
+                <X size={12} />
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Available Tags */}
+        <div style={{
+          maxHeight: '150px',
+          overflowY: 'auto'
+        }}>
+          {searchTerm && !availableTags.includes(searchTerm) && !tags.includes(searchTerm) && (
+            <div
+              onClick={handleAddNew}
+              style={{
+                padding: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: 'var(--accent-primary)',
+                borderBottom: '1px solid var(--border-primary)',
+                fontWeight: 500
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              + "{searchTerm}" ekle
+            </div>
+          )}
+          {filteredTags.length === 0 && !searchTerm ? (
+            <div style={{
+              padding: '0.75rem',
+              textAlign: 'center',
+              color: 'var(--text-tertiary)',
+              fontSize: '0.875rem'
+            }}>
+              {tags.length === 0 ? 'Etiket bulunamadı' : 'Tüm etiketler seçildi'}
+            </div>
+          ) : (
+            filteredTags.map((tag) => (
+              <div
+                key={tag}
+                onClick={() => handleToggleTag(tag)}
+                style={{
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-primary)',
+                  borderBottom: '1px solid var(--border-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                {'#' + tag}
+                <Check size={14} style={{ color: 'var(--accent-primary)', opacity: 0.5 }} />
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BrowserType } from '@/types';
 
 interface BrowserSelectorProps {
@@ -26,8 +26,27 @@ export default function BrowserSelector({
   style = {}
 }: BrowserSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const selectedOption = browserOptions.find(option => option.value === selectedBrowser);
+
+  // Calculate dropdown position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 200; // Approximate dropdown height
+
+      // If not enough space below but more space above, open upward
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition('top');
+      } else {
+        setDropdownPosition('bottom');
+      }
+    }
+  }, [isOpen]);
+
 
   // Size configurations
   const sizeConfig = {
@@ -56,6 +75,7 @@ export default function BrowserSelector({
   return (
     <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
@@ -126,12 +146,15 @@ export default function BrowserSelector({
           <div
             style={{
               position: 'absolute',
-              top: '100%',
+              ...(dropdownPosition === 'top' 
+                ? { bottom: '100%', marginBottom: '0.25rem' }
+                : { top: '100%', marginTop: '0.25rem' }
+              ),
               left: 0,
               right: 0,
               marginTop: '0.25rem',
               backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-primary)',
+              border: '1px solid var(--accent-primary)',
               borderRadius: '0.5rem',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
               zIndex: 20,
