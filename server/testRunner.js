@@ -215,6 +215,8 @@ class TestRunner {
         case 'if':
           stepResult.conditionResult = await this.executeIf(step.config);
           stepResult.logs.push(`Condition result: ${stepResult.conditionResult ? 'TRUE' : 'FALSE'}`);
+          // IF adımı her zaman başarılı sayılır, koşul sonucu ayrı olarak işlenir
+          stepResult.success = true;
           break;
           
         default:

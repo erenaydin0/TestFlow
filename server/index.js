@@ -438,17 +438,25 @@ async function executeTestWorkflow(executionId, execution) {
     const maxIterations = execution.steps.length * 10; // Safety limit
     let iterations = 0;
     
-    let i = startIndex;
-    while (i < execution.steps.length && iterations < maxIterations) {
+    let currentStepId = execution.steps[startIndex].stepId;
+    
+    while (currentStepId && iterations < maxIterations) {
       iterations++;
       
-      // Check for infinite loop
-      const stepKey = `${i}-${iterations}`;
-      if (visitedSteps.has(execution.steps[i].stepId) && iterations > execution.steps.length) {
-        console.warn(`Possible infinite loop detected at step ${i}`);
+      // Get current step index
+      const i = stepMap.get(currentStepId);
+      if (i === undefined) {
+        console.error(`Step not found: ${currentStepId}`);
         break;
       }
-      visitedSteps.add(execution.steps[i].stepId);
+      
+      // Check for infinite loop
+      if (visitedSteps.has(currentStepId) && iterations > execution.steps.length) {
+        console.warn(`Possible infinite loop detected at step ${currentStepId}`);
+        break;
+      }
+      visitedSteps.add(currentStepId);
+      
       const step = execution.steps[i];
       
       if (execution.status === 'cancelled') {
@@ -499,30 +507,26 @@ async function executeTestWorkflow(executionId, execution) {
           progress: execution.progress
         });
         
+        // Determine next step based on step type and connections
+        let nextStepId = null;
+        
         // Handle IF step conditional navigation
         if (step.type === 'if' && result.conditionResult !== undefined) {
-          const nextStepId = result.conditionResult 
+          nextStepId = result.conditionResult 
             ? step.config.trueConnection 
             : step.config.falseConnection;
           
-          if (nextStepId && stepMap.has(nextStepId)) {
-            i = stepMap.get(nextStepId);
-            console.log(`IF condition ${result.conditionResult ? 'TRUE' : 'FALSE'}: jumping to step ${i} (${nextStepId})`);
-            continue;
+          if (nextStepId) {
+            console.log(`IF condition ${result.conditionResult ? 'TRUE' : 'FALSE'}: next step ${nextStepId}`);
           } else {
-            // No connection defined, stop execution
             console.log(`IF step has no ${result.conditionResult ? 'TRUE' : 'FALSE'} connection, ending execution`);
-            break;
           }
         }
-        
         // Handle normal connections (non-IF steps)
-        if (step.config.connections && step.config.connections.length > 0) {
-          const nextStepId = step.config.connections[0]; // Take first connection
-          if (stepMap.has(nextStepId)) {
-            i = stepMap.get(nextStepId);
-            console.log(`Following connection to step ${i} (${nextStepId})`);
-            continue;
+        else if (step.type !== 'if' && step.config.connections && step.config.connections.length > 0) {
+          nextStepId = step.config.connections[0]; // Take first connection
+          if (nextStepId) {
+            console.log(`Following connection to step ${nextStepId}`);
           }
         }
         
@@ -533,13 +537,12 @@ async function executeTestWorkflow(executionId, execution) {
           break;
         }
         
-        // No connections found, try next sequential step
-        i++;
-        
-        // If we've reached the end or next step doesn't exist, stop
-        if (i >= execution.steps.length) {
-          console.log('Reached end of workflow');
-          break;
+        // Set next step or end execution
+        if (nextStepId && stepMap.has(nextStepId)) {
+          currentStepId = nextStepId;
+        } else {
+          console.log('No more steps to execute, ending workflow');
+          currentStepId = null;
         }
         
       } catch (error) {
