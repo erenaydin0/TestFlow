@@ -5,7 +5,6 @@ import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react
 
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import { Button, ButtonGroup } from '@/components/ui';
-import BrowserSelector from '@/components/features/test-builder/BrowserSelector';
 import { BrowserType, TestFormData, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/lib/utils';
 import { useModal } from '@/hooks/ui';
@@ -405,13 +404,30 @@ const TestModal: React.FC<TestModalProps> = ({
                    <Globe size={14} />
                    Tarayıcı
                  </label>
-                 <BrowserSelector
-                   selectedBrowser={browserType}
-                   onBrowserChange={setBrowserType}
-                   disabled={false}
-                   size="lg"
-                   style={{
-                    backgroundColor: 'var(--bg-secondary)'
+                 <AutocompleteInput
+                   value={browserType === 'chromium' ? 'Chrome' : 
+                          browserType === 'firefox' ? 'Firefox' : 
+                          browserType === 'webkit' ? 'Safari' : 
+                          browserType === 'msedge' ? 'Edge' : 'Chrome'}
+                   onChange={(value) => {
+                     const browserMap: { [key: string]: BrowserType } = {
+                       'Chrome': 'chromium',
+                       'Firefox': 'firefox', 
+                       'Safari': 'webkit',
+                       'Edge': 'msedge'
+                     };
+                     setBrowserType(browserMap[value] || 'chromium');
+                   }}
+                   options={['Chrome', 'Firefox', 'Safari', 'Edge']}
+                   placeholder="Chrome"
+                   multiple={false}
+                   onFocus={(e) => {
+                     e.currentTarget.style.borderColor = primaryColor;
+                     e.currentTarget.style.boxShadow = `0 0 0 3px ${primaryColor}20`;
+                   }}
+                   onBlur={(e) => {
+                     e.currentTarget.style.borderColor = 'var(--border-primary)';
+                     e.currentTarget.style.boxShadow = 'none';
                    }}
                  />
                </div>
