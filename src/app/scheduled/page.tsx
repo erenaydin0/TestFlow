@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CosmicSpinner } from '@/components/common';
+import { StatusBadge, CosmicSpinner, CustomSelect } from '@/components/common';
 import { ScheduleModal } from '@/components/modals';
 import { UpcomingTests } from '@/components/features/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription } from '@/lib/utils';
@@ -68,26 +68,21 @@ export default function ScheduledPage() {
         display: 'flex', 
         alignItems: 'center', 
         gap: '1rem',
-        marginBottom: '1.5rem' 
-      }}>
-        <select 
+        marginBottom: '1.5rem' ,  
+        width: '120px'
+        }}>
+          <CustomSelect 
           value={filters.status[0] || ''}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value ? [e.target.value as any] : [] })}
+          onChange={(value) => setFilters({ ...filters, status: value ? [value as any] : [] })}
           style={{
-            padding: '0.5rem 1rem',
-            border: '1px solid var(--border-primary)',
-            borderRadius: '0.5rem',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            outline: 'none',
-            cursor: 'pointer'
+            width: 'max-content'
           }}
-        >
-          <option value="">Tüm Durumlar</option>
-          <option value="active">Aktif</option>
-          <option value="paused">Duraklatılmış</option>
-          <option value="disabled">Devre Dışı</option>
-        </select>
+          options={[
+            { value: 'active', label: 'Aktif' },
+            { value: 'paused', label: 'Duraklatılmış' },
+          ]}
+          placeholder="Tüm Durumlar"
+        />
       </div>
 
       {loading ? (
