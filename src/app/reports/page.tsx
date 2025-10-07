@@ -33,12 +33,14 @@ import { ExecutionResult, ExecutionFilters, ExecutionStats, BrowserType } from '
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
+import { useSidebar } from '@/contexts';
 
 const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 
 export default function ReportsPage() {
+  const { setIsModalOpen } = useSidebar();
   const {
     executions,
     filteredExecutions,
@@ -165,6 +167,11 @@ export default function ReportsPage() {
       document.removeEventListener('keydown', handleEscKey);
     };
   }, [selectedExecution]);
+
+  // Update sidebar state when modal opens/closes
+  useEffect(() => {
+    setIsModalOpen(!!selectedExecution);
+  }, [selectedExecution, setIsModalOpen]);
 
   // Define table columns for DataTable
   const columns: Column<ExecutionResult>[] = [
@@ -952,7 +959,8 @@ export default function ReportsPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 10000,
+            pointerEvents: 'auto'
           }}
           onClick={() => setSelectedExecution(null)}
         >

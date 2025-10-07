@@ -28,7 +28,7 @@ const navigation = [
 
 export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const pathname = usePathname();
-  const { isCollapsed, setIsCollapsed } = useSidebar();
+  const { isCollapsed, setIsCollapsed, isModalOpen } = useSidebar();
   const { openModal } = useSettingsModal();
 
   return (
@@ -46,7 +46,9 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
       overflowX: 'hidden',
       zIndex: 100,
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '2px 0 8px rgba(0, 0, 0, 0.05)'
+      boxShadow: '2px 0 8px rgba(0, 0, 0, 0.05)',
+      pointerEvents: isModalOpen ? 'none' : 'auto',
+      opacity: isModalOpen ? 0.5 : 1
     }}>
       {/* Navigation */}
       <nav style={{ flex: 1, padding: isCollapsed ? '1rem 0.5rem' : '1rem 0.75rem', overflow: 'auto' }}>
