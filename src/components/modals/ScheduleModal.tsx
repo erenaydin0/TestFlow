@@ -233,7 +233,11 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
       justifyContent: 'center',
       zIndex: 1000
     }}>
-      <div className="card" style={{
+      <div style={{
+        backgroundColor: 'var(--bg-primary)',
+        border: '1px solid var(--border-primary)',
+        borderRadius: '1rem',
+        padding: '1.25rem',
         width: '90%',
         maxWidth: '900px',
         height: '600px',
