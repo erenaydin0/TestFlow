@@ -17,6 +17,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'CosmicQA',
   description: 'Modern ve kullanıcı dostu Playwright test otomasyonu uygulaması',
+  icons: {
+    icon: '/icon.ico',
+  },
 };
 
 export default function RootLayout({

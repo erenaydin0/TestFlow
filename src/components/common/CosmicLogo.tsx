@@ -67,24 +67,15 @@ export default function CosmicLogo({ size = 32, animated = true }: CosmicLogoPro
             animation: animated ? 'pulse 3s ease-in-out infinite' : 'none'
           }}
         />
-        
-        {/* Central Diamond Shape */}
-        <g style={{
-          animation: animated ? 'pulse 3s ease-in-out infinite' : 'none'
-        }}>
-          <path
-            d="M 50 30 L 70 50 L 50 70 L 30 50 Z"
-            fill="url(#gradientDiamond)"
-            stroke="var(--bg-primary)"
-            strokeWidth="2"
-          />
-          {/* Inner diamond for depth */}
-          <path
-            d="M 50 38 L 62 50 L 50 62 L 38 50 Z"
-            fill="var(--bg-primary)"
-            opacity="0.3"
-          />
-        </g>
+        {/* Central Logo Image */}
+        <image
+          href="/icon.svg"
+          x="-25"
+          y="-25"
+          width="150"
+          height="150"
+          className={animated ? 'cosmic-logo-pulse' : ''}
+        />
         
         {/* Small orbiting dots - satellites */}
         <circle
@@ -129,11 +120,6 @@ export default function CosmicLogo({ size = 32, animated = true }: CosmicLogoPro
             <stop offset="100%" stopColor="var(--status-primary)" />
           </radialGradient>
           
-          <linearGradient id="gradientDiamond" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--status-warning)" />
-            <stop offset="50%" stopColor="var(--status-primary)" />
-            <stop offset="100%" stopColor="var(--status-purple)" />
-          </linearGradient>
         </defs>
       </svg>
 
