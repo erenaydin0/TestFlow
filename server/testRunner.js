@@ -85,10 +85,13 @@ class TestRunner {
     this.page = await this.context.newPage();
     this.page.setDefaultTimeout(timeout);
     
-    // Add console logging
-    this.page.on('console', msg => {
-      console.log(`Browser console: ${msg.text()}`);
-    });
+    // Add console logging (only in debug mode)
+    const config = require('./config');
+    if (config.enableDebugLogs) {
+      this.page.on('console', msg => {
+        console.log(`Browser console: ${msg.text()}`);
+      });
+    }
     
     // Add error handling
     this.page.on('pageerror', error => {

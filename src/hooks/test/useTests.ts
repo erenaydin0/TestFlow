@@ -28,7 +28,7 @@ const useTests = (options: UseTestsOptions = {}) => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:3001/api/tests');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests`);
       if (!response.ok) throw new Error('Testler yüklenemedi');
       
       const data = await response.json();
@@ -61,7 +61,7 @@ const useTests = (options: UseTestsOptions = {}) => {
   // Delete test
   const deleteTest = async (testId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:3001/api/tests/${testId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests/${testId}`, {
         method: 'DELETE'
       });
       
@@ -89,7 +89,7 @@ const useTests = (options: UseTestsOptions = {}) => {
         updatedAt: undefined
       };
       
-      const response = await fetch('http://localhost:3001/api/tests', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(duplicatedTest)
@@ -109,7 +109,7 @@ const useTests = (options: UseTestsOptions = {}) => {
   // Update test
   const updateTest = async (testId: string, updatedTest: Test): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:3001/api/tests/${testId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests/${testId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedTest)

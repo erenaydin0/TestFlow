@@ -162,7 +162,7 @@ const useReports = (options: UseReportsOptions = {}) => {
   // Delete execution (if needed)
   const deleteExecution = async (executionId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:3001/api/executions/${executionId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/executions/${executionId}`, {
         method: 'DELETE'
       });
       

@@ -259,7 +259,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
       try {
         // Backend'e kaydet
-        const response = await fetch('http://localhost:3001/api/tests', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

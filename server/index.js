@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs-extra');
 const path = require('path');
 
+const config = require('./config');
 const TestRunner = require('./testRunner');
 const ScriptGenerator = require('./scriptGenerator');
 const TestScheduler = require('./scheduler');
@@ -18,12 +19,12 @@ const wss = new WebSocketServer({ server });
 app.use(cors());
 app.use(express.json());
 
-// Storage paths
-const EXECUTIONS_DIR = path.join(__dirname, 'executions');
-const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
-const VIDEOS_DIR = path.join(__dirname, 'videos');
-const SCHEDULED_TESTS_DIR = path.join(__dirname, 'scheduled-tests');
-const TESTS_DIR = path.join(__dirname, 'tests');
+// Storage paths from config
+const EXECUTIONS_DIR = path.join(__dirname, config.executionsDir);
+const SCREENSHOTS_DIR = path.join(__dirname, config.screenshotsDir);
+const VIDEOS_DIR = path.join(__dirname, config.videosDir);
+const SCHEDULED_TESTS_DIR = path.join(__dirname, config.scheduledTestsDir);
+const TESTS_DIR = path.join(__dirname, config.testsDir);
 
 // Ensure directories exist
 fs.ensureDirSync(EXECUTIONS_DIR);
@@ -958,11 +959,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, async () => {
-  console.log(`🚀 CosmicQA Backend Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+server.listen(config.port, async () => {
+  console.log(`🚀 CosmicQA Backend Server running on port ${config.port}`);
+  console.log(`📊 Health check: http://localhost:${config.port}/api/health`);
   console.log(`🔌 WebSocket server ready for connections`);
+  console.log(`🌍 Environment: ${config.nodeEnv}`);
   
   // Initialize Test Scheduler
   testScheduler = new TestScheduler(executeScheduledTest, SCHEDULED_TESTS_DIR);

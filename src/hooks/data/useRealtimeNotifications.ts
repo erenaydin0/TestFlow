@@ -13,7 +13,7 @@ function useRealtimeNotifications() {
   } = useTestNotifications();
 
   // WebSocket bağlantısını sadece browser'da dene
-  const wsUrl = typeof window !== 'undefined' ? 'ws://localhost:3001' : '';
+  const wsUrl = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001') : '';
   const { isConnected, isConnecting, lastMessage, connect } = useWebSocket(wsUrl, {
     autoConnect: typeof window !== 'undefined',
     reconnectAttempts: 5,

@@ -35,7 +35,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:3001/api/scheduled-tests');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scheduled-tests`);
       if (!response.ok) throw new Error('Zamanlanmış testler yüklenemedi');
       
       const data = await response.json();
@@ -72,7 +72,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
 
   const createSchedule = async (schedule: Partial<ScheduledTest>): Promise<ScheduledTest | null> => {
     try {
-      const response = await fetch('http://localhost:3001/api/scheduled-tests', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scheduled-tests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedule)
@@ -91,7 +91,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
 
   const updateSchedule = async (id: string, schedule: Partial<ScheduledTest>): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:3001/api/scheduled-tests/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scheduled-tests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedule)
@@ -110,7 +110,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
 
   const deleteSchedule = async (id: string): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:3001/api/scheduled-tests/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scheduled-tests/${id}`, {
         method: 'DELETE'
       });
       

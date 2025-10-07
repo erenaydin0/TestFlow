@@ -488,7 +488,7 @@ export default function ReportsPage() {
         const step = execution.steps[i];
         if (step.screenshot) {
           try {
-            const response = await fetch(`http://localhost:3001${step.screenshot}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${step.screenshot}`);
             if (response.ok) {
               const blob = await response.blob();
               const filename = `step_${i + 1}_${step.type}_${step.stepId?.slice(0, 8) || 'unknown'}.png`;
@@ -503,7 +503,7 @@ export default function ReportsPage() {
       // Add video if exists
       if (execution.videoPath) {
         try {
-          const response = await fetch(`http://localhost:3001${execution.videoPath}`);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${execution.videoPath}`);
           if (response.ok) {
             const blob = await response.blob();
             zip.file('test_video.webm', blob);
@@ -564,7 +564,7 @@ export default function ReportsPage() {
           const step = execution.steps[i];
           if (step.screenshot) {
             try {
-              const response = await fetch(`http://localhost:3001${step.screenshot}`);
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${step.screenshot}`);
               if (response.ok) {
                 const blob = await response.blob();
                 const filename = `step_${i + 1}_${step.type}_${step.stepId?.slice(0, 8) || 'unknown'}.png`;
@@ -579,7 +579,7 @@ export default function ReportsPage() {
         // Add video for this execution
         if (execution.videoPath) {
           try {
-            const response = await fetch(`http://localhost:3001${execution.videoPath}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${execution.videoPath}`);
             if (response.ok) {
               const blob = await response.blob();
               executionFolder?.file('test_video.webm', blob);
@@ -1224,7 +1224,7 @@ export default function ReportsPage() {
                         {/* Screenshot Link - Sol tarafa taşındı */}
                         {step.screenshot && (
                           <a 
-                            href={`http://localhost:3001${step.screenshot}`}
+                            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${step.screenshot}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
@@ -1349,7 +1349,7 @@ export default function ReportsPage() {
                   {/* Video butonu başta */}
                   {selectedExecution.videoPath && (
                     <a 
-                      href={`http://localhost:3001${selectedExecution.videoPath}`}
+                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${selectedExecution.videoPath}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -1374,7 +1374,7 @@ export default function ReportsPage() {
                   {selectedExecution.screenshots.map((screenshot, index) => (
                     <a 
                       key={index}
-                      href={`http://localhost:3001${screenshot}`}
+                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${screenshot}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

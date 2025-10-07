@@ -517,7 +517,7 @@ export default function TestBuilder() {
       // Backend'e kaydet
       if (loadedWorkflowId) {
         // Güncelleme
-        const response = await fetch(`http://localhost:3001/api/tests/${loadedWorkflowId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests/${loadedWorkflowId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(testData)
@@ -529,7 +529,7 @@ export default function TestBuilder() {
         notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
       } else {
         // Yeni kayıt
-        const response = await fetch('http://localhost:3001/api/tests', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(testData)
@@ -608,7 +608,7 @@ export default function TestBuilder() {
           falseConnection: step.falseConnection // For IF FALSE branch
         }
       }));
-      const response = await fetch('http://localhost:3001/api/execute', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -656,7 +656,7 @@ export default function TestBuilder() {
     
     if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
       // Backend'den workflow yükle
-      fetch(`http://localhost:3001/api/tests/${loadWorkflowId}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests/${loadWorkflowId}`)
         .then(response => {
           if (!response.ok) throw new Error('Test bulunamadı');
           return response.json();
