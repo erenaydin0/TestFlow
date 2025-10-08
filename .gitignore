@@ -43,5 +43,6 @@ next-env.d.ts
 /server/node_modules/
 /server/scheduled-tests/
 /server/tests/
+/server/logs/
 
 .cursor

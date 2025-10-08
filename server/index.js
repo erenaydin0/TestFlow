@@ -10,6 +10,7 @@ const TestRunner = require('./testRunner');
 const ScriptGenerator = require('./scriptGenerator');
 const TestScheduler = require('./scheduler');
 const errorHandler = require('./utils/errorHandler');
+const healthChecker = require('./utils/healthChecker');
 
 const app = express();
 const server = createServer(app);
@@ -978,15 +979,57 @@ app.delete('/api/scheduled-tests/:id', async (req, res) => {
   }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    activeExecutions: activeExecutions.size,
-    connectedClients: clients.size,
-    activeSchedules: testScheduler ? testScheduler.getScheduleCount() : 0
-  });
+// Health check endpoints
+app.get('/api/health', async (req, res) => {
+  try {
+    const health = await healthChecker.generateHealthReport(
+      activeExecutions, 
+      clients, 
+      testScheduler
+    );
+    
+    const statusCode = health.status === 'error' ? 503 : 200;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    await errorHandler.logError(error, { endpoint: '/api/health' });
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      message: 'Health check failed',
+      error: errorHandler.createSafeErrorMessage(error)
+    });
+  }
+});
+
+// Quick health check (lightweight)
+app.get('/api/health/quick', (req, res) => {
+  try {
+    const health = healthChecker.getQuickHealth(activeExecutions, clients, testScheduler);
+    res.json(health);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      message: 'Quick health check failed'
+    });
+  }
+});
+
+// Detailed system metrics
+app.get('/api/health/metrics', async (req, res) => {
+  try {
+    const metrics = healthChecker.getSystemMetrics();
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      metrics
+    });
+  } catch (error) {
+    await errorHandler.logError(error, { endpoint: '/api/health/metrics' });
+    res.status(500).json(errorHandler.formatApiError(error, { 
+      endpoint: '/api/health/metrics' 
+    }));
+  }
 });
 
 // Start server
@@ -994,6 +1037,8 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, async () => {
   console.log(`🚀 CosmicQA Backend Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`⚡ Quick health: http://localhost:${PORT}/api/health/quick`);
+  console.log(`📈 Metrics: http://localhost:${PORT}/api/health/metrics`);
   console.log(`🔌 WebSocket server ready for connections`);
   
   // Initialize Test Scheduler
