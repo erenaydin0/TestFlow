@@ -556,6 +556,8 @@ async function executeTestWorkflow(executionId, execution) {
           if (nextStepId) {
             console.log(`Following connection to step ${nextStepId}`);
           }
+        } else {
+          console.log(`No connections found for ${step.type} step ${step.stepId}, ending execution`);
         }
         
         // If step failed and it's critical, stop execution

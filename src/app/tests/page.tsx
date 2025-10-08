@@ -331,11 +331,20 @@ export default function TestsPage() {
           target: step.selector, // Alternative selector name
           duration: step.duration,
           condition: step.condition,
+          conditionType: step.conditionType, // For IF actions
           expectedValue: step.expectedValue,
+          operator: step.operator, // For IF actions
+          verificationType: step.verificationType, // For verify actions
           direction: step.direction,
           amount: step.amount,
           filename: step.filename,
-          key: step.key
+          key: step.key,
+          optionType: step.optionType, // For dropdown actions
+          optionValue: step.optionValue, // For dropdown actions
+          // Connection properties for flow control
+          connections: step.connections,
+          trueConnection: step.trueConnection, // For IF TRUE branch
+          falseConnection: step.falseConnection // For IF FALSE branch
         }
       }));
       
@@ -383,7 +392,7 @@ export default function TestsPage() {
   const handleDuplicateTest = async (testId: string) => {
     try {
       const test = tests.find((t: any) => t.id === testId);
-      const duplicatedId = duplicateTest(testId);
+      const duplicatedId = await duplicateTest(testId);
       if (duplicatedId && test) {
         notifyTestDuplicated(test.name, duplicatedId);
       }
@@ -405,9 +414,10 @@ export default function TestsPage() {
     }
   };
 
-  const confirmSingleDelete = () => {
+  const confirmSingleDelete = async () => {
     try {
-      if (deleteTest(singleDeleteDialog.testId)) {
+      const result = await deleteTest(singleDeleteDialog.testId);
+      if (result) {
         setSelectedTests(prev => {
           const newSelection = new Set(prev);
           newSelection.delete(singleDeleteDialog.testId);
@@ -425,7 +435,7 @@ export default function TestsPage() {
     if (selectedTests.size === 0) return;
     
     try {
-      const duplicatedCount = bulkDuplicateTests(Array.from(selectedTests));
+      const duplicatedCount = await bulkDuplicateTests(Array.from(selectedTests));
       setSelectedTests(new Set());
       
       if (duplicatedCount > 0) {
