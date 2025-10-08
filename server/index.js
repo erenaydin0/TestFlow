@@ -9,6 +9,7 @@ const path = require('path');
 const TestRunner = require('./testRunner');
 const ScriptGenerator = require('./scriptGenerator');
 const TestScheduler = require('./scheduler');
+const errorHandler = require('./utils/errorHandler');
 
 const app = express();
 const server = createServer(app);
@@ -19,11 +20,11 @@ app.use(cors());
 app.use(express.json());
 
 // Storage paths
-const EXECUTIONS_DIR = path.join(__dirname, 'executions');
-const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
-const VIDEOS_DIR = path.join(__dirname, 'videos');
-const SCHEDULED_TESTS_DIR = path.join(__dirname, 'scheduled-tests');
-const TESTS_DIR = path.join(__dirname, 'tests');
+const EXECUTIONS_DIR = process.env.EXECUTIONS_DIR || path.join(__dirname, 'executions');
+const SCREENSHOTS_DIR = process.env.SCREENSHOTS_DIR || path.join(__dirname, 'screenshots');
+const VIDEOS_DIR = process.env.VIDEOS_DIR || path.join(__dirname, 'videos');
+const SCHEDULED_TESTS_DIR = process.env.SCHEDULED_TESTS_DIR || path.join(__dirname, 'scheduled-tests');
+const TESTS_DIR = process.env.TESTS_DIR || path.join(__dirname, 'tests');
 
 // Ensure directories exist
 fs.ensureDirSync(EXECUTIONS_DIR);
@@ -97,8 +98,8 @@ async function executeScheduledTest(schedule) {
       options: {
         enableScreenshots: false,
         enableRecording: false,
-        headlessMode: true,
-        browserType: 'chromium'
+        headlessMode: process.env.HEADLESS_MODE === 'true' || true,
+        browserType: process.env.DEFAULT_BROWSER || 'chromium'
       },
       steps: testWorkflow.workflow.map(step => ({
         stepId: step.id,
@@ -149,7 +150,10 @@ app.post('/api/execute', async (req, res) => {
     const { workflowId, workflowName, steps, suite, tags, options = {} } = req.body;
     
     if (!steps || !Array.isArray(steps) || steps.length === 0) {
-      return res.status(400).json({ error: 'Invalid or empty steps provided' });
+      return res.status(400).json(errorHandler.formatApiError(
+        new Error('Invalid or empty steps provided'),
+        { requestId: req.id, endpoint: '/api/execute' }
+      ));
     }
     
     // Generate readable execution ID based on workflow name
@@ -182,8 +186,8 @@ app.post('/api/execute', async (req, res) => {
       options: {
         enableScreenshots: options.enableScreenshots || false,
         enableRecording: options.enableRecording || false,
-        headlessMode: options.headlessMode || false,
-        browserType: options.browserType || 'chromium'
+        headlessMode: options.headlessMode || process.env.HEADLESS_MODE === 'true' || false,
+        browserType: options.browserType || process.env.DEFAULT_BROWSER || 'chromium'
       },
       steps: steps.map(step => {
         console.log('Processing step:', JSON.stringify(step, null, 2));
@@ -213,8 +217,14 @@ app.post('/api/execute', async (req, res) => {
     
     res.json({ executionId, status: 'queued' });
   } catch (error) {
-    console.error('Error starting execution:', error);
-    res.status(500).json({ error: 'Failed to start execution' });
+    await errorHandler.logError(error, { 
+      executionId: req.body.workflowId, 
+      endpoint: '/api/execute' 
+    });
+    res.status(500).json(errorHandler.formatApiError(error, { 
+      requestId: req.id, 
+      endpoint: '/api/execute' 
+    }));
   }
 });
 
@@ -235,10 +245,19 @@ app.get('/api/execution/:id', async (req, res) => {
       return res.json(execution);
     }
     
-    res.status(404).json({ error: 'Execution not found' });
+    res.status(404).json(errorHandler.formatApiError(
+      new Error('Execution not found'),
+      { executionId: req.params.id, endpoint: '/api/execution/:id' }
+    ));
   } catch (error) {
-    console.error('Error getting execution:', error);
-    res.status(500).json({ error: 'Failed to get execution' });
+    await errorHandler.logError(error, { 
+      executionId: req.params.id, 
+      endpoint: '/api/execution/:id' 
+    });
+    res.status(500).json(errorHandler.formatApiError(error, { 
+      requestId: req.id, 
+      endpoint: '/api/execution/:id' 
+    }));
   }
 });
 
@@ -532,9 +551,12 @@ async function executeTestWorkflow(executionId, execution) {
         
         // If step failed and it's critical, stop execution
         if (!result.success && step.config.critical !== false) {
-          execution.status = 'failed';
-          execution.error = `Step ${i + 1} failed: ${result.error}`;
-          break;
+        execution.status = 'failed';
+        execution.error = errorHandler.createSafeErrorMessage(
+          new Error(result.error), 
+          { stepIndex: i, stepId: step.stepId }
+        );
+        break;
         }
         
         // Set next step or end execution
@@ -549,17 +571,24 @@ async function executeTestWorkflow(executionId, execution) {
         step.status = 'failed';
         step.endTime = new Date();
         step.duration = step.endTime - step.startTime;
-        step.error = error.message;
+        step.error = errorHandler.createSafeErrorMessage(error, { stepIndex: i });
         
         execution.status = 'failed';
-        execution.error = `Step ${i + 1} execution error: ${error.message}`;
+        execution.error = errorHandler.createSafeErrorMessage(error, { stepIndex: i });
+        
+        // Log detaylı hata
+        await errorHandler.logError(error, { 
+          executionId, 
+          stepIndex: i, 
+          stepId: step.stepId 
+        });
         
         broadcast({
           type: 'step:failed',
           executionId,
           stepIndex: i,
           step,
-          error: error.message
+          error: errorHandler.createSafeErrorMessage(error, { stepIndex: i })
         });
         
         break;
@@ -625,7 +654,10 @@ async function executeTestWorkflow(executionId, execution) {
     execution.status = 'failed';
     execution.endTime = new Date();
     execution.duration = execution.endTime - execution.startTime;
-    execution.error = error.message;
+    execution.error = errorHandler.createSafeErrorMessage(error, { executionId });
+    
+    // Log detaylı hata
+    await errorHandler.logError(error, { executionId });
     
     // Save error state
     await fs.writeJson(path.join(EXECUTIONS_DIR, `${executionId}.json`), execution);
@@ -637,7 +669,7 @@ async function executeTestWorkflow(executionId, execution) {
       type: 'execution:failed',
       executionId,
       execution,
-      error: error.message
+      error: errorHandler.createSafeErrorMessage(error, { executionId })
     });
   }
 }
