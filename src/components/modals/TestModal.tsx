@@ -42,9 +42,9 @@ const TestModal: React.FC<TestModalProps> = ({
     }
   }, [isOpen]);
 
-  // Initialize form with initial data - only when dialog first opens
+  // Initialize form with initial data - when dialog opens or initialData changes
   useEffect(() => {
-    if (isOpen && !hasInitialized.current) {
+    if (isOpen) {
       if (initialData) {
         setName(initialData.name || '');
         setDesc(initialData.description || '');

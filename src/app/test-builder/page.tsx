@@ -132,6 +132,7 @@ export default function TestBuilder() {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [loadedWorkflowId, setLoadedWorkflowId] = useState<string | null>(null);
   const [loadedWorkflowName, setLoadedWorkflowName] = useState<string | null>(null);
+  const [loadedWorkflowData, setLoadedWorkflowData] = useState<any>(null);
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
   
@@ -667,6 +668,7 @@ export default function TestBuilder() {
             setTestSteps(workflow.workflow);
             setLoadedWorkflowId(loadWorkflowId);
             setLoadedWorkflowName(workflow.name);
+            setLoadedWorkflowData(workflow); // Store full workflow data
             
             // Load screenshot and recording settings
             setEnableScreenshots(workflow.enableScreenshots || false);
@@ -900,12 +902,12 @@ export default function TestBuilder() {
           }
         }}
         onSave={handleSaveFromDialog}
-        initialData={loadedWorkflowId && loadedWorkflowName ? {
-          name: loadedWorkflowName,
-          description: '',
-          tags: [],
-          suite: 'Default',
-          browserType: selectedBrowser
+        initialData={loadedWorkflowId && loadedWorkflowData ? {
+          name: loadedWorkflowData.name || '',
+          description: loadedWorkflowData.description || '',
+          tags: loadedWorkflowData.tags || [],
+          suite: loadedWorkflowData.suite || 'Default',
+          browserType: loadedWorkflowData.browserType || selectedBrowser
         } : undefined}
         isUpdating={!!loadedWorkflowId}
         mode={loadedWorkflowId ? 'edit' : 'save'}
