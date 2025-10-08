@@ -144,8 +144,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       console.log('Duplicate toast atlandı:', toast.title, toast.message);
       return;
     }
-    
-    console.log('Yeni toast ekleniyor:', toast.title, toast.message);
 
     const newToast: Notification = {
       ...toast,

@@ -310,14 +310,7 @@ export default function TestsPage() {
       notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test workflow\'u bulunamadı veya boş.');
       return;
     }
-
-
-    // Debug: Browser ayarlarını kontrol et
-    console.log('🔍 TESTS PAGE DEBUG:');
-    console.log('- browserSettings:', browserSettings);
-    console.log('- test.browserType:', test.browserType);
-    console.log('- Final browserType:', test.browserType || browserSettings.defaultBrowser);
-
+    
     try {
       // Convert frontend steps to backend format
       const backendSteps = test.workflow.map((step: any) => ({
