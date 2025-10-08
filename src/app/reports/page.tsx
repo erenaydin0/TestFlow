@@ -26,6 +26,7 @@ import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import TableCells from '@/components/common/TableCells';
 import { StatsCards } from '@/components/features/dashboard';
+import { UnifiedStepView } from '@/components/features/reports';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
@@ -76,6 +77,81 @@ export default function ReportsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Execution flow helper functions
+  const getExecutionPath = (execution: ExecutionResult): string[] => {
+    const path: string[] = [];
+    const stepMap = new Map();
+    execution.steps.forEach((step, index) => {
+      stepMap.set(step.stepId, { step, index });
+    });
+
+    // Find start step (step with no incoming connections)
+    const hasIncomingConnection = new Set();
+    execution.steps.forEach(step => {
+      if (step.config.connections) {
+        step.config.connections.forEach(targetId => hasIncomingConnection.add(targetId));
+      }
+      if (step.config.trueConnection) {
+        hasIncomingConnection.add(step.config.trueConnection);
+      }
+      if (step.config.falseConnection) {
+        hasIncomingConnection.add(step.config.falseConnection);
+      }
+    });
+
+    let currentStepId = execution.steps.find(s => !hasIncomingConnection.has(s.stepId))?.stepId;
+    const visitedSteps = new Set();
+    const maxIterations = execution.steps.length * 10;
+    let iterations = 0;
+
+    while (currentStepId && iterations < maxIterations) {
+      iterations++;
+      
+      if (visitedSteps.has(currentStepId)) {
+        break; // Prevent infinite loops
+      }
+      visitedSteps.add(currentStepId);
+      path.push(currentStepId);
+
+      const currentStepData = stepMap.get(currentStepId);
+      if (!currentStepData) break;
+
+      const { step } = currentStepData;
+      
+      // Determine next step based on step type and connections
+      let nextStepId = null;
+      
+      // Handle IF step conditional navigation
+      if (step.type === 'if' && step.conditionResult !== undefined) {
+        // Gerçek koşul sonucuna göre yön belirle
+        nextStepId = step.conditionResult 
+          ? step.config.trueConnection 
+          : step.config.falseConnection;
+      }
+      // Handle normal connections (non-IF steps)
+      else if (step.type !== 'if' && step.config.connections && step.config.connections.length > 0) {
+        nextStepId = step.config.connections[0];
+      }
+
+      currentStepId = nextStepId;
+    }
+
+    return path;
+  };
+
+  const getConditionResults = (execution: ExecutionResult): Map<string, boolean> => {
+    const results = new Map<string, boolean>();
+    
+    // Gerçek conditionResult'ı kullan
+    execution.steps.forEach(step => {
+      if (step.type === 'if' && step.conditionResult !== undefined) {
+        results.set(step.stepId, step.conditionResult);
+      }
+    });
+
+    return results;
+  };
 
   // Handle URL search parameter
   useEffect(() => {
@@ -1188,159 +1264,12 @@ export default function ReportsPage() {
               </ButtonGroup>
             </div>
 
-            {/* Steps */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Test Adımları</h4>
-              <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                {selectedExecution.steps.map((step, index) => (
-                  <div key={step.stepId} style={{
-                    padding: '1rem',
-                    marginBottom: '0.75rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderRadius: '0.75rem',
-                    borderLeft: `4px solid ${getStatusColor(step.status)}`,
-                    border: step.status === 'failed' ? '1px solid var(--status-error)' : '1px solid var(--border-primary)'
-                  }}>
-                    {/* Step Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ 
-                          fontWeight: 600, 
-                          fontSize: '0.875rem',
-                          backgroundColor: getStatusColor(step.status) + '20',
-                          color: getStatusColor(step.status),
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '0.375rem',
-                          minWidth: '2rem',
-                          textAlign: 'center'
-                        }}>
-                          {index + 1}
-                        </span>
-                        <span style={{ fontWeight: 500, fontSize: '1rem', textTransform: 'capitalize' }}>
-                          {step.type}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {/* Screenshot Link - Sol tarafa taşındı */}
-                        {step.screenshot && (
-                          <a 
-                            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${step.screenshot}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              padding: '0.25rem 0.5rem',
-                              backgroundColor: '#eff6ff',
-                              color: '#2563eb',
-                              textDecoration: 'none',
-                              fontSize: '0.65rem',
-                              borderRadius: '0.25rem',
-                              border: '1px solid #bfdbfe',
-                              fontWeight: 500
-                            }}
-                          >
-                            <Image size={10} />
-                            Ekran Görüntüsü
-                          </a>
-                        )}
-                        <StatusBadge status={step.status} size="md" />
-                      </div>
-                    </div>
-
-                    {/* Step Config Details */}
-                    {step.config && (
-                      <div style={{ marginBottom: '0.75rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem', alignItems: 'start' }}>
-                          {step.config.url && (
-                            <>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>URL:</span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                                {step.config.url}
-                              </span>
-                            </>
-                          )}
-                          {step.config.selector && (
-                            <>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Selector:</span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                                {step.config.selector}
-                              </span>
-                            </>
-                          )}
-                          {step.config.value && (
-                            <>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Değer:</span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>
-                                {step.config.value}
-                              </span>
-                            </>
-                          )}
-                          {step.config.text && step.config.text !== step.config.value && (
-                            <>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Metin:</span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>
-                                {step.config.text}
-                              </span>
-                            </>
-                          )}
-                          {step.config.expectedValue && (
-                            <>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Beklenen:</span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>
-                                {step.config.expectedValue}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step Timing */}
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                      {step.startTime && (
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                          Başlangıç: {new Date(step.startTime).toLocaleTimeString('tr-TR')}
-                        </span>
-                      )}
-                      {step.endTime && (
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                          Bitiş: {new Date(step.endTime).toLocaleTimeString('tr-TR')}
-                        </span>
-                      )}
-                      {step.duration && (
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                          Süre: {formatDuration(step.duration)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Error Message */}
-                    {step.error && (
-                      <div style={{ 
-                        padding: '0.75rem',
-                        backgroundColor: 'var(--status-error-bg)',
-                        border: '1px solid var(--status-error)',
-                        borderRadius: '0.5rem',
-                        marginBottom: '0.5rem'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                          <AlertCircle size={14} style={{ color: 'var(--status-error)' }} />
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--status-error)' }}>
-                            Hata Detayı
-                          </span>
-                        </div>
-                        <p style={{ color: 'var(--status-error)', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>
-                          {step.error}
-                        </p>
-                      </div>
-                    )}
-
-                  </div>
-                ))}
-              </div>
-              </div>
+            {/* Unified Step View */}
+            <UnifiedStepView 
+              steps={selectedExecution.steps}
+              executionPath={getExecutionPath(selectedExecution)}
+              conditionResults={getConditionResults(selectedExecution)}
+            />
               
             {/* Screenshots and Video */}
             {(selectedExecution.screenshots.length > 0 || selectedExecution.videoPath) && (

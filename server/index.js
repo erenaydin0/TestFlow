@@ -82,9 +82,19 @@ async function executeScheduledTest(schedule) {
       return null;
     }
     
-    // Execution ID oluştur
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
-    const executionId = `scheduled-${schedule.testId.slice(0, 8)}-${timestamp}`;
+    // Tek timestamp oluştur ve hem ID hem startTime için kullan
+    const baseTimestamp = new Date();
+    // Local timezone'da timestamp oluştur (UTC+3)
+    const localTimestamp = baseTimestamp.toLocaleString('tr-TR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/[.\s]/g, '').replace(/(\d{2})(\d{2})(\d{4})(\d{2})(\d{2})(\d{2})/, '$3$2$1$4$5$6');
+    const executionId = `scheduled-${schedule.testId.slice(0, 8)}-${localTimestamp}`;
     
     // Execution objesi oluştur
     const execution = {
@@ -92,7 +102,7 @@ async function executeScheduledTest(schedule) {
       workflowId: schedule.testId,
       workflowName: schedule.name,
       status: 'queued',
-      startTime: new Date(),
+      startTime: baseTimestamp,
       suite: schedule.suite,
       tags: ['scheduled'],
       options: {
@@ -154,11 +164,21 @@ app.post('/api/execute', async (req, res) => {
     }
     
     // Generate readable execution ID based on workflow name
-    const generateReadableExecutionId = (workflowName, workflowId) => {
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
+    const generateReadableExecutionId = (workflowName, workflowId, baseTimestamp) => {
+      // Local timezone'da timestamp oluştur (UTC+3)
+      const localTimestamp = baseTimestamp.toLocaleString('tr-TR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/[.\s]/g, '').replace(/(\d{2})(\d{2})(\d{4})(\d{2})(\d{2})(\d{2})/, '$3$2$1$4$5$6');
+      
       if (workflowId && workflowId !== 'manual' && !workflowId.includes('-') === false) {
         // Use existing readable ID + timestamp
-        return `${workflowId}-${timestamp}`;
+        return `${workflowId}-${localTimestamp}`;
       }
       // Fallback to name-based ID
       const cleanName = workflowName
@@ -168,16 +188,18 @@ app.post('/api/execute', async (req, res) => {
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '')
         .slice(0, 20) || 'test';
-      return `${cleanName}-${timestamp}`;
+      return `${cleanName}-${localTimestamp}`;
     };
 
-    const executionId = generateReadableExecutionId(workflowName, workflowId);
+    // Tek timestamp oluştur ve hem ID hem startTime için kullan
+    const baseTimestamp = new Date();
+    const executionId = generateReadableExecutionId(workflowName, workflowId, baseTimestamp);
     const execution = {
       id: executionId,
       workflowId: workflowId || 'manual',
       workflowName: workflowName || 'Manual Test',
       status: 'queued',
-      startTime: new Date(),
+      startTime: baseTimestamp,
       suite: suite || 'Default',
       tags: tags || [],
       options: {
@@ -377,7 +399,7 @@ app.use('/videos', express.static(path.join(__dirname, 'videos')));
 async function executeTestWorkflow(executionId, execution) {
   try {
     execution.status = 'running';
-    execution.startTime = new Date();
+    // startTime'ı güncelleme - zaten doğru timestamp ile oluşturuldu
     
     // Broadcast start
     broadcast({
@@ -494,6 +516,11 @@ async function executeTestWorkflow(executionId, execution) {
         
         if (result.logs) {
           execution.logs.push(...result.logs);
+        }
+        
+        // IF adımları için koşul sonucunu kaydet
+        if (step.type === 'if' && result.conditionResult !== undefined) {
+          step.conditionResult = result.conditionResult;
         }
         
         // Update progress

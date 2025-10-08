@@ -30,6 +30,7 @@ export interface ExecutionStepResult {
   config: any;
   error?: string;
   screenshot?: string;
+  conditionResult?: boolean; // IF adımları için koşul sonucu
 }
 
 export interface ExecutionOptions {
