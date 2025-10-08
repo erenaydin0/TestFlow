@@ -69,9 +69,7 @@ function useWebSocket(url: string, options?: {
 
       ws.current.onmessage = (event) => {
         try {
-          console.log('Raw WebSocket message:', event.data);
           const parsed = JSON.parse(event.data);
-          console.log('Parsed WebSocket message:', parsed);
           
           // Backend'den gelen mesajlar doğrudan obje olarak geliyor
           // Bizim WebSocketMessage interface'ine uygun hale getir

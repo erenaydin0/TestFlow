@@ -22,38 +22,46 @@ function useRealtimeNotifications() {
 
   // Connection durumunu logla
   useEffect(() => {
-    console.log('WebSocket connection status:', { isConnected, isConnecting });
+    // console.log('WebSocket connection status:', { isConnected, isConnecting });
   }, [isConnected, isConnecting]);
 
-  // Processed message IDs to prevent duplicates
+  // Processed message IDs to prevent duplicates (executionId + type based)
   const processedMessageIds = useRef(new Set<string>());
   
   // Track execution states to prevent duplicate notifications
   const executionStates = useRef(new Map<string, Set<string>>());
+  
+  // Track last processed message to prevent rapid duplicates
+  const lastProcessedMessage = useRef<string | null>(null);
 
   useEffect(() => {
     if (!lastMessage) return;
 
-    // Create a unique ID for this message
-    const messageId = `${lastMessage.type}-${lastMessage.data.executionId}-${lastMessage.timestamp}`;
+    // Create a unique ID for this message (without timestamp to prevent duplicates)
+    const messageId = `${lastMessage.type}-${lastMessage.data.executionId}`;
+    
+    // Skip if this is the exact same message as the last one
+    if (lastProcessedMessage.current === messageId) {
+      return; // Silent skip for rapid duplicates
+    }
     
     // Skip if already processed
     if (processedMessageIds.current.has(messageId)) {
-      console.log('Skipping duplicate message:', messageId);
-      return;
+      return; // Silent skip for already processed messages
     }
     
     // Mark as processed
     processedMessageIds.current.add(messageId);
+    lastProcessedMessage.current = messageId;
     
-    // Clean old message IDs (keep only last 100)
-    if (processedMessageIds.current.size > 100) {
+    // Clean old message IDs (keep only last 20)
+    if (processedMessageIds.current.size > 20) {
       const idsArray = Array.from(processedMessageIds.current);
       processedMessageIds.current.clear();
-      idsArray.slice(-50).forEach(id => processedMessageIds.current.add(id));
+      idsArray.slice(-10).forEach(id => processedMessageIds.current.add(id));
     }
 
-    console.log('Processing WebSocket message:', messageId, lastMessage);
+    // console.log('Processing WebSocket message:', messageId, lastMessage);
 
     try {
       switch (lastMessage.type) {
@@ -121,6 +129,12 @@ function useRealtimeNotifications() {
           
           completedStates.add('completed');
           
+          // Clean up all messages for this execution to prevent further duplicates
+          const completedExecutionMessagePrefix = `-${completedExecutionId}`;
+          const completedMessagesToRemove = Array.from(processedMessageIds.current)
+            .filter(id => id.includes(completedExecutionMessagePrefix));
+          completedMessagesToRemove.forEach(id => processedMessageIds.current.delete(id));
+          
           if (lastMessage.data.execution) {
             const completedExecution = lastMessage.data.execution;
             const duration = completedExecution.endTime && completedExecution.startTime 
@@ -166,6 +180,12 @@ function useRealtimeNotifications() {
           }
           
           failedStates.add('failed');
+          
+          // Clean up all messages for this execution to prevent further duplicates
+          const failedExecutionMessagePrefix = `-${failedExecutionId}`;
+          const failedMessagesToRemove = Array.from(processedMessageIds.current)
+            .filter(id => id.includes(failedExecutionMessagePrefix));
+          failedMessagesToRemove.forEach(id => processedMessageIds.current.delete(id));
           
           if (lastMessage.data.execution) {
             const failedExecution = lastMessage.data.execution;
