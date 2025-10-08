@@ -70,10 +70,8 @@ export default function CosmicLogo({ size = 32, animated = true }: CosmicLogoPro
         {/* Central Logo Image */}
         <image
           href="/icon.svg"
-          x="-25"
-          y="-25"
-          width="150"
-          height="150"
+          width="100"
+          height="100"
           className={animated ? 'cosmic-logo-pulse' : ''}
         />
         
