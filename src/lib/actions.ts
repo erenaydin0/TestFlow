@@ -1,23 +1,13 @@
 import {
-  Navigation,
   MousePointer,
   Type,
   Clock,
   RefreshCw,
   GitBranch,
-  Eye,
-  FileText,
-  Download,
-  Upload,
-  Camera,
-  AlertCircle,
   CheckCircle,
-  XCircle,
   Scroll,
   MousePointer2,
   Keyboard,
-  Timer,
-  Zap,
   ChevronDown,
   Link
 } from 'lucide-react';
@@ -457,12 +447,4 @@ export const getTranslatedActionByType = (type: string, t: TranslationFunction):
       }))
     }))
   };
-};
-
-export const getActionColor = (type: string): string => {
-  return getActionByType(type)?.color || 'var(--text-secondary)';
-};
-
-export const getActionTitle = (type: string): string => {
-  return getActionByType(type)?.title || type;
 };

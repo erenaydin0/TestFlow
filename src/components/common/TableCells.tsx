@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Chrome, Globe, Trash2, Copy, Download, Play, Edit, Settings } from 'lucide-react';
+import { Trash2, Copy, Download, Play, Edit, Settings } from 'lucide-react';
 
-import { BrowserType, BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
+import {  BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge } from './';
 import { useI18n } from '@/contexts';
-import { getBrowserName, getBrowserIconComponent } from '@/lib/browserUtils';
+import { getBrowserName } from '@/lib/browserUtils';
 
 // Browser Cell Component
 
@@ -21,7 +21,6 @@ const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) =
       justifyContent: 'center',
       fontSize: '0.875rem'
     }}>
-      {getBrowserIconComponent(browserType, 16)}
       <span style={{ color: 'var(--text-primary)' }}>
         {getBrowserName(browserType)}
       </span>

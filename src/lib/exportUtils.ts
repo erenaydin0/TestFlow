@@ -1,5 +1,4 @@
-import { formatDuration, formatRelativeTime } from './utils';
-import { BrowserType, Test, ExecutionResult, TestFilters, ExecutionFilters } from '@/types';
+import { BrowserType, Test, ExecutionResult } from '@/types';
 import { getBrowserName } from './browserUtils';
 
 // Re-export for backward compatibility

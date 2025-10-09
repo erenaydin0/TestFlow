@@ -341,37 +341,8 @@ export const generateReadableId = (testName: string, existingWorkflows: Test[]):
   return proposedId;
 };
 
-// Mevcut testlerin ID'lerini yeni formata migrate et
-export const migrateTestIds = (): boolean => {
-  try {
-    const savedWorkflows = getSavedWorkflows();
-    let hasChanges = false;
-    
-    const updatedWorkflows = savedWorkflows.map((workflow, index) => {
-      // Eğer ID zaten yeni formatta değilse (UUID gibi uzun ID'ler)
-      if (workflow.id.length > 15 || workflow.id.includes('-') === false || /^[a-z]+-\d{3}$/.test(workflow.id) === false) {
-        const newId = generateReadableId(workflow.name, savedWorkflows.slice(0, index));
-        hasChanges = true;
-        return { ...workflow, id: newId };
-      }
-      return workflow;
-    });
-    
-    if (hasChanges) {
-      localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(updatedWorkflows));
-      console.log('Test ID\'leri yeni formata güncellendi');
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('ID migration error:', error);
-    return false;
-  }
-};
-
 // Workflow storage utilities
-const WORKFLOWS_STORAGE_KEY = 'CosmicQA_saved_workflows';
+const WORKFLOWS_STORAGE_KEY = 'CosmicQA_Workflows';
 
 export const saveWorkflowToStorage = (workflow: {
   name: string;
@@ -545,35 +516,6 @@ export const duplicateWorkflow = (id: string, newName?: string): string | null =
     console.error('Error duplicating workflow:', error);
     return null;
   }
-};
-
-// Workflow validation for saved workflows
-export const validateSavedWorkflow = (workflow: Test): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-  
-  if (!workflow.name || workflow.name.trim().length === 0) {
-    errors.push('Workflow adı gereklidir');
-  }
-  
-  if (workflow.name && workflow.name.length > 100) {
-    errors.push('Workflow adı 100 karakterden uzun olamaz');
-  }
-  
-  if (!workflow.workflow || workflow.workflow.length === 0) {
-    errors.push('Workflow en az bir test adımı içermelidir');
-  }
-  
-  if (workflow.workflow) {
-    const stepValidation = validateWorkflow(workflow.workflow);
-    if (!stepValidation.isValid) {
-      errors.push(...stepValidation.errors);
-    }
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
 };
 
 // Get unique tags from saved workflows

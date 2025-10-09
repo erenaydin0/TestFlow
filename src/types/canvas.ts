@@ -1,40 +1,6 @@
 import { TestStep } from './test';
 
 // Canvas specific types
-export interface CanvasStyles {
-  canvasContainer: React.CSSProperties;
-  innerContainer: React.CSSProperties;
-  svgLayer: React.CSSProperties;
-}
-
-export interface CanvasStylesParams {
-  zoom: number;
-  pan: { x: number; y: number };
-  canvasOffset: { x: number; y: number };
-  isPanning: boolean;
-}
-
-export interface SnapLines {
-  type: 'horizontal' | 'vertical';
-  position: number;
-  start: number;
-  end: number;
-}
-
-export interface SnapResult {
-  x: number;
-  y: number;
-  snapped: boolean;
-  snapLines: SnapLines[];
-}
-
-export interface SelectionBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export interface DragPreview {
   x: number;
   y: number;
@@ -150,22 +116,6 @@ export interface ConnectionRendererProps {
   removeConnection: (stepId: string, targetStepId: string, testSteps: TestStep[], setTestSteps: (steps: TestStep[]) => void, saveToHistory: (steps: TestStep[]) => void) => void;
   setTestSteps: (steps: TestStep[]) => void;
   saveToHistory: (steps: TestStep[]) => void;
-}
-
-export interface ConnectionLineProps {
-  start: { x: number; y: number };
-  end: { x: number; y: number };
-  type: 'normal' | 'true' | 'false';
-  onRemove: () => void;
-}
-
-export interface SnapLinesProps {
-  snapEnabled: boolean;
-  snapLines: SnapLines[];
-}
-
-export interface SelectionBoxProps {
-  selectionBox: SelectionBox;
 }
 
 export interface DragPreviewProps {

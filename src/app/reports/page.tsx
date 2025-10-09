@@ -1218,15 +1218,6 @@ export default function ReportsPage() {
                     <strong>{t('reports.browser')}:</strong>
                     {(() => {
                       const browserType = selectedExecution.options?.browserType || 'chromium';
-                      const getBrowserIcon = () => {
-                        switch(browserType) {
-                          case 'chromium': return <Chrome size={14} style={{ color: 'var(--status-info)' }} />;
-                          case 'firefox': return <Globe size={14} style={{ color: 'var(--status-warning)' }} />;
-                          case 'webkit': return <Globe size={14} style={{ color: 'var(--status-info)' }} />;
-                          case 'msedge': return <Globe size={14} style={{ color: 'var(--status-info)' }} />;
-                          default: return <Chrome size={14} style={{ color: 'var(--status-info)' }} />;
-                        }
-                      };
                       const getBrowserName = () => {
                         switch(browserType) {
                           case 'chromium': return 'Chrome';
@@ -1238,7 +1229,6 @@ export default function ReportsPage() {
                       };
                       return (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          {getBrowserIcon()}
                           <span>{getBrowserName()}</span>
                         </div>
                       );
