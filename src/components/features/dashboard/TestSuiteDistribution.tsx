@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useI18n } from '@/contexts';
 
 interface TestSuite {
   name: string;
@@ -25,14 +26,15 @@ interface TestSuiteDistributionProps {
 
 export default function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistributionProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [currentPage, setCurrentPage] = useState(0); // 0: Test Dağılımı, 1: Tarayıcı Dağılımı
   const [legendPage, setLegendPage] = useState(0); // Legend sayfalama
   
   const ITEMS_PER_PAGE = 4; // Sayfa başına gösterilecek item sayısı
   
   const pages = [
-    { title: 'Test Grubu Dağılımı', data: testSuiteData, link: '/tests' },
-    { title: 'Tarayıcı Dağılımı', data: browserData, link: '/reports' }
+    { title: t('dashboard.testGroupDistribution'), data: testSuiteData, link: '/tests' },
+    { title: t('dashboard.browserDistribution'), data: browserData, link: '/reports' }
   ];
   
   const currentData = pages[currentPage].data;
@@ -86,16 +88,16 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
             {data.name}
           </p>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Toplam:</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Total:</span>
             <span style={{ fontWeight: '600' }}>{data.value}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Oran:</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Ratio:</span>
             <span style={{ fontWeight: '600', color: data.payload.color }}>%{percentage}</span>
           </div>
           {successRate !== undefined && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Başarı:</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Success:</span>
               <span 
                 style={{ 
                   fontWeight: '600', 
@@ -188,7 +190,7 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
               {totalValue}
             </div>
             <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-              Toplam
+              Total
             </div>
           </div>
         </div>
@@ -233,7 +235,7 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
                         className="text-xs flex items-center gap-1.5" 
                         style={{ color: 'var(--text-secondary)' }}
                       >
-                        <span>{item.value} {currentPage === 0 ? 'test' : 'çalıştırma'}</span>
+                        <span>{item.value} {currentPage === 0 ? t('dashboard.tests') : t('dashboard.executions')}</span>
                         {item.successRate !== undefined && (
                           <>
                             <span>•</span>
@@ -244,7 +246,7 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
                                        item.successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
                               }}
                             >
-                              %{item.successRate} başarı
+                              %{item.successRate} {t('common.success') || 'başarı'}
                             </span>
                           </>
                         )}
@@ -294,7 +296,7 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
           <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-primary)' }}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                Toplam {currentPage === 0 ? 'Test' : 'Çalıştırma'}
+                {t('dashboard.total')} {currentPage === 0 ? t('dashboard.tests') : t('dashboard.executions')}
               </span>
               <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 {currentData.reduce((sum, item) => sum + item.value, 0)}

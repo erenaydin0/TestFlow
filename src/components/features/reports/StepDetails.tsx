@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExecutionStepResult } from '@/types/execution';
 import { CheckCircle, XCircle, Clock, AlertCircle, ArrowRight, ArrowDown, Play, Pause } from 'lucide-react';
+import { useI18n } from '@/contexts';
 
 interface StepDetailsProps {
   step: ExecutionStepResult;
@@ -17,6 +18,7 @@ const StepDetails: React.FC<StepDetailsProps> = ({
   executionPath = [],
   conditionResult 
 }) => {
+  const { t, locale } = useI18n();
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'passed':
@@ -300,6 +302,9 @@ const StepDetails: React.FC<StepDetailsProps> = ({
               if (key === 'trueConnection' || key === 'falseConnection' || key === 'connections') return null;
               if (!value || value === '') return null;
               
+              // Filter out internal fields
+              if (key === 'id' || key === 'type' || key === 'x' || key === 'y') return null;
+              
               return (
                 <React.Fragment key={key}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
@@ -310,7 +315,7 @@ const StepDetails: React.FC<StepDetailsProps> = ({
                      key === 'expectedValue' ? 'Beklenen' :
                      key === 'verificationType' ? 'Kontrol Türü' :
                      key === 'conditionType' ? 'Koşul Türü' :
-                     key === 'duration' ? 'Süre' :
+                     key === 'duration' ? t('common.duration') :
                      key === 'direction' ? 'Yön' :
                      key === 'amount' ? 'Miktar' :
                      key === 'key' ? 'Tuş' :
@@ -341,17 +346,31 @@ const StepDetails: React.FC<StepDetailsProps> = ({
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', fontSize: '0.7rem' }}>
         {step.startTime && (
           <span style={{ color: 'var(--text-tertiary)' }}>
-            Başlangıç: {new Date(step.startTime).toLocaleTimeString('tr-TR')}
+            {t('reports.startTime')}: {new Date(step.startTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            })}
           </span>
         )}
         {step.endTime && (
           <span style={{ color: 'var(--text-tertiary)' }}>
-            Bitiş: {new Date(step.endTime).toLocaleTimeString('tr-TR')}
+            {t('reports.endTime')}: {new Date(step.endTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            })}
           </span>
         )}
         {step.duration && (
           <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
-            Süre: {Math.round(step.duration)}ms
+            {t('common.duration')}: {Math.round(step.duration)}ms
           </span>
         )}
       </div>
@@ -368,7 +387,7 @@ const StepDetails: React.FC<StepDetailsProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <AlertCircle size={14} style={{ color: 'var(--status-error)' }} />
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--status-error)' }}>
-              Hata Detayı
+              {t('reports.errorDetails')}
             </span>
           </div>
           <p style={{ color: 'var(--status-error)', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>

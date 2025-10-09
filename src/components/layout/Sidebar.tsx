@@ -12,24 +12,27 @@ import {
   Settings,
   FileText
 } from 'lucide-react';
-import { useSidebar, useSettingsModal } from '@/contexts';
+import { useSidebar, useSettingsModal, useI18n } from '@/contexts';
 
 interface SidebarProps {
   onNavigationAttempt?: (href: string) => void;
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Oluşturucu', href: '/test-builder', icon: Workflow },
-  { name: 'Testler', href: '/tests', icon: TestTube },
-  { name: 'Zamanlanmış', href: '/scheduled', icon: AlarmClock },
-  { name: 'Sonuçlar', href: '/reports', icon: FileText },
+const getNavigation = (t: (key: string) => string) => [
+  { name: t('navigation.dashboard'), href: '/', icon: LayoutDashboard },
+  { name: t('navigation.testBuilder'), href: '/test-builder', icon: Workflow },
+  { name: t('navigation.tests'), href: '/tests', icon: TestTube },
+  { name: t('navigation.scheduled'), href: '/scheduled', icon: AlarmClock },
+  { name: t('navigation.reports'), href: '/reports', icon: FileText },
 ];
 
 export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const pathname = usePathname();
   const { isCollapsed, setIsCollapsed, isModalOpen } = useSidebar();
   const { openModal } = useSettingsModal();
+  const { t } = useI18n();
+  
+  const navigation = getNavigation(t);
 
   return (
     <aside style={{ 
@@ -164,7 +167,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
               e.currentTarget.style.backgroundColor = 'transparent';
               e.currentTarget.style.color = 'var(--text-secondary)';
             }}
-            title="Sidebar'ı Daralt"
+            title={t('sidebar.collapse')}
           >
             <ChevronLeft size={20} />
           </button>
@@ -196,7 +199,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
               e.currentTarget.style.backgroundColor = 'transparent';
               e.currentTarget.style.color = 'var(--text-secondary)';
             }}
-            title="Sidebar'ı Genişlet"
+            title={t('sidebar.expand')}
           >
             <ChevronRight size={20} />
           </button>

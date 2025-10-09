@@ -31,10 +31,10 @@ import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
 import { ExecutionResult, ExecutionFilters, ExecutionStats, BrowserType } from '@/types';
-import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, formatTime } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
-import { useSidebar } from '@/contexts';
+import { useSidebar, useI18n } from '@/contexts';
 
 const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 
@@ -42,6 +42,7 @@ type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'success
 
 export default function ReportsPage() {
   const { setIsModalOpen } = useSidebar();
+  const { t, locale } = useI18n();
   const {
     executions,
     filteredExecutions,
@@ -90,7 +91,7 @@ export default function ReportsPage() {
     const hasIncomingConnection = new Set();
     execution.steps.forEach(step => {
       if (step.config.connections) {
-        step.config.connections.forEach(targetId => hasIncomingConnection.add(targetId));
+        step.config.connections.forEach((targetId: string) => hasIncomingConnection.add(targetId));
       }
       if (step.config.trueConnection) {
         hasIncomingConnection.add(step.config.trueConnection);
@@ -194,8 +195,8 @@ export default function ReportsPage() {
   useEffect(() => {
     const testId = searchParams.get('testId');
     if (testId && executions.length > 0) {
-      console.log('Looking for testId:', testId);
-      console.log('Available executions:', executions.map(e => ({ id: e.id, workflowId: e.workflowId, workflowName: e.workflowName })));
+      console.log(t('reports.lookingForTestId'), testId);
+      console.log(t('reports.availableExecutions'), executions.map(e => ({ id: e.id, workflowId: e.workflowId, workflowName: e.workflowName })));
       
       // Test ID'sine göre en son execution'ı bulalım - daha geniş filtreleme
       const testExecutions = executions.filter(e => 
@@ -211,16 +212,16 @@ export default function ReportsPage() {
         const latestExecution = testExecutions.sort((a, b) => 
           new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
         )[0];
-        console.log('Selected execution:', latestExecution);
+        console.log(t('reports.selectedExecution'), latestExecution);
         setSelectedExecution(latestExecution);
       } else {
         // Eğer testId ile eşleşen bir execution bulunamadıysa, en son execution'ı seç
-        console.log('No matching executions found for testId, selecting latest execution');
+        console.log(t('reports.noMatchingExecutions'));
         const latestExecution = executions.sort((a, b) => 
           new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
         )[0];
         if (latestExecution) {
-          console.log('Selected latest execution:', latestExecution);
+          console.log(t('reports.selectedLatestExecution'), latestExecution);
           setSelectedExecution(latestExecution);
         }
       }
@@ -253,7 +254,7 @@ export default function ReportsPage() {
   const columns: Column<ExecutionResult>[] = [
     {
       key: 'workflowName',
-      label: 'Test Adı',
+      label: t('reports.testName'),
       sortable: true,
       render: (value, execution) => (
         <TestNameCell 
@@ -264,7 +265,7 @@ export default function ReportsPage() {
     },
     {
       key: 'status',
-      label: 'Durum',
+      label: t('reports.status'),
       sortable: true,
       width: '100px',
       render: (value, execution) => (
@@ -273,7 +274,7 @@ export default function ReportsPage() {
     },
     {
       key: 'successRate',
-      label: 'Başarı',
+      label: t('reports.success'),
       sortable: true,
       width: '100px',
       render: (value, execution) => (
@@ -282,18 +283,18 @@ export default function ReportsPage() {
     },
     {
       key: 'startTime',
-      label: 'Başlangıç',
+      label: t('reports.startTime'),
       sortable: true,
       width: '150px',
       render: (value, execution) => (
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {formatRelativeTime(execution.startTime)}
+          {formatRelativeTime(execution.startTime, t)}
         </span>
       )
     },
     {
       key: 'duration',
-      label: 'Süre',
+      label: t('reports.duration'),
       sortable: true,
       align: 'center',
       width: '100px',
@@ -303,7 +304,7 @@ export default function ReportsPage() {
     },
     {
       key: 'suite',
-      label: 'Test Grubu',
+      label: t('reports.testGroup'),
       width: '200px',
       sortable: true,
       render: (value) => (
@@ -314,7 +315,7 @@ export default function ReportsPage() {
     },
     {
       key: 'tags',
-      label: 'Etiketler',
+      label: t('reports.tags'),
       sortable: true,
       width: '250px',
       render: (value, execution) => (
@@ -323,7 +324,7 @@ export default function ReportsPage() {
     },
     {
       key: 'browserType',
-      label: 'Tarayıcı',
+      label: t('reports.browser'),
       sortable: true,
       align: 'center',
       width: '120px',
@@ -333,7 +334,7 @@ export default function ReportsPage() {
     },
     {
       key: 'actions',
-      label: 'Rapor',
+      label: t('reports.downloadReport'),
       sortable: false,
       width: '80px',
       render: (value, execution) => (
@@ -368,32 +369,91 @@ export default function ReportsPage() {
   const goToPreviousPage = () => goToPage(currentPage - 1);
   const goToNextPage = () => goToPage(currentPage + 1);
 
+  // Helper function to get translated status text
+  const getTranslatedStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+      case 'passed':
+        return t('status.passed');
+      case 'failed':
+        return t('status.failed');
+      case 'running':
+        return t('status.running');
+      case 'queued':
+        return t('status.queued');
+      case 'cancelled':
+        return t('status.cancelled');
+      case 'pending':
+        return t('status.pending');
+      case 'active':
+        return t('status.active');
+      case 'paused':
+        return t('status.paused');
+      case 'disabled':
+        return t('status.disabled');
+      default:
+        return status;
+    }
+  };
+
+  // Helper function to get translated step type text
+  const getTranslatedStepTypeText = (type: string) => {
+    switch (type) {
+      case 'navigate':
+        return t('testSteps.navigate');
+      case 'click':
+        return t('testSteps.click');
+      case 'input':
+      case 'type':
+        return t('testSteps.input');
+      case 'wait':
+        return t('testSteps.wait');
+      case 'refresh':
+        return t('testSteps.refresh');
+      case 'screenshot':
+        return t('testSteps.screenshot');
+      case 'verify':
+        return t('testSteps.verify');
+      case 'scroll':
+        return t('testSteps.scroll');
+      case 'hover':
+        return t('testSteps.hover');
+      case 'key':
+        return t('testSteps.key');
+      case 'dropdown':
+        return t('testSteps.dropdown');
+      case 'if':
+        return t('testSteps.condition');
+      default:
+        return type;
+    }
+  };
 
   // Create single CSV report for test execution
   const createTestCSVReport = (executions: ExecutionResult[]) => {
     const csvHeaders = [
-      'Test Adı',
-      'Execution ID',
-      'Durum',
-      'Başlangıç Zamanı',
-      'Bitiş Zamanı',
-      'Toplam Süre (ms)',
-      'Başarı Oranı (%)',
-      'Test Grubu',
-      'Etiketler',
-      'Tarayıcı',
-      'Toplam Adım',
-      'Başarılı Adım',
-      'Başarısız Adım',
-      'Video Mevcut',
-      'Ekran Görüntüsü Sayısı',
-      'İlk Adım Türü',
-      'Son Adım Türü',
-      'İlk Hata',
-      'Son Adım Süresi (ms)',
-      'Ortalama Adım Süresi (ms)',
-      'En Uzun Adım (ms)',
-      'Raporlama Tarihi'
+      t('reports.testName'),
+      t('reports.executionId'),
+      t('reports.status'),
+      t('reports.startTime'),
+      t('reports.endTime'),
+      t('reports.totalDuration'),
+      t('reports.successRate'),
+      t('reports.testGroup'),
+      t('reports.tags'),
+      t('reports.browser'),
+      t('reports.totalSteps'),
+      t('reports.passedSteps'),
+      t('reports.failedSteps'),
+      t('reports.videoAvailable'),
+      t('reports.screenshotCount'),
+      t('reports.firstStepType'),
+      t('reports.lastStepType'),
+      t('reports.firstError'),
+      t('reports.lastStepDuration'),
+      t('reports.averageStepDuration'),
+      t('reports.longestStepDuration'),
+      t('reports.reportingDate')
     ];
     
     const csvRows = executions.map(execution => {
@@ -406,7 +466,7 @@ export default function ReportsPage() {
       return [
         execution.workflowName,
         execution.id,
-        getStatusText(execution.status),
+        getTranslatedStatusText(execution.status),
         execution.startTime ? new Date(execution.startTime).toLocaleString('tr-TR') : '',
         execution.endTime ? new Date(execution.endTime).toLocaleString('tr-TR') : '',
         execution.duration || '',
@@ -426,7 +486,7 @@ export default function ReportsPage() {
         execution.steps.length,
         execution.steps.filter(s => s.status === 'passed').length,
         execution.steps.filter(s => s.status === 'failed').length,
-        execution.videoPath ? 'Evet' : 'Hayır',
+        execution.videoPath ? t('common.yes') : t('common.no'),
         execution.steps.filter(s => s.screenshot).length,
         execution.steps[0]?.type ? getStepTypeText(execution.steps[0].type) : '',
         execution.steps[execution.steps.length - 1]?.type ? getStepTypeText(execution.steps[execution.steps.length - 1].type) : '',
@@ -444,27 +504,27 @@ export default function ReportsPage() {
   // Create detailed steps CSV report
   const createStepsCSVReport = (execution: ExecutionResult) => {
     const csvHeaders = [
-      'Adım No',
-      'Adım ID',
-      'Adım Türü',
-      'Durum',
-      'Başlangıç Zamanı',
-      'Bitiş Zamanı',
-      'Süre (ms)',
-      'URL',
-      'Selector',
-      'Girilen Değer',
-      'Beklenen Değer',
-      'Hata Mesajı',
-      'Ekran Görüntüsü Var'
+      t('reports.stepNumber'),
+      t('reports.stepId'),
+      t('reports.stepType'),
+      t('reports.status'),
+      t('reports.startTime'),
+      t('reports.endTime'),
+      t('reports.duration'),
+      t('reports.url'),
+      t('reports.selector'),
+      t('reports.value'),
+      t('reports.expectedValue'),
+      t('reports.error'),
+      t('reports.screenshot')
     ];
     
     const csvRows = execution.steps.map((step, index) => {
       return [
         index + 1,
         step.stepId || '',
-        getStepTypeText(step.type),
-        getStatusText(step.status),
+        getTranslatedStepTypeText(step.type),
+        getTranslatedStatusText(step.status),
         step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
         step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
         step.duration || '',
@@ -473,7 +533,7 @@ export default function ReportsPage() {
         step.config?.value || step.config?.text || '',
         step.config?.expectedValue || '',
         step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
-        step.screenshot ? 'Evet' : 'Hayır'
+        step.screenshot ? t('common.yes') : t('common.no')
       ];
     });
     
@@ -483,21 +543,21 @@ export default function ReportsPage() {
   // Create consolidated steps CSV for multiple executions
   const createBulkStepsCSVReport = (executions: ExecutionResult[]) => {
     const csvHeaders = [
-      'Test Adı',
-      'Execution ID',
-      'Adım No',
-      'Adım ID',
-      'Adım Türü',
-      'Durum',
-      'Başlangıç Zamanı',
-      'Bitiş Zamanı',
-      'Süre (ms)',
-      'URL',
-      'Selector',
-      'Girilen Değer',
-      'Beklenen Değer',
-      'Hata Mesajı',
-      'Ekran Görüntüsü Var'
+      t('reports.testName'),
+      t('reports.executionId'),
+      t('reports.stepNumber'),
+      t('reports.stepId'),
+      t('reports.stepType'),
+      t('reports.status'),
+      t('reports.startTime'),
+      t('reports.endTime'),
+      t('reports.duration'),
+      t('reports.url'),
+      t('reports.selector'),
+      t('reports.value'),
+      t('reports.expectedValue'),
+      t('reports.error'),
+      t('reports.screenshot')
     ];
     
     const csvRows: any[] = [];
@@ -509,8 +569,8 @@ export default function ReportsPage() {
           execution.id,
           index + 1,
           step.stepId || '',
-          getStepTypeText(step.type),
-          getStatusText(step.status),
+          getTranslatedStepTypeText(step.type),
+          getTranslatedStatusText(step.status),
           step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
           step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
           step.duration || '',
@@ -519,7 +579,7 @@ export default function ReportsPage() {
           step.config?.value || step.config?.text || '',
           step.config?.expectedValue || '',
           step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
-          step.screenshot ? 'Evet' : 'Hayır'
+          step.screenshot ? t('common.yes') : t('common.no')
         ]);
       });
     });
@@ -529,17 +589,17 @@ export default function ReportsPage() {
 
   const getStepTypeText = (type: string) => {
     switch (type) {
-      case 'navigate': return 'Sayfa Geçişi';
-      case 'click': return 'Tıklama';
-      case 'input': return 'Metin Girişi';
-      case 'wait': return 'Bekleme';
-      case 'screenshot': return 'Ekran Görüntüsü';
-      case 'verify': return 'Doğrulama';
-      case 'scroll': return 'Kaydırma';
-      case 'hover': return 'Üzerine Gelme';
-      case 'key': return 'Tuş Basma';
-      case 'refresh': return 'Sayfa Yenileme';
-      case 'if': return 'Koşul Kontrolü';
+      case 'navigate': return t('testSteps.navigate');
+      case 'click': return t('testSteps.click');
+      case 'input': return t('testSteps.input');
+      case 'wait': return t('testSteps.wait');
+      case 'screenshot': return t('testSteps.screenshot');
+      case 'verify': return t('testSteps.verify');
+      case 'scroll': return t('testSteps.scroll');
+      case 'hover': return t('testSteps.hover');
+      case 'key': return t('testSteps.key');
+      case 'refresh': return t('testSteps.refresh');
+      case 'if': return t('testSteps.condition');
       default: return type;
     }
   };
@@ -555,8 +615,8 @@ export default function ReportsPage() {
       const csvContent = createTestCSVReport([execution]);
       const stepsCSVContent = createStepsCSVReport(execution);
       
-      zip.file('test_raporu.csv', '\uFEFF' + csvContent);
-      zip.file('adim_detaylari.csv', '\uFEFF' + stepsCSVContent);
+      zip.file(`${t('reports.testReport')}.csv`, '\uFEFF' + csvContent);
+      zip.file(`${t('reports.stepDetails')}.csv`, '\uFEFF' + stepsCSVContent);
       
       // Add screenshots
       const screenshotsFolder = zip.folder('screenshots');
@@ -602,7 +662,7 @@ export default function ReportsPage() {
       
     } catch (error) {
       console.error('Error creating report package:', error);
-      notifyTestFailure('Single Download', '', 'Rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      notifyTestFailure('Single Download', '', t('reports.reportPackageError') + ': ' + (error instanceof Error ? error.message : t('common.unknownError')));
     }
   };
 
@@ -619,11 +679,11 @@ export default function ReportsPage() {
       
       // Create main CSV report
       const csvContent = createTestCSVReport(selectedExecutionsList);
-      zip.file('toplu_test_raporu.csv', '\uFEFF' + csvContent);
+      zip.file(`${t('reports.bulkTestReport')}.csv`, '\uFEFF' + csvContent);
       
       // Create consolidated steps CSV
       const allStepsCSV = createBulkStepsCSVReport(selectedExecutionsList);
-      zip.file('tum_adim_detaylari.csv', '\uFEFF' + allStepsCSV);
+      zip.file(`${t('reports.allStepDetails')}.csv`, '\uFEFF' + allStepsCSV);
       
       // Add screenshots and videos for each execution
       for (let execIndex = 0; execIndex < selectedExecutionsList.length; execIndex++) {
@@ -632,7 +692,7 @@ export default function ReportsPage() {
         
         // Add individual execution reports
         const stepsCSV = createStepsCSVReport(execution);
-        executionFolder?.file('adim_detaylari.csv', '\uFEFF' + stepsCSV);
+        executionFolder?.file(`${t('reports.stepDetails')}.csv`, '\uFEFF' + stepsCSV);
         
         // Add screenshots for this execution
         const screenshotsFolder = executionFolder?.folder('screenshots');
@@ -671,7 +731,7 @@ export default function ReportsPage() {
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `CosmicQA_TopluRapor_${new Date().toISOString().split('T')[0]}_${selectedExecutions.size}test.zip`;
+      a.download = `CosmicQA_${t('reports.bulkReport')}_${new Date().toISOString().split('T')[0]}_${selectedExecutions.size}test.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -710,13 +770,13 @@ export default function ReportsPage() {
 
   return (
     <PageLayout
-      title="Test Sonuçları"
-      subtitle={`Çalıştırılan testlerin detaylı sonuçları${hasActiveFilters ? ` (${sortedExecutions.length} / ${executions.length} sonuç)` : ''}`}
+      title={t('reports.title')}
+      subtitle={`${t('reports.subtitle')}${hasActiveFilters ? ` (${sortedExecutions.length} / ${executions.length} ${t('reports.results')})` : ''}`}
     >
       <LoadingErrorState
         loading={loading}
         error={error}
-        loadingMessage="Test sonuçları yükleniyor..."
+        loadingMessage={t('reports.loadingResults')}
         onRetry={refresh}
       >
         {/* Stats Overview */}
@@ -760,7 +820,7 @@ export default function ReportsPage() {
                     browsers: filterOptions.browsers,
                     statuses: filterOptions.statuses
                   }}
-                  searchPlaceholder="Test adı..."
+                  searchPlaceholder={t('reports.searchPlaceholder')}
                   showStatus={true}
                   showDateRange={true}
                 />
@@ -849,7 +909,7 @@ export default function ReportsPage() {
                   allData={sortedExecutions}
                   columns={columns}
                   loading={loading}
-                  emptyMessage="Sonuç bulunamadı"
+                  emptyMessage={t('reports.noResults')}
                   selectable={true}
                   selectedItems={selectedExecutions}
                   onSelectionChange={setSelectedExecutions}
@@ -907,7 +967,7 @@ export default function ReportsPage() {
                           cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                           transition: 'all 0.2s ease'
                         }}
-                        title="İlk sayfa"
+                        title={t('common.firstPage')}
                       >
                         <ChevronsLeft size={14} />
                       </button>
@@ -928,7 +988,7 @@ export default function ReportsPage() {
                           cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                           transition: 'all 0.2s ease'
                         }}
-                        title="Önceki sayfa"
+                        title={t('common.previousPage')}
                       >
                         <ChevronLeft size={14} />
                       </button>
@@ -1095,7 +1155,7 @@ export default function ReportsPage() {
                     color: 'var(--text-secondary)',
                     fontFamily: 'monospace'
                   }}>
-                    ID: {selectedExecution.id}
+                    {t('reports.id')}: {selectedExecution.id}
                   </span>
                 </div>
                 
@@ -1107,16 +1167,30 @@ export default function ReportsPage() {
                   color: 'var(--text-secondary)'
                 }}>
                   <div>
-                    <strong>Başlangıç:</strong> {new Date(selectedExecution.startTime).toLocaleString('tr-TR')}
+                    <strong>{t('reports.startTime')}:</strong> {new Date(selectedExecution.startTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
                   </div>
                   {selectedExecution.endTime && (
                     <div>
-                      <strong>Bitiş:</strong> {new Date(selectedExecution.endTime).toLocaleString('tr-TR')}
+                      <strong>{t('reports.endTime')}:</strong> {new Date(selectedExecution.endTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
                     </div>
                   )}
                   {selectedExecution.duration && (
                     <div>
-                      <strong>Süre:</strong> {formatDuration(selectedExecution.duration)}
+                      <strong>{t('common.duration')}:</strong> {formatDuration(selectedExecution.duration)}
                     </div>
                   )}
                 </div>
@@ -1132,7 +1206,7 @@ export default function ReportsPage() {
                 }}>
                   {/* Browser */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <strong>Tarayıcı:</strong>
+                    <strong>{t('reports.browser')}:</strong>
                     {(() => {
                       const browserType = selectedExecution.options?.browserType || 'chromium';
                       const getBrowserIcon = () => {
@@ -1165,14 +1239,14 @@ export default function ReportsPage() {
                   {/* Suite */}
                   {selectedExecution.suite && (
                     <div>
-                      <strong>Test Grubu:</strong> {selectedExecution.suite}
+                      <strong>{t('reports.testGroup')}:</strong> {selectedExecution.suite}
                     </div>
                   )}
                   
                   {/* Tags */}
                   {selectedExecution.tags && selectedExecution.tags.length > 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <strong>Etiketler:</strong>
+                      <strong>{t('reports.tags')}:</strong>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                         {selectedExecution.tags.map((tag, index) => (
                           <span
@@ -1251,7 +1325,7 @@ export default function ReportsPage() {
                   icon={Download}
                   variant="ghost"
                   size="md"
-                  tooltip="Raporu İndir"
+                  tooltip={t('reports.downloadReport')}
                   onClick={() => downloadSingleExecution(selectedExecution)}
                 />
                 <IconButton
@@ -1338,10 +1412,10 @@ export default function ReportsPage() {
         isOpen={showBulkDeleteDialog}
         onClose={() => setShowBulkDeleteDialog(false)}
         onConfirm={confirmBulkDelete}
-        title="Test Kayıtlarını Sil"
-        message={`${selectedExecutions.size} test kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        title={t('reports.deleteRecords')}
+        message={t('reports.deleteConfirm', { count: selectedExecutions.size })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         type="danger"
       />
     </PageLayout>

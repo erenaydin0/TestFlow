@@ -102,7 +102,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     const jsonFiles = files.filter(file => file.type === 'application/json' || file.name.endsWith('.json'));
     
     if (jsonFiles.length === 0) {
-      notifyTestFailure('Import', '', 'Lütfen geçerli JSON dosyaları seçin.');
+      notifyTestFailure(t('common.import'), '', t('testBuilder.selectValidJsonFiles'));
       return;
     }
 

@@ -1,6 +1,8 @@
 import React from 'react';
 import { ExecutionStepResult } from '@/types/execution';
 import { CheckCircle, XCircle, Clock, AlertCircle, ArrowRight, ArrowDown, Play, Pause, Eye, EyeOff } from 'lucide-react';
+import { useI18n } from '@/contexts';
+import { formatRelativeTime, formatTime } from '@/lib/utils';
 
 interface UnifiedStepViewProps {
   steps: ExecutionStepResult[];
@@ -13,6 +15,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
   executionPath, 
   conditionResults 
 }) => {
+  const { t, locale } = useI18n();
   const getStepStatus = (step: ExecutionStepResult) => {
     if (executionPath.includes(step.stepId)) {
       return step.status;
@@ -59,35 +62,35 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
     
     switch (type) {
       case 'navigate':
-        return `URL'ye git: ${config.url || 'Belirtilmedi'}`;
+        return `${t('testSteps.navigate')}: ${config.url || t('common.notSpecified')}`;
       case 'click':
-        return `Element'e tıkla: ${config.selector || 'Belirtilmedi'}`;
+        return `${t('testSteps.click')}: ${config.selector || t('common.notSpecified')}`;
       case 'input':
       case 'type':
-        return `Metin gir: "${config.value || ''}" → ${config.selector || 'Belirtilmedi'}`;
+        return `${t('testSteps.input')}: "${config.value || ''}" → ${config.selector || t('common.notSpecified')}`;
       case 'wait':
-        return `Bekle: ${config.duration || 1000}ms`;
+        return `${t('testSteps.wait')}: ${config.duration || 1000}ms`;
       case 'refresh':
-        return 'Sayfayı yenile';
+        return t('testSteps.refresh');
       case 'screenshot':
-        return 'Ekran görüntüsü al';
+        return t('testSteps.screenshot');
       case 'verify':
         if (config.verificationType === 'url' || config.verificationType === 'urlContains') {
-          return `URL kontrolü: ${config.verificationType === 'url' ? 'Eşit' : 'İçerir'} "${config.expectedValue || ''}"`;
+          return `${t('testSteps.urlCheck')}: ${config.verificationType === 'url' ? t('testSteps.equals') : t('testSteps.contains')} "${config.expectedValue || ''}"`;
         }
-        return `Element kontrolü: ${config.verificationType || 'visible'} → ${config.selector || 'Belirtilmedi'}`;
+        return `${t('testSteps.elementCheck')}: ${config.verificationType || 'visible'} → ${config.selector || t('common.notSpecified')}`;
       case 'scroll':
-        return `Kaydır: ${config.direction || 'down'} ${config.amount ? `${config.amount}px` : ''}`;
+        return `${t('testSteps.scroll')}: ${config.direction || 'down'} ${config.amount ? `${config.amount}px` : ''}`;
       case 'hover':
-        return `Element üzerine gel: ${config.selector || 'Belirtilmedi'}`;
+        return `${t('testSteps.hover')}: ${config.selector || t('common.notSpecified')}`;
       case 'key':
-        return `Tuş bas: ${config.key || 'Belirtilmedi'} → ${config.selector || 'Genel'}`;
+        return `${t('testSteps.key')}: ${config.key || t('common.notSpecified')} → ${config.selector || t('common.general')}`;
       case 'dropdown':
-        return `Dropdown seç: ${config.optionValue || 'Belirtilmedi'} → ${config.selector || 'Belirtilmedi'}`;
+        return `${t('testSteps.dropdown')}: ${config.optionValue || t('common.notSpecified')} → ${config.selector || t('common.notSpecified')}`;
       case 'if':
-        return `Koşul kontrolü: ${config.conditionType || 'visible'} → ${config.selector || 'Belirtilmedi'}`;
+        return `${t('testSteps.condition')}: ${config.conditionType || 'visible'} → ${config.selector || t('common.notSpecified')}`;
       default:
-        return `${type} adımı`;
+        return `${type} ${t('testSteps.step')}`;
     }
   };
 
@@ -206,17 +209,17 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
   const getExecutionReason = (step: ExecutionStepResult, isExecuted: boolean) => {
     if (isExecuted) {
       if (step.type === 'if' && step.conditionResult !== undefined) {
-        return `IF koşulu ${step.conditionResult ? 'doğru' : 'yanlış'} olduğu için çalıştırıldı`;
+        return t('reports.ifConditionExecuted', { result: step.conditionResult ? t('common.true') : t('common.false') });
       }
-      return 'Normal akışta çalıştırıldı';
+      return t('reports.normalFlowExecuted');
     } else {
       if (step.status === 'pending') {
         if (step.type === 'if') {
-          return 'IF koşulunun sonucuna göre atlandı';
+          return t('reports.ifConditionSkipped');
         }
-        return 'Önceki adımlar tamamlanmadığı için beklemede';
+        return t('reports.waitingForPreviousSteps');
       }
-      return 'Henüz çalıştırılmadı';
+      return t('reports.notExecutedYet');
     }
   };
 
@@ -224,7 +227,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
     if (executionPath.includes(step.stepId)) return null;
     
     if (step.type === 'if') {
-      return 'IF koşulunun sonucuna göre atlandı';
+      return t('reports.ifConditionSkipped');
     }
     
     // Check if any previous step failed
@@ -233,17 +236,50 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
     const hasFailedStep = previousSteps.some(s => executionPath.includes(s.stepId) && s.status === 'failed');
     
     if (hasFailedStep) {
-      return 'Önceki adım başarısız olduğu için atlandı';
+      return t('reports.skippedDueToPreviousFailure');
     }
     
-    return 'IF koşulunun sonucuna göre atlandı';
+    return t('reports.ifConditionSkipped');
   };
 
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
-        Test Adımları ve Yürütme Akışı
+        {t('reports.testStepsAndExecutionFlow')}
       </h4>
+      
+      {/* Summary - Moved to top */}
+      <div style={{ 
+        marginBottom: '1rem', 
+        padding: '0.75rem', 
+        backgroundColor: 'var(--bg-tertiary)', 
+        borderRadius: '0.5rem',
+        border: '1px solid var(--border-primary)'
+      }}>
+        <div style={{ 
+          fontSize: '0.75rem', 
+          color: 'var(--text-secondary)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: '0.5rem'
+        }}>
+          <div>
+            <span style={{ fontWeight: 600 }}>{t('reports.totalSteps')}:</span> {steps.length} {t('reports.steps')}
+          </div>
+          <div>
+            <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>{t('reports.executedSteps')}:</span> {executionPath.length} {t('reports.steps')}
+          </div>
+          <div>
+            <span style={{ fontWeight: 600, color: 'var(--text-tertiary)' }}>{t('reports.skippedSteps')}:</span> {steps.length - executionPath.length} {t('reports.steps')}
+          </div>
+          <div>
+            <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>{t('reports.passedSteps')}:</span> {steps.filter(s => executionPath.includes(s.stepId) && s.status === 'passed').length} {t('reports.steps')}
+          </div>
+          <div>
+            <span style={{ fontWeight: 600, color: 'var(--status-error)' }}>{t('reports.failedSteps')}:</span> {steps.filter(s => executionPath.includes(s.stepId) && s.status === 'failed').length} {t('reports.steps')}
+          </div>
+        </div>
+      </div>
       
       <div style={{ 
         display: 'flex', 
@@ -328,7 +364,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                       }}
                     >
                       <ArrowRight size={10} />
-                      Ekran Görüntüsü
+                      {t('reports.screenshot')}
                     </a>
                   )}
                   {isSkipped && (
@@ -340,7 +376,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                       color: 'var(--text-tertiary)'
                     }}>
                       <EyeOff size={12} />
-                      <span>Atlandı</span>
+                      <span>{t('reports.skipped')}</span>
                     </div>
                   )}
                 </div>
@@ -358,7 +394,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                 </p>
                 
                 {/* Execution Reason - Sadece özel durumlar için göster */}
-                {getExecutionReason(step, isExecuted) !== 'Normal akışta çalıştırıldı' && (
+                {getExecutionReason(step, isExecuted) !== t('reports.normalFlowExecuted') && (
                   <div style={{ 
                     fontSize: '0.75rem', 
                     color: 'var(--text-secondary)',
@@ -404,6 +440,9 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                         if (key === 'url') return null;
                       }
                       
+                      // Filter out internal fields
+                      if (key === 'id' || key === 'type' || key === 'x' || key === 'y') return null;
+                      
                       return (
                         <React.Fragment key={key}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
@@ -412,7 +451,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                              key === 'expectedValue' ? 'Beklenen' :
                              key === 'verificationType' ? 'Kontrol Türü' :
                              key === 'conditionType' ? 'Koşul Türü' :
-                             key === 'duration' ? 'Süre' :
+                             key === 'duration' ? t('common.duration') :
                              key === 'direction' ? 'Yön' :
                              key === 'amount' ? 'Miktar' :
                              key === 'key' ? 'Tuş' :
@@ -444,17 +483,29 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', fontSize: '0.7rem' }}>
                   {step.startTime && (
                     <span style={{ color: 'var(--text-tertiary)' }}>
-                      Başlangıç: {new Date(step.startTime).toLocaleTimeString('tr-TR')}
+                      {t('reports.startTime')}: {new Date(step.startTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
                     </span>
                   )}
                   {step.endTime && (
                     <span style={{ color: 'var(--text-tertiary)' }}>
-                      Bitiş: {new Date(step.endTime).toLocaleTimeString('tr-TR')}
+                      {t('reports.endTime')}: {new Date(step.endTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
                     </span>
                   )}
                   {step.duration && (
                     <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
-                      Süre: {Math.round(step.duration)}ms
+                      {t('common.duration')}: {Math.round(step.duration)}ms
                     </span>
                   )}
                 </div>
@@ -484,7 +535,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                     <AlertCircle size={14} style={{ color: 'var(--status-error)' }} />
                     <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--status-error)' }}>
-                      Hata Detayı
+                      {t('reports.errorDetails')}
                     </span>
                   </div>
                   <p style={{ color: 'var(--status-error)', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>
@@ -495,39 +546,6 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
             </div>
           );
         })}
-      </div>
-
-      {/* Summary */}
-      <div style={{ 
-        marginTop: '1rem', 
-        padding: '0.75rem', 
-        backgroundColor: 'var(--bg-tertiary)', 
-        borderRadius: '0.5rem',
-        border: '1px solid var(--border-primary)'
-      }}>
-        <div style={{ 
-          fontSize: '0.75rem', 
-          color: 'var(--text-secondary)',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-          gap: '0.5rem'
-        }}>
-          <div>
-            <span style={{ fontWeight: 600 }}>Toplam:</span> {steps.length} adım
-          </div>
-          <div>
-            <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>Çalıştırılan:</span> {executionPath.length} adım
-          </div>
-          <div>
-            <span style={{ fontWeight: 600, color: 'var(--text-tertiary)' }}>Atlanan:</span> {steps.length - executionPath.length} adım
-          </div>
-          <div>
-            <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>Başarılı:</span> {steps.filter(s => executionPath.includes(s.stepId) && s.status === 'passed').length} adım
-          </div>
-          <div>
-            <span style={{ fontWeight: 600, color: 'var(--status-error)' }}>Başarısız:</span> {steps.filter(s => executionPath.includes(s.stepId) && s.status === 'failed').length} adım
-          </div>
-        </div>
       </div>
     </div>
   );

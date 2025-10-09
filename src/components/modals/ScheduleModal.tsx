@@ -5,6 +5,7 @@ import { X, Clock, Calendar } from 'lucide-react';
 import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
 import { Button } from '@/components/ui';
 import { CustomSelect } from '@/components/common';
+import { useI18n } from '@/contexts';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -13,12 +14,12 @@ interface ScheduleModalProps {
   schedule?: ScheduledTest;
 }
 
-const FREQUENCY_OPTIONS: { value: ScheduleFrequency; label: string; description: string }[] = [
-  { value: 'hourly', label: 'Her Saat', description: 'Her saat başı çalışır' },
-  { value: 'daily', label: 'Her Gün', description: 'Belirlediğiniz saatte her gün' },
-  { value: 'weekly', label: 'Haftalık', description: 'Haftanın belirli günlerinde' },
-  { value: 'monthly', label: 'Aylık', description: 'Ayın belirli günlerinde' },
-  { value: 'custom', label: 'Özel', description: 'Belirli saatlerde çalıştır' }
+const getFrequencyOptions = (t: (key: string) => string): { value: ScheduleFrequency; label: string; description: string }[] => [
+  { value: 'hourly', label: t('scheduleModal.hourly'), description: t('scheduleModal.hourlyDesc') },
+  { value: 'daily', label: t('scheduleModal.daily'), description: t('scheduleModal.dailyDesc') },
+  { value: 'weekly', label: t('scheduleModal.weekly'), description: t('scheduleModal.weeklyDesc') },
+  { value: 'monthly', label: t('scheduleModal.monthly'), description: t('scheduleModal.monthlyDesc') },
+  { value: 'custom', label: t('scheduleModal.custom'), description: t('scheduleModal.customDesc') }
 ];
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
@@ -27,6 +28,7 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
 }));
 
 export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleModalProps) {
+  const { t } = useI18n();
   const [tests, setTests] = useState<Test[]>([]);
   const [loadingTests, setLoadingTests] = useState(false);
   const [selectedTest, setSelectedTest] = useState(schedule?.testId || '');
@@ -149,21 +151,29 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
   const getCronDescription = () => {
     switch (frequency) {
       case 'hourly':
-        return 'Her saat başı çalışacak';
+        return t('scheduleModal.willRunHourly');
       case 'daily':
-        return `Her gün saat ${hour}:${minute}'de çalışacak`;
+        return t('scheduleModal.willRunDaily', { time: `${hour}:${minute}` });
       case 'weekly':
-        const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+        const dayNames = [
+          t('scheduleModal.days.sunday'),
+          t('scheduleModal.days.monday'),
+          t('scheduleModal.days.tuesday'),
+          t('scheduleModal.days.wednesday'),
+          t('scheduleModal.days.thursday'),
+          t('scheduleModal.days.friday'),
+          t('scheduleModal.days.saturday')
+        ];
         const days = selectedDays.map(d => dayNames[d]).join(', ');
-        return `Her hafta ${days} günleri saat ${hour}:${minute}'de çalışacak`;
+        return t('scheduleModal.willRunWeekly', { days, time: `${hour}:${minute}` });
       case 'monthly':
-        return `Her ayın ${selectedMonthDays.join(', ')}. günlerinde saat ${hour}:${minute}'de çalışacak`;
+        return t('scheduleModal.willRunMonthly', { days: selectedMonthDays.join(', '), time: `${hour}:${minute}` });
       case 'custom':
         if (customType === 'hours') {
           const hours = selectedHours.sort((a, b) => a - b).map(h => `${h.toString().padStart(2, '0')}:00`).join(', ');
-          return `Her gün saat ${hours}'de çalışacak`;
+          return t('scheduleModal.willRunCustomHours', { hours });
         } else {
-          return `Her ${customInterval} saatte bir çalışacak`;
+          return t('scheduleModal.willRunCustomInterval', { interval: customInterval });
         }
       default:
         return '';
@@ -259,7 +269,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
             color: 'var(--text-primary)',
             margin: 0
           }}>
-            {schedule ? 'Zamanlamayı Düzenle' : 'Yeni Zamanlama'}
+            {schedule ? t('scheduleModal.editSchedule') : t('scheduleModal.newSchedule')}
           </h2>
           <button
             onClick={onClose}
@@ -301,19 +311,19 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                   color: 'var(--text-primary)',
                   marginBottom: '0.75rem'
                 }}>
-                  Hangi testi zamanlamak istiyorsunuz?
+                  {t('scheduleModal.whichTest')}
                 </label>
                 <CustomSelect
                   value={selectedTest}
                   onChange={(value) => setSelectedTest(value)}
                   options={[
-                    { value: '', label: 'Test Seçin' },
+                    { value: '', label: t('scheduled.selectTest') },
                     ...tests.map(test => ({
                       value: test.id,
                       label: `${test.name} (${test.suite})`
                     }))
                   ]}
-                  placeholder="Test Seçin"
+                  placeholder={t('scheduled.selectTest')}
                   style={{
                     opacity: schedule ? 0.6 : 1,
                     pointerEvents: schedule ? 'none' : 'auto'
@@ -330,14 +340,14 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
               color: 'var(--text-primary)',
               marginBottom: '0.75rem'
             }}>
-              Ne sıklıkla çalışsın?
+              {t('scheduleModal.howOften')}
             </label>
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
               gap: '0.5rem' 
             }}>
-              {FREQUENCY_OPTIONS.map(opt => (
+              {getFrequencyOptions(t).map(opt => (
                 <button
                   key={opt.value}
                   type="button"
@@ -385,7 +395,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                 marginBottom: '0.75rem'
               }}>
                 <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                Saat kaçta çalışsın?
+                {t('scheduleModal.whatTime')}
               </label>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
@@ -408,7 +418,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     }}
                   />
                   <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
-                    Saat
+                    {t('scheduleModal.hour')}
                   </div>
                 </div>
                 <span style={{ fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>:</span>
@@ -432,7 +442,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     }}
                   />
                   <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
-                    Dakika
+                    {t('scheduleModal.minute')}
                   </div>
                 </div>
               </div>
@@ -450,17 +460,17 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                 marginBottom: '0.75rem'
               }}>
                 <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                Hangi günler?
+                {t('scheduleModal.whichDays')}
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {/* Hafta içi günler */}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {[
-                    { value: 1, label: 'Pzt' },
-                    { value: 2, label: 'Sal' },
-                    { value: 3, label: 'Çar' },
-                    { value: 4, label: 'Per' },
-                    { value: 5, label: 'Cum' }
+                    { value: 1, label: t('scheduleModal.days.mondayShort') },
+                    { value: 2, label: t('scheduleModal.days.tuesdayShort') },
+                    { value: 3, label: t('scheduleModal.days.wednesdayShort') },
+                    { value: 4, label: t('scheduleModal.days.thursdayShort') },
+                    { value: 5, label: t('scheduleModal.days.fridayShort') }
                   ].map(day => (
                     <button
                       key={day.value}
@@ -485,8 +495,8 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                 {/* Hafta sonu günler */}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {[
-                    { value: 6, label: 'Cmt' },
-                    { value: 0, label: 'Paz' }
+                    { value: 6, label: t('scheduleModal.days.saturdayShort') },
+                    { value: 0, label: t('scheduleModal.days.sundayShort') }
                   ].map(day => (
                     <button
                       key={day.value}
@@ -523,7 +533,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                 marginBottom: '0.75rem'
               }}>
                 <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                Ayın hangi günleri?
+                {t('scheduleModal.whichMonthDays')}
               </label>
               <div style={{ 
                 display: 'grid', 
@@ -570,7 +580,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                   color: 'var(--text-primary)',
                   marginBottom: '0.75rem'
                 }}>
-                  Nasıl zamanlamak istersiniz?
+                  {t('scheduleModal.howToSchedule')}
                 </label>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
@@ -588,7 +598,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                       transition: 'all 0.2s'
                     }}
                   >
-                    Belirli Saatlerde
+                    {t('scheduleModal.specificHours')}
                   </button>
                   <button
                     type="button"
@@ -605,7 +615,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                       transition: 'all 0.2s'
                     }}
                   >
-                    Belirli Aralıklarla
+                    {t('scheduleModal.specificIntervals')}
                   </button>
                 </div>
               </div>
@@ -621,7 +631,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     marginBottom: '0.75rem'
                   }}>
                     <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    Hangi saatlerde çalışsın?
+                    {t('scheduleModal.whichHours')}
                   </label>
                   <div style={{ 
                     display: 'grid', 
@@ -656,7 +666,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     ))}
                   </div>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
-                    Çoklu seçim yapabilirsiniz. Örn: 09:00, 14:00, 18:00
+                    {t('scheduleModal.multiSelectHint')}
                   </p>
                 </div>
               )}
@@ -672,7 +682,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     marginBottom: '0.75rem'
                   }}>
                     <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    Kaç saatte bir çalışsın?
+                    {t('scheduleModal.howOftenInterval')}
                   </label>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     {[2, 3, 4, 6, 8, 12].map(interval => (
@@ -694,12 +704,12 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                           transition: 'all 0.2s'
                         }}
                       >
-                        {interval} Saat
+                        {t('scheduleModal.hours', { count: interval })}
                       </button>
                     ))}
                   </div>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.75rem' }}>
-                    Test her {customInterval} saatte bir otomatik olarak çalışacak
+                    {t('scheduleModal.willRunEveryInterval', { interval: customInterval })}
                   </p>
                 </div>
               )}
@@ -736,10 +746,10 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
             {/* Sağ: Butonlar */}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button variant="secondary" onClick={onClose} type="button">
-                İptal
+                {t('common.cancel')}
               </Button>
               <Button variant="primary" type="submit">
-                {schedule ? 'Güncelle' : 'Oluştur'}
+                {schedule ? t('common.update') : t('common.create')}
               </Button>
             </div>
           </div>

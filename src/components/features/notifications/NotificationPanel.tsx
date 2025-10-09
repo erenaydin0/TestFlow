@@ -16,7 +16,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
-import { useNotifications, useTheme } from '@/contexts';
+import { useNotifications, useTheme, useI18n } from '@/contexts';
 
 const iconMap = {
   success: CheckCircle,
@@ -38,6 +38,7 @@ function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = useNotifications();
   const { theme } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -165,7 +166,7 @@ function NotificationPanel() {
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                        title="Tümünü Okundu İşaretle"
+                        title={t('notifications.markAllRead')}
                       >
                         <CheckCircle2 size={16} />
                       </button>
@@ -185,7 +186,7 @@ function NotificationPanel() {
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                       onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                      title="Tümünü Temizle"
+                      title={t('notifications.clearAll')}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -316,7 +317,7 @@ function NotificationPanel() {
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                                title="Okundu İşaretle"
+                                title={t('notifications.markAsRead')}
                               >
                                 <Check size={16} />
                               </button>

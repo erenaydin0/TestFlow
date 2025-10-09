@@ -3,12 +3,14 @@
 import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { TestStep } from '@/types';
+import { useI18n } from '@/contexts';
 
 interface StepContentProps {
   step: TestStep;
 }
 
 const StepContent: React.FC<StepContentProps> = ({ step }) => {
+  const { t } = useI18n();
   return (
     <div style={{ 
       fontSize: '0.75rem', 
@@ -31,65 +33,65 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
         <>
           {/* Step configuration preview */}
           {step.type === 'navigate' && (
-            <span>URL: {step.url || 'Belirtilmedi'}</span>
+            <span>URL: {step.url || t('testSteps.notSpecified')}</span>
           )}
           {step.type === 'click' && (
-            <span>Element: {step.selector || 'Belirtilmedi'}</span>
+            <span>{t('testSteps.element')}: {step.selector || t('testSteps.notSpecified')}</span>
           )}
           {step.type === 'input' && (
             <span>
-              {step.selector ? `${step.selector}: ` : 'Input: '}
-              {step.value || 'Belirtilmedi'}
+              {step.selector ? `${step.selector}: ` : `${t('testSteps.input')}: `}
+              {step.value || t('testSteps.notSpecified')}
             </span>
           )}
           {step.type === 'wait' && (
-            <span>Süre: {step.duration || 1000}ms</span>
+            <span>{t('testSteps.duration')}: {step.duration || 1000}ms</span>
           )}
-          {step.type === 'refresh' && 'Sayfa yenileme'}
+          {step.type === 'refresh' && t('testSteps.refresh')}
           {step.type === 'verify' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               {(step.verificationType === 'url' || step.verificationType === 'urlContains') ? (
                 <>
-                  <span>Tür: {step.verificationType === 'url' ? 'URL Kontrolü' : 'URL İçerir'}</span>
-                  {step.expectedValue && <span>Beklenen: {step.expectedValue}</span>}
+                  <span>{t('testSteps.type')}: {step.verificationType === 'url' ? t('testSteps.urlCheck') : t('testSteps.contains')}</span>
+                  {step.expectedValue && <span>{t('testSteps.expected')}: {step.expectedValue}</span>}
                 </>
               ) : (
                 <>
-                  <span>Element: {step.selector || 'Belirtilmedi'}</span>
-                  <span>Tür: {step.verificationType || 'Belirtilmedi'}</span>
-                  {step.expectedValue && <span>Değer: {step.expectedValue}</span>}
+                  <span>{t('testSteps.element')}: {step.selector || t('testSteps.notSpecified')}</span>
+                  <span>{t('testSteps.type')}: {step.verificationType || t('testSteps.notSpecified')}</span>
+                  {step.expectedValue && <span>{t('testSteps.value')}: {step.expectedValue}</span>}
                 </>
               )}
             </div>
           )}
           {step.type === 'scroll' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {step.selector && <span>Element: {step.selector}</span>}
-              <span>Yön: {step.direction || 'Belirtilmedi'}</span>
-              {step.amount && <span>Miktar: {step.amount}px</span>}
+              {step.selector && <span>{t('testSteps.element')}: {step.selector}</span>}
+              <span>{t('testSteps.direction')}: {step.direction || t('testSteps.notSpecified')}</span>
+              {step.amount && <span>{t('testSteps.amount')}: {step.amount}px</span>}
             </div>
           )}
           {step.type === 'hover' && (
-            <span>Element: {step.selector || 'Belirtilmedi'}</span>
+            <span>{t('testSteps.element')}: {step.selector || t('testSteps.notSpecified')}</span>
           )}
           {step.type === 'key' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>Tuş: {step.key || 'Belirtilmedi'}</span>
-              {step.selector && <span>Element: {step.selector}</span>}
+              <span>{t('testSteps.key')}: {step.key || t('testSteps.notSpecified')}</span>
+              {step.selector && <span>{t('testSteps.element')}: {step.selector}</span>}
             </div>
           )}
           {step.type === 'dropdown' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>Element: {step.selector || 'Belirtilmedi'}</span>
-              <span>Tür: {step.optionType || 'Belirtilmedi'}</span>
-              <span>Değer: {step.optionValue || 'Belirtilmedi'}</span>
+              <span>{t('testSteps.element')}: {step.selector || t('testSteps.notSpecified')}</span>
+              <span>{t('testSteps.type')}: {step.optionType || t('testSteps.notSpecified')}</span>
+              <span>{t('testSteps.value')}: {step.optionValue || t('testSteps.notSpecified')}</span>
             </div>
           )}
           {step.type === 'if' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>Tür: {step.conditionType || 'visible'}</span>
-              {step.selector && <span>Element: {step.selector}</span>}
-              {step.expectedValue && <span>Değer: {step.expectedValue}</span>}
+              <span>{t('testSteps.type')}: {step.conditionType || 'visible'}</span>
+              {step.selector && <span>{t('testSteps.element')}: {step.selector}</span>}
+              {step.expectedValue && <span>{t('testSteps.value')}: {step.expectedValue}</span>}
               {step.operator && step.conditionType === 'count' && <span>Operatör: {step.operator}</span>}
               <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem', marginTop: '0.25rem' }}>
                 <span style={{ 
@@ -99,7 +101,7 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
                   gap: '0.25rem'
                 }}>
                   <CheckCircle size={10} />
-                  TRUE: {step.trueConnection ? '✓' : 'Bağlı değil'}
+                  TRUE: {step.trueConnection ? '✓' : t('testSteps.notConnected')}
                 </span>
                 <span style={{ 
                   color: step.falseConnection ? 'var(--status-error)' : 'var(--text-tertiary)',
@@ -108,7 +110,7 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
                   gap: '0.25rem'
                 }}>
                   <XCircle size={10} />
-                  FALSE: {step.falseConnection ? '✓' : 'Bağlı değil'}
+                  FALSE: {step.falseConnection ? '✓' : t('testSteps.notConnected')}
                 </span>
               </div>
             </div>
@@ -124,52 +126,52 @@ const StepContent: React.FC<StepContentProps> = ({ step }) => {
           marginTop: '0.25rem'
         }}>
           {step.type === 'navigate' && step.url && `URL: ${step.url}`}
-          {step.type === 'click' && step.selector && `Element: ${step.selector}`}
-          {step.type === 'input' && step.value && `Input: ${step.value}`}
-          {step.type === 'wait' && `Süre: ${step.duration || 1000}ms`}
-          {step.type === 'refresh' && 'Sayfa yenileme'}
+          {step.type === 'click' && step.selector && `${t('testSteps.element')}: ${step.selector}`}
+          {step.type === 'input' && step.value && `${t('testSteps.input')}: ${step.value}`}
+          {step.type === 'wait' && `${t('testSteps.duration')}: ${step.duration || 1000}ms`}
+          {step.type === 'refresh' && t('testSteps.refresh')}
           {step.type === 'verify' && (
             <div>
               {(step.verificationType === 'url' || step.verificationType === 'urlContains') ? (
                 <>
-                  {step.verificationType && `Tür: ${step.verificationType === 'url' ? 'URL Kontrolü' : 'URL İçerir'}`}
-                  {step.expectedValue && `, Beklenen: ${step.expectedValue}`}
+                  {step.verificationType && `${t('testSteps.type')}: ${step.verificationType === 'url' ? t('testSteps.urlCheck') : t('testSteps.contains')}`}
+                  {step.expectedValue && `, ${t('testSteps.expected')}: ${step.expectedValue}`}
                 </>
               ) : (
                 <>
-                  {step.selector && `Element: ${step.selector}`}
-                  {step.verificationType && `, Tür: ${step.verificationType}`}
-                  {step.expectedValue && `, Değer: ${step.expectedValue}`}
+                  {step.selector && `${t('testSteps.element')}: ${step.selector}`}
+                  {step.verificationType && `, ${t('testSteps.type')}: ${step.verificationType}`}
+                  {step.expectedValue && `, ${t('testSteps.value')}: ${step.expectedValue}`}
                 </>
               )}
             </div>
           )}
           {step.type === 'scroll' && (
             <div>
-              {step.selector && `Element: ${step.selector}, `}
-              {`Yön: ${step.direction || 'Belirtilmedi'}`}
-              {step.amount && `, Miktar: ${step.amount}px`}
+              {step.selector && `${t('testSteps.element')}: ${step.selector}, `}
+              {`${t('testSteps.direction')}: ${step.direction || t('testSteps.notSpecified')}`}
+              {step.amount && `, ${t('testSteps.amount')}: ${step.amount}px`}
             </div>
           )}
-          {step.type === 'hover' && step.selector && `Element: ${step.selector}`}
+          {step.type === 'hover' && step.selector && `${t('testSteps.element')}: ${step.selector}`}
           {step.type === 'key' && (
             <div>
-              {`Tuş: ${step.key || 'Belirtilmedi'}`}
-              {step.selector && `, Element: ${step.selector}`}
+              {`${t('testSteps.key')}: ${step.key || t('testSteps.notSpecified')}`}
+              {step.selector && `, ${t('testSteps.element')}: ${step.selector}`}
             </div>
           )}
           {step.type === 'dropdown' && (
             <div>
-              {step.selector && `Element: ${step.selector}, `}
-              {`Tür: ${step.optionType || 'Belirtilmedi'}, `}
-              {`Değer: ${step.optionValue || 'Belirtilmedi'}`}
+              {step.selector && `${t('testSteps.element')}: ${step.selector}, `}
+              {`${t('testSteps.type')}: ${step.optionType || t('testSteps.notSpecified')}, `}
+              {`${t('testSteps.value')}: ${step.optionValue || t('testSteps.notSpecified')}`}
             </div>
           )}
           {step.type === 'if' && (
             <>
-              {step.conditionType && `Tür: ${step.conditionType}`}
-              {step.selector && `, Element: ${step.selector}`}
-              {step.expectedValue && `, Değer: ${step.expectedValue}`}
+              {step.conditionType && `${t('testSteps.type')}: ${step.conditionType}`}
+              {step.selector && `, ${t('testSteps.element')}: ${step.selector}`}
+              {step.expectedValue && `, ${t('testSteps.value')}: ${step.expectedValue}`}
             </>
           )}
         </div>

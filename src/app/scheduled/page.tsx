@@ -18,8 +18,10 @@ import { UpcomingTests } from '@/components/features/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription } from '@/lib/utils';
 import { useScheduledTests } from '@/hooks/data';
 import { ScheduledTest } from '@/types/test';
+import { useI18n } from '@/contexts';
 
 export default function ScheduledPage() {
+  const { t } = useI18n();
   const { 
     scheduledTests, 
     upcomingRuns, 
@@ -39,11 +41,11 @@ export default function ScheduledPage() {
   
   return (
     <PageLayout
-      title="Zamanlanmış Testler"
+      title={t('scheduled.title')}
       subtitle={
         scheduledTests.length > 0 
-          ? `Zamanlanmış testleri kontrol edin (${filteredTests.length} / ${scheduledTests.length} test)`
-          : 'Zamanlanmış testleri kontrol edin'
+          ? `${t('scheduled.subtitle')} (${filteredTests.length} / ${scheduledTests.length} ${t('scheduled.tests')})`
+          : t('scheduled.subtitle')
       }
       headerActions={
         <button 
@@ -59,7 +61,7 @@ export default function ScheduledPage() {
           }}
         >
           <Plus size={16} />
-          Yeni Zamanlama
+          {t('scheduled.createNewSchedule')}
         </button>
       }
     >
@@ -78,10 +80,10 @@ export default function ScheduledPage() {
             width: 'max-content'
           }}
           options={[
-            { value: 'active', label: 'Aktif' },
-            { value: 'paused', label: 'Duraklatılmış' },
+            { value: 'active', label: t('status.active') },
+            { value: 'paused', label: t('status.paused') },
           ]}
-          placeholder="Tüm Durumlar"
+          placeholder={t('common.allStatuses')}
         />
       </div>
 
@@ -100,7 +102,7 @@ export default function ScheduledPage() {
                 className="btn-primary"
                 onClick={() => window.location.reload()}
               >
-                Yeniden Dene
+                {t('common.retry')}
               </button>
             </div>
           ) : (
@@ -118,7 +120,7 @@ export default function ScheduledPage() {
                   color: 'var(--text-primary)', 
                   margin: '0 0 1rem 0'
                 }}>
-                  Zamanlanmış Testler
+                  {t('scheduled.allSchedules')}
                 </h3>
                 
                 {filteredTests.length === 0 ? (
@@ -128,13 +130,13 @@ export default function ScheduledPage() {
                     color: 'var(--text-secondary)'
                   }}>
                     <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                    <p>Henüz zamanlanmış test yok</p>
+                    <p>{t('scheduled.noSchedulesFound')}</p>
                     <button 
                       className="btn-primary"
                       onClick={() => setIsModalOpen(true)}
                       style={{ marginTop: '1rem' }}
                     >
-                      İlk Zamanlamayı Oluştur
+                      {t('scheduled.createFirstSchedule')}
                     </button>
                   </div>
                 ) : (
@@ -199,7 +201,7 @@ export default function ScheduledPage() {
                               margin: 0,
                               fontWeight: 500
                             }}>
-                              {getScheduleDescription(test.schedule)}
+                              {getScheduleDescription(test.schedule, t)}
                             </p>
                           </div>
                           
@@ -212,7 +214,7 @@ export default function ScheduledPage() {
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em'
                               }}>
-                                Sonraki Çalışma
+                                {t('scheduled.nextRun')}
                               </span>
                             </div>
                             <p style={{ 
@@ -306,7 +308,7 @@ export default function ScheduledPage() {
                         
                         <button 
                           onClick={() => {
-                            if (confirm('Bu zamanlamayı silmek istediğinizden emin misiniz?')) {
+                            if (confirm(t('scheduled.deleteConfirm'))) {
                               deleteSchedule(test.id);
                             }
                           }}
@@ -340,13 +342,13 @@ export default function ScheduledPage() {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          <span>Son Çalışma: </span>
+                          <span>{t('scheduled.lastRun')}: </span>
                           <span style={{ color: 'var(--text-secondary)' }}>
-                            {formatRelativeTime(test.lastRun)}
+                            {formatRelativeTime(test.lastRun, t)}
                           </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          <span>Süre: </span>
+                          <span>{t('common.duration')}: </span>
                           <span style={{ color: 'var(--text-secondary)' }}>
                             {formatDuration(test.lastDuration || 0)}
                           </span>
@@ -355,7 +357,7 @@ export default function ScheduledPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          Başarı Oranı:
+                          {t('scheduled.successRate')}:
                         </span>
                         <span style={{ 
                           fontSize: '0.875rem', 

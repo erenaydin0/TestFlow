@@ -13,10 +13,12 @@ import {
 import { useExecutions } from '@/hooks/data';
 import { useScheduledTests } from '@/hooks/data';
 import { getConsistentColorFromString } from '@/lib/colorUtils';
+import { useI18n } from '@/contexts';
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
   const { scheduledTests, loading: scheduledLoading } = useScheduledTests();
+  const { t } = useI18n();
   const [dateRange, setDateRange] = useState(14);
 
   // Process data for charts
@@ -42,7 +44,7 @@ export default function Dashboard() {
 
     // Test suite distribution with success rate
     const testSuiteData = executions.reduce((acc: any, execution: any) => {
-      const suite = execution.suite || 'Diğer';
+      const suite = execution.suite || t('dashboard.other');
       if (!acc[suite]) {
         acc[suite] = { total: 0, passed: 0 };
       }
@@ -104,7 +106,7 @@ export default function Dashboard() {
                 execution.status === 'failed' ? 'failed' as const : 'running' as const,
         duration: execution.duration || 0,
         lastRun: new Date(execution.startTime),
-        environment: execution.suite || 'Default'
+        environment: execution.suite || t('dashboard.default')
       }));
 
     return {
@@ -120,7 +122,7 @@ export default function Dashboard() {
       <LoadingErrorState 
         loading={loading} 
         error={error} 
-        loadingMessage="Dashboard verileri yükleniyor..."
+        loadingMessage={t('dashboard.loadingData')}
         onRetry={refresh}
       >
         <StatsCards stats={stats} loading={loading} />

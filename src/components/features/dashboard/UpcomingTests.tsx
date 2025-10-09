@@ -4,6 +4,7 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduledTest } from '@/types/test';
 import { getScheduleDescription } from '@/lib/utils';
+import { useI18n } from '@/contexts';
 
 interface UpcomingTestsProps {
   scheduledTests: ScheduledTest[];
@@ -21,6 +22,7 @@ export default function UpcomingTests({
   onTestClick 
 }: UpcomingTestsProps) {
   const router = useRouter();
+  const { t } = useI18n();
 
   // Aktif zamanlamaları nextRun'a göre sırala ve limitle
   const upcoming = scheduledTests
@@ -45,7 +47,7 @@ export default function UpcomingTests({
       <div className="card h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Yaklaşan Testler
+            {t('dashboard.upcomingTests')}
           </h3>
         </div>
         <div className="text-center py-8 flex-1 flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
@@ -59,7 +61,7 @@ export default function UpcomingTests({
     <div className="card h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Yaklaşan Testler
+          {t('dashboard.upcomingTests')}
         </h3>
         
         {showViewAll && upcoming.length > 0 && (
@@ -82,7 +84,7 @@ export default function UpcomingTests({
               e.currentTarget.style.color = 'var(--accent-primary)';
             }}
           >
-            Tümünü Göster
+            {t('dashboard.viewAll')}
             <ArrowRight size={14} />
           </button>
         )}
@@ -92,7 +94,7 @@ export default function UpcomingTests({
         <div className="text-center py-8 flex-1 flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
           <div style={{ textAlign: 'center' }}>
             <Calendar size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
-            <p style={{ fontSize: '0.875rem', margin: 0 }}>Yaklaşan test yok</p>
+            <p style={{ fontSize: '0.875rem', margin: 0 }}>{t('dashboard.noUpcomingTests')}</p>
           </div>
         </div>
       ) : (
@@ -119,7 +121,7 @@ export default function UpcomingTests({
                   <div className="flex items-center gap-2 mt-1">
                     <Clock size={12} color="var(--text-tertiary)" />
                     <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      {schedule.nextRun ? new Date(schedule.nextRun).toLocaleString('tr-TR', {
+                      {schedule.nextRun ? new Date(schedule.nextRun).toLocaleString(navigator.language, {
                         day: '2-digit',
                         month: '2-digit',
                         hour: '2-digit',
@@ -138,7 +140,7 @@ export default function UpcomingTests({
                   {schedule.suite}
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  {getScheduleDescription(schedule.schedule)}
+                  {getScheduleDescription(schedule.schedule, t)}
                 </p>
               </div>
             </div>

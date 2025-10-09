@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 
 import { StatusBadge } from '@/components/common';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/contexts';
 
 interface RecentTest {
   id: number;
@@ -20,6 +21,7 @@ interface RecentTestsProps {
 
 export default function RecentTests({ data }: RecentTestsProps) {
   const router = useRouter();
+  const { t } = useI18n();
 
   const handleTestClick = (test: RecentTest) => {
     if (test.executionId) {
@@ -31,7 +33,7 @@ export default function RecentTests({ data }: RecentTestsProps) {
     <div className="card h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Son Testler
+          {t('dashboard.recentTests')}
         </h3>
         <button
           onClick={() => router.push('/reports')}
@@ -52,13 +54,13 @@ export default function RecentTests({ data }: RecentTestsProps) {
             e.currentTarget.style.color = 'var(--accent-primary)';
           }}
         >
-          Tümünü Göster
+          {t('dashboard.viewAll')}
           <ArrowRight size={14} />
         </button>
       </div>
       {data.length === 0 ? (
         <div className="text-center py-8 flex-1 flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
-          <p>Henüz test çalıştırılmamış</p>
+          <p>{t('dashboard.noTestsRun')}</p>
         </div>
       ) : (
         <div className="space-y-3 flex-1 overflow-y-auto">
@@ -83,13 +85,13 @@ export default function RecentTests({ data }: RecentTestsProps) {
                     {test.name}
                   </p>
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    {test.status === 'running' ? 'Çalışıyor...' : formatRelativeTime(test.lastRun)}
+                    {test.status === 'running' ? t('status.running') : formatRelativeTime(test.lastRun, t)}
                   </p>
                 </div>
               </div>
               <div className="text-right flex-shrink-0 ml-2">
                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  {test.status === 'running' ? 'Devam ediyor' : formatDuration(test.duration)}
+                  {test.status === 'running' ? t('common.continuing') : formatDuration(test.duration)}
                 </p>
                 <p 
                   className="text-xs truncate max-w-[80px]" 

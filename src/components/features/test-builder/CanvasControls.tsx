@@ -5,6 +5,7 @@ import {
   RotateCcw,
   Move
 } from 'lucide-react';
+import { useI18n } from '@/contexts';
 
 // Props interface
 interface CanvasControlsProps {
@@ -22,6 +23,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
   onResetView,
   testStepsCount
 }) => {
+  const { t } = useI18n();
   return (
     <div 
       style={{
@@ -42,7 +44,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
       <button 
         onClick={onZoomIn}
         className="canvas-control"
-        title="Yakınlaştır"
+        title={t('testBuilder.zoomIn')}
       >
         <ZoomIn size={16} />
       </button>
@@ -64,7 +66,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
       <button 
         onClick={onZoomOut}
         className="canvas-control"
-        title="Uzaklaştır"
+        title={t('testBuilder.zoomOut')}
       >
         <ZoomOut size={16} />
       </button>
@@ -79,7 +81,7 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
       <button 
         onClick={onResetView}
         className="canvas-control"
-        title="Sıfırla"
+        title={t('testBuilder.reset')}
       >
         <RotateCcw size={16} />
       </button>

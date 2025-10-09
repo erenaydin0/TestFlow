@@ -3,7 +3,8 @@
 import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { TestStep } from '@/types';
-import { getActionByType } from '@/lib/actions';
+import { getTranslatedActionByType, ActionType } from '@/lib/actions';
+import { useI18n } from '@/contexts';
 
 interface DragPreviewProps {
   dragPreview: {
@@ -20,11 +21,12 @@ const DragPreview: React.FC<DragPreviewProps> = ({
   draggedStep,
   testSteps
 }) => {
+  const { t } = useI18n();
   // Get the step being dragged or the action being added
   const draggedStepData = draggedStep ? testSteps.find(s => s.id === draggedStep) : null;
   const action = draggedStepData 
-    ? getActionByType(draggedStepData.type)
-    : getActionByType(dragPreview.type);
+    ? getTranslatedActionByType(draggedStepData.type, t)
+    : getTranslatedActionByType(dragPreview.type, t);
   
   if (!action) return null;
   const Icon = action.icon;
@@ -60,9 +62,9 @@ const DragPreview: React.FC<DragPreviewProps> = ({
           }}>
             <Icon size={14} color={action.color} />
           </div>
-          <span style={{ 
-            fontSize: '0.75rem', 
-            fontWeight: 500, 
+          <span style={{
+            fontSize: '0.75rem',
+            fontWeight: 500,
             color: 'var(--text-primary)'
           }}>
             {action.title}

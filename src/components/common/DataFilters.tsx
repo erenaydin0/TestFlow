@@ -7,6 +7,7 @@ import { MultiSelect, CustomSelect } from './';
 import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components/ui';
 import { BrowserType, TestFilters, ExecutionFilters } from '@/types';
+import { useI18n } from '@/contexts';
 
 interface FilterState {
   search: string;
@@ -51,6 +52,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
   searchPlaceholder = "Test ara...",
   className = ""
 }) => {
+  const { t } = useI18n();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -155,13 +157,13 @@ const DataFilters: React.FC<DataFiltersProps> = ({
             value={filters.status || ''}
             onChange={(value) => updateFilter('status', value)}
             options={[
-              { value: '', label: 'Tüm Durumlar' },
+              { value: '', label: t('common.allStatuses') },
               ...availableOptions.statuses.map(status => ({
                 value: status,
                 label: status
               }))
             ]}
-            placeholder="Tüm Durumlar"
+            placeholder={t('common.allStatuses')}
           />
         )}
 
@@ -196,7 +198,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           options={availableOptions.suites}
           selectedValues={filters.suite}
           onChange={(values) => updateFilter('suite', values)}
-          placeholder="Tüm Test Grupları"
+          placeholder={t('common.allTestGroups')}
           className="min-w-full"
         />
 
@@ -205,7 +207,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           options={availableOptions.tags}
           selectedValues={filters.tags}
           onChange={(values) => updateFilter('tags', values)}
-          placeholder="Tüm Etiketler"
+          placeholder={t('common.allTags')}
           className="min-w-full"
         />
 
@@ -214,7 +216,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           options={availableOptions.browsers}
           selectedValues={filters.browserType}
           onChange={(values) => updateFilter('browserType', values)}
-          placeholder="Tüm Tarayıcılar"
+          placeholder={t('common.allBrowsers')}
           className="min-w-full"
           renderOption={(browser) => {
             const option = browserOptions.find(opt => opt.value === browser);
@@ -273,10 +275,10 @@ const DataFilters: React.FC<DataFiltersProps> = ({
             value={filters.status || ''}
             onChange={(value) => updateFilter('status', value)}
             options={[
-              { value: 'completed', label: 'Başarılı' },
-              { value: 'failed', label: 'Başarısız' },
+              { value: 'completed', label: t('status.passed') },
+              { value: 'failed', label: t('status.failed') },
             ]}
-            placeholder="Tüm Durumlar"
+            placeholder={t('common.allStatuses')}
             className="min-w-[120px]"
           />
         )}
@@ -312,7 +314,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           options={availableOptions.suites}
           selectedValues={filters.suite}
           onChange={(values) => updateFilter('suite', values)}
-          placeholder="Tüm Test Grupları"
+          placeholder={t('common.allTestGroups')}
           className="min-w-[150px]"
         />
 
@@ -321,7 +323,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           options={availableOptions.tags}
           selectedValues={filters.tags}
           onChange={(values) => updateFilter('tags', values)}
-          placeholder="Tüm Etiketler"
+          placeholder={t('common.allTags')}
           className="min-w-[150px]"
         />
 
@@ -330,7 +332,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           options={availableOptions.browsers}
           selectedValues={filters.browserType}
           onChange={(values) => updateFilter('browserType', values)}
-          placeholder="Tüm Tarayıcılar"
+          placeholder={t('common.allBrowsers')}
           className="min-w-[150px]"
           renderOption={(browser) => {
             const option = browserOptions.find(opt => opt.value === browser);

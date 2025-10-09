@@ -8,6 +8,7 @@ import {
   Clock
 } from 'lucide-react';
 import { formatDuration } from '@/lib/utils';
+import { useI18n } from '@/contexts';
 
 interface StatsCardsProps {
   stats: {
@@ -21,6 +22,7 @@ interface StatsCardsProps {
 }
 
 export default function StatsCards({ stats, loading = false }: StatsCardsProps) {
+  const { t } = useI18n();
   const [animatedStats, setAnimatedStats] = useState({
     totalExecutions: 0,
     completedExecutions: 0,
@@ -76,7 +78,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Toplam Test
+              {t('dashboard.totalTests')}
             </p>
             <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--status-info)', margin: 0 }}>
               {loading ? '...' : animatedStats.totalExecutions}
@@ -98,7 +100,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Başarılı
+              {t('dashboard.passedTests')}
             </p>
             <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--status-success)', margin: 0 }}>
               {loading ? '...' : animatedStats.completedExecutions}
@@ -120,7 +122,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Başarısız
+              {t('dashboard.failedTests')}
             </p>
             <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--status-error)', margin: 0 }}>
               {loading ? '...' : animatedStats.failedExecutions}
@@ -142,7 +144,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Ortalama Süre
+              {t('dashboard.averageDuration')}
             </p>
             <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--status-warning)', margin: 0 }}>
               {loading ? '...' : formatDuration(stats.avgDuration)}
@@ -164,7 +166,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Başarı Oranı
+              {t('dashboard.successRate')}
             </p>
             <p style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--status-success)', margin: 0 }}>
               {loading ? '...' : animatedStats.successRate}%

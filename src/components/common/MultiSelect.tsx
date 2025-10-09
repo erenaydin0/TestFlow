@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X, Check, Search } from 'lucide-react';
 import { useDropdown } from '@/hooks/ui';
 import { getDropdownContainerStyle, getDropdownOptionHandlers } from '@/lib/dropdownStyles';
+import { useI18n } from '@/contexts';
 
 interface MultiSelectProps {
   options: string[];
@@ -18,10 +19,11 @@ export default function MultiSelect({
   options,
   selectedValues,
   onChange,
-  placeholder = "Seçiniz...",
+  placeholder,
   className = "",
   renderOption
 }: MultiSelectProps) {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,7 +112,7 @@ export default function MultiSelect({
         }}>
           {selectedValues.length === 0 ? (
             <span style={{ color: 'var(--text-secondary)' }}>
-              {placeholder}
+              {placeholder || t('common.select')}
             </span>
           ) : selectedValues.length === 1 ? (
             <span style={{ 
@@ -204,7 +206,7 @@ export default function MultiSelect({
                 color: 'var(--text-secondary)', 
                 fontSize: '0.75rem' 
               }}>
-                {searchTerm ? 'Arama sonucu bulunamadı' : 'Seçenek bulunamadı'}
+                {searchTerm ? t('common.noSearchResults') : t('common.noOptions')}
               </div>
             ) : (
               filteredOptions.map((option) => (

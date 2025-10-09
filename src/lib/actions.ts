@@ -22,379 +22,441 @@ import {
   Link
 } from 'lucide-react';
 
+// Translation function type
+export type TranslationFunction = (key: string) => string;
+
 // Action category for better organization
 export type ActionCategory = 'navigation' | 'interaction' | 'input' | 'validation' | 'utility' | 'advanced';
 
 // Field configuration for dynamic form generation
 export interface ActionField {
   key: string;
-  label: string;
+  label?: string;
+  labelKey?: string;
   type: 'text' | 'url' | 'number' | 'textarea' | 'select' | 'checkbox';
   placeholder?: string;
+  placeholderKey?: string;
   required?: boolean;
   min?: number;
   max?: number;
   step?: number;
-  options?: { value: string; label: string }[];
+  options?: { value: string; label?: string; labelKey?: string }[];
   description?: string;
+  descriptionKey?: string;
 }
 
 // Enhanced action type with extensible configuration
 export interface ActionType {
   type: string;
-  title: string;
+  title?: string;
+  titleKey?: string;
   icon: React.ComponentType<{ size?: number; color?: string }>;
   color: string;
   borderColor: string;
-  description: string;
+  description?: string;
+  descriptionKey?: string;
   category: ActionCategory;
   fields: ActionField[];
   isAdvanced?: boolean;
   version?: string;
 }
 
-// Base action configurations
-const baseActions: ActionType[] = [
+// Base action configurations (without translations)
+const baseActionsConfig: any[] = [
   {
     type: 'navigate',
-    title: 'Sayfa Git',
+    titleKey: 'testSteps.navigate',
     icon: Link,
     color: 'var(--status-info)',
     borderColor: 'var(--status-info)',
-    description: 'Belirtilen URL\'e git',
-    category: 'navigation',
+    descriptionKey: 'testSteps.navigateDesc',
+    category: 'navigation' as ActionCategory,
     fields: [
       {
         key: 'url',
-        label: 'URL',
-        type: 'url',
-        placeholder: 'https://example.com',
+        labelKey: 'testSteps.url',
+        type: 'url' as const,
+        placeholderKey: 'testSteps.urlPlaceholder',
         required: true,
-        description: 'Gidilecek web sayfasının adresi'
+        descriptionKey: 'testSteps.urlDescription'
       }
     ]
   },
   {
     type: 'click',
-    title: 'Tıkla',
+    titleKey: 'testSteps.click',
     icon: MousePointer,
     color: 'var(--status-success)',
     borderColor: 'var(--status-success)',
-    description: 'Element\'e tıkla',
-    category: 'interaction',
+    descriptionKey: 'testSteps.clickDesc',
+    category: 'interaction' as ActionCategory,
     fields: [
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#button, .class, //button[text()=\'Submit\'], [data-testid=\'submit\']',
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.clickSelectorPlaceholder',
         required: true,
-        description: 'CSS seçici, XPath veya ID kullanarak tıklanacak element'
+        descriptionKey: 'testSteps.selectorDescription'
       }
     ]
   },
   {
     type: 'input',
-    title: 'Metin Gir',
+    titleKey: 'testSteps.input',
     icon: Type,
     color: 'var(--status-error)',
     borderColor: 'var(--status-error)',
-    description: 'Input alanına metin gir',
-    category: 'input',
+    descriptionKey: 'testSteps.inputDesc',
+    category: 'input' as ActionCategory,
     fields: [
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#input, .form-field, //input[@name=\'username\'], [name=\'username\']',
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.inputSelectorPlaceholder',
         required: true,
-        description: 'CSS seçici, XPath veya ID kullanarak metin girilecek input alanı'
+        descriptionKey: 'testSteps.inputSelectorDescription'
       },
       {
         key: 'value',
-        label: 'Değer',
-        type: 'text',
-        placeholder: 'Girilecek metin',
+        labelKey: 'testSteps.value',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.inputValuePlaceholder',
         required: true,
-        description: 'Input alanına girilecek metin'
+        descriptionKey: 'testSteps.inputValueDescription'
       }
     ]
   },
   {
     type: 'wait',
-    title: 'Bekle',
+    titleKey: 'testSteps.wait',
     icon: Clock,
     color: 'var(--status-warning)',
     borderColor: 'var(--status-warning)',
-    description: 'Belirtilen süre bekle',
-    category: 'utility',
+    descriptionKey: 'testSteps.waitDesc',
+    category: 'utility' as ActionCategory,
     fields: [
       {
         key: 'duration',
-        label: 'Bekleme Süresi (milisaniye)',
-        type: 'number',
+        labelKey: 'testSteps.duration',
+        type: 'number' as const,
         placeholder: '1000',
         min: 100,
         max: 30000,
         step: 100,
         required: true,
-        description: 'Beklenecek süre (milisaniye cinsinden)'
+        descriptionKey: 'testSteps.durationDescription'
       }
     ]
   },
   {
     type: 'refresh',
-    title: 'Yenile',
+    titleKey: 'testSteps.refresh',
     icon: RefreshCw,
     color: 'var(--status-purple)',
     borderColor: 'var(--status-purple)',
-    description: 'Sayfayı yenile',
-    category: 'navigation',
+    descriptionKey: 'testSteps.refreshDesc',
+    category: 'navigation' as ActionCategory,
     fields: []
   },
   {
     type: 'if',
-    title: 'Koşul',
+    titleKey: 'testSteps.condition',
     icon: GitBranch,
     color: 'var(--status-error)',
     borderColor: 'var(--status-error)',
-    description: 'Koşullu işlem',
-    category: 'advanced',
+    descriptionKey: 'testSteps.conditionDesc',
+    category: 'advanced' as ActionCategory,
     isAdvanced: true,
     fields: [
       {
         key: 'conditionType',
-        label: 'Koşul Türü',
-        type: 'select',
+        labelKey: 'testSteps.conditionType',
+        type: 'select' as const,
         required: true,
         options: [
-          { value: 'exists', label: 'Element Var' },
-          { value: 'visible', label: 'Element Görünür' },
-          { value: 'hidden', label: 'Element Gizli' },
-          { value: 'text', label: 'Metin Eşit' },
-          { value: 'textContains', label: 'Metin İçerir' },
-          { value: 'value', label: 'Değer Eşit' },
-          { value: 'valueContains', label: 'Değer İçerir' },
-          { value: 'count', label: 'Element Sayısı' },
-          { value: 'url', label: 'URL Eşit' },
-          { value: 'urlContains', label: 'URL İçerir' }
+          { value: 'exists', labelKey: 'testSteps.elementExists' },
+          { value: 'visible', labelKey: 'testSteps.elementVisible' },
+          { value: 'hidden', labelKey: 'testSteps.elementHidden' },
+          { value: 'text', labelKey: 'testSteps.textEquals' },
+          { value: 'textContains', labelKey: 'testSteps.textContains' },
+          { value: 'value', labelKey: 'testSteps.valueEquals' },
+          { value: 'valueContains', labelKey: 'testSteps.valueContains' },
+          { value: 'count', labelKey: 'testSteps.elementCount' },
+          { value: 'url', labelKey: 'testSteps.urlEquals' },
+          { value: 'urlContains', labelKey: 'testSteps.urlContains' }
         ],
-        description: 'Hangi tür koşul kontrolü yapılacağını seçin'
+        descriptionKey: 'testSteps.conditionTypeDescription'
       },
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#element, .class, //div[@data-testid=\'result\'], [data-testid=\'result\']',
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.conditionSelectorPlaceholder',
         required: false,
-        description: 'CSS seçici, XPath veya ID (URL kontrolü için gerekli değil)'
+        descriptionKey: 'testSteps.conditionSelectorDescription'
       },
       {
         key: 'expectedValue',
-        label: 'Beklenen Değer',
-        type: 'text',
-        placeholder: 'Karşılaştırılacak değer',
-        description: 'Koşulun karşılaştırılacağı değer (metin, sayı veya URL)'
+        labelKey: 'testSteps.expectedValue',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.expectedValuePlaceholder',
+        descriptionKey: 'testSteps.expectedValueDescription'
       },
       {
         key: 'operator',
-        label: 'Karşılaştırma Operatörü',
-        type: 'select',
+        labelKey: 'testSteps.operator',
+        type: 'select' as const,
         required: false,
         options: [
-          { value: 'equals', label: 'Eşit (=)' },
-          { value: 'notEquals', label: 'Eşit Değil (≠)' },
-          { value: 'greaterThan', label: 'Büyüktür (>)' },
-          { value: 'lessThan', label: 'Küçüktür (<)' },
-          { value: 'greaterOrEqual', label: 'Büyük veya Eşit (≥)' },
-          { value: 'lessOrEqual', label: 'Küçük veya Eşit (≤)' }
+          { value: 'equals', labelKey: 'testSteps.equals' },
+          { value: 'notEquals', labelKey: 'testSteps.notEquals' },
+          { value: 'greaterThan', labelKey: 'testSteps.greaterThan' },
+          { value: 'lessThan', labelKey: 'testSteps.lessThan' },
+          { value: 'greaterOrEqual', labelKey: 'testSteps.greaterOrEqual' },
+          { value: 'lessOrEqual', labelKey: 'testSteps.lessOrEqual' }
         ],
-        description: 'Sayısal karşılaştırmalar için operatör (sadece count türü için)'
+        descriptionKey: 'testSteps.operatorDescription'
       }
     ]
   }
 ];
 
 // Extended actions for future use
-const extendedActions: ActionType[] = [
+const extendedActionsConfig: any[] = [
   {
     type: 'verify',
-    title: 'Doğrula',
+    titleKey: 'testSteps.verify',
     icon: CheckCircle,
     color: 'var(--status-success)',
     borderColor: 'var(--status-success)',
-    description: 'Elementin varlığını veya içeriğini doğrula',
-    category: 'validation',
+    descriptionKey: 'testSteps.verifyDesc',
+    category: 'validation' as ActionCategory,
     fields: [
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#element, .class, //div[@data-testid=\'result\'], [data-testid=\'result\']',
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.verifySelectorPlaceholder',
         required: false,
-        description: 'CSS seçici, XPath veya ID kullanarak doğrulanacak element (URL kontrolü için gerekli değil)'
+        descriptionKey: 'testSteps.verifySelectorDescription'
       },
       {
         key: 'verificationType',
-        label: 'Doğrulama Türü',
-        type: 'select',
+        labelKey: 'testSteps.verificationType',
+        type: 'select' as const,
         required: true,
         options: [
-          { value: 'text', label: 'Metin İçeriği' },
-          { value: 'contains', label: 'Metin İçerir' },
-          { value: 'url', label: 'URL Kontrolü' },
-          { value: 'urlContains', label: 'URL İçerir' },
-          { value: 'value', label: 'Input Değeri' },
-          { value: 'visible', label: 'Görünür' },
-          { value: 'hidden', label: 'Gizli' },
-          { value: 'enabled', label: 'Etkin' },
-          { value: 'disabled', label: 'Devre Dışı' }
+          { value: 'text', labelKey: 'testSteps.textContent' },
+          { value: 'contains', labelKey: 'testSteps.textContains' },
+          { value: 'url', labelKey: 'testSteps.urlCheck' },
+          { value: 'urlContains', labelKey: 'testSteps.urlContains' },
+          { value: 'value', labelKey: 'testSteps.inputValue' },
+          { value: 'visible', labelKey: 'testSteps.visible' },
+          { value: 'hidden', labelKey: 'testSteps.hidden' },
+          { value: 'enabled', labelKey: 'testSteps.enabled' },
+          { value: 'disabled', labelKey: 'testSteps.disabled' }
         ],
-        description: 'Hangi tür doğrulama yapılacağını seçin'
+        descriptionKey: 'testSteps.verificationTypeDescription'
       },
       {
         key: 'expectedValue',
-        label: 'Beklenen Değer',
-        type: 'text',
-        placeholder: 'Beklenen metin, değer veya URL',
-        description: 'Elementin veya sayfanın sahip olması beklenen değer'
+        labelKey: 'testSteps.expectedValue',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.verifyExpectedValuePlaceholder',
+        descriptionKey: 'testSteps.verifyExpectedValueDescription'
       }
     ]
   },
   {
     type: 'scroll',
-    title: 'Kaydır',
+    titleKey: 'testSteps.scroll',
     icon: Scroll,
     color: 'var(--status-info)',
     borderColor: 'var(--status-info)',
-    description: 'Sayfayı veya elementi kaydır',
-    category: 'interaction',
+    descriptionKey: 'testSteps.scrollDesc',
+    category: 'interaction' as ActionCategory,
     fields: [
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#element, .container, //div[@class=\'scroll\'] (boş bırakılırsa sayfa kaydırılır)',
-        description: 'CSS seçici, XPath veya ID kullanarak kaydırılacak element'
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.scrollSelectorPlaceholder',
+        descriptionKey: 'testSteps.scrollSelectorDescription'
       },
       {
         key: 'direction',
-        label: 'Yön',
-        type: 'select',
+        labelKey: 'testSteps.direction',
+        type: 'select' as const,
         required: true,
         options: [
-          { value: 'top', label: 'Yukarı' },
-          { value: 'bottom', label: 'Aşağı' },
-          { value: 'left', label: 'Sol' },
-          { value: 'right', label: 'Sağ' }
+          { value: 'top', labelKey: 'testSteps.up' },
+          { value: 'bottom', labelKey: 'testSteps.down' },
+          { value: 'left', labelKey: 'testSteps.left' },
+          { value: 'right', labelKey: 'testSteps.right' }
         ],
-        description: 'Kaydırma yönü'
+        descriptionKey: 'testSteps.directionDescription'
       },
       {
         key: 'amount',
-        label: 'Miktar (piksel)',
-        type: 'number',
+        labelKey: 'testSteps.amount',
+        type: 'number' as const,
         placeholder: '500',
         min: 0,
         max: 5000,
         step: 50,
-        description: 'Kaydırılacak piksel miktarı (boş bırakılırsa tam kaydırma yapılır)'
+        descriptionKey: 'testSteps.amountDescription'
       }
     ]
   },
-
   {
     type: 'hover',
-    title: 'Üzerine Gel',
+    titleKey: 'testSteps.hover',
     icon: MousePointer2,
     color: 'var(--status-warning)',
     borderColor: 'var(--status-warning)',
-    description: 'Elementin üzerine gel (hover)',
-    category: 'interaction',
+    descriptionKey: 'testSteps.hoverDesc',
+    category: 'interaction' as ActionCategory,
     fields: [
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#element, .hover-target, //button[@title=\'Hover me\']',
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.hoverSelectorPlaceholder',
         required: true,
-        description: 'CSS seçici, XPath veya ID kullanarak üzerine gelinecek element'
+        descriptionKey: 'testSteps.hoverSelectorDescription'
       }
     ]
   },
   {
     type: 'key',
-    title: 'Tuş Bas',
+    titleKey: 'testSteps.key',
     icon: Keyboard,
     color: 'var(--status-error)',
     borderColor: 'var(--status-error)',
-    description: 'Klavye tuşuna bas',
-    category: 'input',
+    descriptionKey: 'testSteps.keyDesc',
+    category: 'input' as ActionCategory,
     fields: [
       {
         key: 'key',
-        label: 'Tuş',
-        type: 'text',
-        placeholder: 'Tuş yakalamak için alana tıklayın ve tuşa basın...',
+        labelKey: 'testSteps.keyLabel',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.keyCapturePlaceholder',
         required: true,
-        description: 'Basılacak klavye tuşu - input alanına tıklayıp istediğiniz tuşa basın'
+        descriptionKey: 'testSteps.keyDescription'
       },
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#element, .input-field, //input[@type=\'text\'] (boş bırakılırsa genel tuş basımı)',
-        description: 'CSS seçici, XPath veya ID kullanarak tuş basımının yapılacağı element'
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.keySelectorPlaceholder',
+        descriptionKey: 'testSteps.keySelectorDescription'
       }
     ]
   },
   {
     type: 'dropdown',
-    title: 'Dropdown Seç',
+    titleKey: 'testSteps.dropdown',
     icon: ChevronDown,
     color: 'var(--status-success)',
     borderColor: 'var(--status-success)',
-    description: 'Dropdown menüden seçim yap',
-    category: 'input',
+    descriptionKey: 'testSteps.dropdownDesc',
+    category: 'input' as ActionCategory,
     fields: [
       {
         key: 'selector',
-        label: 'Seçici (Selector)',
-        type: 'text',
-        placeholder: '#select, .dropdown, //select[@name=\'country\'], [name=\'dropdown\']',
+        labelKey: 'testSteps.selector',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.dropdownSelectorPlaceholder',
         required: true,
-        description: 'CSS seçici, XPath veya ID kullanarak dropdown elementi'
+        descriptionKey: 'testSteps.dropdownSelectorDescription'
       },
       {
         key: 'optionType',
-        label: 'Seçim Türü',
-        type: 'select',
+        labelKey: 'testSteps.optionType',
+        type: 'select' as const,
         required: true,
         options: [
-          { value: 'value', label: 'Değer (Value)' },
-          { value: 'text', label: 'Görünen Metin' },
-          { value: 'index', label: 'Sıra Numarası' }
+          { value: 'value', labelKey: 'testSteps.value' },
+          { value: 'text', labelKey: 'testSteps.visibleText' },
+          { value: 'index', labelKey: 'testSteps.indexNumber' }
         ],
-        description: 'Hangi yöntemle seçim yapılacağını belirtin'
+        descriptionKey: 'testSteps.optionTypeDescription'
       },
       {
         key: 'optionValue',
-        label: 'Seçilecek Değer',
-        type: 'text',
-        placeholder: 'Seçilecek değer, metin veya index numarası',
+        labelKey: 'testSteps.optionValue',
+        type: 'text' as const,
+        placeholderKey: 'testSteps.optionValuePlaceholder',
         required: true,
-        description: 'Seçim türüne göre: value attribute, görünen metin veya 0-tabanlı index numarası'
+        descriptionKey: 'testSteps.optionValueDescription'
       }
     ]
   }
 ];
 
-// Combine all actions
-export const availableActions: ActionType[] = [...baseActions, ...extendedActions];
+// Function to get translated actions
+export const getTranslatedActions = (t: TranslationFunction): ActionType[] => {
+  const translateAction = (action: any): ActionType => ({
+    ...action,
+    title: action.titleKey ? t(action.titleKey) : action.title,
+    description: action.descriptionKey ? t(action.descriptionKey) : action.description,
+    fields: action.fields.map((field: any) => ({
+      ...field,
+      label: field.labelKey ? t(field.labelKey) : field.label,
+      description: field.descriptionKey ? t(field.descriptionKey) : field.description,
+      options: field.options?.map((option: any) => ({
+        ...option,
+        label: option.labelKey ? t(option.labelKey) : option.label
+      }))
+    }))
+  });
+
+  return [...baseActionsConfig, ...extendedActionsConfig].map(translateAction);
+};
+
+// Default actions (for backward compatibility) - these will have empty titles
+export const availableActions: ActionType[] = [...baseActionsConfig, ...extendedActionsConfig].map(action => ({
+  ...action,
+  title: action.titleKey || action.title || action.type,
+  description: action.descriptionKey || action.description || '',
+  fields: action.fields.map((field: any) => ({
+    ...field,
+    label: field.labelKey || field.label || field.key,
+    description: field.descriptionKey || field.description || '',
+    options: field.options?.map((option: any) => ({
+      ...option,
+      label: option.labelKey || option.label || option.value
+    }))
+  }))
+}));
 
 // Helper functions
 export const getActionByType = (type: string): ActionType | undefined => {
   return availableActions.find(action => action.type === type);
+};
+
+// Translation-aware version of getActionByType
+export const getTranslatedActionByType = (type: string, t: TranslationFunction): ActionType | undefined => {
+  const action = [...baseActionsConfig, ...extendedActionsConfig].find(action => action.type === type);
+  if (!action) return undefined;
+  
+  return {
+    ...action,
+    title: action.titleKey ? t(action.titleKey) : action.title || action.type,
+    description: action.descriptionKey ? t(action.descriptionKey) : action.description || '',
+    fields: action.fields.map((field: any) => ({
+      ...field,
+      label: field.labelKey ? t(field.labelKey) : field.label || field.key,
+      placeholder: field.placeholderKey ? t(field.placeholderKey) : field.placeholder,
+      description: field.descriptionKey ? t(field.descriptionKey) : field.description || '',
+      options: field.options?.map((option: any) => ({
+        ...option,
+        label: option.labelKey ? t(option.labelKey) : option.label || option.value
+      }))
+    }))
+  };
 };
 
 export const getActionColor = (type: string): string => {
@@ -423,8 +485,8 @@ export class ActionRegistry {
 
   static registerAction(action: ActionType): void {
     // Validate action
-    if (!action.type || !action.title || !action.icon) {
-      throw new Error('Action must have type, title, and icon');
+    if (!action.type || (!action.title && !action.titleKey) || !action.icon) {
+      throw new Error('Action must have type, title (or titleKey), and icon');
     }
 
     // Check for duplicates
@@ -451,4 +513,4 @@ export class ActionRegistry {
     }
     return false;
   }
-} 
+}

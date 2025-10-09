@@ -7,7 +7,8 @@ import {
   NotificationProvider, 
   SidebarProvider, 
   BrowserProvider, 
-  SettingsModalProvider 
+  SettingsModalProvider,
+  I18nProvider
 } from '@/contexts';
 import { ToastContainer } from '@/components/features/notifications';
 import { SettingsModalWrapper } from '@/components/modals';
@@ -30,19 +31,21 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <ThemeProvider>
-          <BrowserProvider>
-            <NotificationProvider>
-              <SidebarProvider>
-                <SettingsModalProvider>
-                  {children}
-                  <ToastContainer />
-                  <SettingsModalWrapper />
-                </SettingsModalProvider>
-              </SidebarProvider>
-            </NotificationProvider>
-          </BrowserProvider>
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <BrowserProvider>
+              <NotificationProvider>
+                <SidebarProvider>
+                  <SettingsModalProvider>
+                    {children}
+                    <ToastContainer />
+                    <SettingsModalWrapper />
+                  </SettingsModalProvider>
+                </SidebarProvider>
+              </NotificationProvider>
+            </BrowserProvider>
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );

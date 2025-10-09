@@ -1,5 +1,6 @@
 import React from 'react';
-import { availableActions, ActionType } from '@/lib/actions';
+import { getTranslatedActions, ActionType } from '@/lib/actions';
+import { useI18n } from '@/contexts';
 
 // Props interface
 interface ActionsPanelProps {
@@ -15,6 +16,9 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({
   onDragEnd,
   onMouseDown
 }) => {
+  const { t } = useI18n();
+  const actions = getTranslatedActions(t);
+
   return (
     <div 
       style={{
@@ -34,7 +38,7 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({
       }}
     >
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        {availableActions.map((action) => {
+        {actions.map((action) => {
           const Icon = action.icon;
           return (
             <div

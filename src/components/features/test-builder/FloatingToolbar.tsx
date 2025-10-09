@@ -23,6 +23,7 @@ import {
 import { TestStep, BrowserType, FloatingToolbarProps } from '@/types';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components/ui';
+import { useI18n } from '@/contexts';
 
 
 export default function FloatingToolbar({
@@ -56,6 +57,8 @@ export default function FloatingToolbar({
   selectedBrowser,
   onBrowserChange
 }: FloatingToolbarProps) {
+  const { t } = useI18n();
+  
   const handleImportClick = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -108,7 +111,7 @@ export default function FloatingToolbar({
           icon={Play}
           variant={testStepsCount > 0 ? "success" : "ghost"}
           size="sm"
-          tooltip={isRunning ? "Test Çalışıyor..." : "Testi Çalıştır"}
+          tooltip={isRunning ? t('testBuilder.testRunning') : t('testBuilder.runTest')}
           disabled={testStepsCount === 0 || isRunning}
           loading={isRunning}
           onClick={onRun}
@@ -125,7 +128,7 @@ export default function FloatingToolbar({
           icon={Download}
           variant="ghost"
           size="sm"
-          tooltip="Workflow'u Dışa Aktar (.json)"
+          tooltip={t('testBuilder.exportWorkflow')}
           disabled={testStepsCount === 0}
           onClick={onExport}
         />
@@ -133,7 +136,7 @@ export default function FloatingToolbar({
           icon={Upload}
           variant="ghost"
           size="sm"
-          tooltip="Workflow'u İçe Aktar (.json)"
+          tooltip={t('testBuilder.importWorkflow')}
           onClick={handleImportClick}
         />
       </ButtonGroup>
@@ -158,7 +161,7 @@ export default function FloatingToolbar({
           icon={Redo}
           variant="ghost"
           size="sm"
-          tooltip="İleri Al - Ctrl+Y"
+          tooltip={t('testBuilder.redo')}
           disabled={!canRedo}
           onClick={onRedo}
         />
@@ -173,7 +176,7 @@ export default function FloatingToolbar({
       
       <button 
         onClick={onAutoArrange}
-        title="Adımları Otomatik Hizala"
+        title={t('testBuilder.autoArrange')}
         disabled={testStepsCount === 0}
         style={{
           padding: '0.375rem',
@@ -224,7 +227,7 @@ export default function FloatingToolbar({
         icon={Magnet}
         variant={snapEnabled ? "primary" : "ghost"}
         size="sm"
-        tooltip={snapEnabled ? "Otomatik Sabitlemeyi Kapat" : "Otomatik Sabitlemeyi Aç"}
+        tooltip={snapEnabled ? t('testBuilder.disableSnap') : t('testBuilder.enableSnap')}
         onClick={onToggleSnap}
         style={snapEnabled ? { 
           backgroundColor: 'var(--accent-primary)', 
@@ -239,7 +242,7 @@ export default function FloatingToolbar({
           icon={Camera}
           variant={enableScreenshots ? "warning" : "ghost"}
           size="sm"
-          tooltip={enableScreenshots ? "Ekran Görüntüsü Almayı Kapat" : "Ekran Görüntüsü Almayı Aç"}
+          tooltip={enableScreenshots ? t('testBuilder.disableScreenshots') : t('testBuilder.enableScreenshots')}
           onClick={() => onToggleScreenshots?.()}
           style={enableScreenshots ? { 
             backgroundColor: 'var(--status-warning)', 
@@ -253,7 +256,7 @@ export default function FloatingToolbar({
           icon={Video}
           variant={enableRecording ? "danger" : "ghost"}
           size="sm"
-          tooltip={enableRecording ? "Ekran Kaydını Kapat" : "Ekran Kaydını Aç"}
+          tooltip={enableRecording ? t('testBuilder.disableRecording') : t('testBuilder.enableRecording')}
           onClick={() => onToggleRecording?.()}
           style={enableRecording ? { 
             backgroundColor: 'var(--status-error)', 
@@ -267,7 +270,7 @@ export default function FloatingToolbar({
           icon={headlessMode ? EyeOff : Eye}
           variant={headlessMode ? "success" : "ghost"}
           size="sm"
-          tooltip={headlessMode ? "Görünür Mod (Browser Açık)" : "Gizli Mod (Headless)"}
+          tooltip={headlessMode ? t('testBuilder.visibleMode') : t('testBuilder.headlessMode')}
           onClick={() => onToggleHeadless?.()}
           style={headlessMode ? { 
             backgroundColor: 'var(--status-success)', 
@@ -340,17 +343,17 @@ export default function FloatingToolbar({
             whiteSpace: 'nowrap',
             flexShrink: 0
           }}
-          title={`${connectionType === 'true' ? 'TRUE Dalı' :
-                   connectionType === 'false' ? 'FALSE Dalı' :
-                   'Bağlantı Modu'} - Test adımları arasındaki bağlantı türünü gösterir`}
+          title={`${connectionType === 'true' ? t('testBuilder.trueBranch') :
+                   connectionType === 'false' ? t('testBuilder.falseBranch') :
+                   t('testBuilder.connectionMode')} - ${t('testBuilder.connectionTypeDesc')}`}
         >
           {connectionType === 'true' ? <CheckCircle size={14} /> :
            connectionType === 'false' ? <XCircle size={14} /> :
            <GitBranch size={14} />}
           <span style={{ whiteSpace: 'nowrap' }}>
-            {connectionType === 'true' ? 'TRUE Dalı' :
-             connectionType === 'false' ? 'FALSE Dalı' :
-             'Bağlantı Modu'}
+            {connectionType === 'true' ? t('testBuilder.trueBranch') :
+             connectionType === 'false' ? t('testBuilder.falseBranch') :
+             t('testBuilder.connectionMode')}
           </span>
         </div>
       )}

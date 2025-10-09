@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Calendar } from 'lucide-react';
 
 import { getChartColors, getTextColors, getBorderColors, getBgColors } from '@/lib/chartUtils';
+import { useI18n } from '@/contexts';
 
 interface DailyResult {
   date: string;
@@ -21,6 +22,7 @@ type DateRange = 7 | 14 | 30 | 60;
 
 export default function DailyTestResults({ data, onDateRangeChange }: DailyTestResultsProps) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [selectedRange, setSelectedRange] = useState<DateRange>(14);
   const colors = getChartColors();
   const textColors = getTextColors();
@@ -28,10 +30,10 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
   const bgColors = getBgColors();
 
   const dateRanges: { value: DateRange; label: string }[] = [
-    { value: 7, label: '7 Gün' },
-    { value: 14, label: '14 Gün' },
-    { value: 30, label: '30 Gün' },
-    { value: 60, label: '60 Gün' }
+    { value: 7, label: t('dashboard.days', { count: 7 }) },
+    { value: 14, label: t('dashboard.days', { count: 14 }) },
+    { value: 30, label: t('dashboard.days', { count: 30 }) },
+    { value: 60, label: t('dashboard.days', { count: 60 }) }
   ];
 
   const handleRangeChange = (range: DateRange) => {
@@ -47,7 +49,7 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
     <div className="card h-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold" style={{ color: textColors.primary }}>
-          Günlük Test Sonuçları
+          {t('dashboard.dailyResults')}
         </h3>
         <div className="flex items-center gap-2">
           <Calendar size={16} style={{ color: textColors.secondary }} />
@@ -92,7 +94,7 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
               tickFormatter={(value) => {
                 const date = new Date(value);
                 const day = date.getDate();
-                const month = date.toLocaleDateString('tr-TR', { month: 'short' });
+                const month = date.toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US', { month: 'short' });
                 return `${day} ${month}`;
               }}
             />
@@ -107,13 +109,13 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
               }}
               labelFormatter={(value) => {
                 const date = new Date(value);
-                return date.toLocaleDateString('tr-TR');
+                return date.toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US');
               }}
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
                   const total = payload[0].payload.total;
                   const date = label ? new Date(label) : null;
-                  const formattedDate = date ? date.toLocaleDateString('tr-TR', { 
+                  const formattedDate = date ? date.toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US', { 
                     day: 'numeric', 
                     month: 'long', 
                     year: 'numeric',
@@ -165,7 +167,7 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
                         justifyContent: 'space-between',
                         fontWeight: '600'
                       }}>
-                        <span>Toplam</span>
+                        <span>Total</span>
                         <span style={{ color: textColors.primary }}>{total}</span>
                       </div>
                     </div>
@@ -181,7 +183,7 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
               stroke={colors.success} 
               fill={colors.success} 
               fillOpacity={0.6}
-              name="Başarılı"
+              name={t('status.passed')}
             />
             <Area 
               type="monotone" 
@@ -190,7 +192,7 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
               stroke={colors.error} 
               fill={colors.error} 
               fillOpacity={0.6}
-              name="Başarısız"
+              name={t('status.failed')}
             />
           </AreaChart>
         </ResponsiveContainer>

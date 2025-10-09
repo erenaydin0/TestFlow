@@ -1,21 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Sun, Moon, Monitor, Settings, Palette, Code } from 'lucide-react';
-import { useTheme, useBrowserSettings } from '@/contexts';
+import { X, Sun, Moon, Monitor, Settings, Palette, Code, Globe } from 'lucide-react';
+import { useTheme, useBrowserSettings, useI18n } from '@/contexts';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
+import { LanguageSelector } from '@/components/common';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type TabType = 'browser' | 'appearance';
+type TabType = 'browser' | 'appearance' | 'language';
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('browser');
   const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
   const { 
     defaultBrowser, 
     setDefaultBrowser, 
@@ -39,14 +41,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   ];
 
   const themeOptions = [
-    { value: 'light', label: 'Açık Tema', icon: Sun },
-    { value: 'dark', label: 'Koyu Tema', icon: Moon },
-    { value: 'system', label: 'Sistem', icon: Monitor }
+    { value: 'light', label: t('common.light'), icon: Sun },
+    { value: 'dark', label: t('common.dark'), icon: Moon },
+    { value: 'system', label: t('common.system'), icon: Monitor }
   ];
 
   const tabs = [
-    { id: 'browser' as TabType, label: 'Tarayıcı', icon: Code },
-    { id: 'appearance' as TabType, label: 'Görünüm', icon: Palette }
+    { id: 'browser' as TabType, label: t('settings.browser'), icon: Code },
+    { id: 'appearance' as TabType, label: t('settings.appearance'), icon: Palette },
+    { id: 'language' as TabType, label: t('settings.language'), icon: Globe }
   ];
 
   // ESC tuşu ile kapatma ve tab navigasyonu
@@ -93,7 +96,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             color: 'var(--text-primary)',
             marginBottom: '0.75rem'
           }}>
-            Varsayılan Tarayıcı
+            {t('settings.defaultBrowser')}
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
             {browserOptions.map((browser) => {
@@ -146,7 +149,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             color: 'var(--text-primary)',
             marginBottom: '0.75rem'
           }}>
-            Test Seçenekleri
+            {t('settings.testOptions')}
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
           <label style={{
@@ -181,7 +184,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               fontSize: '0.875rem',
               color: 'var(--text-primary)'
             }}>
-              Headless Mod
+              {t('settings.headlessMode')}
             </span>
           </label>
 
@@ -217,7 +220,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               fontSize: '0.875rem',
               color: 'var(--text-primary)'
             }}>
-              Video Kaydı
+              {t('settings.videoRecording')}
             </span>
           </label>
 
@@ -253,7 +256,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               fontSize: '0.875rem',
               color: 'var(--text-primary)'
             }}>
-              Ekran Görüntüleri
+              {t('settings.screenshots')}
             </span>
           </label>
           </div>
@@ -304,6 +307,44 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           );
         })}
       </div>
+  );
+
+  const renderLanguageSettings = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div>
+        <label style={{
+          display: 'block',
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          color: 'var(--text-primary)',
+          marginBottom: '0.75rem'
+        }}>
+          {t('settings.selectLanguage')}
+        </label>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '1rem',
+          padding: '1rem',
+          backgroundColor: 'var(--bg-tertiary)',
+          borderRadius: '0.5rem',
+          border: '1px solid var(--border-primary)'
+        }}>
+          <Globe size={20} color="var(--text-secondary)" />
+          <div style={{ flex: 1 }}>
+            <LanguageSelector />
+          </div>
+        </div>
+        <p style={{
+          fontSize: '0.75rem',
+          color: 'var(--text-secondary)',
+          marginTop: '0.5rem',
+          marginBottom: 0
+        }}>
+          {t('settings.languageDescription')}
+        </p>
+      </div>
+    </div>
   );
 
   if (!isVisible) return null;
@@ -368,7 +409,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               margin: 0,
               lineHeight: 1
             }}>
-              Ayarlar
+              {t('common.settings')}
             </h2>
           </div>
 
@@ -457,7 +498,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   return (
                     <>
                       <Icon size={20} />
-                      {currentTab?.label} Ayarları
+                      {currentTab?.label} {t('settings.settings')}
                     </>
                   );
                 })()}
@@ -467,7 +508,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               icon={X}
               variant="ghost"
               size="md"
-              tooltip="Kapat"
+              tooltip={t('common.close')}
               onClick={onClose}
             />
           </div>
@@ -480,6 +521,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           }}>
             {activeTab === 'browser' && renderBrowserSettings()}
             {activeTab === 'appearance' && renderAppearanceSettings()}
+            {activeTab === 'language' && renderLanguageSettings()}
           </div>
         </div>
       </div>

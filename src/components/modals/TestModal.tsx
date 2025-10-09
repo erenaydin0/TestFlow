@@ -8,6 +8,7 @@ import { Button, ButtonGroup } from '@/components/ui';
 import { BrowserType, TestFormData, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/lib/utils';
 import { useModal } from '@/hooks/ui';
+import { useI18n } from '@/contexts';
 
 
 const TestModal: React.FC<TestModalProps> = ({
@@ -29,6 +30,7 @@ const TestModal: React.FC<TestModalProps> = ({
   const [existingTags, setExistingTags] = useState<string[]>([]);
   const [existingSuites, setExistingSuites] = useState<string[]>([]);
   const hasInitialized = useRef(false);
+  const { t } = useI18n();
 
   const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
     animationDuration: 200
@@ -85,13 +87,13 @@ const TestModal: React.FC<TestModalProps> = ({
     const newErrors: string[] = [];
 
     if (!name.trim()) {
-      newErrors.push('Test adı gereklidir');
+      newErrors.push(t('testBuilder.testNameRequired'));
     } else if (name.length > 100) {
-      newErrors.push('Test adı 100 karakterden uzun olamaz');
+      newErrors.push(t('testBuilder.testNameTooLong'));
     }
 
     if (desc.length > 500) {
-      newErrors.push('Açıklama 500 karakterden uzun olamaz');
+      newErrors.push(t('testBuilder.descriptionTooLong'));
     }
 
     setErrors(newErrors);
@@ -126,9 +128,9 @@ const TestModal: React.FC<TestModalProps> = ({
   if (!isVisible) return null;
 
   const isEditMode = isUpdating || mode === 'edit';
-  const modalTitle = title || (isEditMode ? 'Test Workflow\'unu Güncelle' : 'Test Workflow\'unu Kaydet');
-  const modalDescription = description || (isEditMode ? 'Mevcut workflow\'u güncelleyin' : 'Workflow\'unuzu daha sonra kullanmak üzere kaydedin');
-  const submitButtonText = isEditMode ? 'Güncelle' : 'Kaydet';
+  const modalTitle = title || (isEditMode ? t('testBuilder.updateWorkflow') : t('testBuilder.saveWorkflow'));
+  const modalDescription = description || (isEditMode ? t('testBuilder.updateWorkflowDesc') : t('testBuilder.saveWorkflowDesc'));
+  const submitButtonText = isEditMode ? t('common.update') : t('common.save');
   const IconComponent = isEditMode ? Edit : Save;
   const primaryColor = isEditMode ? '#7c3aed' : '#2563eb';
   const primaryColorHover = isEditMode ? '#6d28d9' : '#1d4ed8';
@@ -289,7 +291,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Test workflow'unuzun adını girin"
+                placeholder={t('testBuilder.workflowNamePlaceholder')}
                 required
                 style={{
                   width: '100%',
@@ -327,7 +329,7 @@ const TestModal: React.FC<TestModalProps> = ({
               <textarea
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
-                placeholder="Test workflow'unuzun ne yaptığını açıklayın"
+                placeholder={t('testBuilder.workflowDescriptionPlaceholder')}
                 rows={2}
                 style={{
                   width: '100%',
@@ -377,7 +379,7 @@ const TestModal: React.FC<TestModalProps> = ({
                    value={suite}
                    onChange={setSuite}
                    options={existingSuites}
-                   placeholder="Paket adı"
+                   placeholder={t('testBuilder.suitePlaceholder')}
                    multiple={false}
                    onFocus={(e) => {
                      e.currentTarget.style.borderColor = primaryColor;
@@ -451,7 +453,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 value={tags}
                 onChange={setTags}
                 options={existingTags}
-                placeholder="login, checkout, smoke-test (virgülle ayırın)"
+                placeholder={t('testBuilder.tagsPlaceholder')}
                 multiple={true}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = primaryColor;

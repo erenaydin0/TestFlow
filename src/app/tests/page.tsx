@@ -31,12 +31,13 @@ import { Test, TestFormData, TestFilters } from '@/types';
 import { exportTestWorkflow } from '@/lib/utils';
 import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTestNotifications, useTests } from '@/hooks/test';
-import { useBrowserSettings } from '@/contexts';
+import { useBrowserSettings, useI18n } from '@/contexts';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 
 export default function TestsPage() {
   const browserSettings = useBrowserSettings();
+  const { t } = useI18n();
   const { 
     tests, 
     loading, 
@@ -189,7 +190,7 @@ export default function TestsPage() {
   const columns: Column<Test>[] = [
     {
       key: 'name',
-      label: 'Test Adı',
+      label: t('tests.testName'),
       sortable: true,
       width: '300px',
       render: (value, test) => (
@@ -203,7 +204,7 @@ export default function TestsPage() {
 
     {
       key: 'suite',
-      label: 'Test Grubu',
+      label: t('tests.testGroup'),
       sortable: true,
       width: '150px',
       render: (value, test) => (
@@ -217,7 +218,7 @@ export default function TestsPage() {
     },
     {
       key: 'tags',
-      label: 'Etiketler',
+      label: t('tests.tags'),
       sortable: true,
       width: '200px',
       render: (value, test) => (
@@ -231,7 +232,7 @@ export default function TestsPage() {
     },
     {
       key: 'browserType',
-      label: 'Tarayıcı',
+      label: t('tests.browser'),
       sortable: true,
       width: '100px',
       render: (value, test) => (
@@ -244,7 +245,7 @@ export default function TestsPage() {
     },
     {
       key: 'stepCount',
-      label: 'Adım Sayısı',
+      label: t('tests.stepCount'),
       sortable: true,
       width: '100px',
       render: (value, test) => (
@@ -253,7 +254,7 @@ export default function TestsPage() {
     },
     {
       key: 'createdAt',
-      label: 'Oluşturulma',
+      label: t('tests.createdAt'),
       sortable: true,
       width: '100px',
       render: (value, test) => (
@@ -264,7 +265,7 @@ export default function TestsPage() {
     },
     {
       key: 'actions',
-      label: 'İşlemler',
+      label: t('tests.actions'),
       sortable: false,
       width: '200px',
       render: (value, test) => (
@@ -307,7 +308,7 @@ export default function TestsPage() {
   const handleRunTest = async (testId: string) => {
     const test = tests.find((t: any) => t.id === testId);
     if (!test || !test.workflow || test.workflow.length === 0) {
-      notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test workflow\'u bulunamadı veya boş.');
+      notifyTestFailure(test?.name || t('tests.unknownTest'), testId, t('tests.workflowNotFound'));
       return;
     }
     
@@ -370,7 +371,7 @@ export default function TestsPage() {
       
     } catch (error) {
       console.error('Test execution error:', error);
-      notifyTestFailure(test.name, testId, error instanceof Error ? error.message : 'Bilinmeyen hata');
+      notifyTestFailure(test.name, testId, error instanceof Error ? error.message : t('common.unknownError'));
     }
   };
 
@@ -391,7 +392,7 @@ export default function TestsPage() {
       }
     } catch (error) {
       const test = tests.find((t: any) => t.id === testId);
-      notifyTestFailure(test?.name || 'Bilinmeyen Test', testId, 'Test kopyalanırken hata oluştu.');
+      notifyTestFailure(test?.name || t('tests.unknownTest'), testId, t('tests.duplicateError'));
     }
   };
 
@@ -419,7 +420,7 @@ export default function TestsPage() {
         notifyTestDeleted(singleDeleteDialog.testName, singleDeleteDialog.testId);
       }
     } catch (error) {
-      notifyTestFailure(singleDeleteDialog.testName, singleDeleteDialog.testId, 'Test silinirken hata oluştu.');
+      notifyTestFailure(singleDeleteDialog.testName, singleDeleteDialog.testId, t('tests.deleteError'));
     }
   };
 
@@ -435,7 +436,7 @@ export default function TestsPage() {
         notifyTestDuplicated(`${duplicatedCount} test`, '');
       }
     } catch (error) {
-      notifyTestFailure('Bulk Duplicate', '', 'Testler kopyalanırken hata oluştu.');
+      notifyTestFailure(t('tests.bulkDuplicate'), '', t('tests.bulkDuplicateError'));
     }
   };
 
@@ -451,7 +452,7 @@ export default function TestsPage() {
       setSelectedTests(new Set());
       notifyTestDeleted(`${deletedCount} test`, '');
     } catch (error) {
-      notifyTestFailure('Bulk Delete', '', 'Testler silinirken hata oluştu.');
+      notifyTestFailure(t('tests.bulkDelete'), '', t('tests.bulkDeleteError'));
     }
   };
 
@@ -463,7 +464,7 @@ export default function TestsPage() {
     const validTests = selectedTestsData.filter((test: any) => test.workflow && test.workflow.length > 0);
     
     if (validTests.length === 0) {
-      notifyTestFailure('Bulk Run', '', 'Seçilen testlerde çalıştırılabilir workflow bulunamadı.');
+      notifyTestFailure(t('tests.bulkRun'), '', t('tests.noValidWorkflows'));
       return;
     }
 
@@ -523,7 +524,7 @@ export default function TestsPage() {
       
     } catch (error) {
       console.error('Bulk test execution error:', error);
-      notifyTestFailure('Bulk Run', '', `Testler çalıştırılırken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}. Backend server'ın çalıştığından emin olun.`);
+      notifyTestFailure(t('tests.bulkRun'), '', `${t('tests.bulkRunError')}: ${error instanceof Error ? error.message : t('common.unknownError')}. ${t('tests.checkBackend')}`);
     }
   };
 
@@ -550,9 +551,9 @@ export default function TestsPage() {
             headlessMode: test.headlessMode
           }
         );
-        notifyTestImported(`"${test.name}" başarıyla export edildi!`, testId);
+        notifyTestImported(t('tests.exportSuccess', { name: test.name }), testId);
       } catch (error) {
-        notifyTestFailure('Export', '', 'Export işlemi sırasında hata oluştu.');
+        notifyTestFailure(t('tests.export'), '', t('tests.exportError'));
       }
     }
   };
@@ -561,18 +562,18 @@ export default function TestsPage() {
   // Handle CSV export (selected tests)
   const handleBulkCSVExport = () => {
     if (selectedTests.size === 0) {
-      notifyTestFailure('CSV Export', '', 'Export edilecek test seçin.');
+      notifyTestFailure(t('tests.csvExport'), '', t('tests.selectTestsToExport'));
       return;
     }
 
     const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
     exportTestsToCSV(selectedTestsData);
-    notifyTestImported(`${selectedTestsData.length} test CSV olarak export edildi!`, '');
+    notifyTestImported(t('tests.csvExportSuccess', { count: selectedTestsData.length }), '');
   };
 
   const handleBulkExport = () => {
     if (selectedTests.size === 0) {
-      notifyTestFailure('Export', '', 'Export edilecek test seçin.');
+      notifyTestFailure(t('tests.export'), '', t('tests.selectTestsToExport'));
       return;
     }
 
@@ -595,7 +596,7 @@ export default function TestsPage() {
             headlessMode: test.headlessMode
           }
         );
-        notifyTestImported(`"${test.name}" başarıyla export edildi!`, test.id);
+        notifyTestImported(t('tests.exportSuccess', { name: test.name }), test.id);
       }
     } else {
       // Multiple tests export
@@ -631,7 +632,7 @@ export default function TestsPage() {
       linkElement.setAttribute('download', exportFileName);
       linkElement.click();
 
-      notifyTestImported(`${selectedTestsData.length} test başarıyla export edildi!`, '');
+      notifyTestImported(t('tests.bulkExportSuccess', { count: selectedTestsData.length }), '');
     }
   };
 
@@ -645,18 +646,18 @@ export default function TestsPage() {
     // Reload tests after successful import
     refresh();
     setIsImportDialogOpen(false);
-    notifyTestImported(`${importedCount} workflow`, '');
+    notifyTestImported(t('tests.importSuccess', { count: importedCount }), '');
   };
 
   return (
     <PageLayout
-      title="Kayıtlı Testler"
-      subtitle={`Toplam ${tests.length} kayıtlı test bulunuyor.`}
+      title={t('tests.title')}
+      subtitle={t('tests.subtitle', { count: tests.length })}
     >
       <LoadingErrorState
         loading={loading}
         error={null}
-        loadingMessage="Kaydedilen testler yükleniyor..."
+        loadingMessage={t('tests.loadingTests')}
         onRetry={refresh}
       >
 
@@ -681,7 +682,7 @@ export default function TestsPage() {
                     tags: filterOptions.tags,
                     browsers: filterOptions.browsers || []
                   }}
-                  searchPlaceholder="Test ara..."
+                  searchPlaceholder={t('tests.searchTests')}
                   showStatus={false}
                   showDateRange={false}
                 />
@@ -695,7 +696,7 @@ export default function TestsPage() {
                       fontSize: '0.875rem', 
                       color: 'var(--text-secondary)' 
                     }}>
-                      {selectedTests.size} test seçili
+                      {t('tests.selectedTests', { count: selectedTests.size })}
                     </span>
                     
                     <Button
@@ -704,7 +705,7 @@ export default function TestsPage() {
                       icon={X}
                       onClick={() => setSelectedTests(new Set())}
                     >
-                      Temizle
+                      {t('common.clear')}
                     </Button>
                     <ButtonGroup spacing="sm">
                       <Button
@@ -714,7 +715,7 @@ export default function TestsPage() {
                         onClick={handleBulkRun}
                         style={{ color: 'var(--status-success)', borderColor: 'var(--status-success)' }}
                       >
-                        Çalıştır
+                        {t('tests.runTest')}
                       </Button>
                       <Button
                         variant="outline"
@@ -723,7 +724,7 @@ export default function TestsPage() {
                         onClick={handleBulkDuplicate}
                         style={{ color: 'var(--status-purple)', borderColor: 'var(--status-purple)' }}
                       >
-                        Kopyala
+                        {t('tests.duplicateTest')}
                       </Button>
                       <Button
                         variant="outline"
@@ -732,7 +733,7 @@ export default function TestsPage() {
                         onClick={handleBulkDelete}
                         style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)' }}
                       >
-                        Sil
+                        {t('common.delete')}
                       </Button>
                     </ButtonGroup>
                     <Button
@@ -741,7 +742,7 @@ export default function TestsPage() {
                       icon={Download}
                       onClick={handleBulkExport}
                     >
-                      Dışa Aktar
+                      {t('common.export')}
                     </Button>
                   </>
                 )}
@@ -753,7 +754,7 @@ export default function TestsPage() {
                     icon={Upload}
                     onClick={handleImport}
                   >
-                    İçe Aktar
+                    {t('common.import')}
                   </Button>
                   <button 
                     className="btn-primary" 
@@ -767,7 +768,7 @@ export default function TestsPage() {
                     onClick={handleCreateNewTest}
                   >
                     <Plus size={16} />
-                    Yeni Test
+                    {t('tests.createNew')}
                   </button>
                 </ButtonGroup>
               </div>
@@ -833,7 +834,7 @@ export default function TestsPage() {
                   allData={filteredTests}
                   columns={columns}
                   loading={loading}
-                  emptyMessage="Test bulunamadı"
+                  emptyMessage={t('tests.noTestsFound')}
                   selectable={true}
                   selectedItems={selectedTests}
                   onSelectionChange={setSelectedTests}
@@ -892,7 +893,7 @@ export default function TestsPage() {
                         cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s ease'
                       }}
-                      title="İlk sayfa"
+                      title={t('common.firstPage')}
                     >
                       <ChevronsLeft size={14} />
                     </button>
@@ -913,7 +914,7 @@ export default function TestsPage() {
                         cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s ease'
                       }}
-                      title="Önceki sayfa"
+                      title={t('common.previousPage')}
                     >
                       <ChevronLeft size={14} />
                     </button>
@@ -1023,7 +1024,7 @@ export default function TestsPage() {
         title="Testleri Sil"
         message={`${selectedTests.size} testi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"
-        cancelText="İptal"
+        cancelText={t('common.cancel')}
         type="danger"
       />
 
@@ -1035,7 +1036,7 @@ export default function TestsPage() {
         title="Testi Sil"
         message={`"${singleDeleteDialog.testName}" testini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"
-        cancelText="İptal"
+        cancelText={t('common.cancel')}
         type="danger"
       />
 

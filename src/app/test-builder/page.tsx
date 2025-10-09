@@ -34,10 +34,11 @@ import {
   useUnsavedChanges,
   useTestNotifications
 } from '@/hooks';
-import { useSidebar, useBrowserSettings } from '@/contexts';
+import { useSidebar, useBrowserSettings, useI18n } from '@/contexts';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();
+  const { t } = useI18n();
   const {
     testSteps,
     setTestSteps,
@@ -387,7 +388,7 @@ export default function TestBuilder() {
   // Handle export workflow
   const handleExport = useCallback(() => {
     if (testSteps.length === 0) {
-      notifyTestFailure('Test Dışa Aktarma', '', 'Dışa aktarılacak test adımı bulunamadı.');
+      notifyTestFailure(t('testBuilder.export'), '', t('testBuilder.noStepsToExport'));
       return;
     }
 
@@ -409,7 +410,7 @@ export default function TestBuilder() {
       notifyTestImported(`"${workflowName}" başarıyla export edildi!`, '');
     } catch (error) {
       console.error('Export error:', error);
-      notifyTestFailure('Test Dışa Aktarma', '', 'Workflow dışa aktarılırken bir hata oluştu.');
+      notifyTestFailure(t('testBuilder.export'), '', t('testBuilder.exportError'));
     }
   }, [testSteps, selectedBrowser, enableScreenshots, enableRecording, headlessMode]);
 
@@ -475,14 +476,14 @@ export default function TestBuilder() {
       notifyTestImported(`${name} (${newSteps.length} adım)${metadataInfo}`, '');
     } catch (error) {
       console.error('Import error:', error);
-      notifyTestFailure('Workflow İçe Aktarma', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
+      notifyTestFailure(t('testBuilder.import'), '', error instanceof Error ? error.message : t('common.unknownError'));
     }
   }, [testSteps, setTestSteps, saveToHistory, generateId]);
 
   // Handle save workflow - Updated to show save dialog
   const handleSave = useCallback(() => {
     if (testSteps.length === 0) {
-      notifyTestFailure('Test Kaydetme', '', 'Kaydedilecek test adımı bulunamadı.');
+      notifyTestFailure(t('testBuilder.save'), '', t('testBuilder.noStepsToSave'));
       return;
     }
     
@@ -524,7 +525,7 @@ export default function TestBuilder() {
           body: JSON.stringify(testData)
         });
         
-        if (!response.ok) throw new Error('Test güncellenemedi');
+        if (!response.ok) throw new Error(t('testBuilder.testUpdateFailed'));
         const updated = await response.json();
         workflowId = updated.id;
         notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
@@ -653,7 +654,7 @@ export default function TestBuilder() {
   
   useEffect(() => {
     const loadWorkflowId = searchParams.get('load');
-    console.log('useEffect çalıştı:', { loadWorkflowId, loadedWorkflowId });
+    console.log(t('testBuilder.useEffectRunning'), { loadWorkflowId, loadedWorkflowId });
     
     if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
       // Backend'den workflow yükle
@@ -664,7 +665,7 @@ export default function TestBuilder() {
         })
         .then(workflow => {
           if (workflow && workflow.workflow) {
-            console.log('Workflow yükleniyor:', workflow.name);
+            console.log(t('testBuilder.loadingWorkflow'), workflow.name);
             setTestSteps(workflow.workflow);
             setLoadedWorkflowId(loadWorkflowId);
             setLoadedWorkflowName(workflow.name);
@@ -688,21 +689,21 @@ export default function TestBuilder() {
             // Show success message only if not shown before for this workflow
             const notificationKey = `loaded-${loadWorkflowId}`;
             if (!shownNotifications.current.has(notificationKey)) {
-              console.log('Bildirim gösteriliyor:', workflow.name);
+              console.log(t('testBuilder.showingNotification'), workflow.name);
               shownNotifications.current.add(notificationKey);
               setTimeout(() => {
                 notifyWorkflowLoaded(workflow.name);
               }, 100);
             } else {
-              console.log('Bildirim zaten gösterildi, tekrar gösterilmiyor');
+              console.log(t('testBuilder.notificationAlreadyShown'));
             }
           } else {
-            notifyTestFailure('Test Builder Workflow', '', 'Workflow bulunamadı veya geçersiz!');
+            notifyTestFailure(t('navigation.testBuilder'), '', t('testBuilder.workflowNotFoundOrInvalid'));
           }
         })
         .catch(error => {
-          console.error('Workflow yükleme hatası:', error);
-          notifyTestFailure('Test Builder Workflow', '', 'Workflow yüklenemedi!');
+          console.error(t('testBuilder.workflowLoadError'), error);
+          notifyTestFailure(t('navigation.testBuilder'), '', t('testBuilder.workflowLoadFailed'));
         });
     }
     

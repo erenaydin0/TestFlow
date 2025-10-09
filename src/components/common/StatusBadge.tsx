@@ -1,3 +1,5 @@
+import { useI18n } from '@/contexts';
+
 interface StatusBadgeProps {
   status: string;
   size?: 'sm' | 'md' | 'lg';
@@ -27,6 +29,8 @@ export const getStatusText = (status: string): string => {
 };
 
 export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
+  const { t } = useI18n();
+  
   // Boş status için hiçbir şey render etme
   if (!status || status.trim() === '') {
     return null;
@@ -34,7 +38,35 @@ export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
 
   const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
   const color = config?.color || 'var(--text-secondary)';
-  const text = config?.text || status;
+  
+  // Get translated text
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+      case 'passed':
+        return t('status.passed');
+      case 'failed':
+        return t('status.failed');
+      case 'running':
+        return t('status.running');
+      case 'queued':
+        return t('status.queued');
+      case 'cancelled':
+        return t('status.cancelled');
+      case 'pending':
+        return t('status.pending');
+      case 'active':
+        return t('status.active');
+      case 'paused':
+        return t('status.paused');
+      case 'disabled':
+        return t('status.disabled');
+      default:
+        return status;
+    }
+  };
+  
+  const text = getStatusText(status);
 
   return (
     <span style={{

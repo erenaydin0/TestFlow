@@ -22,10 +22,10 @@ import {
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/features/notifications';
-import { CustomSelect, StatusBadge, getStatusText, CosmicLogo } from '@/components/common';
+import { CustomSelect, StatusBadge, getStatusText, CosmicLogo, LanguageSelector } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { useRealtimeNotifications } from '@/hooks/data';
-import { useTheme, useSettingsModal } from '@/contexts';
+import { useTheme, useSettingsModal, useI18n } from '@/contexts';
 
 interface HeaderProps {
   title?: string;
@@ -46,6 +46,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const { theme, setTheme } = useTheme();
   const { openModal } = useSettingsModal();
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userPanelRef = useRef<HTMLDivElement>(null);
@@ -83,9 +84,9 @@ export default function Header({ title, subtitle }: HeaderProps) {
   }, [isUserPanelOpen, showSearchResults]);
 
   const themeOptions = [
-    { id: 'light', label: 'Açık', icon: Sun },
-    { id: 'dark', label: 'Koyu', icon: Moon },
-    { id: 'system', label: 'Sistem', icon: Monitor },
+    { id: 'light', label: t('common.light'), icon: Sun },
+    { id: 'dark', label: t('common.dark'), icon: Moon },
+    { id: 'system', label: t('common.system'), icon: Monitor },
   ];
 
   // Handle search input changes
@@ -215,7 +216,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
             }} />
             <input
               type="text"
-              placeholder="Testler ve raporlarda ara..."
+              placeholder={t('common.search')}
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               onKeyPress={handleSearchKeyPress}
@@ -302,7 +303,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                     textAlign: 'center',
                     color: 'var(--text-secondary)'
                   }}>
-                    Aranıyor...
+                    {t('common.loading')}
                   </div>
                 ) : searchResults.total === 0 ? (
                   <div style={{
@@ -310,7 +311,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                     textAlign: 'center',
                     color: 'var(--text-secondary)'
                   }}>
-                    "{searchQuery}" için sonuç bulunamadı
+                    "{searchQuery}" {t('common.noResults')}
                   </div>
                 ) : (
                   <>
@@ -329,7 +330,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                           gap: '0.5rem'
                         }}>
                           <FileText size={16} />
-                          Testler ({searchResults.tests.length})
+                          {t('navigation.tests')} ({searchResults.tests.length})
                         </div>
                         {searchResults.tests.map((result) => (
                           <div
@@ -416,7 +417,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                               e.currentTarget.style.color = '#2563eb';
                             }}
                           >
-                            +{searchResults.totalTests - searchResults.tests.length} test daha → Testler sayfasında gör
+                            +{searchResults.totalTests - searchResults.tests.length} {t('common.moreTests')} → {t('common.viewInTestsPage')}
                           </div>
                         )}
                       </div>
@@ -437,7 +438,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                           gap: '0.5rem'
                         }}>
                           <BarChart3 size={16} />
-                          Raporlar ({searchResults.reports.length})
+                          {t('navigation.reports')} ({searchResults.reports.length})
                         </div>
                         {searchResults.reports.map((result) => (
                           <div
@@ -524,7 +525,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                               e.currentTarget.style.color = '#2563eb';
                             }}
                           >
-                            +{searchResults.totalReports - searchResults.reports.length} rapor daha → Raporlar sayfasında gör
+                            +{searchResults.totalReports - searchResults.reports.length} {t('common.moreReports')} → {t('common.viewInReportsPage')}
                           </div>
                         )}
                       </div>
@@ -544,6 +545,9 @@ export default function Header({ title, subtitle }: HeaderProps) {
           alignItems: 'center', 
           gap: '1rem' 
         }}>
+          {/* Language Selector */}
+          <LanguageSelector />
+          
           {/* Notifications */}
           <NotificationPanel />
 
@@ -614,7 +618,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                     color: 'var(--text-primary)',
                     margin: 0
                   }}>
-                    Test Kullanıcısı
+                    {t('common.testUser')}
                   </p>
                   <p style={{ 
                     fontSize: '0.75rem', 
@@ -639,7 +643,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                     fontWeight: 500, 
                     color: 'var(--text-primary)'
                   }}>
-                    Görünüm
+                    {t('common.appearance')}
                   </span>
                   
                   {/* Compact Theme Dropdown */}
@@ -688,7 +692,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                     e.currentTarget.style.color = 'var(--text-secondary)';
                   }}>
                   <Settings size={14} />
-                  <span>Ayarlar</span>
+                  <span>{t('common.settings')}</span>
                 </button>
                 
                 <button style={{
@@ -713,7 +717,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}>
                   <LogOut size={14} />
-                  <span>Çıkış Yap</span>
+                  <span>{t('common.logout')}</span>
                 </button>
               </div>
             </div>

@@ -20,8 +20,8 @@ export function formatDuration(ms: number): string {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('tr-TR', {
+export function formatDate(date: Date, locale: string = 'tr'): string {
+  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -30,82 +30,104 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
+
+export function formatTime(date: Date, locale: string = 'tr'): string {
+  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(date);
+}
+
 // Get schedule description from cron expression
-export function getScheduleDescription(schedule: string): string {
+export function getScheduleDescription(schedule: string, t?: (key: string, params?: Record<string, any>) => string): string {
+  // If no translation function provided, return the schedule as is
+  if (!t) {
+    return schedule;
+  }
+
   const scheduleMap: { [key: string]: string } = {
-    '0 9 * * *': 'Her gün 09:00',
-    '0 2 * * 1': 'Her Pazartesi 02:00',
-    '0 0 * * 0': 'Her Pazar 00:00',
-    '0 */6 * * *': 'Her 6 saatte bir',
-    '0 0 1 * *': 'Her ayın 1\'inde',
-    '0 * * * *': 'Her saat başı',
-    '0 0 * * *': 'Her gün 00:00',
-    '0 12 * * *': 'Her gün 12:00'
+    '0 9 * * *': t('schedule.dailyAt') + ' 09:00',
+    '0 2 * * 1': t('schedule.mondayAt') + ' 02:00',
+    '0 0 * * 0': t('schedule.sundayAt') + ' 00:00',
+    '0 */6 * * *': t('schedule.everyHours', { hours: 6 }),
+    '0 0 1 * *': t('schedule.monthlyOn', { day: 1 }),
+    '0 * * * *': t('schedule.hourly'),
+    '0 0 * * *': t('schedule.dailyAtMidnight'),
+    '0 12 * * *': t('schedule.dailyAtNoon')
   };
 
   if (scheduleMap[schedule]) {
     return scheduleMap[schedule];
   }
 
-  // Cron parse et
+  // Parse cron expression
   const parts = schedule.split(' ');
   if (parts.length >= 5) {
     const [min, hour, day, month, weekday] = parts;
     
-    // Saatlik - belirli saatlerde
+    // Hourly - specific hours
     if (hour.includes(',') && !hour.includes('*') && !hour.includes('/')) {
       const hours = hour.split(',').map(h => `${h.padStart(2, '0')}:${min.padStart(2, '0')}`).join(', ');
-      return `Her gün saat ${hours}`;
+      return t('schedule.dailyAtTime', { time: hours });
     }
     
-    // Saatlik - belirli aralıklarla
+    // Hourly - specific intervals
     if (hour.includes('/')) {
       const interval = hour.split('/')[1];
-      return `Her ${interval} saatte bir`;
+      return t('schedule.everyHours', { hours: interval });
     }
     
-    // Dakikalık
+    // Minutely
     if (min.includes('/') && hour === '*') {
       const interval = min.split('/')[1];
-      return `Her ${interval} dakikada bir`;
+      return t('schedule.everyMinutes', { minutes: interval });
     }
     
-    // Günlük
+    // Daily
     if (hour !== '*' && !hour.includes('/') && !hour.includes(',') && day === '*' && weekday === '*') {
-      return `Her gün ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+      return t('schedule.dailyAtSpecificTime', { time: `${hour.padStart(2, '0')}:${min.padStart(2, '0')}` });
     }
     
-    // Haftalık
+    // Weekly
     if (weekday !== '*') {
-      const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+      const days = [
+        t('schedule.days.sunday'),
+        t('schedule.days.monday'),
+        t('schedule.days.tuesday'),
+        t('schedule.days.wednesday'),
+        t('schedule.days.thursday'),
+        t('schedule.days.friday'),
+        t('schedule.days.saturday')
+      ];
       const dayNames = weekday.split(',').map(d => days[parseInt(d)]).join(', ');
-      return `${dayNames} ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+      return t('schedule.weeklyOn', { days: dayNames, time: `${hour.padStart(2, '0')}:${min.padStart(2, '0')}` });
     }
     
-    // Aylık
+    // Monthly
     if (day !== '*' && !day.includes(',')) {
-      return `Her ayın ${day}. günü ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+      return t('schedule.monthlyOnDay', { day, time: `${hour.padStart(2, '0')}:${min.padStart(2, '0')}` });
     }
     
-    // Aylık - birden fazla gün
+    // Monthly - multiple days
     if (day.includes(',')) {
       const days = day.split(',').join(', ');
-      return `Her ayın ${days}. günleri ${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+      return t('schedule.monthlyOnDays', { days, time: `${hour.padStart(2, '0')}:${min.padStart(2, '0')}` });
     }
   }
 
   return schedule;
 }
 
-export function formatRelativeTime(date: Date | string | null | undefined): string {
+export function formatRelativeTime(date: Date | string | null | undefined, t?: (key: string, params?: Record<string, any>) => string, locale?: string): string {
   if (!date) {
-    return 'Bilinmiyor';
+    return t ? t('common.unknown') : 'Bilinmiyor';
   }
 
   const parsedDate = typeof date === 'string' ? new Date(date) : date;
   
   if (isNaN(parsedDate.getTime())) {
-    return 'Geçersiz tarih';
+    return t ? t('common.invalidDate') : 'Geçersiz tarih';
   }
 
   const now = new Date();
@@ -115,15 +137,15 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
   const diffInDays = Math.floor(diffInHours / 24);
 
   if (diffInMinutes < 1) {
-    return 'Şimdi';
+    return t ? t('common.now') : 'Şimdi';
   } else if (diffInMinutes < 60) {
-    return `${diffInMinutes} dakika önce`;
+    return t ? t('common.minutesAgo', { count: diffInMinutes }) : `${diffInMinutes} dakika önce`;
   } else if (diffInHours < 24) {
-    return `${diffInHours} saat önce`;
+    return t ? t('common.hoursAgo', { count: diffInHours }) : `${diffInHours} saat önce`;
   } else if (diffInDays < 7) {
-    return `${diffInDays} gün önce`;
+    return t ? t('common.daysAgo', { count: diffInDays }) : `${diffInDays} gün önce`;
   } else {
-    return formatDate(parsedDate);
+    return formatDate(parsedDate, locale);
   }
 }
 

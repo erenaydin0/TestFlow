@@ -3,8 +3,9 @@
 import React from 'react';
 
 import { TestStep, TestStepCardProps } from '@/types';
-import { getActionByType, ActionType } from '@/lib/actions';
+import { getTranslatedActionByType, ActionType } from '@/lib/actions';
 import { StepHeader, StepContent } from '@/components/features/test-builder';
+import { useI18n } from '@/contexts';
 
 // TestStepCardProps is now imported from @/types
 
@@ -33,7 +34,8 @@ const TestStepCard: React.FC<TestStepCardProps> = ({
   setTestSteps,
   saveToHistory
 }) => {
-  const action = getActionByType(step.type);
+  const { t } = useI18n();
+  const action = getTranslatedActionByType(step.type, t);
   if (!action) return null;
 
   return (

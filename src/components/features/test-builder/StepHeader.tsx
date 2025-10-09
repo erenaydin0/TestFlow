@@ -4,6 +4,7 @@ import React from 'react';
 import { CheckCircle, XCircle, GitBranch, Trash2 } from 'lucide-react';
 import { TestStep } from '@/types';
 import { ActionType } from '@/lib/actions';
+import { useI18n } from '@/contexts';
 
 interface StepHeaderProps {
   step: TestStep;
@@ -54,6 +55,7 @@ const StepHeader: React.FC<StepHeaderProps> = ({
   setTestSteps,
   saveToHistory
 }) => {
+  const { t } = useI18n();
   const Icon = action.icon;
 
   return (
@@ -124,10 +126,10 @@ const StepHeader: React.FC<StepHeaderProps> = ({
                 }
               }}
               title={isConnecting && connectionStart === step.id && connectionType === 'true'
-                ? 'TRUE bağlantısını iptal et' 
+                ? t('testSteps.cancelTrueConnection')
                 : isConnecting 
-                  ? 'TRUE dalına bağla' 
-                  : 'TRUE dalı bağlantısı başlat'}
+                  ? t('testSteps.connectToTrue')
+                  : t('testSteps.startTrueConnection')}
             >
               <CheckCircle size={12} />
             </button>
@@ -172,10 +174,10 @@ const StepHeader: React.FC<StepHeaderProps> = ({
                 }
               }}
               title={isConnecting && connectionStart === step.id && connectionType === 'false'
-                ? 'FALSE bağlantısını iptal et' 
+                ? t('testSteps.cancelFalseConnection')
                 : isConnecting 
-                  ? 'FALSE dalına bağla' 
-                : 'FALSE dalı bağlantısı başlat'}
+                  ? t('testSteps.connectToFalse')
+                : t('testSteps.startFalseConnection')}
             >
               <XCircle size={12} />
             </button>
@@ -224,10 +226,10 @@ const StepHeader: React.FC<StepHeaderProps> = ({
               }
             }}
             title={isConnecting && connectionStart === step.id 
-              ? 'Bağlantıyı iptal et' 
+              ? t('testSteps.cancelConnection')
               : isConnecting 
-                ? 'Buraya bağla' 
-                : 'Bağlantı başlat'}
+                ? t('testSteps.connectHere')
+                : t('testSteps.startConnection')}
           >
             <GitBranch size={12} />
           </button>

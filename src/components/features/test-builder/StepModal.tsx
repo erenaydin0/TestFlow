@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 import { IconButton } from '@/components/ui';
 import { TestStep } from '@/types';
-import { availableActions, getActionByType, ActionField } from '@/lib/actions';
+import { getTranslatedActions, getTranslatedActionByType, ActionField } from '@/lib/actions';
 import { CustomSelect } from '@/components/common';
+import { useI18n } from '@/contexts';
 
 // Available actions type
 interface ActionType {
@@ -40,6 +41,7 @@ const StepModal: React.FC<StepModalProps> = ({
   onClose,
   onUpdateProperty
 }) => {
+  const { t } = useI18n();
   // Local state for form inputs
   const [localStep, setLocalStep] = useState<TestStep | null>(null);
   // State for keyboard capture
@@ -139,10 +141,10 @@ const StepModal: React.FC<StepModalProps> = ({
             key={fieldId}
             id={fieldId}
             type="text"
-            value={isCapturing ? 'Tuş bekleniyor...' : (value as string)}
+            value={isCapturing ? t('testBuilder.waitingForKey') : (value as string)}
             onClick={() => {
               setIsCapturingKey(field.key);
-              console.log('Input clicked, capturing keys for:', field.key);
+              console.log(t('testBuilder.inputClicked'), field.key);
             }}
             onKeyDown={(e) => {
               console.log('Key down event:', e.key);
@@ -232,7 +234,7 @@ const StepModal: React.FC<StepModalProps> = ({
               value: option.value || '',
               label: option.label || ''
             })) || []}
-            placeholder="Seçiniz..."
+            placeholder={t('common.select')}
             style={{
               backgroundColor: 'var(--bg-secondary)',
               fontSize: '0.875rem',
@@ -294,7 +296,7 @@ const StepModal: React.FC<StepModalProps> = ({
 
   if (!isOpen || !step || !localStep) return null;
 
-  const action = getActionByType(step.type);
+  const action = getTranslatedActionByType(step.type, t);
   if (!action) return null;
 
   const Icon = action.icon;
@@ -391,7 +393,7 @@ const StepModal: React.FC<StepModalProps> = ({
             icon={X}
             variant="ghost"
             size="md"
-            tooltip="Kapat"
+            tooltip={t('common.close')}
             onClick={onClose}
           />
         </div>
@@ -407,13 +409,13 @@ const StepModal: React.FC<StepModalProps> = ({
               color: 'var(--text-primary)',
               marginBottom: '0.5rem'
             }}>
-              Adım Açıklaması
+              {t('testBuilder.stepDescription')}
             </label>
             <input
               type="text"
               value={localStep.description || ''}
               onChange={(e) => handleLocalUpdate('description', e.target.value)}
-              placeholder="Bu adımın ne yaptığını açıklayın..."
+              placeholder={t('testBuilder.stepDescriptionPlaceholder')}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -440,7 +442,7 @@ const StepModal: React.FC<StepModalProps> = ({
 
           {/* Dynamic fields based on action configuration */}
           {action.fields.map((field) => {
-            // Selector URL kontrolü için opsiyonel
+            // Selector is optional for URL verification
             const isUrlVerification = localStep?.verificationType === 'url' || localStep?.verificationType === 'urlContains';
             const isFieldRequired = field.key === 'selector' && isUrlVerification ? false : field.required;
             
