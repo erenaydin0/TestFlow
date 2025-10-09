@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useWebSocket } from '@/hooks/network';
 import { useTestNotifications } from '@/hooks/test';
+import { API_URL } from '@/lib/config';
 
 function useRealtimeNotifications() {
   const { 

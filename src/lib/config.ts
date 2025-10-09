@@ -13,6 +13,9 @@ export const config = {
   isProduction: process.env.NODE_ENV === 'production',
 } as const;
 
+// API URL helper - most commonly used
+export const API_URL = config.apiUrl;
+
 // API endpoints helper
 export const apiEndpoints = {
   execute: `${config.apiUrl}/api/execute`,

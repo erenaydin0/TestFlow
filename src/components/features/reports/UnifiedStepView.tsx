@@ -3,6 +3,7 @@ import { ExecutionStepResult } from '@/types/execution';
 import { CheckCircle, XCircle, Clock, AlertCircle, ArrowRight, ArrowDown, Play, Pause, Eye, EyeOff } from 'lucide-react';
 import { useI18n } from '@/contexts';
 import { formatRelativeTime, formatTime } from '@/lib/utils';
+import { API_URL } from '@/lib/config';
 
 interface UnifiedStepViewProps {
   steps: ExecutionStepResult[];
@@ -346,7 +347,7 @@ const UnifiedStepView: React.FC<UnifiedStepViewProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {step.screenshot && (
                     <a 
-                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${step.screenshot}`}
+                      href={`${API_URL}${step.screenshot}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

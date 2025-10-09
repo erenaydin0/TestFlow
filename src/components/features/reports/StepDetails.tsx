@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExecutionStepResult } from '@/types/execution';
+import { API_URL } from '@/lib/config';
 import { CheckCircle, XCircle, Clock, AlertCircle, ArrowRight, ArrowDown, Play, Pause } from 'lucide-react';
 import { useI18n } from '@/contexts';
 
@@ -248,7 +249,7 @@ const StepDetails: React.FC<StepDetailsProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {step.screenshot && (
             <a 
-              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${step.screenshot}`}
+              href={`${API_URL}${step.screenshot}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

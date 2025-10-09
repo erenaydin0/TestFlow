@@ -6,6 +6,7 @@ import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
 import { Button, ButtonGroup, IconButton } from '@/components/ui';
 import { useTestNotifications } from '@/hooks/test';
 import { BrowserType, TestFormData } from '@/types';
+import { API_URL } from '@/lib/config';
 
 interface ImportDialogProps {
   isOpen: boolean;
@@ -102,7 +103,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     const jsonFiles = files.filter(file => file.type === 'application/json' || file.name.endsWith('.json'));
     
     if (jsonFiles.length === 0) {
-      notifyTestFailure(t('common.import'), '', t('testBuilder.selectValidJsonFiles'));
+      notifyTestFailure(('common.import'), '', ('testBuilder.selectValidJsonFiles'));
       return;
     }
 
@@ -259,7 +260,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
       try {
         // Backend'e kaydet
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests`, {
+        const response = await fetch(`${API_URL}/api/tests`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

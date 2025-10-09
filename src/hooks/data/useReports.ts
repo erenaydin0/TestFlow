@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats } from '@/types';
 import { filterExecutions, getUniqueFilterOptions } from '@/lib/exportUtils';
+import { API_URL } from '@/lib/config';
 import useExecutions from './useExecutions';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
@@ -162,7 +163,7 @@ const useReports = (options: UseReportsOptions = {}) => {
   // Delete execution (if needed)
   const deleteExecution = async (executionId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/executions/${executionId}`, {
+      const response = await fetch(`${API_URL}/api/executions/${executionId}`, {
         method: 'DELETE'
       });
       

@@ -1,4 +1,5 @@
 import { getSavedWorkflows } from './utils';
+import { API_URL } from './config';
 
 export interface SearchResult {
   id: string;
@@ -77,7 +78,7 @@ export const searchInReports = async (query: string): Promise<SearchResult[]> =>
   if (!query.trim()) return [];
   
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/executions`);
+    const response = await fetch(`${API_URL}/api/executions`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

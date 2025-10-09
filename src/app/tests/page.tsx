@@ -32,6 +32,7 @@ import { exportTestWorkflow } from '@/lib/utils';
 import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTestNotifications, useTests } from '@/hooks/test';
 import { useBrowserSettings, useI18n } from '@/contexts';
+import { API_URL } from '@/lib/config';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 
@@ -490,7 +491,7 @@ export default function TestsPage() {
           }
         }));
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/execute`, {
+        const response = await fetch(`${API_URL}/api/execute`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui';
 import { CustomSelect } from '@/components/common';
 import { useI18n, useSidebar } from '@/contexts';
 import { useModal } from '@/hooks/ui';
+import { API_URL } from '@/lib/config';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -82,7 +83,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
     const loadTests = async () => {
       try {
         setLoadingTests(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/tests`);
+        const response = await fetch(`${API_URL}/api/tests`);
         if (!response.ok) throw new Error('Testler yüklenemedi');
         const data = await response.json();
         setTests(data);

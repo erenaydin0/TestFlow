@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import { ExecutionResult, ExecutionStats } from '@/types';
+import { API_URL } from '@/lib/config';
 
 interface UseExecutionsOptions {
   autoFetch?: boolean;
@@ -19,7 +20,7 @@ const useExecutions = (options: UseExecutionsOptions = {}) => {
   const fetchExecutions = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/executions`);
+      const response = await fetch(`${API_URL}/api/executions`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
