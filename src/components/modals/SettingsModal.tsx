@@ -8,7 +8,7 @@ import { useModal } from '@/hooks/ui';
 import { CustomSelect } from '@/components/common';
 
 export default function SettingsModal() {
-  const { isOpen, closeModal } = useSettingsModal();
+  const { isSettingsOpen, closeSettingsModal } = useSettingsModal();
   const { theme, setTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
   const { setIsModalOpen } = useSidebar();
@@ -23,7 +23,7 @@ export default function SettingsModal() {
     setDefaultScreenshots
   } = useBrowserSettings();
 
-  const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
+  const { isVisible, getOverlayStyle, getModalStyle } = useModal(isSettingsOpen, {
     animationDuration: 200
   });
 
@@ -48,14 +48,14 @@ export default function SettingsModal() {
   // ESC tuşu ile kapatma ve sidebar'ı devre dışı bırak
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
+      if (!isSettingsOpen) return;
       
       if (e.key === 'Escape') {
-        closeModal();
+        closeSettingsModal();
       }
     };
 
-    if (isOpen) {
+    if (isSettingsOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
       setIsModalOpen(true);
@@ -70,7 +70,7 @@ export default function SettingsModal() {
       document.body.style.overflow = 'unset';
       setIsModalOpen(false);
     };
-  }, [isOpen, closeModal, setIsModalOpen]);
+  }, [isSettingsOpen, closeSettingsModal, setIsModalOpen]);
 
 
 
@@ -267,7 +267,7 @@ export default function SettingsModal() {
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          closeModal();
+          closeSettingsModal();
         }
       }}
     >
@@ -311,7 +311,7 @@ export default function SettingsModal() {
             variant="ghost"
             size="md"
             tooltip={t('common.close')}
-            onClick={closeModal}
+            onClick={closeSettingsModal}
           />
         </div>
 

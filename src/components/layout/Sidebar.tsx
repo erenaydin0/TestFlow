@@ -29,7 +29,7 @@ const getNavigation = (t: (key: string) => string) => [
 export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const pathname = usePathname();
   const { isCollapsed, setIsCollapsed, isModalOpen } = useSidebar();
-  const { openModal } = useSettingsModal();
+  const { openSettingsModal } = useSettingsModal();
   const { t } = useI18n();
   
   const navigation = getNavigation(t);
@@ -113,7 +113,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
       }}>
         {/* Ayarlar Butonu - Sol */}
         <button
-          onClick={openModal}
+          onClick={openSettingsModal}
           style={{
             background: 'none',
             border: 'none',

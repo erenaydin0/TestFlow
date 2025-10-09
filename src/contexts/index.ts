@@ -1,13 +1,4 @@
 // Context exports
-export { BrowserProvider, useBrowserSettings } from './browser-context';
-export type { BrowserType } from './browser-context';
+export { AppProvider, useApp, useBrowserSettings, useTheme, useI18n } from './app-context';
 
-export { I18nProvider, useI18n } from './i18n-context';
-
-export { NotificationProvider, useNotifications } from './notification-context';
-
-export { SettingsModalProvider, useSettingsModal } from './settings-modal-context';
-
-export { SidebarProvider, useSidebar } from './sidebar-context';
-
-export { ThemeProvider, useTheme } from './theme-context';
+export { UIProvider, useUI, useSidebar, useSettingsModal, useNotifications } from './ui-context';

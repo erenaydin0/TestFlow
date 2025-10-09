@@ -45,7 +45,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { openModal } = useSettingsModal();
+  const { openSettingsModal } = useSettingsModal();
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -662,7 +662,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
               <div style={{ padding: '0.5rem' }}>
                 <button 
                   onClick={() => {
-                    openModal();
+                    openSettingsModal();
                     setIsUserPanelOpen(false);
                   }}
                   style={{
