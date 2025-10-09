@@ -513,5 +513,14 @@
         "fridayShort": "Fri",
         "saturdayShort": "Sat"
       }
+    },
+    "datePicker": {
+      "selectDate": "Select Date",
+      "quickSelect": "Quick Select",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7days": "Last 7 Days",
+      "last14days": "Last 14 Days",
+      "last30days": "Last 30 Days"
     }
 }

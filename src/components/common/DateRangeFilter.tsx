@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { tr } from 'date-fns/locale/tr';
+import { enUS } from 'date-fns/locale/en-US';
 import { Calendar, ChevronDown, X } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useI18n } from '@/contexts';
 
-// Türkçe locale'i kaydet
+// Locale'leri kaydet
 registerLocale('tr', tr);
+registerLocale('en', enUS);
 
 interface DateRangeFilterProps {
   startDate?: string;
@@ -19,6 +22,7 @@ interface DateRangeFilterProps {
 type QuickSelect = 'today' | 'yesterday' | 'last7days' | 'last14days' | 'last30days' | 'custom';
 
 export default function DateRangeFilter({ startDate, endDate, onDateChange, onClear }: DateRangeFilterProps) {
+  const { t, locale } = useI18n();
   const [start, setStart] = useState<Date | null>(startDate ? new Date(startDate) : null);
   const [end, setEnd] = useState<Date | null>(endDate ? new Date(endDate) : null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -38,11 +42,11 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
   };
 
   const quickSelections = [
-    { value: 'today' as QuickSelect, label: 'Bugün' },
-    { value: 'yesterday' as QuickSelect, label: 'Dün' },
-    { value: 'last7days' as QuickSelect, label: 'Son 7 Gün' },
-    { value: 'last14days' as QuickSelect, label: 'Son 14 Gün' },
-    { value: 'last30days' as QuickSelect, label: 'Son 30 Gün' }
+    { value: 'today' as QuickSelect, label: t('datePicker.today') },
+    { value: 'yesterday' as QuickSelect, label: t('datePicker.yesterday') },
+    { value: 'last7days' as QuickSelect, label: t('datePicker.last7days') },
+    { value: 'last14days' as QuickSelect, label: t('datePicker.last14days') },
+    { value: 'last30days' as QuickSelect, label: t('datePicker.last30days') }
   ];
 
   const handleQuickSelect = (quick: QuickSelect) => {
@@ -102,11 +106,14 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
   };
 
   const formatDateRange = () => {
-    if (!start) return 'Tarih Seç';
+    if (!start) return t('datePicker.selectDate');
+    const isTurkish = locale === 'tr';
+    const localeString = isTurkish ? 'tr-TR' : 'en-US';
+    
     if (!end || start.toDateString() === end.toDateString()) {
-      return start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+      return start.toLocaleDateString(localeString, { day: 'numeric', month: 'long', year: 'numeric' });
     }
-    return `${start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    return `${start.toLocaleDateString(localeString, { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString(localeString, { day: 'numeric', month: 'short', year: 'numeric' })}`;
   };
 
   return (
@@ -155,8 +162,8 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
                 endDate={end}
                 selectsRange
                 inline
-                locale="tr"
-                dateFormat="dd/MM/yyyy"
+                locale={locale}
+                dateFormat={locale === 'tr' ? 'dd/MM/yyyy' : 'MM/dd/yyyy'}
                 maxDate={new Date()}
                 showMonthDropdown
                 showYearDropdown
@@ -184,7 +191,7 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
                   marginBottom: '0.25rem'
                 }}
               >
-                Hızlı Seçim
+{t('datePicker.quickSelect')}
               </div>
               {quickSelections.map((quick) => (
                 <button

@@ -513,5 +513,14 @@
         "fridayShort": "Cum",
         "saturdayShort": "Cmt"
       }
+    },
+    "datePicker": {
+      "selectDate": "Tarih Seç",
+      "quickSelect": "Hızlı Seçim",
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "last7days": "Son 7 Gün",
+      "last14days": "Son 14 Gün",
+      "last30days": "Son 30 Gün"
     }
 }
