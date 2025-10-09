@@ -37,31 +37,3 @@ export function getConsistentColorFromString(str: string): string {
   return COSMIC_COLORS[index];
 }
 
-/**
- * Birden fazla item için tutarlı renkler üretir
- * @param items - Renk atanacak itemlar
- * @param keyExtractor - Item'dan key çıkaran fonksiyon
- * @returns Renk atanmış itemlar
- */
-export function assignConsistentColors<T extends { name: string }>(
-  items: T[]
-): (T & { color: string })[] {
-  return items.map(item => ({
-    ...item,
-    color: getConsistentColorFromString(item.name)
-  }));
-}
-
-/**
- * Mevcut renkleri koruyarak eksik renkleri atar
- * @param items - Renk atanacak itemlar (bazılarında color olabilir)
- * @returns Tüm itemlara renk atanmış liste
- */
-export function ensureColors<T extends { name: string; color?: string }>(
-  items: T[]
-): (T & { color: string })[] {
-  return items.map(item => ({
-    ...item,
-    color: item.color || getConsistentColorFromString(item.name)
-  }));
-}

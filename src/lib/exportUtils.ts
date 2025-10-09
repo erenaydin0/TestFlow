@@ -197,55 +197,6 @@ export const exportExecutionStepsToCSV = (execution: ExecutionResult): void => {
   downloadCSV(csvContent, filename);
 };
 
-// Bulk execution steps export
-export const exportBulkExecutionStepsToCSV = (executions: ExecutionResult[]): void => {
-  const csvHeaders = [
-    'Test Adı',
-    'Execution ID',
-    'Adım No',
-    'Adım ID',
-    'Adım Türü',
-    'Durum',
-    'Başlangıç Zamanı',
-    'Bitiş Zamanı',
-    'Süre (ms)',
-    'URL',
-    'Selector',
-    'Girilen Değer',
-    'Beklenen Değer',
-    'Hata Mesajı',
-    'Ekran Görüntüsü'
-  ];
-  
-  const csvRows: (string | number)[][] = [];
-  executions.forEach(execution => {
-    execution.steps.forEach((step, index) => {
-      csvRows.push([
-        execution.workflowName,
-        execution.id,
-        index + 1,
-        step.stepId || '',
-        getStepTypeText(step.type),
-        getStatusText(step.status),
-        step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
-        step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
-        step.duration || '',
-        step.config?.url || '',
-        step.config?.selector || '',
-        step.config?.value || step.config?.text || '',
-        step.config?.expectedValue || '',
-        step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
-        step.screenshot ? 'Var' : ''
-      ]);
-    });
-  });
-
-  const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  const filename = `CosmicQA-bulk-steps-${new Date().toISOString().split('T')[0]}.csv`;
-  
-  downloadCSV(csvContent, filename);
-};
-
 // Common filter logic for tests
 export const filterTests = (
   tests: Test[], 
