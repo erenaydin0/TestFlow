@@ -5,7 +5,8 @@ import { X, Clock, Calendar } from 'lucide-react';
 import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
 import { Button } from '@/components/ui';
 import { CustomSelect } from '@/components/common';
-import { useI18n } from '@/contexts';
+import { useI18n, useSidebar } from '@/contexts';
+import { useModal } from '@/hooks/ui';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -29,10 +30,40 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => ({
 
 export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleModalProps) {
   const { t } = useI18n();
+  const { setIsModalOpen } = useSidebar();
   const [tests, setTests] = useState<Test[]>([]);
   const [loadingTests, setLoadingTests] = useState(false);
   const [selectedTest, setSelectedTest] = useState(schedule?.testId || '');
   const [frequency, setFrequency] = useState<ScheduleFrequency>(schedule?.frequency || 'daily');
+
+  const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
+    animationDuration: 200
+  });
+
+  // Modal açıkken body scroll'unu engelle, ESC tuşu ile kapatma ve sidebar'ı devre dışı bırak
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', handleKeyDown);
+      setIsModalOpen(true);
+    } else {
+      document.body.style.overflow = 'unset';
+      document.removeEventListener('keydown', handleKeyDown);
+      setIsModalOpen(false);
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.removeEventListener('keydown', handleKeyDown);
+      setIsModalOpen(false);
+    };
+  }, [isOpen, setIsModalOpen]);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  };
   
   // Zamanlama detayları
   const [hour, setHour] = useState('09');
@@ -228,33 +259,50 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
     );
   };
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'var(--bg-primary)',
-        border: '1px solid var(--border-primary)',
-        borderRadius: '1rem',
-        padding: '1.25rem',
-        width: '90%',
-        maxWidth: '900px',
-        height: '600px',
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '1rem',
+        pointerEvents: 'auto',
+        ...getOverlayStyle()
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        style={{
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--border-primary)',
+          borderRadius: '1rem',
+          padding: '1.25rem',
+          width: '90%',
+          maxWidth: '900px',
+          height: '600px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          pointerEvents: 'auto',
+          position: 'relative',
+          zIndex: 10000,
+          ...getModalStyle()
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

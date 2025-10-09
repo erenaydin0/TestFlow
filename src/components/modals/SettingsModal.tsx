@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Sun, Moon, Monitor, Settings, Palette, Code, Globe } from 'lucide-react';
-import { useTheme, useBrowserSettings, useI18n } from '@/contexts';
+import { useTheme, useBrowserSettings, useI18n, useSidebar } from '@/contexts';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
 import { CustomSelect } from '@/components/common';
@@ -15,6 +15,7 @@ interface SettingsModalProps {
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, setTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
+  const { setIsModalOpen } = useSidebar();
   const { 
     defaultBrowser, 
     setDefaultBrowser, 
@@ -48,7 +49,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { value: 'en', label: 'English' }
   ];
 
-  // ESC tuşu ile kapatma
+  // ESC tuşu ile kapatma ve sidebar'ı devre dışı bırak
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -61,13 +62,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
+      setIsModalOpen(true);
+    } else {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+      setIsModalOpen(false);
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
+      setIsModalOpen(false);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, setIsModalOpen]);
 
 
 
