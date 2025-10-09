@@ -7,7 +7,6 @@ import { Sidebar, Header } from '@/components/layout';
 import { 
   UnifiedToolbar,
   CanvasControls,
-  StepModal,
   ConnectionRenderer,
   TestStepCard,
   DragPreview,
@@ -15,19 +14,16 @@ import {
   SelectionBox,
   UnsavedChangesDialog
 } from '@/components/features/test-builder';
-import { TestModal } from '@/components/modals';
+import { TestModal, StepModal } from '@/components/modals';
 
 import { TestStep, BrowserType, TestFormData, TestFilters } from '@/types';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/lib/utils';
 import { 
   useTestSteps,
-  useCopyPaste,
-  useSnapToGrid,
-  useCanvasInteraction,
-  useConnections,
-  useSelection,
-  useCanvasStyles,
+  useCanvasCore,
+  useCanvasSelection,
+  useCanvasLayout,
   useMouseEvents,
   useUnsavedChanges,
   useTestNotifications
@@ -55,28 +51,6 @@ export default function TestBuilder() {
   const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded } = useTestNotifications();
 
   const {
-    selectedSteps,
-    setSelectedSteps,
-    selectedStep,
-    setSelectedStep,
-    copiedSteps,
-    selectAllSteps,
-    clearSelection,
-    copySteps,
-    pasteSteps,
-    duplicateSteps
-  } = useCopyPaste();
-
-  const {
-    snapEnabled,
-    snapLines,
-    setSnapLines,
-    snapToPosition,
-    clearSnapLines,
-    toggleSnap
-  } = useSnapToGrid();
-
-  const {
     canvasRef,
     canvasOffset,
     setCanvasOffset,
@@ -91,9 +65,14 @@ export default function TestBuilder() {
     setDraggedAction,
     draggedStep,
     setDraggedStep,
+    isDragOver,
     setIsDragOver,
     dragPreview,
     setDragPreview,
+    isSelecting: canvasIsSelecting,
+    selectionBox: canvasSelectionBox,
+    setSelectionBox: setCanvasSelectionBox,
+    canvasStyles,
     zoomIn,
     zoomOut,
     resetView,
@@ -103,7 +82,31 @@ export default function TestBuilder() {
     handleCanvasDragOver,
     handleCanvasDragEnter,
     handleCanvasDragLeave
-  } = useCanvasInteraction();
+  } = useCanvasCore();
+
+  const {
+    selectedSteps,
+    setSelectedSteps,
+    selectedStep,
+    setSelectedStep,
+    isSelecting: selectionIsSelecting,
+    selectionBox: selectionSelectionBox,
+    selectionStart,
+    setSelectionStart,
+    copiedSteps,
+    setCopiedSteps,
+    selectAllSteps,
+    clearSelection,
+    toggleStepSelection,
+    copySteps,
+    pasteSteps,
+    duplicateSteps,
+    handleCanvasMouseDown: selectionHandleCanvasMouseDown,
+    handleCanvasMouseMove: selectionHandleCanvasMouseMove,
+    handleCanvasMouseUp: selectionHandleCanvasMouseUp,
+    getStepsInSelectionBox,
+    handleStepClick: selectionHandleStepClick
+  } = useCanvasSelection();
 
   const {
     isConnecting,
@@ -112,21 +115,18 @@ export default function TestBuilder() {
     setConnectionStart,
     connectionType,
     setConnectionType,
+    snapEnabled,
+    snapLines,
+    setSnapLines,
     startConnection,
     endConnection,
     removeConnection,
+    snapToPosition,
+    clearSnapLines,
+    toggleSnap,
     getStepCenter,
     getConnectionStyle
-  } = useConnections();
-
-  const {
-    isSelecting: selectionIsSelecting,
-    selectionBox: selectionSelectionBox,
-    handleCanvasMouseDown: selectionHandleCanvasMouseDown,
-    handleCanvasMouseMove: selectionHandleCanvasMouseMove,
-    handleCanvasMouseUp: selectionHandleCanvasMouseUp,
-    handleStepClick: selectionHandleStepClick
-  } = useSelection();
+  } = useCanvasLayout();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -200,13 +200,6 @@ export default function TestBuilder() {
   }, [enableScreenshots, enableRecording, headlessMode]);
   const searchParams = useSearchParams();
 
-  // Canvas styles
-  const canvasStyles = useCanvasStyles({
-    zoom,
-    pan,
-    canvasOffset,
-    isPanning
-  });
 
   // Custom mouse move handler that handles both selection and panning
   const handleMouseMove = useCallback((e: MouseEvent) => {

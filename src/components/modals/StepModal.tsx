@@ -1,31 +1,12 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import {
-  Navigation,
-  MousePointer,
-  Type,
-  Clock,
-  RotateCcw,
-  GitBranch,
-  X,
-  Save
-} from 'lucide-react';
+import {  X } from 'lucide-react';
 import { IconButton } from '@/components/ui';
 import { TestStep } from '@/types';
-import { getTranslatedActions, getTranslatedActionByType, ActionField } from '@/lib/actions';
+import { getTranslatedActionByType, ActionField } from '@/lib/actions';
 import { CustomSelect } from '@/components/common';
 import { useI18n } from '@/contexts';
-
-// Available actions type
-interface ActionType {
-  type: string;
-  title: string;
-  icon: React.ComponentType<{ size?: number; color?: string }>;
-  color: string;
-  description: string;
-  category: string;
-  fields: ActionField[];
-  isAdvanced?: boolean;
-}
 
 // Props interface
 interface StepModalProps {

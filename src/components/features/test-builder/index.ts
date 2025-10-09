@@ -4,7 +4,6 @@ export { default as BrowserSelector } from './BrowserSelector';
 export { default as CanvasControls } from './CanvasControls';
 export { default as DragPreview } from './DragPreview';
 export { default as ImportDialog } from './ImportDialog';
-export { default as StepModal } from './StepModal';
 export { default as UnsavedChangesDialog } from './UnsavedChangesDialog';
 
 // Canvas Overlays (merged components)
