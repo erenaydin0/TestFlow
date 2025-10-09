@@ -1,6 +1,7 @@
 // Server configuration - Load from environment variables
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
+const dotenv = require('dotenv');
+dotenv.config();
 
 const config = {
   // Server
