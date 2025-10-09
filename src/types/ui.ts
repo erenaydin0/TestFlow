@@ -1,10 +1,16 @@
 import { BaseModalProps, BaseTableProps, BaseCellProps } from './base';
-import { Test, TestFormData, TestFilters } from './test';
+import { Test, TestFormData, TestFilters, BrowserType } from './test';
 import { ExecutionResult, ExecutionFilters } from './execution';
-import { BrowserType } from './test';
 
 // Theme Types
 export type Theme = 'light' | 'dark' | 'system';
+
+// Status Types
+export type TestStatus = 'passed' | 'failed' | 'pending' | 'running';
+export type ExecutionStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type StepStatus = 'pending' | 'running' | 'passed' | 'failed';
+export type ScheduleStatus = 'active' | 'paused' | 'disabled';
+export type ScheduleFrequency = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
 // Modal Props
 export interface TestModalProps extends BaseModalProps {
@@ -81,7 +87,7 @@ export interface TagsCellProps extends BaseCellProps {
 }
 
 export interface StatusCellProps extends BaseCellProps {
-  status: 'passed' | 'failed' | 'running' | 'pending' | 'completed' | 'cancelled' | 'queued';
+  status: TestStatus | ExecutionStatus;
   size?: 'sm' | 'md' | 'lg';
 }
 

@@ -1,4 +1,5 @@
 // Chart and dashboard specific types
+import { TestStatus } from './ui';
 
 export interface DailyResult {
   date: string;
@@ -32,7 +33,7 @@ export interface RecentTest {
   id: number;
   executionId?: string;
   name: string;
-  status: 'passed' | 'failed' | 'running';
+  status: TestStatus;
   duration: number;
   lastRun: Date;
   environment: string;

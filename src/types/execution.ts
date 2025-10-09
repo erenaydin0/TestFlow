@@ -1,10 +1,11 @@
 import { BaseEntity, BaseStats } from './base';
 import { BrowserType } from './test';
+import { ExecutionStatus, StepStatus } from './ui';
 
 export interface ExecutionResult extends BaseEntity {
   workflowId: string;
   workflowName: string;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  status: ExecutionStatus;
   startTime: Date;
   endTime?: Date;
   duration?: number;
@@ -23,7 +24,7 @@ export interface ExecutionResult extends BaseEntity {
 export interface ExecutionStepResult {
   stepId: string;
   type: string;
-  status: 'pending' | 'running' | 'passed' | 'failed';
+  status: StepStatus;
   startTime?: Date;
   endTime?: Date;
   duration?: number;

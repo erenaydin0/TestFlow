@@ -4,12 +4,13 @@ import { ArrowRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common';
 import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/lib/utils';
 import { useI18n } from '@/contexts';
+import { TestStatus } from '@/types';
 
 interface RecentTest {
   id: number;
   executionId?: string;
   name: string;
-  status: 'passed' | 'failed' | 'running';
+  status: TestStatus;
   duration: number;
   lastRun: Date;
   environment: string;

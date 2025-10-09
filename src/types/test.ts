@@ -1,11 +1,12 @@
 import { BaseEntity, BaseFormData } from './base';
+import { TestStatus, ScheduleStatus, ScheduleFrequency } from './ui';
 
 export type BrowserType = 'chromium' | 'firefox' | 'webkit' | 'msedge';
 
 export interface Test extends BaseEntity {
   name: string;
   description: string;
-  status: 'passed' | 'failed' | 'pending' | 'running';
+  status: TestStatus;
   duration: number;
   tags: string[];
   suite: string;
@@ -94,10 +95,6 @@ export interface TestStats {
   avgDuration: number;
   successRate: number;
 }
-
-// Scheduled Test Types
-export type ScheduleStatus = 'active' | 'paused' | 'disabled';
-export type ScheduleFrequency = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
 export interface ScheduledTest extends BaseEntity {
   testId: string;
