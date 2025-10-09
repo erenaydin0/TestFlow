@@ -1,22 +1,5 @@
 import { useState, useCallback } from 'react';
-import { TestStep } from '@/types';
-
-interface UseTestStepsReturn {
-  testSteps: TestStep[];
-  setTestSteps: (steps: TestStep[]) => void;
-  history: TestStep[][];
-  historyIndex: number;
-  canUndo: boolean;
-  canRedo: boolean;
-  saveToHistory: (newSteps: TestStep[]) => void;
-  undo: (clearSelections?: () => void) => void;
-  redo: (clearSelections?: () => void) => void;
-  addStep: (step: TestStep) => void;
-  deleteStep: (stepId: string, clearSelections?: () => void) => void;
-  updateStepProperty: (stepId: string, property: string, value: any) => void;
-  autoArrangeSteps: () => void;
-  generateId: () => string;
-}
+import { TestStep, UseTestStepsReturn } from '@/types';
 
 const useTestSteps = (): UseTestStepsReturn => {
   const [testSteps, setTestSteps] = useState<TestStep[]>([]);

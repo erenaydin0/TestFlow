@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats } from '@/types';
+import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats, UseReportsOptions } from '@/types';
 import { filterExecutions, getUniqueFilterOptions } from '@/lib/exportUtils';
 import { API_URL } from '@/lib/config';
 import useExecutions from './useExecutions';
@@ -20,10 +20,6 @@ interface ReportFilters {
   suite: string[];
   tags: string[];
   browserType: BrowserType[];
-}
-
-interface UseReportsOptions {
-  autoFetch?: boolean;
 }
 
 const useReports = (options: UseReportsOptions = {}) => {

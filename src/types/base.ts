@@ -29,6 +29,7 @@ export interface BaseFilterState {
 
 export interface BaseHookOptions {
   autoLoad?: boolean;
+  autoFetch?: boolean;
 }
 
 export interface BaseStats {

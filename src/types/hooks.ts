@@ -22,11 +22,14 @@ export interface UseReportsOptions extends BaseHookOptions {
 export interface UseTestStepsReturn {
   testSteps: any[];
   setTestSteps: (steps: any[]) => void;
+  history: any[][];
+  historyIndex: number;
   canUndo: boolean;
   canRedo: boolean;
   saveToHistory: (steps: any[]) => void;
   undo: (callback?: () => void) => void;
   redo: (callback?: () => void) => void;
+  addStep: (step: any) => void;
   deleteStep: (stepId: string, callback?: () => void) => void;
   updateStepProperty: (stepId: string, property: string, value: any) => void;
   autoArrangeSteps: () => void;

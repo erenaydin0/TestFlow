@@ -2,12 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { ExecutionResult, ExecutionStats } from '@/types';
+import { ExecutionResult, ExecutionStats, UseExecutionsOptions } from '@/types';
 import { API_URL } from '@/lib/config';
-
-interface UseExecutionsOptions {
-  autoFetch?: boolean;
-}
 
 const useExecutions = (options: UseExecutionsOptions = {}) => {
   const { autoFetch = true } = options;

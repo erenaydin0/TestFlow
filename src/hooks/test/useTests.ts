@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
-import { Test, BrowserType, TestFilters, TestFormData } from '@/types';
+import { Test, TestFilters } from '@/types';
 import { filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
 import { API_URL } from '@/lib/config';
 

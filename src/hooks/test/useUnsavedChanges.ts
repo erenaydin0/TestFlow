@@ -1,24 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { TestStep } from '@/types';
+import { TestStep, UseUnsavedChangesProps, UseUnsavedChangesReturn } from '@/types';
 import { useI18n } from '@/contexts';
-
-interface UseUnsavedChangesProps {
-  testSteps: TestStep[];
-  onSave?: () => Promise<void>;
-}
-
-interface UseUnsavedChangesReturn {
-  hasUnsavedChanges: boolean;
-  showUnsavedDialog: boolean;
-  pendingNavigation: string | null;
-  handleNavigation: (url: string) => void;
-  confirmNavigation: () => void;
-  cancelNavigation: () => void;
-  saveAndNavigate: () => Promise<void>;
-  markAsSaved: () => void;
-  resetUnsavedChanges: () => void;
-}
 
 export const useUnsavedChanges = ({
   testSteps,
