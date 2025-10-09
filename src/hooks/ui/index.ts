@@ -1,4 +1,2 @@
 // UI hooks
-export { default as useKeyboardShortcuts } from './useKeyboardShortcuts';
-export { useDropdown } from './useDropdown';
-export { useModal } from './useModal';
+export { useDropdown, useModal } from './useUIInteractions';

@@ -28,7 +28,6 @@ import {
   useCanvasInteraction,
   useConnections,
   useSelection,
-  useKeyboardShortcuts,
   useCanvasStyles,
   useMouseEvents,
   useUnsavedChanges,
@@ -334,26 +333,6 @@ export default function TestBuilder() {
     }
   };
 
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    isModalOpen,
-    selectedSteps,
-    copiedSteps,
-    testSteps,
-    generateId,
-    copySteps,
-    pasteSteps,
-    duplicateSteps,
-    selectAllSteps,
-    deleteSelectedSteps,
-    clearSelection,
-    undo,
-    redo,
-    setTestSteps,
-    saveToHistory,
-    setSelectedSteps,
-    setSelectedStep
-  });
 
   // Canvas mouse event handlers using selection hook
   const handleCanvasMouseDown = (e: React.MouseEvent) => {

@@ -3,6 +3,106 @@
 import React, { useState } from 'react';
 import { TestStep } from '@/types';
 
+// ============================================================================
+// SelectionBox Component
+// ============================================================================
+
+interface SelectionBoxProps {
+  selectionBox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: number;
+  strokeDasharray?: string;
+  opacity?: number;
+}
+
+export const SelectionBox: React.FC<SelectionBoxProps> = ({
+  selectionBox,
+  fillColor = "rgba(59, 130, 246, 0.1)",
+  strokeColor = "var(--color-selected)",
+  strokeWidth = 1,
+  strokeDasharray = "4,4",
+  opacity = 0.8
+}) => {
+  if (!selectionBox) return null;
+
+  return (
+    <rect
+      x={selectionBox.x}
+      y={selectionBox.y}
+      width={selectionBox.width}
+      height={selectionBox.height}
+      fill={fillColor}
+      stroke={strokeColor}
+      strokeWidth={strokeWidth}
+      strokeDasharray={strokeDasharray}
+      opacity={opacity}
+    />
+  );
+};
+
+// ============================================================================
+// SnapLines Component
+// ============================================================================
+
+interface SnapLinesProps {
+  snapEnabled: boolean;
+  snapLines: {
+    x: number[];
+    y: number[];
+  };
+}
+
+export const SnapLines: React.FC<SnapLinesProps> = ({
+  snapEnabled,
+  snapLines
+}) => {
+  if (!snapEnabled) return null;
+
+  return (
+    <g>
+      {/* Vertical snap lines */}
+      {snapLines.x.map((x, index) => (
+        <line
+          key={`snap-x-${index}`}
+          x1={x}
+          y1={0}
+          x2={x}
+          y2="100%"
+          stroke="var(--status-info)"
+          strokeWidth="1"
+          strokeDasharray="4,4"
+          opacity="0.6"
+        />
+      ))}
+      
+      {/* Horizontal snap lines */}
+      {snapLines.y.map((y, index) => (
+        <line
+          key={`snap-y-${index}`}
+          x1={0}
+          y1={y}
+          x2="100%"
+          y2={y}
+          stroke="var(--status-info)"
+          strokeWidth="1"
+          strokeDasharray="4,4"
+          opacity="0.6"
+        />
+      ))}
+    </g>
+  );
+};
+
+// ============================================================================
+// ConnectionRenderer Component
+// ============================================================================
+
 interface ConnectionRendererProps {
   testSteps: TestStep[];
   getStepCenter: (step: TestStep) => { x: number; y: number };
@@ -189,7 +289,7 @@ const ConnectionLine: React.FC<ConnectionLineProps> = ({
   );
 };
 
-const ConnectionRenderer: React.FC<ConnectionRendererProps> = ({
+export const ConnectionRenderer: React.FC<ConnectionRendererProps> = ({
   testSteps,
   getStepCenter,
   getConnectionStyle,
@@ -260,5 +360,3 @@ const ConnectionRenderer: React.FC<ConnectionRendererProps> = ({
 
   return <>{connections}</>;
 };
-
-export default ConnectionRenderer; 
