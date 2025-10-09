@@ -18,7 +18,8 @@
     "createFirstSchedule": "İlk Zamanlamayı Oluştur",
     "nextRun": "Sonraki Çalışma",
     "allSchedules": "Zamanlanmış Testler",
-    "noSchedulesFound": "Henüz zamanlanmış test yok"
+    "noSchedulesFound": "Henüz zamanlanmış test yok",
+    "schedule": "Zamanlama"
   },
   "dashboard": {
     "title": "Dashboard",

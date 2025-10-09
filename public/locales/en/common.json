@@ -18,7 +18,8 @@
     "createFirstSchedule": "Create First Schedule",
     "nextRun": "Next Run",
     "allSchedules": "Scheduled Tests",
-    "noSchedulesFound": "No scheduled tests yet"
+    "noSchedulesFound": "No scheduled tests yet",
+    "schedule": "Schedule"
   },
   "dashboard": {
     "title": "Dashboard",

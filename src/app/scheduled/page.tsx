@@ -192,7 +192,7 @@ export default function ScheduledPage() {
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.05em'
                               }}>
-                                Zamanlama
+                                {t('scheduled.schedule')}
                               </span>
                             </div>
                             <p style={{ 
