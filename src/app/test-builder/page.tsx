@@ -5,8 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { Sidebar, Header } from '@/components/layout';
 import { 
-  FloatingToolbar,
-  ActionsPanel,
+  UnifiedToolbar,
   CanvasControls,
   StepModal,
   ConnectionRenderer,
@@ -721,8 +720,8 @@ export default function TestBuilder() {
             testStepsCount={testSteps.length}
           />
 
-          {/* Floating Toolbar */}
-          <FloatingToolbar
+          {/* Unified Toolbar */}
+          <UnifiedToolbar
             onAutoArrange={autoArrangeSteps}
             testStepsCount={testSteps.length}
             snapEnabled={snapEnabled}
@@ -770,10 +769,7 @@ export default function TestBuilder() {
             }}
             selectedBrowser={selectedBrowser}
             onBrowserChange={handleBrowserChange}
-          />
-
-          {/* Floating Actions Panel */}
-          <ActionsPanel
+            showActionsPanel={true}
             draggedAction={draggedAction}
             onActionDragStart={handleActionDragStart}
             onDragEnd={handleDragEnd}
