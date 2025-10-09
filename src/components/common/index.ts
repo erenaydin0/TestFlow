@@ -9,4 +9,3 @@ export { default as StatusBadge, getStatusColor, getStatusText } from './StatusB
 export { default as CosmicLogo } from './CosmicLogo';
 export { default as CosmicSpinner } from './CosmicSpinner';
 export { EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from './EditableCells';
-export { LanguageSelector } from './LanguageSelector';
