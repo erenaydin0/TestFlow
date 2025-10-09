@@ -2,6 +2,7 @@
 
 import { BrowserType } from '@/types';
 import { CustomSelect } from '@/components/common';
+import { BASIC_BROWSER_OPTIONS } from '@/lib/browserUtils';
 
 interface BrowserSelectorProps {
   selectedBrowser: BrowserType;
@@ -12,12 +13,7 @@ interface BrowserSelectorProps {
   useFixedPosition?: boolean; // Tablo içinde kullanım için
 }
 
-const browserOptions = [
-  { value: 'chromium' as BrowserType, label: 'Chrome' },    
-  { value: 'firefox' as BrowserType, label: 'Firefox' },
-  { value: 'webkit' as BrowserType, label: 'Safari' },
-  { value: 'msedge' as BrowserType, label: 'Edge' }
-];
+const browserOptions = BASIC_BROWSER_OPTIONS;
 
 export default function BrowserSelector({ 
   selectedBrowser, 

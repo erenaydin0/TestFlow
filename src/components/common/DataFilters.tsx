@@ -8,6 +8,7 @@ import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components/ui';
 import { BrowserType, TestFilters, ExecutionFilters } from '@/types';
 import { useI18n } from '@/contexts';
+import { EXTENDED_BROWSER_OPTIONS } from '@/lib/browserUtils';
 
 interface FilterState {
   search: string;
@@ -36,12 +37,7 @@ interface DataFiltersProps {
   className?: string;
 }
 
-const browserOptions = [
-  { value: 'chromium' as BrowserType, label: 'Chrome', icon: Chrome, color: 'var(--status-info)' },
-  { value: 'firefox' as BrowserType, label: 'Firefox', icon: Globe, color: 'var(--status-warning)' },
-  { value: 'webkit' as BrowserType, label: 'Safari', icon: Globe, color: 'var(--status-info)' },
-  { value: 'msedge' as BrowserType, label: 'Edge', icon: Globe, color: 'var(--status-info)' }
-];
+const browserOptions = EXTENDED_BROWSER_OPTIONS;
 
 const DataFilters: React.FC<DataFiltersProps> = ({
   filters,
@@ -224,7 +220,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
             const IconComponent = option.icon;
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <IconComponent size={14} style={{ color: option.color }} />
+                {IconComponent && <IconComponent size={14} style={{ color: option.color }} />}
                 <span>{option.label}</span>
               </div>
             );
@@ -340,7 +336,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
             const IconComponent = option.icon;
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <IconComponent size={14} style={{ color: option.color }} />
+                {IconComponent && <IconComponent size={14} style={{ color: option.color }} />}
                 <span>{option.label}</span>
               </div>
             );

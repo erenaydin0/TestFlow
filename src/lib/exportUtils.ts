@@ -1,16 +1,9 @@
 import { formatDuration, formatRelativeTime } from './utils';
 import { BrowserType, Test, ExecutionResult, TestFilters, ExecutionFilters } from '@/types';
+import { getBrowserName } from './browserUtils';
 
-// Common browser name conversion
-export const getBrowserName = (browserType?: BrowserType): string => {
-  switch (browserType) {
-    case 'chromium': return 'Chrome';
-    case 'firefox': return 'Firefox';
-    case 'webkit': return 'Safari';
-    case 'msedge': return 'Edge';
-    default: return 'Chrome';
-  }
-};
+// Re-export for backward compatibility
+export { getBrowserName };
 
 // Common CSV download function
 export const downloadCSV = (content: string, filename: string): void => {

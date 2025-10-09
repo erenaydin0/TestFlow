@@ -7,6 +7,7 @@ import { Theme } from '@/types';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
 import { CustomSelect } from '@/components/common';
+import { SETTINGS_BROWSER_OPTIONS } from '@/lib/browserUtils';
 
 export default function SettingsModal() {
   const { isSettingsOpen, closeSettingsModal } = useSettingsModal();
@@ -28,12 +29,7 @@ export default function SettingsModal() {
     animationDuration: 200
   });
 
-  const browserOptions = [
-    { value: 'chromium', label: 'Chrome/Chromium' },
-    { value: 'firefox', label: 'Firefox' },
-    { value: 'webkit', label: 'Safari/WebKit' },
-    { value: 'msedge', label: 'Microsoft Edge' }
-  ];
+  const browserOptions = SETTINGS_BROWSER_OPTIONS;
 
   const themeOptions = [
     { value: 'light', label: t('common.light') },

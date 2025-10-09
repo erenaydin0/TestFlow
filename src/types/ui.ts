@@ -12,6 +12,26 @@ export type StepStatus = 'pending' | 'running' | 'passed' | 'failed';
 export type ScheduleStatus = 'active' | 'paused' | 'disabled';
 export type ScheduleFrequency = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
+// Browser Types
+export interface BrowserOption {
+  value: BrowserType;
+  label: string;
+  icon?: React.ComponentType<any>;
+  color?: string;
+}
+
+export interface BrowserNameMapping {
+  [key: string]: string;
+}
+
+export interface BrowserIconMapping {
+  [key: string]: React.ComponentType<any>;
+}
+
+export interface BrowserColorMapping {
+  [key: string]: string;
+}
+
 // Modal Props
 export interface TestModalProps extends BaseModalProps {
   onSave: (data: TestFormData) => void;

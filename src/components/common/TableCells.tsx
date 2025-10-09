@@ -7,29 +7,11 @@ import { BrowserType, BrowserCellProps, TagsCellProps, StatusCellProps, TestName
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge } from './';
 import { useI18n } from '@/contexts';
+import { getBrowserName, getBrowserIconComponent } from '@/lib/browserUtils';
 
 // Browser Cell Component
 
 const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) => {
-  const getBrowserIcon = () => {
-    switch(browserType) {
-      case 'chromium': return <Chrome size={16} style={{ color: 'var(--status-info)' }} />;
-      case 'firefox': return <Globe size={16} style={{ color: 'var(--status-warning)' }} />;
-      case 'webkit': return <Globe size={16} style={{ color: 'var(--status-info)' }} />;
-      case 'msedge': return <Globe size={16} style={{ color: 'var(--status-info)' }} />;
-      default: return <Chrome size={16} style={{ color: 'var(--status-info)' }} />;
-    }
-  };
-
-  const getBrowserName = () => {
-    switch(browserType) {
-      case 'chromium': return 'Chrome';
-      case 'firefox': return 'Firefox';
-      case 'webkit': return 'Safari';
-      case 'msedge': return 'Edge';
-      default: return 'Chrome';
-    }
-  };
 
   return (
     <div style={{
@@ -39,9 +21,9 @@ const BrowserCell: React.FC<BrowserCellProps> = ({ browserType = 'chromium' }) =
       justifyContent: 'center',
       fontSize: '0.875rem'
     }}>
-      {getBrowserIcon()}
+      {getBrowserIconComponent(browserType, 16)}
       <span style={{ color: 'var(--text-primary)' }}>
-        {getBrowserName()}
+        {getBrowserName(browserType)}
       </span>
     </div>
   );
