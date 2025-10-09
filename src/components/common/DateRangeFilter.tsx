@@ -234,7 +234,7 @@ export default function DateRangeFilter({ startDate, endDate, onDateChange, onCl
                   }}
                 >
                   <X size={14} />
-                  Temizle
+                  {t('filters.clear')}
                 </button>
               )}
             </div>

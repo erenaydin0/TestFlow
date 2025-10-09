@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, ButtonGroup } from '@/components/ui';
+import { useI18n } from '@/contexts';
 
 interface UnsavedChangesDialogProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   onCancel,
   isSaveDialogOpen = false
 }) => {
+  const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
   
   // SaveDialog açıkken bu dialog'u saving modunda göster
@@ -93,7 +95,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
                 marginBottom: '8px',
               }}
             >
-              Kaydedilmemiş Değişiklikler
+              {t('unsavedChanges.title')}
             </h3>
             <p
               style={{
@@ -103,7 +105,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
                 lineHeight: '1.5',
               }}
             >
-              Test workflow'unuzda kaydedilmemiş değişiklikler var. Bu sayfadan ayrılmadan önce değişikliklerinizi kaydetmek istiyor musunuz?
+              {t('unsavedChanges.message')}
             </p>
           </div>
         </div>
@@ -120,7 +122,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             disabled={isInSavingMode}
             onClick={onCancel}
           >
-            İptal
+            {t('unsavedChanges.cancel')}
           </Button>
           <Button
             variant="outline"
@@ -129,7 +131,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             onClick={onDiscard}
             style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)' }}
           >
-            Kaydetme
+            {t('unsavedChanges.dontSave')}
           </Button>
           <Button
             variant="primary"
@@ -138,7 +140,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             loading={isInSavingMode}
             onClick={handleSave}
           >
-            {isInSavingMode ? 'Kaydediliyor...' : 'Kaydet'}
+            {isInSavingMode ? t('unsavedChanges.saving') : t('unsavedChanges.save')}
           </Button>
         </ButtonGroup>
       </div>

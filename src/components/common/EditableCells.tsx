@@ -7,6 +7,7 @@ import MultiSelect from './MultiSelect';
 import { BrowserSelector } from '@/components/features/test-builder';
 import { useDropdown } from '@/hooks/ui';
 import { getDropdownContainerStyle } from '@/lib/dropdownStyles';
+import { useI18n } from '@/contexts';
 
 interface EditableSuiteCellProps {
   value: string;
@@ -21,6 +22,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
   availableSuites,
   onUpdate
 }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +100,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
           }
         }}
       >
-        {value || 'Grup seç'}
+        {value || t('searchPlaceholders.selectGroup')}
       </div>
 
       {/* Dropdown */}
@@ -115,7 +117,7 @@ export const EditableSuiteCell: React.FC<EditableSuiteCellProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Ara veya yeni ekle..."
+            placeholder={t('searchPlaceholders.searchOrAddNew')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && searchTerm.trim()) {
                 handleSelect(searchTerm.trim());
@@ -213,6 +215,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
   availableTags,
   onUpdate
 }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -352,7 +355,7 @@ export const EditableTagsCell: React.FC<EditableTagsCellProps> = ({
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Ara veya yeni ekle..."
+          placeholder={t('searchPlaceholders.searchOrAddNew')}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               handleAddNew();

@@ -14,7 +14,8 @@ import {
   CheckCircle2 
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr } from 'date-fns/locale/tr';
+import { enUS } from 'date-fns/locale/en-US';
 
 import { useNotifications, useTheme, useI18n } from '@/contexts';
 
@@ -38,7 +39,7 @@ function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = useNotifications();
   const { theme } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -146,7 +147,7 @@ function NotificationPanel() {
                 color: 'var(--text-primary)',
                 marginLeft: '0.3rem'
               }}>
-                Bildirimler
+                {t('notifications.notifications')}
               </h3>
               <div className="flex items-center space-x-2">
                 {notifications.length > 0 && (
@@ -166,7 +167,7 @@ function NotificationPanel() {
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                        title={t('notifications.markAllRead')}
+                        title={t('notifications.markAllAsRead')}
                       >
                         <CheckCircle2 size={16} />
                       </button>
@@ -224,7 +225,7 @@ function NotificationPanel() {
                     margin: '0 auto 1rem', 
                     opacity: 0.3 
                   }} />
-                  <p>Henüz bildirim yok</p>
+                  <p>{t('notifications.noNotifications')}</p>
                 </div>
               ) : (
                 <div style={{
@@ -294,7 +295,7 @@ function NotificationPanel() {
                             }}>
                               {formatDistanceToNow(notification.timestamp, { 
                                 addSuffix: true,
-                                locale: tr
+                                locale: locale === 'tr' ? tr : enUS
                               })}
                             </p>
                           </div>

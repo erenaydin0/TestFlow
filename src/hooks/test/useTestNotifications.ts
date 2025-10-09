@@ -1,13 +1,14 @@
-import { useNotifications } from '@/contexts';
+import { useNotifications, useI18n } from '@/contexts';
 
 function useTestNotifications() {
   const { addNotification, showToast } = useNotifications();
+  const { t } = useI18n();
 
   const notifyTestStart = (testName: string, testId: string) => {
     showToast({
       type: 'info',
-      title: 'Test Başlatıldı',
-      message: `"${testName}" testi çalışmaya başladı`,
+      title: t('notifications.testStart'),
+      message: t('notifications.testStartMessage', { testName }),
       testId,
       autoClose: true,
       duration: 3000
@@ -15,20 +16,20 @@ function useTestNotifications() {
 
     addNotification({
       type: 'info',
-      title: 'Test Başlatıldı',
-      message: `"${testName}" testi çalışmaya başladı`,
+      title: t('notifications.testStart'),
+      message: t('notifications.testStartMessage', { testName }),
       testId,
       persistent: true
     });
   };
 
   const notifyTestSuccess = (testName: string, testId: string, duration?: number, executionId?: string) => {
-    const durationText = duration ? ` (${(duration / 1000).toFixed(1)}s)` : '';
+    const durationText = duration ? t('notifications.withDuration', { duration: (duration / 1000).toFixed(1) }) : '';
     
     showToast({
       type: 'success',
-      title: 'Test Başarılı',
-      message: `"${testName}" testi başarıyla tamamlandı${durationText}`,
+      title: t('notifications.testSuccess'),
+      message: t('notifications.testSuccessMessage', { testName }) + durationText,
       testId,
       executionId,
       autoClose: true,
@@ -37,8 +38,8 @@ function useTestNotifications() {
 
     addNotification({
       type: 'success',
-      title: 'Test Başarılı',
-      message: `"${testName}" testi başarıyla tamamlandı${durationText}`,
+      title: t('notifications.testSuccess'),
+      message: t('notifications.testSuccessMessage', { testName }) + durationText,
       testId,
       executionId,
       persistent: true
@@ -46,13 +47,13 @@ function useTestNotifications() {
   };
 
   const notifyTestFailure = (testName: string, testId: string, error?: string, duration?: number, executionId?: string) => {
-    const durationText = duration ? ` (${(duration / 1000).toFixed(1)}s)` : '';
-    const errorText = error ? `: ${error}` : '';
+    const durationText = duration ? t('notifications.withDuration', { duration: (duration / 1000).toFixed(1) }) : '';
+    const errorText = error ? t('notifications.withError', { error }) : '';
     
     showToast({
       type: 'error',
-      title: 'Test Başarısız',
-      message: `"${testName}" testi başarısız oldu${durationText}${errorText}`,
+      title: t('notifications.testFailed'),
+      message: t('notifications.testFailedMessage', { testName }) + durationText + errorText,
       testId,
       executionId,
       autoClose: true,  // Hata bildirimleri de otomatik kaybolsun
@@ -61,8 +62,8 @@ function useTestNotifications() {
 
     addNotification({
       type: 'error',
-      title: 'Test Başarısız',
-      message: `"${testName}" testi başarısız oldu${durationText}${errorText}`,
+      title: t('notifications.testFailed'),
+      message: t('notifications.testFailedMessage', { testName }) + durationText + errorText,
       testId,
       executionId,
       persistent: true
@@ -72,8 +73,8 @@ function useTestNotifications() {
   const notifyTestSaved = (testName: string, testId: string) => {
     showToast({
       type: 'success',
-      title: 'Test Kaydedildi',
-      message: `"${testName}" testi başarıyla kaydedildi`,
+      title: t('notifications.testSaved'),
+      message: t('notifications.testSavedMessage', { testName }),
       testId,
       autoClose: true,
       duration: 3000
@@ -83,8 +84,8 @@ function useTestNotifications() {
   const notifyTestScheduled = (testName: string, testId: string, scheduleTime: string) => {
     showToast({
       type: 'info',
-      title: 'Test Zamanlandı',
-      message: `"${testName}" testi ${scheduleTime} için zamanlandı`,
+      title: t('notifications.testScheduled'),
+      message: t('notifications.testScheduledMessage', { testName, scheduleTime }),
       testId,
       autoClose: true,
       duration: 4000
@@ -92,8 +93,8 @@ function useTestNotifications() {
 
     addNotification({
       type: 'info',
-      title: 'Test Zamanlandı',
-      message: `"${testName}" testi ${scheduleTime} için zamanlandı`,
+      title: t('notifications.testScheduled'),
+      message: t('notifications.testScheduledMessage', { testName, scheduleTime }),
       testId,
       persistent: true
     });
@@ -102,8 +103,8 @@ function useTestNotifications() {
   const notifyTestImported = (testName: string, testId: string) => {
     showToast({
       type: 'success',
-      title: 'Test İçe Aktarıldı',
-      message: `"${testName}" testi başarıyla içe aktarıldı`,
+      title: t('notifications.testImported'),
+      message: t('notifications.testImportedMessage', { testName }),
       testId,
       autoClose: true,
       duration: 3000
@@ -113,8 +114,8 @@ function useTestNotifications() {
   const notifyExecutionStart = (workflowName: string, executionId: string) => {
     showToast({
       type: 'info',
-      title: 'Execution Başlatıldı',
-      message: `"${workflowName}" execution başlatıldı`,
+      title: t('notifications.executionStarted'),
+      message: t('notifications.executionStartedMessage', { workflowName }),
       executionId,
       autoClose: true,
       duration: 3000
@@ -122,21 +123,21 @@ function useTestNotifications() {
 
     addNotification({
       type: 'info',
-      title: 'Execution Başlatıldı',
-      message: `"${workflowName}" execution başlatıldı`,
+      title: t('notifications.executionStarted'),
+      message: t('notifications.executionStartedMessage', { workflowName }),
       executionId,
       persistent: true
     });
   };
 
   const notifyExecutionComplete = (workflowName: string, executionId: string, status: 'completed' | 'failed', duration?: number) => {
-    const durationText = duration ? ` (${(duration / 1000).toFixed(1)}s)` : '';
+    const durationText = duration ? t('notifications.withDuration', { duration: (duration / 1000).toFixed(1) }) : '';
     const isSuccess = status === 'completed';
     
     showToast({
       type: isSuccess ? 'success' : 'error',
-      title: isSuccess ? 'Execution Tamamlandı' : 'Execution Başarısız',
-      message: `"${workflowName}" execution ${isSuccess ? 'başarıyla tamamlandı' : 'başarısız oldu'}${durationText}`,
+      title: isSuccess ? t('notifications.executionCompleted') : t('notifications.executionFailed'),
+      message: (isSuccess ? t('notifications.executionCompletedMessage', { workflowName }) : t('notifications.executionFailedMessage', { workflowName })) + durationText,
       executionId,
       autoClose: true,  // Hem başarılı hem başarısız execution'lar otomatik kaybolsun
       duration: isSuccess ? 5000 : 8000  // Hata bildirimleri için biraz daha uzun süre
@@ -144,8 +145,8 @@ function useTestNotifications() {
 
     addNotification({
       type: isSuccess ? 'success' : 'error',
-      title: isSuccess ? 'Execution Tamamlandı' : 'Execution Başarısız',
-      message: `"${workflowName}" execution ${isSuccess ? 'başarıyla tamamlandı' : 'başarısız oldu'}${durationText}`,
+      title: isSuccess ? t('notifications.executionCompleted') : t('notifications.executionFailed'),
+      message: (isSuccess ? t('notifications.executionCompletedMessage', { workflowName }) : t('notifications.executionFailedMessage', { workflowName })) + durationText,
       executionId,
       persistent: true
     });
@@ -154,16 +155,16 @@ function useTestNotifications() {
   const notifyTestDeleted = (testName: string, testId: string) => {
     showToast({
       type: 'info',
-      title: 'Test Silindi',
-      message: `"${testName}" testi silindi`,
+      title: t('notifications.testDeleted'),
+      message: t('notifications.testDeletedMessage', { testName }),
       testId,
       autoClose: true,
       duration: 3000
     });
     addNotification({
       type: 'info',
-      title: 'Test Silindi',
-      message: `"${testName}" testi silindi`,
+      title: t('notifications.testDeleted'),
+      message: t('notifications.testDeletedMessage', { testName }),
       testId,
       persistent: true
     });
@@ -172,8 +173,8 @@ function useTestNotifications() {
   const notifyTestDuplicated = (testName: string, testId: string) => {
     showToast({
       type: 'success',
-      title: 'Test Kopyalandı',
-      message: `"${testName}" testi kopyalandı`,
+      title: t('notifications.testDuplicated'),
+      message: t('notifications.testDuplicatedMessage', { testName }),
       testId,
       autoClose: true,
       duration: 3000
@@ -183,8 +184,8 @@ function useTestNotifications() {
   const notifyWorkflowLoaded = (workflowName: string) => {
     showToast({
       type: 'success',
-      title: 'Workflow Yüklendi',
-      message: `"${workflowName}" workflow'u yüklendi!`,
+      title: t('notifications.workflowLoaded'),
+      message: t('notifications.workflowLoadedMessage', { workflowName }),
       autoClose: true,
       duration: 3000
     });

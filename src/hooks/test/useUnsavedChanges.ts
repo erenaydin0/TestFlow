@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { TestStep } from '@/types';
+import { useI18n } from '@/contexts';
 
 interface UseUnsavedChangesProps {
   testSteps: TestStep[];
@@ -23,6 +24,7 @@ export const useUnsavedChanges = ({
   testSteps,
   onSave
 }: UseUnsavedChangesProps): UseUnsavedChangesReturn => {
+  const { t } = useI18n();
   const router = useRouter();
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
@@ -120,7 +122,7 @@ export const useUnsavedChanges = ({
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = 'Kaydedilmemiş değişiklikleriniz var. Sayfadan ayrılmak istediğinizden emin misiniz?';
+        e.returnValue = t('unsavedChanges.browserWarning');
         return e.returnValue;
       }
     };

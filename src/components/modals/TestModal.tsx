@@ -257,7 +257,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 fontWeight: 500,
                 color: '#dc2626'
               }}>
-                Lütfen aşağıdaki hataları düzeltin:
+                {t('testModal.fixErrors')}
               </span>
             </div>
             <ul style={{
@@ -285,7 +285,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 color: 'var(--text-primary)',
                 marginBottom: '0.5rem'
               }}>
-                Test Adı *
+                {t('testModal.testName')} *
               </label>
               <input
                 type="text"
@@ -324,7 +324,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 color: 'var(--text-primary)',
                 marginBottom: '0.5rem'
               }}>
-                Açıklama
+                {t('testModal.description')}
               </label>
               <textarea
                 value={desc}
@@ -373,7 +373,7 @@ const TestModal: React.FC<TestModalProps> = ({
                    marginBottom: '0.5rem'
                  }}>
                    <FolderOpen size={14} />
-                   Test Paketi
+                   {t('testModal.testPackage')}
                  </label>
                  <AutocompleteInput
                    value={suite}
@@ -404,7 +404,7 @@ const TestModal: React.FC<TestModalProps> = ({
                    marginBottom: '0.5rem'
                  }}>
                    <Globe size={14} />
-                   Tarayıcı
+                   {t('testModal.browser')}
                  </label>
                  <AutocompleteInput
                    value={browserType === 'chromium' ? 'Chrome' : 
@@ -447,7 +447,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 marginBottom: '0.5rem'
               }}>
                 <Tag size={14} />
-                Etiketler
+                {t('testModal.tags')}
               </label>
               <AutocompleteInput
                 value={tags}
@@ -469,7 +469,7 @@ const TestModal: React.FC<TestModalProps> = ({
                 color: 'var(--text-secondary)',
                 margin: '0.25rem 0 0 0'
               }}>
-                Mevcut etiketlerden seçebilir ya da yeni etiket yazabilirsiniz
+                {t('testModal.tagsHint')}
               </p>
             </div>
           </div>
@@ -489,7 +489,7 @@ const TestModal: React.FC<TestModalProps> = ({
               size="md"
               onClick={onClose}
             >
-              İptal
+              {t('testModal.cancel')}
             </Button>
             <Button
               variant="primary"

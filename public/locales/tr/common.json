@@ -302,11 +302,6 @@
     "selectLanguage": "Dil Seçin",
     "languageDescription": "Uygulama dilini değiştirin. Değişiklikler anında uygulanır."
   },
-  "notifications": {
-    "markAllRead": "Tümünü Okundu İşaretle",
-    "clearAll": "Tümünü Temizle",
-    "markAsRead": "Okundu İşaretle"
-  },
   "sidebar": {
     "collapse": "Sidebar'ı Daralt",
     "expand": "Sidebar'ı Genişlet"
@@ -522,5 +517,104 @@
       "last7days": "Son 7 Gün",
       "last14days": "Son 14 Gün",
       "last30days": "Son 30 Gün"
+    },
+    "notifications": {
+      "testStart": "Test Başlatıldı",
+      "testSuccess": "Test Başarılı",
+      "testFailed": "Test Başarısız",
+      "testSaved": "Test Kaydedildi",
+      "testScheduled": "Test Zamanlandı",
+      "testImported": "Test İçe Aktarıldı",
+      "executionStarted": "Test Başlatıldı",
+      "executionCompleted": "Test Tamamlandı",
+      "executionFailed": "Test Başarısız",
+      "testStartMessage": "\"{{testName}}\" testi çalışmaya başladı",
+      "testSuccessMessage": "\"{{testName}}\" testi başarıyla tamamlandı",
+      "testFailedMessage": "\"{{testName}}\" testi başarısız oldu",
+      "testSavedMessage": "\"{{testName}}\" testi başarıyla kaydedildi",
+      "testScheduledMessage": "\"{{testName}}\" testi {{scheduleTime}} için zamanlandı",
+      "testImportedMessage": "\"{{testName}}\" testi başarıyla içe aktarıldı",
+      "executionStartedMessage": "\"{{workflowName}}\" testi başlatıldı",
+      "executionCompletedMessage": "\"{{workflowName}}\" testi başarıyla tamamlandı",
+      "executionFailedMessage": "\"{{workflowName}}\" testi başarısız oldu",
+      "testDeleted": "Test Silindi",
+      "testDuplicated": "Test Kopyalandı",
+      "workflowLoaded": "Workflow Yüklendi",
+      "testDeletedMessage": "\"{{testName}}\" testi silindi",
+      "testDuplicatedMessage": "\"{{testName}}\" testi kopyalandı",
+      "workflowLoadedMessage": "\"{{workflowName}}\" workflow'u yüklendi",
+      "withDuration": " ({{duration}}s)",
+      "withError": ": {{error}}",
+      "markAsRead": "Okundu olarak işaretle",
+      "markAllAsRead": "Tümünü okundu işaretle",
+      "clearAll": "Tümünü temizle",
+      "noNotifications": "Bildirim yok",
+      "notifications": "Bildirimler"
+    },
+    "filters": {
+      "filters": "Filtreler",
+      "clearFilters": "Filtreleri Temizle",
+      "clear": "Temizle",
+      "noResultsFound": "Filtre kriterlerine uygun sonuç bulunamadı",
+      "noTestsFound": "Filtreye uygun test bulunamadı",
+      "noWorkflowsYet": "Henüz test workflow'u yok",
+      "createFirstWorkflow": "Test builder'da ilk workflow'unuzu oluşturun",
+      "tryDifferentFilters": "Farklı filtreler deneyerek aradığınız testleri bulabilirsiniz",
+      "createFirstTest": "İlk Test Workflow'unu Oluştur"
+    },
+    "bulkActions": {
+      "testsSelected": "{{count}} test seçili",
+      "downloadSelected": "Seçilenleri İndir",
+      "delete": "Sil",
+      "clearSelection": "Seçimi Temizle"
+    },
+    "confirmDialog": {
+      "confirm": "Onayla",
+      "cancel": "İptal",
+      "deleteTests": "Testleri Sil",
+      "deleteTest": "Testi Sil",
+      "deleteTestsMessage": "{{count}} testi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleteTestMessage": "\"{{testName}}\" testini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "delete": "Sil"
+    },
+    "testModal": {
+      "testName": "Test Adı",
+      "description": "Açıklama",
+      "testPackage": "Test Paketi",
+      "browser": "Tarayıcı",
+      "tags": "Etiketler",
+      "tagsHint": "Mevcut etiketlerden seçebilir ya da yeni etiket yazabilirsiniz",
+      "fixErrors": "Lütfen aşağıdaki hataları düzeltin:",
+      "cancel": "İptal"
+    },
+    "unsavedChanges": {
+      "title": "Kaydedilmemiş Değişiklikler",
+      "message": "Test workflow'unuzda kaydedilmemiş değişiklikler var. Bu sayfadan ayrılmadan önce değişikliklerinizi kaydetmek istiyor musunuz?",
+      "cancel": "İptal",
+      "dontSave": "Kaydetme",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor...",
+      "browserWarning": "Kaydedilmemiş değişiklikleriniz var. Sayfadan ayrılmak istediğinizden emin misiniz?"
+    },
+    "actionTooltips": {
+      "run": "Çalıştır",
+      "edit": "Düzenle",
+      "settings": "Ayarlar",
+      "duplicate": "Kopyala",
+      "export": "Dışa Aktar",
+      "download": "İndir",
+      "delete": "Sil"
+    },
+    "multiSelect": {
+      "itemsSelected": "{{count}} öğe seçili",
+      "select": "Seçin"
+    },
+    "searchPlaceholders": {
+      "searchOrAddNew": "Ara veya yeni ekle...",
+      "search": "Ara...",
+      "selectGroup": "Grup seç"
+    },
+    "copyFeedback": {
+      "copied": "Kopyalandı! ✓"
     }
 }

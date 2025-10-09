@@ -522,5 +522,104 @@
       "last7days": "Last 7 Days",
       "last14days": "Last 14 Days",
       "last30days": "Last 30 Days"
+    },
+    "notifications": {
+      "testStart": "Test Started",
+      "testSuccess": "Test Successful",
+      "testFailed": "Test Failed",
+      "testSaved": "Test Saved",
+      "testScheduled": "Test Scheduled",
+      "testImported": "Test Imported",
+      "executionStarted": "Test Started",
+      "executionCompleted": "Test Completed",
+      "executionFailed": "Test Failed",
+      "testStartMessage": "\"{{testName}}\" test started running",
+      "testSuccessMessage": "\"{{testName}}\" test completed successfully",
+      "testFailedMessage": "\"{{testName}}\" test failed",
+      "testSavedMessage": "\"{{testName}}\" test saved successfully",
+      "testScheduledMessage": "\"{{testName}}\" test scheduled for {{scheduleTime}}",
+      "testImportedMessage": "\"{{testName}}\" test imported successfully",
+      "executionStartedMessage": "\"{{workflowName}}\" test started",
+      "executionCompletedMessage": "\"{{workflowName}}\" test completed successfully",
+      "executionFailedMessage": "\"{{workflowName}}\" test failed",
+      "testDeleted": "Test Deleted",
+      "testDuplicated": "Test Duplicated",
+      "workflowLoaded": "Workflow Loaded",
+      "testDeletedMessage": "\"{{testName}}\" test deleted",
+      "testDuplicatedMessage": "\"{{testName}}\" test duplicated",
+      "workflowLoadedMessage": "\"{{workflowName}}\" workflow loaded",
+      "withDuration": " ({{duration}}s)",
+      "withError": ": {{error}}",
+      "markAsRead": "Mark as read",
+      "markAllAsRead": "Mark all as read",
+      "clearAll": "Clear all",
+      "noNotifications": "No notifications",
+      "notifications": "Notifications"
+    },
+    "filters": {
+      "filters": "Filters",
+      "clearFilters": "Clear Filters",
+      "clear": "Clear",
+      "noResultsFound": "No results found matching filter criteria",
+      "noTestsFound": "No tests found matching filters",
+      "noWorkflowsYet": "No test workflows yet",
+      "createFirstWorkflow": "Create your first workflow in test builder",
+      "tryDifferentFilters": "Try different filters to find the tests you're looking for",
+      "createFirstTest": "Create First Test Workflow"
+    },
+    "bulkActions": {
+      "testsSelected": "{{count}} tests selected",
+      "downloadSelected": "Download Selected",
+      "delete": "Delete",
+      "clearSelection": "Clear Selection"
+    },
+    "confirmDialog": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "deleteTests": "Delete Tests",
+      "deleteTest": "Delete Test",
+      "deleteTestsMessage": "Are you sure you want to delete {{count}} tests? This action cannot be undone.",
+      "deleteTestMessage": "Are you sure you want to delete \"{{testName}}\" test? This action cannot be undone.",
+      "delete": "Delete"
+    },
+    "testModal": {
+      "testName": "Test Name",
+      "description": "Description",
+      "testPackage": "Test Package",
+      "browser": "Browser",
+      "tags": "Tags",
+      "tagsHint": "You can select from existing tags or write new ones",
+      "fixErrors": "Please fix the following errors:",
+      "cancel": "Cancel"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved Changes",
+      "message": "You have unsaved changes in your test workflow. Do you want to save your changes before leaving this page?",
+      "cancel": "Cancel",
+      "dontSave": "Don't Save",
+      "save": "Save",
+      "saving": "Saving...",
+      "browserWarning": "You have unsaved changes. Are you sure you want to leave this page?"
+    },
+    "actionTooltips": {
+      "run": "Run",
+      "edit": "Edit",
+      "settings": "Settings",
+      "duplicate": "Duplicate",
+      "export": "Export",
+      "download": "Download",
+      "delete": "Delete"
+    },
+    "multiSelect": {
+      "itemsSelected": "{{count}} items selected",
+      "select": "Select"
+    },
+    "searchPlaceholders": {
+      "searchOrAddNew": "Search or add new...",
+      "search": "Search...",
+      "selectGroup": "Select group"
+    },
+    "copyFeedback": {
+      "copied": "Copied! ✓"
     }
 }

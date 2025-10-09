@@ -801,7 +801,7 @@ export default function TestsPage() {
                 color: 'var(--text-primary)',
                 margin: '0 0 0.5rem 0'
               }}>
-                {tests.length === 0 ? 'Henüz test workflow\'u yok' : 'Filtreye uygun test bulunamadı'}
+                {tests.length === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
               </h3>
               <p style={{ 
                 fontSize: '0.875rem', 
@@ -809,8 +809,8 @@ export default function TestsPage() {
                 margin: '0 0 1.5rem 0'
               }}>
                 {tests.length === 0 
-                  ? 'Test builder\'da ilk workflow\'unuzu oluşturun'
-                  : 'Farklı filtreler deneyerek aradığınız testleri bulabilirsiniz'
+                  ? t('filters.createFirstWorkflow')
+                  : t('filters.tryDifferentFilters')
                 }
               </p>
               <button 
@@ -824,7 +824,7 @@ export default function TestsPage() {
                 }}
               >
                 <Plus size={16} />
-                İlk Test Workflow'unu Oluştur
+                {t('filters.createFirstTest')}
               </button>
               </div>
             ) : (
@@ -1021,10 +1021,10 @@ export default function TestsPage() {
         isOpen={showBulkDeleteDialog}
         onClose={() => setShowBulkDeleteDialog(false)}
         onConfirm={confirmBulkDelete}
-        title="Testleri Sil"
-        message={`${selectedTests.size} testi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText={t('common.cancel')}
+        title={t('confirmDialog.deleteTests')}
+        message={t('confirmDialog.deleteTestsMessage', { count: selectedTests.size })}
+        confirmText={t('confirmDialog.delete')}
+        cancelText={t('confirmDialog.cancel')}
         type="danger"
       />
 
@@ -1033,10 +1033,10 @@ export default function TestsPage() {
         isOpen={singleDeleteDialog.show}
         onClose={() => setSingleDeleteDialog({show: false, testId: '', testName: ''})}
         onConfirm={confirmSingleDelete}
-        title="Testi Sil"
-        message={`"${singleDeleteDialog.testName}" testini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText={t('common.cancel')}
+        title={t('confirmDialog.deleteTest')}
+        message={t('confirmDialog.deleteTestMessage', { testName: singleDeleteDialog.testName })}
+        confirmText={t('confirmDialog.delete')}
+        cancelText={t('confirmDialog.cancel')}
         type="danger"
       />
 

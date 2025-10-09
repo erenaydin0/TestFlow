@@ -6,6 +6,7 @@ import { Chrome, Globe, Trash2, Copy, Download, Play, Edit, Settings } from 'luc
 import { BrowserType, BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/lib/utils';
 import { StatusBadge } from './';
+import { useI18n } from '@/contexts';
 
 // Browser Cell Component
 
@@ -97,18 +98,19 @@ interface DateCellProps {
 }
 
 const DateCell: React.FC<DateCellProps> = ({ date, format = 'relative' }) => {
+  const { locale } = useI18n();
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
   let displayText = '';
   switch (format) {
     case 'relative':
-      displayText = formatRelativeTime(dateObj);
+      displayText = formatRelativeTime(dateObj, undefined, locale);
       break;
     case 'absolute':
-      displayText = dateObj.toLocaleString('tr-TR');
+      displayText = dateObj.toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US');
       break;
     case 'time':
-      displayText = dateObj.toLocaleTimeString('tr-TR');
+      displayText = dateObj.toLocaleTimeString(locale === 'tr' ? 'tr-TR' : 'en-US');
       break;
   }
 
@@ -147,6 +149,7 @@ const DurationCell: React.FC<DurationCellProps> = ({ duration }) => {
 // Test Name Cell Component
 
 const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) => {
+  const { t } = useI18n();
   const [showCopied, setShowCopied] = React.useState(false);
 
   const handleCopyId = async (e: React.MouseEvent) => {
@@ -211,7 +214,7 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
               }
             }}
           >
-            {showCopied ? 'Kopyalandı! ✓' : `ID: ${id.slice(0, 40)}`}
+            {showCopied ? t('copyFeedback.copied') : `ID: ${id.slice(0, 40)}`}
             {id.length > 40 && '...'}
           </div>
         </div>
@@ -233,6 +236,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   disabled = false,
   actions = []
 }) => {
+  const { t } = useI18n();
   const defaultActions: Array<{
     icon: React.ReactNode;
     label: string;
@@ -244,7 +248,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onRun) {
     defaultActions.push({
       icon: <Play size={14} />,
-      label: 'Çalıştır',
+      label: t('actionTooltips.run'),
       onClick: onRun,
       color: 'var(--status-success)'
     });
@@ -252,7 +256,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onEdit) {
     defaultActions.push({
       icon: <Edit size={14} />,
-      label: 'Düzenle',
+      label: t('actionTooltips.edit'),
       onClick: onEdit,
       color: 'var(--text-secondary)'
     });
@@ -260,7 +264,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onSettings) {
     defaultActions.push({
       icon: <Settings size={14} />,
-      label: 'Ayarlar',
+      label: t('actionTooltips.settings'),
       onClick: onSettings,
       color: 'var(--text-secondary)'
     });
@@ -268,7 +272,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onDuplicate) {
     defaultActions.push({
       icon: <Copy size={14} />,
-      label: 'Kopyala',
+      label: t('actionTooltips.duplicate'),
       onClick: onDuplicate,
       color: 'var(--text-secondary)'
     });
@@ -276,7 +280,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onExport) {
     defaultActions.push({
       icon: <Download size={14} />,
-      label: 'Dışa Aktar',
+      label: t('actionTooltips.export'),
       onClick: onExport,
       color: 'var(--text-secondary)'
     });
@@ -284,7 +288,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onDownload) {
     defaultActions.push({
       icon: <Download size={14} />,
-      label: 'İndir',
+      label: t('actionTooltips.download'),
       onClick: onDownload,
       color: 'var(--text-secondary)'
     });
@@ -292,7 +296,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   if (onDelete) {
     defaultActions.push({
       icon: <Trash2 size={14} />,
-      label: 'Sil',
+      label: t('actionTooltips.delete'),
       onClick: onDelete,
       color: 'var(--status-error)'
     });

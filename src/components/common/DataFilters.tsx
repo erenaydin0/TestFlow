@@ -49,7 +49,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
   availableOptions,
   showDateRange = false,
   showStatus = false,
-  searchPlaceholder = "Test ara...",
+  searchPlaceholder,
   className = ""
 }) => {
   const { t } = useI18n();
@@ -105,7 +105,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Filter size={16} color="var(--text-secondary)" />
           <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-            Filtreler
+            {t('filters.filters')}
           </span>
           {hasActiveFilters && (
             <Button
@@ -115,7 +115,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
               onClick={clearAllFilters}
               style={{ marginLeft: 'auto' }}
             >
-              Temizle
+              {t('filters.clear')}
             </Button>
           )}
         </div>
@@ -134,7 +134,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           />
           <input
             type="text"
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder || t('searchPlaceholders.search')}
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             style={{
@@ -252,7 +252,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           />
           <input
             type="text"
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder || t('searchPlaceholders.search')}
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             style={{
@@ -357,7 +357,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
             className="min-w-[150px]"
             style={{ margin: '0' }}
           >
-            Filtreleri Temizle
+            {t('filters.clearFilters')}
           </Button>
         )}
       </div>

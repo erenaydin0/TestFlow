@@ -834,39 +834,39 @@ export default function ReportsPage() {
                 />
               </div>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 {selectedExecutions.size > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <span style={{ 
                       fontSize: '0.875rem', 
                       color: 'var(--text-secondary)' 
                     }}>
-                      {selectedExecutions.size} test seçili
+                      {t('bulkActions.testsSelected', { count: selectedExecutions.size })}
                     </span>
-                    <ButtonGroup spacing="sm">
+                    <ButtonGroup spacing="xs">
                       <Button
                         variant="success"
-                        size="sm"
+                        size="xs"
                         icon={Download}
                         onClick={downloadSelectedTests}
                       >
-                        Seçilenleri İndir
+                        {t('bulkActions.downloadSelected')}
                       </Button>
                       <Button
                         variant="danger"
-                        size="sm"
+                        size="xs"
                         icon={Trash2}
                         onClick={deleteSelectedTests}
                       >
-                        Sil
+                        {t('bulkActions.delete')}
                       </Button>
                       <Button
                         variant="secondary"
-                        size="sm"
+                        size="xs"
                         icon={X}
                         onClick={() => setSelectedExecutions(new Set())}
                       >
-                        Seçimi Temizle
+                        {t('bulkActions.clearSelection')}
                       </Button>
                     </ButtonGroup>
                   </div>
@@ -907,7 +907,7 @@ export default function ReportsPage() {
               }}>
                 <FileText size={24} />
                 <span style={{ marginLeft: '0.5rem' }}>
-                  {hasActiveFilters ? 'Filtre kriterlerine uygun sonuç bulunamadı' : 'Henüz test çalıştırılmamış'}
+                  {hasActiveFilters ? t('filters.noResultsFound') : t('dashboard.noTestsRun')}
                 </span>
               </div>
             ) : (

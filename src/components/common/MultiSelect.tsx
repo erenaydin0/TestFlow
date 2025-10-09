@@ -76,7 +76,7 @@ export default function MultiSelect({
     if (selectedValues.length === 1) {
       return selectedValues[0];
     }
-    return `${selectedValues.length} öğe seçili`;
+    return t('multiSelect.itemsSelected', { count: selectedValues.length });
   };
 
   return (
@@ -112,7 +112,7 @@ export default function MultiSelect({
         }}>
           {selectedValues.length === 0 ? (
             <span style={{ color: 'var(--text-secondary)' }}>
-              {placeholder || t('common.select')}
+              {placeholder || t('multiSelect.select')}
             </span>
           ) : selectedValues.length === 1 ? (
             <span style={{ 
@@ -133,7 +133,7 @@ export default function MultiSelect({
             </span>
           ) : (
             <span style={{ fontSize: '0.75rem' }}>
-              {selectedValues.length} öğe seçili
+              {t('multiSelect.itemsSelected', { count: selectedValues.length })}
             </span>
           )}
         </div>
@@ -178,7 +178,7 @@ export default function MultiSelect({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Ara..."
+                placeholder={t('searchPlaceholders.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{

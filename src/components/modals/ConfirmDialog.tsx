@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button, ButtonGroup } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
+import { useI18n } from '@/contexts';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -21,10 +22,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Onayla',
-  cancelText = 'İptal',
+  confirmText,
+  cancelText,
   type = 'warning'
 }) => {
+  const { t } = useI18n();
   const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
     animationDuration: 200
   });
@@ -150,14 +152,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             size="sm"
             onClick={onClose}
           >
-            {cancelText}
+            {cancelText || t('confirmDialog.cancel')}
           </Button>
           <Button
             variant={type === 'danger' ? 'danger' : type === 'warning' ? 'warning' : 'primary'}
             size="sm"
             onClick={handleConfirm}
           >
-            {confirmText}
+            {confirmText || t('confirmDialog.confirm')}
           </Button>
         </ButtonGroup>
       </div>
