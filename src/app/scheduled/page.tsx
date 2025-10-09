@@ -15,13 +15,13 @@ import { PageLayout } from '@/components/layout';
 import { StatusBadge, CosmicSpinner, CustomSelect } from '@/components/common';
 import { ScheduleModal } from '@/components/modals';
 import { UpcomingTests } from '@/components/features/dashboard';
-import { formatDuration, formatRelativeTime, getScheduleDescription } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/lib/utils';
 import { useScheduledTests } from '@/hooks/data';
 import { ScheduledTest } from '@/types/test';
 import { useI18n } from '@/contexts';
 
 export default function ScheduledPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { 
     scheduledTests, 
     upcomingRuns, 
@@ -343,7 +343,10 @@ export default function ScheduledPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                           <span>{t('scheduled.lastRun')}: </span>
-                          <span style={{ color: 'var(--text-secondary)' }}>
+                          <span 
+                            style={{ color: 'var(--text-secondary)' }}
+                            title={formatDateForTooltip(test.lastRun, locale)}
+                          >
                             {formatRelativeTime(test.lastRun, t)}
                           </span>
                         </div>

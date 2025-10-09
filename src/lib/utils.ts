@@ -149,6 +149,26 @@ export function formatRelativeTime(date: Date | string | null | undefined, t?: (
   }
 }
 
+// Format date for tooltip with locale support
+export function formatDateForTooltip(date: Date | string | null | undefined, locale: string = 'tr'): string {
+  if (!date) return '';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(dateObj.getTime())) return '';
+  
+  const isTurkish = locale === 'tr';
+  
+  return dateObj.toLocaleString(isTurkish ? 'tr-TR' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    weekday: 'long'
+  });
+}
 
 // Test workflow import/export functions
 export const exportTestWorkflow = (

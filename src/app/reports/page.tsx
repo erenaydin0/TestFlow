@@ -31,7 +31,7 @@ import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
 import { ExecutionResult, ExecutionFilters, ExecutionStats, BrowserType } from '@/types';
-import { formatDuration, formatRelativeTime, formatTime } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, formatTime, formatDateForTooltip } from '@/lib/utils';
 import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
@@ -286,11 +286,19 @@ export default function ReportsPage() {
       label: t('reports.startTime'),
       sortable: true,
       width: '150px',
-      render: (value, execution) => (
-        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {formatRelativeTime(execution.startTime, t)}
-        </span>
-      )
+      render: (value, execution) => {
+        const { locale } = useI18n();
+        const fullDateTime = formatDateForTooltip(execution.startTime, locale);
+        
+        return (
+          <span 
+            style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}
+            title={fullDateTime}
+          >
+            {formatRelativeTime(execution.startTime, t)}
+          </span>
+        );
+      }
     },
     {
       key: 'duration',

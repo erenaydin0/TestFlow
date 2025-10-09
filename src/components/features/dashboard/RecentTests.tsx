@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 
 import { StatusBadge } from '@/components/common';
-import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/lib/utils';
 import { useI18n } from '@/contexts';
 
 interface RecentTest {
@@ -21,7 +21,7 @@ interface RecentTestsProps {
 
 export default function RecentTests({ data }: RecentTestsProps) {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const handleTestClick = (test: RecentTest) => {
     if (test.executionId) {
@@ -84,7 +84,11 @@ export default function RecentTests({ data }: RecentTestsProps) {
                   >
                     {test.name}
                   </p>
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <p 
+                    className="text-xs" 
+                    style={{ color: 'var(--text-secondary)' }}
+                    title={formatDateForTooltip(test.lastRun, locale)}
+                  >
                     {test.status === 'running' ? t('status.running') : formatRelativeTime(test.lastRun, t)}
                   </p>
                 </div>
