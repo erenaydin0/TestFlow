@@ -2,17 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { X, Sun, Moon, Monitor, Settings, Palette, Code, Globe } from 'lucide-react';
-import { useTheme, useBrowserSettings, useI18n, useSidebar } from '@/contexts';
+import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/contexts';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
 import { CustomSelect } from '@/components/common';
 
-interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal() {
+  const { isOpen, closeModal } = useSettingsModal();
   const { theme, setTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
   const { setIsModalOpen } = useSidebar();
@@ -55,7 +51,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       if (!isOpen) return;
       
       if (e.key === 'Escape') {
-        onClose();
+        closeModal();
       }
     };
 
@@ -74,7 +70,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       document.body.style.overflow = 'unset';
       setIsModalOpen(false);
     };
-  }, [isOpen, onClose, setIsModalOpen]);
+  }, [isOpen, closeModal, setIsModalOpen]);
 
 
 
@@ -271,7 +267,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          onClose();
+          closeModal();
         }
       }}
     >
@@ -315,7 +311,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             variant="ghost"
             size="md"
             tooltip={t('common.close')}
-            onClick={onClose}
+            onClick={closeModal}
           />
         </div>
 

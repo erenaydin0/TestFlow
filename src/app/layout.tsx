@@ -11,7 +11,7 @@ import {
   I18nProvider
 } from '@/contexts';
 import { ToastContainer } from '@/components/features/notifications';
-import { SettingsModalWrapper } from '@/components/modals';
+import { SettingsModal } from '@/components/modals';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,7 +39,7 @@ export default function RootLayout({
                   <SettingsModalProvider>
                     {children}
                     <ToastContainer />
-                    <SettingsModalWrapper />
+                    <SettingsModal />
                   </SettingsModalProvider>
                 </SidebarProvider>
               </NotificationProvider>
