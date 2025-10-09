@@ -25,11 +25,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
-.env
-.env.production
-
 # vercel
 .vercel
 
@@ -44,5 +39,6 @@ next-env.d.ts
 /server/node_modules/
 /server/scheduled-tests/
 /server/tests/
+/server/logs/
 
 .cursor
