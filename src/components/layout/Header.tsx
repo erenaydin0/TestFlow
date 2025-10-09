@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/features/notifications';
-import { CustomSelect, StatusBadge, getStatusText, CosmicLogo, LanguageSelector } from '@/components/common';
+import { CustomSelect, StatusBadge, getStatusText, CosmicLogo } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { useRealtimeNotifications } from '@/hooks/data';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
@@ -545,9 +545,6 @@ export default function Header({ title, subtitle }: HeaderProps) {
           alignItems: 'center', 
           gap: '1rem' 
         }}>
-          {/* Language Selector */}
-          <LanguageSelector />
-          
           {/* Notifications */}
           <NotificationPanel />
 
