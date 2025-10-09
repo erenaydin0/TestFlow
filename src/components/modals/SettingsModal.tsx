@@ -5,19 +5,16 @@ import { X, Sun, Moon, Monitor, Settings, Palette, Code, Globe } from 'lucide-re
 import { useTheme, useBrowserSettings, useI18n } from '@/contexts';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
-import { LanguageSelector } from '@/components/common';
+import { CustomSelect } from '@/components/common';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type TabType = 'browser' | 'appearance' | 'language';
-
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('browser');
   const { theme, setTheme } = useTheme();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const { 
     defaultBrowser, 
     setDefaultBrowser, 
@@ -41,34 +38,23 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   ];
 
   const themeOptions = [
-    { value: 'light', label: t('common.light'), icon: Sun },
-    { value: 'dark', label: t('common.dark'), icon: Moon },
-    { value: 'system', label: t('common.system'), icon: Monitor }
+    { value: 'light', label: t('common.light') },
+    { value: 'dark', label: t('common.dark') },
+    { value: 'system', label: t('common.system') }
   ];
 
-  const tabs = [
-    { id: 'browser' as TabType, label: t('settings.browser'), icon: Code },
-    { id: 'appearance' as TabType, label: t('settings.appearance'), icon: Palette },
-    { id: 'language' as TabType, label: t('settings.language'), icon: Globe }
+  const languageOptions = [
+    { value: 'tr', label: 'Türkçe' },
+    { value: 'en', label: 'English' }
   ];
 
-  // ESC tuşu ile kapatma ve tab navigasyonu
+  // ESC tuşu ile kapatma
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
       
       if (e.key === 'Escape') {
         onClose();
-      } else if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
-        e.preventDefault();
-        const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
-        setActiveTab(tabs[prevIndex].id);
-      } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
-        e.preventDefault();
-        const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-        const nextIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
-        setActiveTab(tabs[nextIndex].id);
       }
     };
 
@@ -81,77 +67,89 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose, activeTab, tabs]);
+  }, [isOpen, onClose]);
 
 
 
-  const renderBrowserSettings = () => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* Varsayılan Tarayıcı */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.875rem',
+  const renderSettingsContent = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Tarayıcı Seçimi */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <Code size={18} color="var(--text-secondary)" />
+          <h3 style={{
+            fontSize: '1rem',
             fontWeight: '600',
             color: 'var(--text-primary)',
-            marginBottom: '0.75rem'
+            margin: 0
           }}>
             {t('settings.defaultBrowser')}
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-            {browserOptions.map((browser) => {
-              const Icon = browser;
-              const isSelected = defaultBrowser === browser.value;
-              
-              return (
-                <button
-                  key={browser.value}
-                  onClick={() => setDefaultBrowser(browser.value as any)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    backgroundColor: isSelected ? 'var(--color-selected)' : 'var(--bg-tertiary)',
-                    color: isSelected ? 'white' : 'var(--text-primary)',
-                    border: `2px solid ${isSelected ? 'var(--color-selected)' : 'var(--border-primary)'}`,
-                    boxShadow: isSelected ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : 'none',
-                    fontWeight: isSelected ? '600' : '500',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                    }
-                  }}
-                >
-                  {browser.label}
-                </button>
-              );
-            })}
-          </div>
+          </h3>
         </div>
+        <CustomSelect
+          value={defaultBrowser}
+          onChange={(value) => setDefaultBrowser(value as any)}
+          options={browserOptions}
+          style={{ maxWidth: '300px' }}
+        />
+      </div>
 
-        {/* Test Seçenekleri */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.875rem',
+      {/* Tema Seçimi */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <Palette size={18} color="var(--text-secondary)" />
+          <h3 style={{
+            fontSize: '1rem',
             fontWeight: '600',
             color: 'var(--text-primary)',
-            marginBottom: '0.75rem'
+            margin: 0
+          }}>
+            {t('settings.appearance')}
+          </h3>
+        </div>
+        <CustomSelect
+          value={theme}
+          onChange={(value) => setTheme(value as any)}
+          options={themeOptions}
+          style={{ maxWidth: '300px' }}
+        />
+      </div>
+
+      {/* Dil Seçimi */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <Globe size={18} color="var(--text-secondary)" />
+          <h3 style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            margin: 0
+          }}>
+            {t('settings.language')}
+          </h3>
+        </div>
+        <CustomSelect
+          value={locale}
+          onChange={(value) => setLocale(value)}
+          options={languageOptions}
+          style={{ maxWidth: '300px' }}
+        />
+      </div>
+
+      {/* Test Seçenekleri */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <Settings size={18} color="var(--text-secondary)" />
+          <h3 style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            margin: 0
           }}>
             {t('settings.testOptions')}
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+          </h3>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <label style={{
             display: 'flex',
             alignItems: 'center',
@@ -162,12 +160,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             borderRadius: '0.5rem',
             border: '1px solid var(--border-primary)',
             transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
           }}>
             <input
               type="checkbox"
@@ -198,12 +190,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             borderRadius: '0.5rem',
             border: '1px solid var(--border-primary)',
             transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
           }}>
             <input
               type="checkbox"
@@ -234,12 +220,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             borderRadius: '0.5rem',
             border: '1px solid var(--border-primary)',
             transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
           }}>
             <input
               type="checkbox"
@@ -259,90 +239,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               {t('settings.screenshots')}
             </span>
           </label>
-          </div>
         </div>
-      </div>
-  );
-
-  const renderAppearanceSettings = () => (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-        {themeOptions.map((themeOption) => {
-          const Icon = themeOption.icon;
-          const isSelected = theme === themeOption.value;
-          
-          return (
-            <button
-              key={themeOption.value}
-              onClick={() => setTheme(themeOption.value as any)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '1rem',
-                backgroundColor: isSelected ? '#3b82f6' : 'var(--bg-tertiary)',
-                color: isSelected ? 'white' : 'var(--text-primary)',
-                border: `2px solid ${isSelected ? '#3b82f6' : 'var(--border-primary)'}`,
-                boxShadow: isSelected ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : 'none',
-                fontWeight: isSelected ? '600' : '500',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                }
-              }}
-            >
-              <Icon size={20} />
-              {themeOption.label}
-            </button>
-          );
-        })}
-      </div>
-  );
-
-  const renderLanguageSettings = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div>
-        <label style={{
-          display: 'block',
-          fontSize: '0.875rem',
-          fontWeight: '600',
-          color: 'var(--text-primary)',
-          marginBottom: '0.75rem'
-        }}>
-          {t('settings.selectLanguage')}
-        </label>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '1rem',
-          padding: '1rem',
-          backgroundColor: 'var(--bg-tertiary)',
-          borderRadius: '0.5rem',
-          border: '1px solid var(--border-primary)'
-        }}>
-          <Globe size={20} color="var(--text-secondary)" />
-          <div style={{ flex: 1 }}>
-            <LanguageSelector />
-          </div>
-        </div>
-        <p style={{
-          fontSize: '0.75rem',
-          color: 'var(--text-secondary)',
-          marginTop: '0.5rem',
-          marginBottom: 0
-        }}>
-          {t('settings.languageDescription')}
-        </p>
       </div>
     </div>
   );
@@ -376,153 +273,52 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           backgroundColor: 'var(--bg-primary)',
           borderRadius: '0.75rem',
           border: '1px solid var(--border-primary)',
-          width: '900px',
-          height: '600px',
+          width: '500px',
+          maxHeight: '80vh',
           overflow: 'hidden',
           position: 'relative',
           display: 'flex',
+          flexDirection: 'column',
           ...getModalStyle()
         }}
       >
-        {/* Sidebar */}
+        {/* Header */}
         <div style={{
-          width: '240px',
-          backgroundColor: 'var(--bg-secondary)',
-          borderRight: '1px solid var(--border-primary)',
-          borderRadius: '0.75rem 0 0 0.75rem',
           display: 'flex',
-          flexDirection: 'column'
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1.5rem',
+          borderBottom: '1px solid var(--border-primary)',
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: '0.75rem 0.75rem 0 0'
         }}>
-          {/* Header */}
-          <div style={{
-            padding: '1.5rem',
-            borderBottom: '1px solid var(--border-primary)',
-            height: '73px',
-            display: 'flex',
-            alignItems: 'center',
-            boxSizing: 'border-box'
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Settings size={20} color="var(--text-primary)" />
             <h2 style={{
               fontSize: '1.25rem',
               fontWeight: '600',
               color: 'var(--text-primary)',
-              margin: 0,
-              lineHeight: 1
+              margin: 0
             }}>
               {t('common.settings')}
             </h2>
           </div>
-
-          {/* Navigation */}
-          <div style={{ 
-            flex: 1,
-            padding: '1rem'
-          }}>
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    backgroundColor: isActive ? 'var(--color-selected)' : 'transparent',
-                    color: isActive ? 'white' : 'var(--text-secondary)',
-                    border: isActive ? '2px solid var(--color-selected)' : '2px solid transparent',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: isActive ? '600' : '500',
-                    transition: 'all 0.2s ease',
-                    width: '100%',
-                    textAlign: 'left',
-                    marginBottom: '0.5rem',
-                    boxShadow: isActive ? '0 0 0 1px rgba(59, 130, 246, 0.3)' : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                      e.currentTarget.style.color = 'var(--text-primary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                    }
-                  }}
-                >
-                  <Icon size={18} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          <IconButton
+            icon={X}
+            variant="ghost"
+            size="md"
+            tooltip={t('common.close')}
+            onClick={onClose}
+          />
         </div>
 
-        {/* Main Content */}
+        {/* Content */}
         <div style={{ 
           flex: 1,
-          display: 'flex',
-          flexDirection: 'column'
+          padding: '1.5rem',
+          overflow: 'auto'
         }}>
-          {/* Header with close button */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '1.5rem',
-            borderBottom: '1px solid var(--border-primary)',
-            height: '73px',
-            boxSizing: 'border-box'
-          }}>
-            <div>
-              <h3 style={{
-                fontSize: '1.125rem',
-                fontWeight: '600',
-                color: 'var(--text-primary)',
-                margin: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                lineHeight: 1
-              }}>
-                {(() => {
-                  const currentTab = tabs.find(tab => tab.id === activeTab);
-                  const Icon = currentTab?.icon || Settings;
-                  return (
-                    <>
-                      <Icon size={20} />
-                      {currentTab?.label} {t('settings.settings')}
-                    </>
-                  );
-                })()}
-              </h3>
-            </div>
-            <IconButton
-              icon={X}
-              variant="ghost"
-              size="md"
-              tooltip={t('common.close')}
-              onClick={onClose}
-            />
-          </div>
-
-          {/* Content */}
-          <div style={{ 
-            flex: 1,
-            padding: '1.5rem',
-            overflow: 'auto'
-          }}>
-            {activeTab === 'browser' && renderBrowserSettings()}
-            {activeTab === 'appearance' && renderAppearanceSettings()}
-            {activeTab === 'language' && renderLanguageSettings()}
-          </div>
+          {renderSettingsContent()}
         </div>
       </div>
     </div>
