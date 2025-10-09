@@ -26,7 +26,7 @@ import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import TableCells from '@/components/common/TableCells';
 import { StatsCards } from '@/components/features/dashboard';
-import { UnifiedStepView } from '@/components/features/reports';
+import { StepView } from '@/components/features/reports';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
@@ -1348,7 +1348,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Unified Step View */}
-            <UnifiedStepView 
+            <StepView 
               steps={selectedExecution.steps}
               executionPath={getExecutionPath(selectedExecution)}
               conditionResults={getConditionResults(selectedExecution)}
