@@ -2,10 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { BrowserType } from '@/types';
-
-// Theme Types
-type Theme = 'light' | 'dark' | 'system';
+import { BrowserType, Theme } from '@/types';
 
 // Browser Settings Interface
 interface BrowserSettings {

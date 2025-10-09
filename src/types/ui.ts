@@ -3,6 +3,9 @@ import { Test, TestFormData, TestFilters } from './test';
 import { ExecutionResult, ExecutionFilters } from './execution';
 import { BrowserType } from './test';
 
+// Theme Types
+export type Theme = 'light' | 'dark' | 'system';
+
 // Modal Props
 export interface TestModalProps extends BaseModalProps {
   onSave: (data: TestFormData) => void;

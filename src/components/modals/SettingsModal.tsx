@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Sun, Moon, Monitor, Settings, Palette, Code, Globe } from 'lucide-react';
 import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/contexts';
+import { Theme } from '@/types';
 import { IconButton } from '@/components/ui';
 import { useModal } from '@/hooks/ui';
 import { CustomSelect } from '@/components/common';
@@ -112,7 +113,7 @@ export default function SettingsModal() {
         </div>
         <CustomSelect
           value={theme}
-          onChange={(value) => setTheme(value as any)}
+          onChange={(value) => setTheme(value as Theme)}
           options={themeOptions}
           style={{ maxWidth: '300px' }}
         />

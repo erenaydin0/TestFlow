@@ -26,6 +26,7 @@ import { CustomSelect, StatusBadge, getStatusText, CosmicLogo } from '@/componen
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { useRealtimeNotifications } from '@/hooks/data';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
+import { Theme } from '@/types';
 
 interface HeaderProps {
   title?: string;
@@ -647,7 +648,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   <div style={{ position: 'relative' }}>
                     <CustomSelect
                       value={theme}
-                      onChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}
+                      onChange={(value) => setTheme(value as Theme)}
                       options={themeOptions.map((option) => ({
                         value: option.id,
                         label: option.label
