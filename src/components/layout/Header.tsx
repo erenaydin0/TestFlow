@@ -6,13 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Bell, 
   Search, 
-  User, 
   Settings, 
   Sun, 
   Moon, 
   Monitor, 
   LogOut, 
-  UserCircle, 
   TestTube, 
   FileText, 
   BarChart3, 
@@ -20,7 +18,7 @@ import {
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/notifications';
-import { CustomSelect, StatusBadge, CosmicLogo, IconButton, Button } from '@/components/common';
+import { CustomSelect, StatusBadge, CosmicLogo, IconButton, Button, AstronautIcon } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
 import { useNotifications } from '@/hooks';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
@@ -554,16 +552,13 @@ export default function Header() {
               }}
             >
               <div style={{ 
-                width: '2rem', 
-                height: '2rem', 
-                backgroundColor: 'var(--status-info-bg)', 
-                borderRadius: '50%', 
+                width: '2.5rem', 
+                height: '2.5rem',
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                border: '2px solid var(--border-primary)'
               }}>
-                <User size={16} color="var(--status-info)" />
+                <AstronautIcon size={32} color="var(--status-info)" />
               </div>
             </button>
 
@@ -578,16 +573,13 @@ export default function Header() {
                 borderBottom: '1px solid var(--border-primary)'
               }}>
                 <div style={{ 
-                  width: '2.5rem', 
-                  height: '2.5rem', 
-                  backgroundColor: 'var(--status-info-bg)', 
-                  borderRadius: '50%', 
+                  width: '3rem', 
+                  height: '3rem',
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  border: '2px solid var(--border-primary)'
                 }}>
-                  <UserCircle size={20} color="var(--status-info)" />
+                  <AstronautIcon size={48} color="var(--status-info)" />
                 </div>
                 <div>
                   <p style={{ 
