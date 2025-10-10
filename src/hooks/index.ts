@@ -12,6 +12,5 @@ export { default as useWebSocket } from './useWebSocket';
 export { default as useTestNotifications } from './useTestNotifications';
 export { default as useTests } from './useTests';
 export { default as useTestSteps } from './useTestSteps';
-export { default as useUnsavedChanges } from './useUnsavedChanges';
 // UI hooks
-export { useDropdown, useModal } from './useUIInteractions';
+export { useDropdown, useModal, useUnsavedChanges } from './useUIInteractions';

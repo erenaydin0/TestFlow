@@ -168,6 +168,7 @@ export default function TestBuilder() {
     resetUnsavedChanges
   } = useUnsavedChanges({
     testSteps,
+    canUndo,
     onSave: async () => {
       if (testSteps.length === 0) return;
       
