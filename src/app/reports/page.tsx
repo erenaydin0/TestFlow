@@ -26,7 +26,7 @@ import TableCells from '@/components/common/TableCells';
 import { StatsCards } from '@/components/features/dashboard';
 import { StepView } from '@/components/features/reports';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
-import { Button, IconButton, ButtonGroup } from '@/components/ui';
+import { Button, IconButton, ButtonGroup } from '@/components';
 
 import { ExecutionResult, BrowserType } from '@/types';
 import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/lib/utils';

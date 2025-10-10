@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { X, Settings, Palette, Code, Globe } from 'lucide-react';
 import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/contexts';
 import { Theme } from '@/types';
-import { IconButton } from '@/components/ui';
+import { IconButton } from '@/components';
 import { useModal } from '@/hooks/ui';
 import { CustomSelect } from '@/components/common';
 import { SETTINGS_BROWSER_OPTIONS } from '@/lib/browserUtils';

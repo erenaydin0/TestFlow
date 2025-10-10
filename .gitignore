@@ -33,12 +33,6 @@ yarn-error.log*
 next-env.d.ts
 
 # Backend server files
-/server/executions/
-/server/screenshots/
-/server/videos/
-/server/node_modules/
-/server/scheduled-tests/
-/server/tests/
-/server/logs/
+/server/storage/
 
 .cursor

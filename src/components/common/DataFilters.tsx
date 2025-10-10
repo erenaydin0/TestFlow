@@ -5,7 +5,7 @@ import { Search, X, Filter } from 'lucide-react';
 
 import { MultiSelect, CustomSelect } from './';
 import DateRangeFilter from './DateRangeFilter';
-import { Button } from '@/components/ui';
+import { Button } from '@/components';
 import { BrowserType } from '@/types';
 import { useI18n } from '@/contexts';
 import { BASIC_BROWSER_OPTIONS } from '@/lib/browserUtils';

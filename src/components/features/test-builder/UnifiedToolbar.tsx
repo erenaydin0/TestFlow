@@ -24,7 +24,7 @@ import {
 import { TestStep, BrowserType, FloatingToolbarProps } from '@/types';
 import { getTranslatedActions, ActionType } from '@/lib/actions';
 import BrowserSelector from './BrowserSelector';
-import { IconButton, ButtonGroup } from '@/components/ui';
+import { IconButton, ButtonGroup } from '@/components';
 import { useI18n } from '@/contexts';
 
 // Ortak toolbar props interface

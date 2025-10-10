@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react';
 
-import AutocompleteInput from '@/components/ui/AutocompleteInput';
-import { Button, ButtonGroup } from '@/components/ui';
+import AutocompleteInput from '@/components/common/AutocompleteInput';
+import { Button, ButtonGroup } from '@/components/common';
 import { BrowserType, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/lib/utils';
 import { useModal } from '@/hooks/ui';

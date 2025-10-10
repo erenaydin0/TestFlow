@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, ButtonGroup } from '@/components/ui';
+import { Button, ButtonGroup } from '@/components';
 import { useModal } from '@/hooks/ui';
 import { useI18n } from '@/contexts';
 

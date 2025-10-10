@@ -75,21 +75,35 @@ CosmicQA/
 ├── src/                      # Frontend (Next.js)
 │   ├── app/                  # Next.js app router pages
 │   ├── components/           # React components
+│   │   ├── common/           # Shared UI components
+│   │   ├── features/         # Feature-specific components
+│   │   ├── layout/           # Layout components
+│   │   └── modals/           # Modal components
 │   ├── contexts/             # React contexts
 │   ├── hooks/                # Custom hooks
+│   │   ├── core/             # Core functionality hooks
+│   │   ├── data/             # Data management hooks
+│   │   ├── network/          # Network-related hooks
+│   │   ├── test/             # Test-related hooks
+│   │   └── ui/               # UI interaction hooks
 │   ├── lib/                  # Utility functions & config
 │   └── types/                # TypeScript type definitions
 ├── server/                   # Backend (Express + Playwright)
-│   ├── config.js            # Server configuration
-│   ├── index.js             # Express server
-│   ├── testRunner.js        # Playwright test runner
-│   ├── scriptGenerator.js   # Test script generator
-│   ├── scheduler.js         # Test scheduler
-│   ├── executions/          # Test execution results
-│   ├── screenshots/         # Test screenshots
-│   ├── videos/              # Test recordings
-│   ├── tests/               # Saved test workflows
-│   └── scheduled-tests/     # Scheduled test configs
+│   ├── core/                 # Core server files
+│   │   ├── config.js        # Server configuration
+│   │   ├── index.js         # Express server
+│   │   ├── testRunner.js    # Playwright test runner
+│   │   ├── scriptGenerator.js # Test script generator
+│   │   └── scheduler.js     # Test scheduler
+│   ├── services/             # Service modules
+│   │   ├── errorHandler.js  # Error handling service
+│   │   └── healthChecker.js # Health monitoring service
+│   └── storage/              # Data storage
+│       ├── executions/       # Test execution results
+│       ├── screenshots/      # Test screenshots
+│       ├── videos/           # Test recordings
+│       ├── tests/            # Saved test workflows
+│       └── scheduled-tests/  # Scheduled test configs
 └── public/                   # Static assets
 ```
 

@@ -10,8 +10,8 @@ const config = require('./config');
 const TestRunner = require('./testRunner');
 const ScriptGenerator = require('./scriptGenerator');
 const TestScheduler = require('./scheduler');
-const errorHandler = require('./utils/errorHandler');
-const healthChecker = require('./utils/healthChecker');
+const errorHandler = require('../services/errorHandler');
+const healthChecker = require('../services/healthChecker');
 
 const app = express();
 const server = createServer(app);
@@ -22,11 +22,11 @@ app.use(cors());
 app.use(express.json());
 
 // Storage paths
-const EXECUTIONS_DIR = path.join(__dirname, 'executions');
-const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
-const VIDEOS_DIR = path.join(__dirname, 'videos');
-const SCHEDULED_TESTS_DIR = path.join(__dirname, 'scheduled-tests');
-const TESTS_DIR = path.join(__dirname, 'tests');
+const EXECUTIONS_DIR = path.join(__dirname, '../storage/executions');
+const SCREENSHOTS_DIR = path.join(__dirname, '../storage/screenshots');
+const VIDEOS_DIR = path.join(__dirname, '../storage/videos');
+const SCHEDULED_TESTS_DIR = path.join(__dirname, '../storage/scheduled-tests');
+const TESTS_DIR = path.join(__dirname, '../storage/tests');
 
 // Ensure directories exist
 fs.ensureDirSync(EXECUTIONS_DIR);
@@ -413,7 +413,7 @@ app.delete('/api/executions/:id', async (req, res) => {
 
 // Serve screenshots and videos
 app.use('/screenshots', express.static(SCREENSHOTS_DIR));
-app.use('/videos', express.static(path.join(__dirname, 'videos')));
+app.use('/videos', express.static(VIDEOS_DIR));
 
 // Test execution function
 async function executeTestWorkflow(executionId, execution) {

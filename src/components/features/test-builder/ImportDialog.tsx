@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow, saveWorkflowToStorage } from '@/lib/utils';
-import { Button, ButtonGroup, IconButton } from '@/components/ui';
+import { Button, ButtonGroup, IconButton } from '@/components';
 import { useTestNotifications } from '@/hooks/test';
 import { BrowserType, TestFormData } from '@/types';
 import { API_URL } from '@/lib/config';
