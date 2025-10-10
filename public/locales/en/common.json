@@ -197,6 +197,8 @@
     "disableSnap": "Disable Auto Snap",
     "enableScreenshots": "Enable Screenshots",
     "disableScreenshots": "Disable Screenshots",
+    "deleteSteps": "Delete Steps",
+    "deleteStepsMessage": "Are you sure you want to delete {{count}} steps? This action cannot be undone.",
     "enableRecording": "Enable Recording",
     "disableRecording": "Disable Recording",
     "visibleMode": "Visible Mode (Browser Open)",
@@ -305,11 +307,6 @@
     "screenshots": "Screenshots",
     "selectLanguage": "Select Language",
     "languageDescription": "Change the application language. Changes are applied immediately."
-  },
-  "notifications": {
-    "markAllRead": "Mark All as Read",
-    "clearAll": "Clear All",
-    "markAsRead": "Mark as Read"
   },
   "sidebar": {
     "collapse": "Collapse Sidebar",

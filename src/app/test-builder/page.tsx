@@ -134,6 +134,7 @@ export default function TestBuilder() {
   const [loadedWorkflowData, setLoadedWorkflowData] = useState<any>(null);
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Browser settings
   const { defaultBrowser, defaultHeadless, defaultRecording, defaultScreenshots } = useBrowserSettings();
@@ -311,6 +312,11 @@ export default function TestBuilder() {
 
   const deleteSelectedSteps = () => {
     if (selectedSteps.size === 0) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteSteps = () => {
+    if (selectedSteps.size === 0) return;
     
     // Delete all selected steps
     const newSteps = testSteps.filter(step => !selectedSteps.has(step.id));
@@ -322,6 +328,8 @@ export default function TestBuilder() {
     if (selectedStep && selectedSteps.has(selectedStep.id)) {
       setSelectedStep(null);
     }
+    
+    setShowDeleteConfirm(false);
   };
 
 
@@ -894,6 +902,17 @@ export default function TestBuilder() {
         discardText={t('unsavedChanges.dontSave')}
         variant="unsaved"
         isSaveDialogOpen={isSaveDialogOpen}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteSteps}
+        title={t('testBuilder.deleteSteps')}
+        message={t('testBuilder.deleteStepsMessage', { count: selectedSteps.size })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        type="danger"
       />
     </div>
   );

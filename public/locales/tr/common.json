@@ -197,6 +197,8 @@
     "disableSnap": "Otomatik Sabitlemeyi Kapat",
     "enableScreenshots": "Ekran Görüntüsü Almayı Aç",
     "disableScreenshots": "Ekran Görüntüsü Almayı Kapat",
+    "deleteSteps": "Adımları Sil",
+    "deleteStepsMessage": "{{count}} adımı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "enableRecording": "Ekran Kaydını Aç",
     "disableRecording": "Ekran Kaydını Kapat",
     "visibleMode": "Görünür Mod (Browser Açık)",
