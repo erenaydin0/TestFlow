@@ -114,6 +114,12 @@ class TestScheduler {
 
   calculateNextRun(cronExpression) {
     try {
+      // Önce cron ifadesini validate et
+      if (!cron.validate(cronExpression)) {
+        console.error(`Geçersiz cron ifadesi: ${cronExpression}`);
+        return new Date(Date.now() + 60 * 60 * 1000); // 1 saat sonra
+      }
+      
       // Croner kullanarak sonraki çalışma zamanını hesapla
       const job = new Cron(cronExpression, { timezone: 'Europe/Istanbul' });
       const nextRun = job.nextRun();
@@ -180,6 +186,38 @@ class TestScheduler {
     } catch (error) {
       console.error('Zamanlama yeniden yüklenirken hata:', error);
       return false;
+    }
+  }
+
+  async fixExistingSchedules() {
+    try {
+      console.log('🔧 Mevcut zamanlamaların nextRun değerleri düzeltiliyor...');
+      
+      const files = await fs.readdir(this.scheduledTestsDir);
+      
+      for (const file of files) {
+        if (file.endsWith('.json')) {
+          try {
+            const schedulePath = path.join(this.scheduledTestsDir, file);
+            const schedule = await fs.readJson(schedulePath);
+            
+            // nextRun değerini yeniden hesapla
+            const newNextRun = this.calculateNextRun(schedule.schedule);
+            
+            if (newNextRun.getTime() !== new Date(schedule.nextRun).getTime()) {
+              schedule.nextRun = newNextRun;
+              await fs.writeJson(schedulePath, schedule);
+              console.log(`✅ ${schedule.name} nextRun düzeltildi: ${newNextRun.toISOString()}`);
+            }
+          } catch (error) {
+            console.error(`Hata (${file}):`, error);
+          }
+        }
+      }
+      
+      console.log('✅ Tüm zamanlamalar düzeltildi');
+    } catch (error) {
+      console.error('Zamanlamalar düzeltilirken hata:', error);
     }
   }
 

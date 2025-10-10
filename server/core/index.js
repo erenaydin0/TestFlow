@@ -49,8 +49,8 @@ const activeExecutions = new Map();
 // WebSocket connections
 const clients = new Set();
 
-// Test Scheduler instance
-let testScheduler = null;
+// Test Scheduler instance - initialize early
+const testScheduler = new TestScheduler(executeScheduledTest, storageDirs.SCHEDULED_TESTS_DIR);
 
 // WebSocket connection handling
 wss.on('connection', (ws) => {
@@ -416,8 +416,10 @@ server.listen(PORT, async () => {
   console.log(`🌍 Environment: ${config.nodeEnv}`);
   
   // Initialize Test Scheduler
-  testScheduler = new TestScheduler(executeScheduledTest, storageDirs.SCHEDULED_TESTS_DIR);
   await testScheduler.initialize();
+  
+  // Fix existing schedules' nextRun values
+  await testScheduler.fixExistingSchedules();
 });
 
 // Graceful shutdown

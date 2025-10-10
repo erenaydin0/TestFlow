@@ -96,6 +96,7 @@ function createScheduledRoutes(storageDirs, broadcast, testScheduler) {
       if (testScheduler) {
         schedule.nextRun = testScheduler.calculateNextRun(schedule.schedule);
       } else {
+        // Fallback: 1 saat sonra
         schedule.nextRun = new Date(Date.now() + 60 * 60 * 1000);
       }
       
