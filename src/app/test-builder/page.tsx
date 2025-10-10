@@ -11,10 +11,9 @@ import {
   TestStepCard,
   DragPreview,
   SnapLines,
-  SelectionBox,
-  UnsavedChangesDialog
+  SelectionBox
 } from '@/components/features/test-builder';
-import { TestModal, StepModal } from '@/components/modals';
+import { TestModal, StepModal, ConfirmDialog } from '@/components/modals';
 
 import { TestStep, BrowserType, TestFormData, TestFilters } from '@/types';
 import { getActionByType } from '@/lib/actions';
@@ -883,11 +882,17 @@ export default function TestBuilder() {
         mode={loadedWorkflowId ? 'edit' : 'save'}
       />
 
-      <UnsavedChangesDialog
+      <ConfirmDialog
         isOpen={showUnsavedDialog}
-        onSave={saveAndNavigate}
+        onClose={cancelNavigation}
+        onConfirm={saveAndNavigate}
         onDiscard={confirmNavigation}
-        onCancel={cancelNavigation}
+        title={t('unsavedChanges.title')}
+        message={t('unsavedChanges.message')}
+        confirmText={t('unsavedChanges.save')}
+        cancelText={t('unsavedChanges.cancel')}
+        discardText={t('unsavedChanges.dontSave')}
+        variant="unsaved"
         isSaveDialogOpen={isSaveDialogOpen}
       />
     </div>

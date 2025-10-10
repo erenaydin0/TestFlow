@@ -566,7 +566,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               ))}
             </div>
 
-            <ButtonGroup align="end" spacing="md">
+            <ButtonGroup spacing="md">
               <Button
                 variant="secondary"
                 size="md"

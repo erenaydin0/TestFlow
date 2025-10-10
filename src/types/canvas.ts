@@ -129,10 +129,3 @@ export interface BrowserSelectorProps {
   onBrowserChange: (browser: string) => void;
 }
 
-export interface UnsavedChangesDialogProps {
-  isOpen: boolean;
-  onSave: () => void;
-  onDiscard: () => void;
-  onCancel: () => void;
-  isSaveDialogOpen: boolean;
-}
