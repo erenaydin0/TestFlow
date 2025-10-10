@@ -230,7 +230,8 @@ const useCanvas = (): UseCanvasReturn => {
       width: '100%',
       height: '100%',
       pointerEvents: 'none' as const,
-      zIndex: 1
+      zIndex: 1,
+      overflow: 'visible' as const
     }
   }), [zoom, pan.x, pan.y, canvasOffset.x, canvasOffset.y, isPanning]);
 
@@ -783,22 +784,22 @@ const useCanvas = (): UseCanvasReturn => {
       case 'true':
         return { 
           color: 'var(--status-success)',
-          strokeWidth: 2.5,
-          opacity: 0.8,
+          strokeWidth: 3,
+          opacity: 0.9,
           label: 'TRUE'
         };
       case 'false':
         return { 
           color: 'var(--status-error)',
-          strokeWidth: 2.5,
-          opacity: 0.8,
+          strokeWidth: 3,
+          opacity: 0.9,
           label: 'FALSE'
         };
       default:
         return { 
-          color: 'var(--text-secondary)',
-          strokeWidth: 2,
-          opacity: 0.7,
+          color: '#6B7280', // Daha belirgin gri renk
+          strokeWidth: 2.5,
+          opacity: 0.8,
           label: ''
         };
     }
