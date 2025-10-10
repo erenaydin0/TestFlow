@@ -19,7 +19,8 @@ import {
   Camera,
   Video,
   Eye,
-  EyeOff
+  EyeOff,
+  Layout
 } from 'lucide-react';
 import { TestStep, BrowserType, FloatingToolbarProps } from '@/types';
 import { getTranslatedActions, ActionType } from '@/utils/actions';
@@ -254,7 +255,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
       <div style={TOOLBAR_STYLES.separator}></div>
       
       <IconButton
-        icon={Magnet}
+        icon={Layout}
         onClick={onAutoArrange}
         disabled={testStepsCount === 0}
         variant="ghost"

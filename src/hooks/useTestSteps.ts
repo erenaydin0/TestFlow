@@ -76,45 +76,17 @@ const useTestSteps = (): UseTestStepsReturn => {
 
     const arrangedSteps = [...testSteps];
     const visited = new Set<string>();
-    let currentX = 100;
-    const Y_POSITION = 100;
-    const STEP_SPACING = 250;
+    const STEPS_PER_ROW = 6;
+    const STEP_SPACING_X = 200;
+    const STEP_SPACING_Y = 120;
+    const START_X = 100;
+    const START_Y = 100;
 
-    const arrangeFromStep = (stepId: string, column: number): number => {
-      if (visited.has(stepId)) return column;
-      visited.add(stepId);
+    // Her dal için ayrı pozisyon takibi
+    const branchPositions = new Map<string, { x: number; y: number }>();
+    const branchQueues = new Map<string, string[]>();
 
-      const step = arrangedSteps.find(s => s.id === stepId);
-      if (!step) return column;
-
-      // Position current step
-      step.x = currentX;
-      step.y = Y_POSITION;
-      currentX += STEP_SPACING;
-
-      let maxColumn = column;
-
-      // Handle normal connections
-      if (step.connections) {
-        for (const connectionId of step.connections) {
-          maxColumn = Math.max(maxColumn, arrangeFromStep(connectionId, column + 1));
-        }
-      }
-
-      // Handle If step branches
-      if (step.type === 'if') {
-        if (step.trueConnection) {
-          maxColumn = Math.max(maxColumn, arrangeFromStep(step.trueConnection, column + 1));
-        }
-        if (step.falseConnection) {
-          maxColumn = Math.max(maxColumn, arrangeFromStep(step.falseConnection, column + 1));
-        }
-      }
-
-      return maxColumn;
-    };
-
-    // Find root steps (steps with no incoming connections)
+    // Gelen bağlantıları hesapla
     const hasIncomingConnection = new Set<string>();
     arrangedSteps.forEach(step => {
       step.connections?.forEach(id => hasIncomingConnection.add(id));
@@ -124,19 +96,135 @@ const useTestSteps = (): UseTestStepsReturn => {
       }
     });
 
+    // Root step'leri bul
     const rootSteps = arrangedSteps.filter(step => !hasIncomingConnection.has(step.id));
 
-    // Arrange from root steps
+    // Ana akışı düzenle (zigzag)
+    let mainIndex = 0;
+    const getZigzagPosition = (index: number) => {
+      const row = Math.floor(index / STEPS_PER_ROW);
+      const col = index % STEPS_PER_ROW;
+      const isEvenRow = row % 2 === 0;
+      const actualCol = isEvenRow ? col : (STEPS_PER_ROW - 1 - col);
+      
+      return {
+        x: START_X + (actualCol * STEP_SPACING_X),
+        y: START_Y + (row * STEP_SPACING_Y)
+      };
+    };
+
+    // Ana akışı yerleştir
+    const arrangeMainFlow = (stepId: string) => {
+      if (visited.has(stepId)) return;
+      visited.add(stepId);
+
+      const step = arrangedSteps.find(s => s.id === stepId);
+      if (!step) return;
+
+      // Ana akış pozisyonu
+      const position = getZigzagPosition(mainIndex);
+      step.x = position.x;
+      step.y = position.y;
+      mainIndex++;
+
+      // IF step'i ise dalları başlat
+      if (step.type === 'if') {
+        if (step.trueConnection) {
+          branchPositions.set(step.trueConnection, {
+            x: step.x,
+            y: step.y + STEP_SPACING_Y
+          });
+          branchQueues.set(step.trueConnection, [step.trueConnection]);
+        }
+        if (step.falseConnection) {
+          branchPositions.set(step.falseConnection, {
+            x: step.x,
+            y: step.y + (STEP_SPACING_Y * 2)
+          });
+          branchQueues.set(step.falseConnection, [step.falseConnection]);
+        }
+      } else {
+        // Normal bağlantıları devam ettir
+        if (step.connections) {
+          step.connections.forEach(connectionId => {
+            arrangeMainFlow(connectionId);
+          });
+        }
+      }
+    };
+
+    // Dalları yerleştir
+    const arrangeBranch = (branchId: string) => {
+      const queue = branchQueues.get(branchId);
+      if (!queue) return;
+
+      let branchIndex = 0;
+      const branchStartPos = branchPositions.get(branchId);
+      if (!branchStartPos) return;
+
+      while (queue.length > 0) {
+        const stepId = queue.shift()!;
+        if (visited.has(stepId)) continue;
+        visited.add(stepId);
+
+        const step = arrangedSteps.find(s => s.id === stepId);
+        if (!step) continue;
+
+        // Dal pozisyonu
+        step.x = branchStartPos.x + (branchIndex * STEP_SPACING_X);
+        step.y = branchStartPos.y;
+        branchIndex++;
+
+        // Bu daldan devam eden bağlantıları ekle
+        if (step.connections) {
+          step.connections.forEach(connectionId => {
+            if (!visited.has(connectionId) && !queue.includes(connectionId)) {
+              queue.push(connectionId);
+            }
+          });
+        }
+
+        // IF step'i ise yeni dallar başlat
+        if (step.type === 'if') {
+          if (step.trueConnection) {
+            const newBranchId = `${branchId}-true-${step.trueConnection}`;
+            branchPositions.set(newBranchId, {
+              x: step.x,
+              y: step.y + STEP_SPACING_Y
+            });
+            branchQueues.set(newBranchId, [step.trueConnection]);
+            arrangeBranch(newBranchId);
+          }
+          if (step.falseConnection) {
+            const newBranchId = `${branchId}-false-${step.falseConnection}`;
+            branchPositions.set(newBranchId, {
+              x: step.x,
+              y: step.y + (STEP_SPACING_Y * 2)
+            });
+            branchQueues.set(newBranchId, [step.falseConnection]);
+            arrangeBranch(newBranchId);
+          }
+        }
+      }
+    };
+
+    // Ana akışı başlat
     rootSteps.forEach(step => {
-      arrangeFromStep(step.id, 0);
+      arrangeMainFlow(step.id);
     });
 
-    // Arrange remaining unvisited steps
+    // Dalları yerleştir
+    branchQueues.forEach((queue, branchId) => {
+      arrangeBranch(branchId);
+    });
+
+    // Kalan adımları yerleştir
     arrangedSteps.forEach(step => {
       if (!visited.has(step.id)) {
-        step.x = currentX;
-        step.y = Y_POSITION;
-        currentX += STEP_SPACING;
+        const position = getZigzagPosition(mainIndex);
+        step.x = position.x;
+        step.y = position.y;
+        mainIndex++;
       }
     });
 
