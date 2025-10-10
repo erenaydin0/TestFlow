@@ -19,7 +19,7 @@ import {
   X 
 } from 'lucide-react';
 
-import { NotificationPanel } from '@/components/features/notifications';
+import { NotificationPanel } from '@/components/notifications';
 import { CustomSelect, StatusBadge, CosmicLogo } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
 import { useRealtimeNotifications } from '@/hooks';

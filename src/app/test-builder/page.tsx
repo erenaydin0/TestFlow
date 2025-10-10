@@ -12,7 +12,7 @@ import {
   DragPreview,
   SnapLines,
   SelectionBox
-} from '@/components/features/test-builder';
+} from '@/components/test-builder';
 import { TestModal, StepModal, ConfirmDialog } from '@/components/modals';
 
 import { TestStep, BrowserType } from '@/types';

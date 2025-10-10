@@ -9,7 +9,7 @@ import {
   TestSuiteDistribution, 
   RecentTests,
   UpcomingTests
-} from '@/components/features/dashboard';
+} from '@/components/dashboard';
 import { useExecutions, useScheduledTests } from '@/hooks';
 import { getConsistentColorFromString } from '@/utils/colorUtils';
 import { useI18n } from '@/contexts';

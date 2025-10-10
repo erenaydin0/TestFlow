@@ -23,7 +23,7 @@ import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import TableCells from '@/components/common/TableCells';
 import { EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from '@/components/common';
-import ImportDialog from '@/components/features/test-builder/ImportDialog';
+import ImportDialog from '@/components/test-builder/ImportDialog';
 import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup, } from '@/components';
 

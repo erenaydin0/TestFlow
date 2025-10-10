@@ -5,7 +5,7 @@ import {
   AppProvider,
   UIProvider
 } from '@/contexts';
-import { ToastContainer } from '@/components/features/notifications';
+import { ToastContainer } from '@/components/notifications';
 import { SettingsModal } from '@/components/modals';
 
 const inter = Inter({ subsets: ['latin'] });

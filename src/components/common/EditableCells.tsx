@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Check, X } from 'lucide-react';
 import { BrowserType } from '@/types';
 import MultiSelect from './MultiSelect';
-import { BrowserSelector } from '@/components/features/test-builder';
+import { BrowserSelector } from '@/components/test-builder';
 import { useDropdown } from '@/hooks';
 import { getDropdownContainerStyle } from '@/utils/dropdownStyles';
 import { useI18n } from '@/contexts';
