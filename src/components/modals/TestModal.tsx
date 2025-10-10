@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react';
 
 import AutocompleteInput from '@/components/common/AutocompleteInput';
@@ -9,6 +9,7 @@ import { BrowserType, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/utils/utils';
 import { useModal } from '@/hooks';
 import { useI18n } from '@/contexts';
+import { API_URL } from '@/utils/config';
 
 
 const TestModal: React.FC<TestModalProps> = ({
@@ -29,7 +30,6 @@ const TestModal: React.FC<TestModalProps> = ({
   const [errors, setErrors] = useState<string[]>([]);
   const [existingTags, setExistingTags] = useState<string[]>([]);
   const [existingSuites, setExistingSuites] = useState<string[]>([]);
-  const hasInitialized = useRef(false);
   const { t } = useI18n();
 
   const { isVisible, getOverlayStyle, getModalStyle } = useModal(isOpen, {
@@ -39,12 +39,69 @@ const TestModal: React.FC<TestModalProps> = ({
   // Load existing tags and suites when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setExistingTags(getExistingTags());
-      setExistingSuites(getExistingSuites());
+      const fetchExistingData = async () => {
+        // First try backend API
+        try {
+          const response = await fetch(`${API_URL}/api/tests`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            const tests = await response.json();
+            const allTags = new Set<string>();
+            const allSuites = new Set<string>();
+            
+            // Extract tags and suites from all tests
+            if (Array.isArray(tests)) {
+              tests.forEach((test: any) => {
+                if (test.tags && Array.isArray(test.tags)) {
+                  test.tags.forEach((tag: string) => {
+                    if (tag && tag.trim()) {
+                      allTags.add(tag.trim());
+                    }
+                  });
+                }
+                if (test.suite && test.suite.trim()) {
+                  allSuites.add(test.suite.trim());
+                }
+              });
+            }
+            
+            // Add default suite if no suites exist
+            if (allSuites.size === 0) {
+              allSuites.add('Default');
+            }
+            
+            setExistingTags(Array.from(allTags).sort());
+            setExistingSuites(Array.from(allSuites).sort());
+            return; // Success, exit early
+          }
+        } catch (apiError) {
+          console.warn('Backend API not available, falling back to local storage:', apiError);
+        }
+        
+        // Fallback to local storage
+        try {
+          const tags = getExistingTags();
+          const suites = getExistingSuites();
+          setExistingTags(tags);
+          setExistingSuites(suites);
+        } catch (localError) {
+          console.warn('Local storage not available, using minimal defaults:', localError);
+          // Final fallback - minimal defaults
+          setExistingTags([]);
+          setExistingSuites(['Default']);
+        }
+      };
+      
+      fetchExistingData();
     }
   }, [isOpen]);
 
-  // Initialize form with initial data - when dialog opens or initialData changes
+  // Initialize form with initial data - only when dialog opens
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -62,12 +119,8 @@ const TestModal: React.FC<TestModalProps> = ({
         setBrowserType('chromium');
       }
       setErrors([]);
-      hasInitialized.current = true;
-    } else if (!isOpen) {
-      // Reset flag when dialog closes
-      hasInitialized.current = false;
     }
-  }, [isOpen, initialData]);
+  }, [isOpen]); // Sadece isOpen değiştiğinde çalışsın
 
   // Handle escape key
   useEffect(() => {

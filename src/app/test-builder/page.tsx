@@ -509,6 +509,10 @@ export default function TestBuilder() {
         if (!response.ok) throw new Error(t('testBuilder.testUpdateFailed'));
         const updated = await response.json();
         workflowId = updated.id;
+        
+        // Update loadedWorkflowData with new data
+        setLoadedWorkflowData(updated);
+        
         notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
       } else {
         // Yeni kayıt
@@ -522,6 +526,10 @@ export default function TestBuilder() {
         const saved = await response.json();
         workflowId = saved.id;
         setLoadedWorkflowId(workflowId);
+        
+        // Set loadedWorkflowData for new workflow
+        setLoadedWorkflowData(saved);
+        
         notifyTestSaved(data.name, workflowId);
       }
       
