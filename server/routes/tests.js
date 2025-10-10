@@ -2,13 +2,19 @@
  * Test routes
  */
 
-const express = require('express');
-const fs = require('fs-extra');
-const { v4: uuidv4 } = require('uuid');
+import express from 'express';
+import fs from 'fs-extra';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
 
-const { getTestFilePath } = require('../utils/fileUtils');
-const { validateTestRequest } = require('../middleware/validation');
-const errorHandler = require('../services/errorHandler');
+import { getTestFilePath } from '../utils/fileUtils.js';
+import { validateTestRequest } from '../middleware/validation.js';
+import errorHandler from '../services/errorHandler.js';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -150,4 +156,4 @@ function createTestRoutes(storageDirs, broadcast) {
   return router;
 }
 
-module.exports = createTestRoutes;
+export default createTestRoutes;

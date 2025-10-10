@@ -1,5 +1,10 @@
-const fs = require('fs-extra');
-const path = require('path');
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class ErrorHandler {
   constructor() {
@@ -113,4 +118,4 @@ class ErrorHandler {
   }
 }
 
-module.exports = new ErrorHandler();
+export default new ErrorHandler();

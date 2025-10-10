@@ -1,27 +1,32 @@
-const express = require('express');
-const cors = require('cors');
-const { createServer } = require('http');
-const { WebSocketServer } = require('ws');
-const fs = require('fs-extra');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const config = require('./config');
-const TestRunner = require('./testRunner');
-const ScriptGenerator = require('./scriptGenerator');
-const TestScheduler = require('./scheduler');
-const errorHandler = require('../services/errorHandler');
-const healthChecker = require('../services/healthChecker');
+import config from './config.js';
+import TestRunner from './testRunner.js';
+import ScriptGenerator from './scriptGenerator.js';
+import TestScheduler from './scheduler.js';
+import errorHandler from '../services/errorHandler.js';
+import healthChecker from '../services/healthChecker.js';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Utils
-const { ensureDirectoriesExist } = require('../utils/fileUtils');
-const { generateScheduledExecutionId } = require('../utils/timestamp');
-const { findStartStepIndex, buildStepMap, getNextStepId, calculateSuccessRate, hasFailedSteps } = require('../utils/executionUtils');
+import { ensureDirectoriesExist } from '../utils/fileUtils.js';
+import { generateScheduledExecutionId } from '../utils/timestamp.js';
+import { findStartStepIndex, buildStepMap, getNextStepId, calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js';
 
 // Routes
-const createExecutionRoutes = require('../routes/executions');
-const createTestRoutes = require('../routes/tests');
-const createScheduledRoutes = require('../routes/scheduled');
-const createHealthRoutes = require('../routes/health');
+import createExecutionRoutes from '../routes/executions.js';
+import createTestRoutes from '../routes/tests.js';
+import createScheduledRoutes from '../routes/scheduled.js';
+import createHealthRoutes from '../routes/health.js';
 
 const app = express();
 const server = createServer(app);

@@ -1,7 +1,12 @@
-const cron = require('node-cron');
-const { Cron } = require('croner');
-const fs = require('fs-extra');
-const path = require('path');
+import cron from 'node-cron';
+import { Cron } from 'croner';
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class TestScheduler {
   constructor(executeTestFunction, scheduledTestsDir) {
@@ -233,4 +238,4 @@ class TestScheduler {
   }
 }
 
-module.exports = TestScheduler;
+export default TestScheduler;

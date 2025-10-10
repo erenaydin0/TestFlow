@@ -1,7 +1,12 @@
-const { chromium, firefox, webkit } = require('playwright');
-const { expect } = require('@playwright/test');
-const path = require('path');
-const fs = require('fs-extra');
+import { chromium, firefox, webkit } from 'playwright';
+import { expect } from '@playwright/test';
+import path from 'path';
+import fs from 'fs-extra';
+import { fileURLToPath } from 'url';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class TestRunner {
   constructor(screenshotsDir = null) {
@@ -86,7 +91,7 @@ class TestRunner {
     this.page.setDefaultTimeout(timeout);
     
     // Add console logging (only in debug mode)
-    const config = require('./config');
+    const config = (await import('./config.js')).default;
     if (config.enableDebugLogs) {
       this.page.on('console', msg => {
         console.log(`Browser console: ${msg.text()}`);
@@ -793,4 +798,4 @@ class TestRunner {
   }
 }
 
-module.exports = TestRunner; 
+export default TestRunner; 

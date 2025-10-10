@@ -53,7 +53,7 @@ function generateScheduledExecutionId(testId, baseTimestamp) {
   return `scheduled-${testId.slice(0, 8)}-${localTimestamp}`;
 }
 
-module.exports = {
+export {
   generateReadableExecutionId,
   generateScheduledExecutionId
 };

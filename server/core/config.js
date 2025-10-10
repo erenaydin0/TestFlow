@@ -1,6 +1,12 @@
 // Server configuration - Load from environment variables
-const path = require('path');
-const dotenv = require('dotenv');
+import path from 'path';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+
+// ES modules için __dirname ve __filename
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const config = {
@@ -42,4 +48,4 @@ const config = {
   }
 };
 
-module.exports = config;
+export default config;

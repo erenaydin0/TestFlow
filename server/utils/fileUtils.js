@@ -2,8 +2,13 @@
  * File utility functions
  */
 
-const fs = require('fs-extra');
-const path = require('path');
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Ensure all required directories exist
@@ -65,7 +70,7 @@ function getVideoFilePath(videosDir, executionId) {
   return path.join(videosDir, `${executionId}.webm`);
 }
 
-module.exports = {
+export {
   ensureDirectoriesExist,
   getExecutionFilePath,
   getTestFilePath,

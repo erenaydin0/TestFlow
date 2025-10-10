@@ -2,16 +2,21 @@
  * Execution routes
  */
 
-const express = require('express');
-const fs = require('fs-extra');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+import express from 'express';
+import fs from 'fs-extra';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
 
-const { generateReadableExecutionId } = require('../utils/timestamp');
-const { getExecutionFilePath } = require('../utils/fileUtils');
-const { findStartStepIndex, buildStepMap, getNextStepId, calculateSuccessRate, hasFailedSteps } = require('../utils/executionUtils');
-const { validateExecutionRequest } = require('../middleware/validation');
-const errorHandler = require('../services/errorHandler');
+import { generateReadableExecutionId } from '../utils/timestamp.js';
+import { getExecutionFilePath } from '../utils/fileUtils.js';
+import { findStartStepIndex, buildStepMap, getNextStepId, calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js';
+import { validateExecutionRequest } from '../middleware/validation.js';
+import errorHandler from '../services/errorHandler.js';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -238,4 +243,4 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
   return router;
 }
 
-module.exports = createExecutionRoutes;
+export default createExecutionRoutes;

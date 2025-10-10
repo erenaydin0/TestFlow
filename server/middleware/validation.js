@@ -117,7 +117,7 @@ function validateScheduledTestRequest(req, res, next) {
   next();
 }
 
-module.exports = {
+export {
   validateExecutionRequest,
   validateTestRequest,
   validateScheduledTestRequest

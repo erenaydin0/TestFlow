@@ -88,7 +88,7 @@ function hasFailedSteps(steps) {
   return steps.some(step => step.status === 'failed');
 }
 
-module.exports = {
+export {
   findStartStepIndex,
   buildStepMap,
   getNextStepId,

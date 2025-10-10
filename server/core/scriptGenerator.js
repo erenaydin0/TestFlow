@@ -370,9 +370,9 @@ async function executeTestSteps(steps, executionId, onStepUpdate) {
   return results;
 }
 
-module.exports = executeTestSteps;
+export { executeTestSteps };
 `;
   }
 }
 
-module.exports = ScriptGenerator; 
+export default ScriptGenerator; 

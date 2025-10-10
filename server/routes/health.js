@@ -2,8 +2,8 @@
  * Health check routes
  */
 
-const express = require('express');
-const errorHandler = require('../services/errorHandler');
+import express from 'express';
+import errorHandler from '../services/errorHandler.js';
 
 const router = express.Router();
 
@@ -67,4 +67,4 @@ function createHealthRoutes(activeExecutions, clients, testScheduler, healthChec
   return router;
 }
 
-module.exports = createHealthRoutes;
+export default createHealthRoutes;

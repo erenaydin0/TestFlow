@@ -1,6 +1,11 @@
-const fs = require('fs-extra');
-const path = require('path');
-const os = require('os');
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+
+// ES modules için __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class HealthChecker {
   constructor() {
@@ -226,4 +231,4 @@ class HealthChecker {
   }
 }
 
-module.exports = new HealthChecker();
+export default new HealthChecker();
