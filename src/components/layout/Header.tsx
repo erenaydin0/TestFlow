@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/notifications';
-import { CustomSelect, StatusBadge, CosmicLogo } from '@/components/common';
+import { CustomSelect, StatusBadge, CosmicLogo, IconButton, Button } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
 import { useRealtimeNotifications } from '@/hooks';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
@@ -248,32 +248,19 @@ export default function Header() {
               }}
             />
             {searchQuery && (
-              <button
+              <IconButton
+                icon={X}
                 onClick={handleClearSearch}
+                variant="ghost"
+                size="xs"
                 style={{
                   position: 'absolute',
                   right: '0.75rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0.25rem',
-                  borderRadius: '0.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease'
+                  color: 'var(--text-tertiary)'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <X size={14} color="var(--text-tertiary)" />
-              </button>
+              />
             )}
 
             {/* Search Results Dropdown */}
@@ -654,62 +641,35 @@ export default function Header() {
 
               {/* Menu Items */}
               <div style={{ padding: '0.5rem' }}>
-                <button 
+                <Button 
                   onClick={() => {
                     openSettingsModal();
                     setIsUserPanelOpen(false);
                   }}
+                  variant="ghost"
+                  icon={Settings}
+                  size="sm"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.5rem 0.75rem',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-secondary)',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    transition: 'all 0.2s ease',
                     width: '100%',
-                    textAlign: 'left'
+                    justifyContent: 'flex-start',
+                    color: 'var(--text-secondary)'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                    e.currentTarget.style.color = 'var(--text-primary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                  }}>
-                  <Settings size={14} />
-                  <span>{t('common.settings')}</span>
-                </button>
+                >
+                  {t('common.settings')}
+                </Button>
                 
-                <button style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: 'transparent',
-                  color: 'var(--status-error)',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  transition: 'all 0.2s ease',
-                  width: '100%',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--status-error-bg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}>
-                  <LogOut size={14} />
-                  <span>{t('common.logout')}</span>
-                </button>
+                <Button 
+                  variant="ghost"
+                  icon={LogOut}
+                  size="sm"
+                  style={{
+                    width: '100%',
+                    justifyContent: 'flex-start',
+                    color: 'var(--status-error)'
+                  }}
+                >
+                  {t('common.logout')}
+                </Button>
               </div>
             </div>
           </div>

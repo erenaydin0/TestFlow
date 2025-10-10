@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import Button from './Button';
 
 interface LoadingErrorStateProps {
   loading: boolean;
@@ -74,25 +75,15 @@ export default function LoadingErrorState({
             {error}
           </p>
           {onRetry && (
-            <button
+            <Button
               onClick={onRetry}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--border-primary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                margin: '0 auto'
-              }}
+              variant="primary"
+              icon={RefreshCw}
+              size="sm"
+              style={{ margin: '0 auto' }}
             >
-              <RefreshCw size={16} />
               Tekrar Dene
-            </button>
+            </Button>
           )}
         </div>
       </div>

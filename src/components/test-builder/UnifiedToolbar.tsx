@@ -253,53 +253,15 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
       
       <div style={TOOLBAR_STYLES.separator}></div>
       
-      <button 
+      <IconButton
+        icon={Magnet}
         onClick={onAutoArrange}
-        title={t('testBuilder.autoArrange')}
         disabled={testStepsCount === 0}
-        style={{
-          padding: '0.375rem',
-          backgroundColor: 'transparent',
-          border: 'none',
-          borderRadius: '0.375rem',
-          cursor: testStepsCount === 0 ? 'not-allowed' : 'pointer',
-          color: 'var(--text-secondary)',
-          opacity: testStepsCount === 0 ? 0.5 : 1,
-          transition: 'all 0.2s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '2rem',
-          height: '2rem'
-        }}
-        onMouseEnter={(e) => {
-          if (testStepsCount > 0) {
-            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'transparent';
-        }}
-      >
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 3px)',
-          gridTemplateRows: 'repeat(3, 3px)',
-          gap: '1px'
-        }}>
-          {[...Array(9)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: '3px',
-                height: '3px',
-                backgroundColor: 'currentColor',
-                borderRadius: '0.5px'
-              }}
-            />
-          ))}
-        </div>
-      </button>
+        variant="ghost"
+        size="sm"
+        tooltip={t('testBuilder.autoArrange')}
+        style={{ color: 'var(--text-secondary)' }}
+      />
       
       <ButtonGroup spacing="xs">
         <IconButton

@@ -3,7 +3,7 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'ghost' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'ghost' | 'outline' | 'cosmic';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 export type ButtonGroupSpacing = 'none' | 'xs' | 'sm' | 'md' | 'lg';
 
@@ -102,6 +102,15 @@ const getVariantStyles = (variant: ButtonVariant, isIconButton = false) => {
         backgroundColor: 'transparent',
         color: 'var(--text-primary)',
         border: '1px solid var(--border-primary)'
+      };
+    case 'cosmic':
+      return {
+        ...baseStyles,
+        backgroundColor: 'var(--status-primary)',
+        color: 'white',
+        border: 'none',
+        position: 'relative',
+        overflow: 'hidden'
       };
     default:
       return baseStyles;
@@ -216,6 +225,12 @@ const getHoverStyles = (variant: ButtonVariant, isIconButton = false) => {
       return { backgroundColor: 'var(--bg-tertiary)' };
     case 'outline':
       return { backgroundColor: 'var(--bg-tertiary)' };
+    case 'cosmic':
+      return { 
+        backgroundColor: 'var(--status-primary-hover)',
+        boxShadow: '0 4px 12px rgba(208, 126, 71, 0.3)',
+        transform: 'translateY(-1px)'
+      };
     default:
       return {};
   }
@@ -273,6 +288,53 @@ const SpinAnimation = () => (
   `}</style>
 );
 
+const CosmicAnimation = () => (
+  <style jsx>{`
+    @keyframes cosmicRipple {
+      from {
+        width: 0;
+        height: 0;
+        opacity: 0.2;
+      }
+      to {
+        width: 300px;
+        height: 300px;
+        opacity: 0;
+      }
+    }
+    
+    .cosmic-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease, height 0.6s ease;
+    }
+    
+    .cosmic-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .dark .cosmic-button {
+      background: linear-gradient(135deg, #e89558 0%, #b87aa6 100%);
+      box-shadow: 0 2px 8px rgba(232, 149, 88, 0.2);
+    }
+    
+    .dark .cosmic-button:hover {
+      box-shadow: 
+        0 4px 16px rgba(232, 149, 88, 0.4),
+        0 0 20px rgba(184, 122, 166, 0.2);
+      transform: translateY(-1px);
+    }
+  `}</style>
+);
+
 const Button: React.FC<ButtonProps> = ({
   variant = 'secondary',
   size = 'md',
@@ -303,13 +365,16 @@ const Button: React.FC<ButtonProps> = ({
     ...style
   };
 
+  const cosmicClassName = variant === 'cosmic' ? 'cosmic-button' : '';
+  const finalClassName = className ? `${className} ${cosmicClassName}` : cosmicClassName;
+
   const iconSize = getIconSize(size);
 
   return (
     <button
       {...props}
       style={buttonStyles}
-      className={className}
+      className={finalClassName}
       disabled={disabled || loading}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
@@ -323,6 +388,7 @@ const Button: React.FC<ButtonProps> = ({
       {children && <span>{children}</span>}
       
       <SpinAnimation />
+      <CosmicAnimation />
     </button>
   );
 };

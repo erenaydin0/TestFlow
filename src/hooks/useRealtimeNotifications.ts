@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useWebSocket } from '@/hooks/network';
+import { useWebSocket } from '@/hooks';
 import { useTestNotifications } from '@/hooks';
 import { API_URL } from '@/utils/config';
 

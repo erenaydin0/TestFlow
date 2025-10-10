@@ -757,20 +757,14 @@ export default function TestsPage() {
                   >
                     {t('common.import')}
                   </Button>
-                  <button 
-                    className="btn-primary" 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      padding: '0.375rem 0.75rem',
-                      fontSize: '0.875rem'
-                    }}
+                  <Button 
+                    variant="primary"
+                    icon={Plus}
                     onClick={handleCreateNewTest}
+                    size="sm"
                   >
-                    <Plus size={16} />
                     {t('tests.createNew')}
-                  </button>
+                  </Button>
                 </ButtonGroup>
               </div>
             </div>
@@ -814,19 +808,15 @@ export default function TestsPage() {
                   : t('filters.tryDifferentFilters')
                 }
               </p>
-              <button 
+              <Button 
                 onClick={handleCreateNewTest}
-                className="btn-primary"
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem',
-                  margin: '0 auto'
-                }}
+                variant="primary"
+                icon={Plus}
+                size="sm"
+                style={{ margin: '0 auto' }}
               >
-                <Plus size={16} />
                 {t('filters.createFirstTest')}
-              </button>
+              </Button>
               </div>
             ) : (
               <div>
@@ -878,47 +868,25 @@ export default function TestsPage() {
 
                   {/* Pagination Buttons */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
+                    <IconButton
+                      icon={ChevronsLeft}
                       onClick={goToFirstPage}
                       disabled={currentPage === 1}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '2rem',
-                        height: '2rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.375rem',
-                        backgroundColor: currentPage === 1 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                        color: currentPage === 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
-                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      title={t('common.firstPage')}
-                    >
-                      <ChevronsLeft size={14} />
-                    </button>
+                      variant="outline"
+                      size="sm"
+                      tooltip={t('common.firstPage')}
+                      style={{ width: '2rem', height: '2rem' }}
+                    />
 
-                    <button
+                    <IconButton
+                      icon={ChevronLeft}
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '2rem',
-                        height: '2rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.375rem',
-                        backgroundColor: currentPage === 1 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                        color: currentPage === 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
-                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      title={t('common.previousPage')}
-                    >
-                      <ChevronLeft size={14} />
-                    </button>
+                      variant="outline"
+                      size="sm"
+                      tooltip={t('common.previousPage')}
+                      style={{ width: '2rem', height: '2rem' }}
+                    />
 
                     {/* Page Numbers */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -934,74 +902,45 @@ export default function TestsPage() {
 
                         for (let i = startPage; i <= endPage; i++) {
                           pages.push(
-                            <button
+                            <Button
                               key={i}
                               onClick={() => goToPage(i)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '2rem',
+                              variant={i === currentPage ? 'primary' : 'outline'}
+                              size="sm"
+                              style={{ 
+                                width: '2rem', 
                                 height: '2rem',
-                                border: '1px solid var(--border-primary)',
-                                borderRadius: '0.375rem',
-                                backgroundColor: i === currentPage ? 'var(--color-selected)' : 'var(--bg-primary)',
-                                color: i === currentPage ? 'white' : 'var(--text-primary)',
-                                cursor: 'pointer',
-                                fontSize: '0.875rem',
-                                fontWeight: i === currentPage ? '600' : '400',
-                                transition: 'all 0.2s ease'
+                                minWidth: '2rem',
+                                padding: '0'
                               }}
                             >
                               {i}
-                            </button>
+                            </Button>
                           );
                         }
                         return pages;
                       })()}
                     </div>
 
-                    <button
+                    <IconButton
+                      icon={ChevronRight}
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '2rem',
-                        height: '2rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.375rem',
-                        backgroundColor: currentPage === totalPages ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                        color: currentPage === totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      title="Sonraki sayfa"
-                    >
-                      <ChevronRight size={14} />
-                    </button>
+                      variant="outline"
+                      size="sm"
+                      tooltip="Sonraki sayfa"
+                      style={{ width: '2rem', height: '2rem' }}
+                    />
 
-                    <button
+                    <IconButton
+                      icon={ChevronsRight}
                       onClick={goToLastPage}
                       disabled={currentPage === totalPages}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '2rem',
-                        height: '2rem',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.375rem',
-                        backgroundColor: currentPage === totalPages ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                        color: currentPage === totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      title="Son sayfa"
-                    >
-                      <ChevronsRight size={14} />
-                    </button>
+                      variant="outline"
+                      size="sm"
+                      tooltip="Son sayfa"
+                      style={{ width: '2rem', height: '2rem' }}
+                    />
                   </div>
                 </div>
               )}

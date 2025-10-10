@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CustomSelect, LoadingErrorState } from '@/components/common';
+import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton } from '@/components/common';
 import { ScheduleModal, ConfirmDialog } from '@/components/modals';
 import { UpcomingTests } from '@/components/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/utils/utils';
@@ -55,21 +55,17 @@ export default function ScheduledPage() {
           : t('scheduled.subtitle')
       }
       headerActions={
-        <button 
-          className="btn-primary" 
+        <Button 
+          variant="primary"
+          icon={Plus}
           onClick={() => {
             setEditingSchedule(undefined);
             setIsModalOpen(true);
           }}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem' 
-          }}
+          size="sm"
         >
-          <Plus size={16} />
           {t('scheduled.createNewSchedule')}
-        </button>
+        </Button>
       }
     >
       {/* Filters */}
@@ -105,12 +101,13 @@ export default function ScheduledPage() {
               color: 'var(--text-secondary)'
             }}>
               <p style={{ color: 'var(--status-error)', marginBottom: '1rem' }}>{error}</p>
-              <button 
-                className="btn-primary"
+              <Button 
+                variant="primary"
                 onClick={() => window.location.reload()}
+                size="sm"
               >
                 {t('common.retry')}
-              </button>
+              </Button>
             </div>
           ) : (
             <div style={{ 
@@ -138,13 +135,14 @@ export default function ScheduledPage() {
                   }}>
                     <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
                     <p>{t('scheduled.noSchedulesFound')}</p>
-                    <button 
-                      className="btn-primary"
+                    <Button 
+                      variant="primary"
                       onClick={() => setIsModalOpen(true)}
+                      size="sm"
                       style={{ marginTop: '1rem' }}
                     >
                       {t('scheduled.createFirstSchedule')}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -244,100 +242,47 @@ export default function ScheduledPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {test.status === 'active' ? (
-                          <button 
+                          <IconButton 
+                            icon={Pause}
                             onClick={() => toggleSchedule(test.id)}
-                            style={{ 
-                              padding: '0.5rem', 
-                              color: 'var(--status-warning)', 
-                              backgroundColor: 'transparent',
-                              border: 'none',
-                              borderRadius: '0.375rem',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'rgba(217, 119, 6, 0.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                          >
-                            <Pause size={18} />
-                          </button>
+                            variant="ghost"
+                            size="sm"
+                            style={{ color: 'var(--status-warning)' }}
+                          />
                         ) : (
-                          <button 
+                          <IconButton 
+                            icon={Play}
                             onClick={() => toggleSchedule(test.id)}
-                            style={{ 
-                              padding: '0.5rem', 
-                              color: 'var(--status-success)', 
-                              backgroundColor: 'transparent',
-                              border: 'none',
-                              borderRadius: '0.375rem',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'rgba(5, 150, 105, 0.1)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                          >
-                            <Play size={18} />
-                          </button>
+                            variant="ghost"
+                            size="sm"
+                            style={{ color: 'var(--status-success)' }}
+                          />
                         )}
                         
-                        <button 
+                        <IconButton 
+                          icon={Edit}
                           onClick={() => {
                             setEditingSchedule(test);
                             setIsModalOpen(true);
                           }}
-                          style={{ 
-                            padding: '0.5rem', 
-                            color: 'var(--text-secondary)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.375rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                            e.currentTarget.style.color = 'var(--text-primary)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-secondary)';
-                          }}
-                        >
-                          <Edit size={18} />
-                        </button>
+                          variant="ghost"
+                          size="sm"
+                          tooltip={t('common.edit')}
+                        />
                         
-                        <button 
+                        <IconButton 
+                          icon={Trash2}
                           onClick={() => {
                             setDeleteConfirm({
                               isOpen: true,
                               schedule: test
                             });
                           }}
-                          style={{ 
-                            padding: '0.5rem', 
-                            color: 'var(--status-error)', 
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '0.375rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                          variant="ghost"
+                          size="sm"
+                          tooltip={t('common.delete')}
+                          style={{ color: 'var(--status-error)' }}
+                        />
                       </div>
                     </div>
                     

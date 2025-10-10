@@ -384,29 +384,14 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <IconButton
+            icon={X}
             onClick={handleClose}
-            style={{
-              width: '2rem',
-              height: '2rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '0.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <X size={18} />
-          </button>
+            variant="ghost"
+            size="sm"
+            tooltip="Kapat"
+            style={{ color: 'var(--text-secondary)' }}
+          />
         </div>
 
         {importResults ? (
@@ -441,12 +426,13 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               {importResults.skipped > 0 && <p>⚠️ {importResults.skipped} workflow atlandı (zaten mevcut)</p>}
               {importResults.failed > 0 && <p>❌ {importResults.failed} workflow import edilemedi</p>}
             </div>
-            <button 
+            <Button 
               onClick={handleClose}
-              className="btn-primary"
+              variant="cosmic"
+              size="md"
             >
               Tamam
-            </button>
+            </Button>
           </div>
         ) : previews.length > 0 ? (
           /* Preview Section */
@@ -634,12 +620,13 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
                 veya dosya seçmek için tıklayın
               </p>
               
-              <button 
-                className="btn-primary"
+              <Button 
+                variant="cosmic"
+                size="md"
                 style={{ pointerEvents: 'none' }}
               >
                 Dosya Seç
-              </button>
+              </Button>
             </div>
 
             <input

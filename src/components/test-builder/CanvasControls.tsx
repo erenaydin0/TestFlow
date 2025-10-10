@@ -6,6 +6,7 @@ import {
   Move
 } from 'lucide-react';
 import { useI18n } from '@/contexts';
+import { IconButton } from '@/components/common';
 
 // Props interface
 interface CanvasControlsProps {
@@ -41,13 +42,14 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
       }}
     >
-      <button 
+      <IconButton
+        icon={ZoomIn}
         onClick={onZoomIn}
+        variant="ghost"
+        size="sm"
+        tooltip={t('testBuilder.zoomIn')}
         className="canvas-control"
-        title={t('testBuilder.zoomIn')}
-      >
-        <ZoomIn size={16} />
-      </button>
+      />
       
       <span style={{ 
         padding: '0.25rem 0.5rem',
@@ -63,13 +65,14 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
         {Math.round(zoom * 100)}%
       </span>
       
-      <button 
+      <IconButton
+        icon={ZoomOut}
         onClick={onZoomOut}
+        variant="ghost"
+        size="sm"
+        tooltip={t('testBuilder.zoomOut')}
         className="canvas-control"
-        title={t('testBuilder.zoomOut')}
-      >
-        <ZoomOut size={16} />
-      </button>
+      />
       
       <div style={{
         width: '1px',
@@ -78,13 +81,14 @@ const CanvasControls: React.FC<CanvasControlsProps> = ({
         margin: '0 0.25rem'
       }}></div>
       
-      <button 
+      <IconButton
+        icon={RotateCcw}
         onClick={onResetView}
+        variant="ghost"
+        size="sm"
+        tooltip={t('testBuilder.reset')}
         className="canvas-control"
-        title={t('testBuilder.reset')}
-      >
-        <RotateCcw size={16} />
-      </button>
+      />
       
       <span style={{
         fontSize: '0.75rem',

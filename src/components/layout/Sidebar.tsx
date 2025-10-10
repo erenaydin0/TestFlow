@@ -13,6 +13,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useSidebar, useSettingsModal, useI18n } from '@/contexts';
+import { IconButton } from '@/components/common';
 
 interface SidebarProps {
   onNavigationAttempt?: (href: string) => void;
@@ -112,97 +113,37 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
         borderTop: '1px solid var(--border-primary)'
       }}>
         {/* Ayarlar Butonu - Sol */}
-        <button
+        <IconButton
+          icon={Settings}
           onClick={openSettingsModal}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            padding: '0.75rem',
-            borderRadius: '0.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'color 0.2s ease, background-color 0.2s ease',
-            minWidth: '2.5rem',
-            minHeight: '2.5rem'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--text-secondary)';
-          }}
-          title="Ayarlar"
-        >
-          <Settings size={20} />
-        </button>
+          variant="ghost"
+          size="md"
+          tooltip="Ayarlar"
+          style={{ color: 'var(--text-secondary)' }}
+        />
 
         {/* Collapse Toggle - Sağ */}
         {!isCollapsed && (
-          <button
+          <IconButton
+            icon={ChevronLeft}
             onClick={() => setIsCollapsed(!isCollapsed)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              padding: '0.75rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'color 0.2s ease, background-color 0.2s ease',
-              minWidth: '2.5rem',
-              minHeight: '2.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-            title={t('sidebar.collapse')}
-          >
-            <ChevronLeft size={20} />
-          </button>
+            variant="ghost"
+            size="md"
+            tooltip={t('sidebar.collapse')}
+            style={{ color: 'var(--text-secondary)' }}
+          />
         )}
 
         {/* Collapsed durumda genişlet butonu */}
         {isCollapsed && (
-          <button
+          <IconButton
+            icon={ChevronRight}
             onClick={() => setIsCollapsed(!isCollapsed)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              padding: '0.75rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'color 0.2s ease, background-color 0.2s ease',
-              minWidth: '2.5rem',
-              minHeight: '2.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-            title={t('sidebar.expand')}
-          >
-            <ChevronRight size={20} />
-          </button>
+            variant="ghost"
+            size="md"
+            tooltip={t('sidebar.expand')}
+            style={{ color: 'var(--text-secondary)' }}
+          />
         )}
       </div>
     </aside>

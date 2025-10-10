@@ -125,7 +125,6 @@ export default function Dashboard() {
         onRetry={refresh}
       >
         <StatsCards stats={stats} loading={loading} />
-        
         {/* İlk satır: Günlük Test Sonuçları + Son Testler */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
           <div className="lg:col-span-8">
