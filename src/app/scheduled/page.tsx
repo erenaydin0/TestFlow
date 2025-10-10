@@ -13,7 +13,7 @@ import {
 
 import { PageLayout } from '@/components/layout';
 import { StatusBadge, CustomSelect, LoadingErrorState } from '@/components/common';
-import { ScheduleModal } from '@/components/modals';
+import { ScheduleModal, ConfirmDialog } from '@/components/modals';
 import { UpcomingTests } from '@/components/features/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/lib/utils';
 import { useScheduledTests } from '@/hooks/data';
@@ -38,6 +38,13 @@ export default function ScheduledPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduledTest | undefined>();
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    schedule: ScheduledTest | null;
+  }>({
+    isOpen: false,
+    schedule: null
+  });
   
   return (
     <PageLayout
@@ -308,9 +315,10 @@ export default function ScheduledPage() {
                         
                         <button 
                           onClick={() => {
-                            if (confirm(t('scheduled.deleteConfirm'))) {
-                              deleteSchedule(test.id);
-                            }
+                            setDeleteConfirm({
+                              isOpen: true,
+                              schedule: test
+                            });
                           }}
                           style={{ 
                             padding: '0.5rem', 
@@ -407,6 +415,22 @@ export default function ScheduledPage() {
           }
         }}
         schedule={editingSchedule}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, schedule: null })}
+        onConfirm={async () => {
+          if (deleteConfirm.schedule) {
+            await deleteSchedule(deleteConfirm.schedule.id);
+            setDeleteConfirm({ isOpen: false, schedule: null });
+          }
+        }}
+        title={t('scheduled.deleteTitle')}
+        message={t('scheduled.deleteMessage', { name: deleteConfirm.schedule?.name })}
+        confirmText={t('scheduled.deleteConfirm')}
+        cancelText={t('scheduled.cancel')}
+        type="danger"
       />
     </PageLayout>
   );
