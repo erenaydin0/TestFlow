@@ -211,17 +211,18 @@ const useCanvas = (): UseCanvasReturn => {
       backgroundImage: `
         radial-gradient(circle, var(--border-primary) 1px, transparent 1px)
       `,
-      backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+      backgroundSize: `${20}px ${20}px`,
       backgroundPosition: `${pan.x}px ${pan.y}px`,
-      transform: `scale(${zoom})`,
-      transformOrigin: 'center center'
+      overflow: 'hidden' as const
     },
     innerContainer: {
       transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${zoom})`,
       transformOrigin: '0 0',
       width: '100%',
       height: '100%',
-      position: 'relative' as const
+      position: 'relative' as const,
+      minWidth: '1000px',
+      minHeight: '1000px'
     },
     svgLayer: {
       position: 'absolute' as const,
