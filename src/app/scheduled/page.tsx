@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CosmicSpinner, CustomSelect } from '@/components/common';
+import { StatusBadge, CustomSelect, LoadingErrorState } from '@/components/common';
 import { ScheduleModal } from '@/components/modals';
 import { UpcomingTests } from '@/components/features/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/lib/utils';
@@ -89,7 +89,7 @@ export default function ScheduledPage() {
 
       {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-              <CosmicSpinner size="lg" />
+              <LoadingErrorState loading={loading} error={error} children={<></>} />
             </div>
           ) : error ? (
             <div style={{ 
