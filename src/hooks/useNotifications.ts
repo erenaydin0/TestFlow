@@ -514,6 +514,22 @@ function useNotifications() {
           }
           
           states.add('started');
+          
+          // Trigger test start notification
+          if (lastMessage.data.execution) {
+            const execution = lastMessage.data.execution;
+            notifyTestStart(execution.workflowName, executionId);
+          } else {
+            notifyTestStart('Test Execution', executionId);
+          }
+          break;
+
+        case 'execution:scheduled':
+          console.log('Execution scheduled message:', lastMessage.data);
+          
+          if (lastMessage.data.execution && lastMessage.data.execution.workflowName) {
+            notifyWorkflowLoaded(lastMessage.data.execution.workflowName);
+          }
           break;
 
         case 'step:started':
