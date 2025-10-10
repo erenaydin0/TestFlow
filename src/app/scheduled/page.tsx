@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Play, 
   Pause, 
@@ -8,17 +8,26 @@ import {
   Trash2, 
   Plus,
   Clock,
-  Calendar
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  X
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton } from '@/components/common';
+import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters } from '@/components/common';
+import { Column } from '@/components/common/DataTable';
 import { ScheduleModal, ConfirmDialog } from '@/components/modals';
 import { UpcomingTests } from '@/components/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/utils/utils';
 import { useScheduledTests } from '@/hooks';
 import { ScheduledTest } from '@/types/test';
 import { useI18n } from '@/contexts';
+import TableCells from '@/components/common/TableCells';
+
+const { TestNameCell, StatusCell, ScheduleCell, NextRunCell, ScheduledActionsCell } = TableCells;
 
 export default function ScheduledPage() {
   const { t, locale } = useI18n();
@@ -46,6 +55,171 @@ export default function ScheduledPage() {
     schedule: null
   });
   
+  // Selection state
+  const [selectedSchedules, setSelectedSchedules] = useState<Set<string>>(new Set());
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<string>('nextRun');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Sort schedules
+  const sortedSchedules = useMemo(() => {
+    const sorted = [...filteredTests];
+    sorted.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case 'schedule':
+          aValue = a.schedule;
+          bValue = b.schedule;
+          break;
+        case 'nextRun':
+          aValue = a.nextRun ? new Date(a.nextRun).getTime() : 0;
+          bValue = b.nextRun ? new Date(b.nextRun).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [filteredTests, sortField, sortOrder]);
+
+  // Pagination logic
+  const totalItems = sortedSchedules.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageSchedules = sortedSchedules.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Define table columns
+  const columns: Column<ScheduledTest>[] = [
+    {
+      key: 'name',
+      label: t('scheduled.testName'),
+      sortable: true,
+      width: '300px',
+      render: (value: any, schedule: ScheduledTest) => (
+        <TestNameCell 
+          name={schedule.name} 
+          description={schedule.description} 
+          id={schedule.id}
+        />
+      )
+    },
+    {
+      key: 'status',
+      label: t('scheduled.status'),
+      sortable: true,
+      width: '120px',
+      render: (value: any, schedule: ScheduledTest) => (
+        <div style={{ 
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '0.25rem 0.75rem',
+          borderRadius: '0.375rem',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          color: schedule.status === 'active' ? 'var(--status-success)' : 'var(--status-error)',
+        }}>
+          {schedule.status === 'active' ? t('scheduled.active') : t('scheduled.inactive')}
+        </div>
+      )
+    },
+    {
+      key: 'schedule',
+      label: t('scheduled.schedule'),
+      sortable: true,
+      width: '200px',
+      render: (value: any, schedule: ScheduledTest) => (
+        <ScheduleCell 
+          schedule={schedule.schedule}
+          description={getScheduleDescription(schedule.schedule, t)}
+        />
+      )
+    },
+    {
+      key: 'nextRun',
+      label: t('scheduled.nextRun'),
+      sortable: true,
+      width: '200px',
+      render: (value: any, schedule: ScheduledTest) => (
+        <NextRunCell nextRun={schedule.nextRun} />
+      )
+    },
+    {
+      key: 'actions',
+      label: t('scheduled.actions'),
+      sortable: false,
+      width: '150px',
+      render: (value: any, schedule: ScheduledTest) => (
+        <ScheduledActionsCell
+          onToggle={() => toggleSchedule(schedule.id)}
+          onEdit={() => {
+            setEditingSchedule(schedule);
+            setIsModalOpen(true);
+          }}
+          onDelete={() => {
+            setDeleteConfirm({
+              isOpen: true,
+              schedule: schedule
+            });
+          }}
+          status={schedule.status === 'active' ? 'active' : 'inactive'}
+        />
+      )
+    }
+  ];
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
+
+  // Bulk operations
+  const handleBulkToggle = () => {
+    selectedSchedules.forEach(id => {
+      toggleSchedule(id);
+    });
+    setSelectedSchedules(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    selectedSchedules.forEach(id => {
+      deleteSchedule(id);
+    });
+    setSelectedSchedules(new Set());
+  };
+  
   return (
     <PageLayout
       title={t('scheduled.title')}
@@ -54,41 +228,7 @@ export default function ScheduledPage() {
           ? `${t('scheduled.subtitle')} (${filteredTests.length} / ${scheduledTests.length} ${t('scheduled.tests')})`
           : t('scheduled.subtitle')
       }
-      headerActions={
-        <Button 
-          variant="cosmic"
-          icon={Plus}
-          onClick={() => {
-            setEditingSchedule(undefined);
-            setIsModalOpen(true);
-          }}
-          size="sm"
-        >
-          {t('scheduled.createNewSchedule')}
-        </Button>
-      }
     >
-      {/* Filters */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '1rem',
-        marginBottom: '1.5rem' ,  
-        width: '120px'
-        }}>
-          <CustomSelect 
-          value={filters.status[0] || ''}
-          onChange={(value) => setFilters({ ...filters, status: value ? [value as any] : [] })}
-          style={{
-            width: 'max-content'
-          }}
-          options={[
-            { value: 'active', label: t('status.active') },
-            { value: 'paused', label: t('status.paused') },
-          ]}
-          placeholder={t('common.allStatuses')}
-        />
-      </div>
 
       {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
@@ -118,14 +258,6 @@ export default function ScheduledPage() {
             }}>
               {/* Scheduled Tests */}
               <div className="card">
-                <h3 style={{ 
-                  fontSize: '1.125rem', 
-                  fontWeight: 600, 
-                  color: 'var(--text-primary)', 
-                  margin: '0 0 1rem 0'
-                }}>
-                  {t('scheduled.allSchedules')}
-                </h3>
                 
                 {filteredTests.length === 0 ? (
                   <div style={{ 
@@ -145,187 +277,238 @@ export default function ScheduledPage() {
                     </Button>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {filteredTests.map((test) => (
-                  <div 
-                    key={test.id} 
-                    className="card"
-                    style={{ 
-                      backgroundColor: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-primary)',
-                      padding: '1rem'
-                    }}
-                  >
+                  <div>
+                    {/* Filters */}
                     <div style={{ 
                       display: 'flex', 
-                      alignItems: 'flex-start', 
-                      justifyContent: 'space-between',
-                      marginBottom: '0.75rem'
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      marginBottom: '1rem'
                     }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                          <h4 style={{ 
-                            fontSize: '1rem', 
-                            fontWeight: 600, 
-                            color: 'var(--text-primary)',
-                            margin: 0
-                          }}>
-                            {test.name}
-                          </h4>
-                          <StatusBadge status={test.status} />
-                        </div>
-                        
-                        <p style={{ 
-                          fontSize: '0.875rem', 
-                          color: 'var(--text-secondary)',
-                          margin: '0 0 0.75rem 0'
-                        }}>
-                          {test.description}
-                        </p>
-                        
-                        <div style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: 'repeat(2, 1fr)', 
-                          gap: '1rem' 
-                        }}>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                              <Clock size={14} color="var(--text-tertiary)" />
-                              <span style={{ 
-                                fontSize: '0.75rem', 
-                                color: 'var(--text-tertiary)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em'
-                              }}>
-                                {t('scheduled.schedule')}
-                              </span>
-                            </div>
-                            <p style={{ 
-                              fontSize: '0.875rem', 
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '0.75rem',
+                        alignItems: 'center',
+                        flexWrap: 'wrap'
+                      }}>
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            placeholder={t('scheduled.searchSchedules')}
+                            value={filters.search || ''}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                            style={{
+                              padding: '0.375rem',
+                              border: '1px solid var(--border-primary)',
+                              borderRadius: '0.375rem',
+                              backgroundColor: 'var(--bg-primary)',
                               color: 'var(--text-primary)',
-                              margin: 0,
-                              fontWeight: 500
-                            }}>
-                              {getScheduleDescription(test.schedule, t)}
-                            </p>
-                          </div>
-                          
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                              <Calendar size={14} color="var(--text-tertiary)" />
-                              <span style={{ 
-                                fontSize: '0.75rem', 
-                                color: 'var(--text-tertiary)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em'
-                              }}>
-                                {t('scheduled.nextRun')}
-                              </span>
-                            </div>
-                            <p style={{ 
-                              fontSize: '0.875rem', 
-                              color: 'var(--text-primary)',
-                              margin: 0,
-                              fontWeight: 500
-                            }}>
-                              {test.nextRun ? new Date(test.nextRun).toLocaleString('tr-TR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : '-'}
-                            </p>
-                          </div>
+                              fontSize: '0.75rem',
+                              minWidth: '200px'
+                            }}
+                          />
+                          <CustomSelect 
+                            value={filters.status[0] || ''}
+                            onChange={(value) => setFilters({ ...filters, status: value ? [value as any] : [] })}
+                            style={{ width: 'max-content' }}
+                            options={[
+                              { value: 'active', label: t('scheduled.active') },
+                              { value: 'paused', label: t('scheduled.inactive') },
+                            ]}
+                            placeholder={t('common.allStatuses')}
+                          />
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {test.status === 'active' ? (
-                          <IconButton 
-                            icon={Pause}
-                            onClick={() => toggleSchedule(test.id)}
-                            variant="ghost"
-                            size="sm"
-                            style={{ color: 'var(--status-warning)' }}
-                          />
-                        ) : (
-                          <IconButton 
-                            icon={Play}
-                            onClick={() => toggleSchedule(test.id)}
-                            variant="ghost"
-                            size="sm"
-                            style={{ color: 'var(--status-success)' }}
-                          />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {/* Bulk Actions */}
+                        {selectedSchedules.size > 0 && (
+                          <>
+                            <span style={{ 
+                              fontSize: '0.875rem', 
+                              color: 'var(--text-secondary)' 
+                            }}>
+                              {selectedSchedules.size} seçili
+                            </span>
+                            
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              icon={X}
+                              onClick={() => setSelectedSchedules(new Set())}
+                            >
+                              {t('common.clear')}
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={Pause}
+                              onClick={handleBulkToggle}
+                              style={{ 
+                                color: 'var(--status-warning)', 
+                                borderColor: 'var(--status-warning)' 
+                              }}
+                            >
+                              {t('scheduled.toggleAll')}
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={Trash2}
+                              onClick={handleBulkDelete}
+                              style={{ 
+                                color: 'var(--status-error)', 
+                                borderColor: 'var(--status-error)' 
+                              }}
+                            >
+                              {t('common.delete')}
+                            </Button>
+                          </>
                         )}
                         
-                        <IconButton 
-                          icon={Edit}
-                          onClick={() => {
-                            setEditingSchedule(test);
-                            setIsModalOpen(true);
-                          }}
-                          variant="ghost"
+                        <Button 
+                          variant="cosmic"
+                          icon={Plus}
+                          onClick={() => setIsModalOpen(true)}
                           size="sm"
-                          tooltip={t('common.edit')}
-                        />
-                        
-                        <IconButton 
-                          icon={Trash2}
-                          onClick={() => {
-                            setDeleteConfirm({
-                              isOpen: true,
-                              schedule: test
-                            });
-                          }}
-                          variant="ghost"
-                          size="sm"
-                          tooltip={t('common.delete')}
-                          style={{ color: 'var(--status-error)' }}
-                        />
+                        >
+                          {t('scheduled.createNewSchedule')}
+                        </Button>
                       </div>
                     </div>
-                    
+
+                    {/* Separator */}
                     <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      paddingTop: '0.75rem',
-                      borderTop: '1px solid var(--border-primary)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          <span>{t('scheduled.lastRun')}: </span>
-                          <span 
-                            style={{ color: 'var(--text-secondary)' }}
-                            title={formatDateForTooltip(test.lastRun, locale)}
-                          >
-                            {formatRelativeTime(test.lastRun, t)}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          <span>{t('common.duration')}: </span>
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            {formatDuration(test.lastDuration || 0)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          {t('scheduled.successRate')}:
-                        </span>
-                        <span style={{ 
-                          fontSize: '0.875rem', 
-                          fontWeight: 600,
-                          color: (test.successRate || 0) >= 95 ? 'var(--status-success)' : (test.successRate || 0) >= 85 ? 'var(--status-warning)' : 'var(--status-error)'
+                      borderTop: '1px solid var(--border-primary)', 
+                      margin: '0 0 1rem 0' 
+                    }}></div>
+
+
+                    {/* Data Table */}
+                    <DataTable
+                      data={currentPageSchedules}
+                      allData={filteredTests}
+                      columns={columns}
+                      loading={loading}
+                      emptyMessage={t('scheduled.noTestsFound')}
+                      selectable={true}
+                      selectedItems={selectedSchedules}
+                      onSelectionChange={setSelectedSchedules}
+                      getItemId={(schedule) => schedule.id}
+                      onSort={(field: string, order: 'asc' | 'desc') => {
+                        setSortField(field);
+                        setSortOrder(order);
+                      }}
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                    />
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '1.5rem',
+                        padding: '0.75rem 1.5rem',
+                        borderTop: '1px solid var(--border-primary)'
+                      }}>
+                        {/* Pagination Info */}
+                        <div style={{ 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.875rem' 
                         }}>
-                          {test.successRate || 0}%
-                        </span>
+                          {totalItems > 0 ? (
+                            <>
+                              <span>{startIndex + 1} - {Math.min(endIndex, totalItems)}</span>
+                              <span style={{ margin: '0 0.25rem' }}>•</span>
+                              <span>{totalItems} toplam zamanlama</span>
+                            </>
+                          ) : (
+                            'Zamanlama bulunamadı'
+                          )}
+                        </div>
+
+                        {/* Pagination Buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <IconButton
+                            icon={ChevronsLeft}
+                            onClick={goToFirstPage}
+                            disabled={currentPage === 1}
+                            variant="outline"
+                            size="sm"
+                            tooltip={t('common.firstPage')}
+                            style={{ width: '2rem', height: '2rem' }}
+                          />
+
+                          <IconButton
+                            icon={ChevronLeft}
+                            onClick={goToPreviousPage}
+                            disabled={currentPage === 1}
+                            variant="outline"
+                            size="sm"
+                            tooltip={t('common.previousPage')}
+                            style={{ width: '2rem', height: '2rem' }}
+                          />
+
+                          {/* Page Numbers */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            {(() => {
+                              const pages = [];
+                              const maxVisiblePages = 5;
+                              let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                              let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                              
+                              if (endPage - startPage + 1 < maxVisiblePages) {
+                                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                              }
+
+                              for (let i = startPage; i <= endPage; i++) {
+                                pages.push(
+                                  <Button
+                                    key={i}
+                                    onClick={() => goToPage(i)}
+                                    variant={i === currentPage ? 'primary' : 'outline'}
+                                    size="sm"
+                                    style={{ 
+                                      width: '2rem', 
+                                      height: '2rem',
+                                      minWidth: '2rem',
+                                      padding: '0'
+                                    }}
+                                  >
+                                    {i}
+                                  </Button>
+                                );
+                              }
+                              return pages;
+                            })()}
+                          </div>
+
+                          <IconButton
+                            icon={ChevronRight}
+                            onClick={goToNextPage}
+                            disabled={currentPage === totalPages}
+                            variant="outline"
+                            size="sm"
+                            tooltip={t('common.nextPage')}
+                            style={{ width: '2rem', height: '2rem' }}
+                          />
+
+                          <IconButton
+                            icon={ChevronsRight}
+                            onClick={goToLastPage}
+                            disabled={currentPage === totalPages}
+                            variant="outline"
+                            size="sm"
+                            tooltip={t('common.lastPage')}
+                            style={{ width: '2rem', height: '2rem' }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Trash2, Copy, Download, Play, Edit, Settings } from 'lucide-react';
+import { Trash2, Copy, Download, Play, Edit, Settings, Pause } from 'lucide-react';
 
 import {  BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/utils/utils';
@@ -382,6 +382,236 @@ const SuccessRateCell: React.FC<SuccessRateCellProps> = ({ rate }) => {
   );
 };
 
+// Schedule Cell Component
+interface ScheduleCellProps {
+  schedule: string;
+  description?: string;
+}
+
+const ScheduleCell: React.FC<ScheduleCellProps> = ({ schedule, description }) => {
+  const { t } = useI18n();
+  
+  const getScheduleDescription = (cronExpression: string) => {
+    // Basit cron ifadesi çevirisi
+    const parts = cronExpression.split(' ');
+    if (parts.length === 5) {
+      const [minute, hour, day, month, dayOfWeek] = parts;
+      
+      if (minute === '0' && day === '*' && month === '*' && dayOfWeek === '*') {
+        return `Her saat ${hour}:00'da`;
+      }
+      if (minute !== '0' && day === '*' && month === '*' && dayOfWeek === '*') {
+        return `Her saat ${hour}:${minute.padStart(2, '0')}'da`;
+      }
+      if (minute === '0' && hour !== '0' && day === '*' && month === '*' && dayOfWeek === '*') {
+        return `Her gün ${hour}:00'da`;
+      }
+      if (minute !== '0' && hour !== '0' && day === '*' && month === '*' && dayOfWeek === '*') {
+        return `Her gün ${hour}:${minute.padStart(2, '0')}'da`;
+      }
+    }
+    return cronExpression;
+  };
+
+  return (
+    <div>
+      {description && (
+        <div style={{ 
+          fontSize: '0.875rem',
+          color: 'var(--text-primary)',
+          fontWeight: 500
+        }}>
+          {description}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Next Run Cell Component
+interface NextRunCellProps {
+  nextRun?: string | Date;
+}
+
+const NextRunCell: React.FC<NextRunCellProps> = ({ nextRun }) => {
+  if (!nextRun) {
+    return (
+      <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
+    );
+  }
+
+  const date = typeof nextRun === 'string' ? new Date(nextRun) : nextRun;
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  let displayText = '';
+  if (diffMs < 0) {
+    displayText = 'Geçmiş';
+  } else if (diffHours < 1) {
+    displayText = `${diffMinutes} dakika sonra`;
+  } else if (diffHours < 24) {
+    displayText = `${diffHours} saat sonra`;
+  } else {
+    displayText = date.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  return (
+    <div>
+      <div style={{ 
+        fontSize: '0.875rem',
+        color: 'var(--text-primary)',
+        fontWeight: 500
+      }}>
+        {displayText}
+      </div>
+      <div style={{ 
+        fontSize: '0.75rem',
+        color: 'var(--text-secondary)',
+        marginTop: '0.25rem'
+      }}>
+        {date.toLocaleString('tr-TR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Scheduled Actions Cell Component
+interface ScheduledActionsCellProps {
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  status: 'active' | 'inactive';
+  disabled?: boolean;
+}
+
+const ScheduledActionsCell: React.FC<ScheduledActionsCellProps> = ({
+  onToggle,
+  onEdit,
+  onDelete,
+  status,
+  disabled = false
+}) => {
+  const { t } = useI18n();
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '0.5rem',
+    }}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        disabled={disabled}
+        title={status === 'active' ? t('scheduled.pause') : t('scheduled.resume')}
+        style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: 'none',
+          borderRadius: '0.375rem',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          color: status === 'active' ? 'var(--status-warning)' : 'var(--status-success)',
+          opacity: disabled ? 0.5 : 1,
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onMouseEnter={(e) => {
+          if (!disabled) {
+            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
+      >
+        {status === 'active' ? <Pause size={14} /> : <Play size={14} />}
+      </button>
+      
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit();
+        }}
+        disabled={disabled}
+        title={t('common.edit')}
+        style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: 'none',
+          borderRadius: '0.375rem',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          color: 'var(--text-secondary)',
+          opacity: disabled ? 0.5 : 1,
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onMouseEnter={(e) => {
+          if (!disabled) {
+            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
+      >
+        <Edit size={14} />
+      </button>
+      
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        disabled={disabled}
+        title={t('common.delete')}
+        style={{
+          padding: '0.375rem',
+          backgroundColor: 'transparent',
+          border: 'none',
+          borderRadius: '0.375rem',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          color: 'var(--status-error)',
+          opacity: disabled ? 0.5 : 1,
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        onMouseEnter={(e) => {
+          if (!disabled) {
+            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+};
+
 // Default exports
 export default {
   BrowserCell,
@@ -392,5 +622,8 @@ export default {
   TestNameCell,
   ActionsCell,
   StepCountCell,
-  SuccessRateCell
+  SuccessRateCell,
+  ScheduleCell,
+  NextRunCell,
+  ScheduledActionsCell
 };
