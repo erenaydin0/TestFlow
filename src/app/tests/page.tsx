@@ -27,7 +27,7 @@ import ImportDialog from '@/components/features/test-builder/ImportDialog';
 import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
-import { Test, TestFormData, TestFilters } from '@/types';
+import { Test } from '@/types';
 import { exportTestWorkflow } from '@/lib/utils';
 import { exportTestsToCSV } from '@/lib/exportUtils';
 import { useTestNotifications, useTests } from '@/hooks/test';

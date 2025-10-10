@@ -15,7 +15,7 @@ import {
 } from '@/components/features/test-builder';
 import { TestModal, StepModal, ConfirmDialog } from '@/components/modals';
 
-import { TestStep, BrowserType, TestFormData, TestFilters } from '@/types';
+import { TestStep, BrowserType } from '@/types';
 import { getActionByType } from '@/lib/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/lib/utils';
 import { 

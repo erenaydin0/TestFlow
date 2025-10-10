@@ -15,9 +15,7 @@ import {
   ChevronsRight,
   AlertCircle,
   FileText,
-  Tag,
-  Chrome,
-  Globe
+  Tag
 } from 'lucide-react';
 
 import PageLayout from '@/components/layout/PageLayout';
@@ -30,9 +28,9 @@ import { StepView } from '@/components/features/reports';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components/ui';
 
-import { ExecutionResult, ExecutionFilters, ExecutionStats, BrowserType } from '@/types';
-import { formatDuration, formatRelativeTime, formatTime, formatDateForTooltip } from '@/lib/utils';
-import { StatusBadge, getStatusColor, getStatusText } from '@/components/common';
+import { ExecutionResult, BrowserType } from '@/types';
+import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/lib/utils';
+import { StatusBadge } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
 import { API_URL } from '@/lib/config';
