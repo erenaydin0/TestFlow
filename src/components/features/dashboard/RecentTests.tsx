@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 
 import { StatusBadge } from '@/components/common';
-import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
 import { useI18n } from '@/contexts';
 import { TestStatus } from '@/types';
 

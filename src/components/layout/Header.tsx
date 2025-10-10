@@ -21,8 +21,8 @@ import {
 
 import { NotificationPanel } from '@/components/features/notifications';
 import { CustomSelect, StatusBadge, CosmicLogo } from '@/components/common';
-import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
-import { useRealtimeNotifications } from '@/hooks/data';
+import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
+import { useRealtimeNotifications } from '@/hooks';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
 import { Theme } from '@/types';
 

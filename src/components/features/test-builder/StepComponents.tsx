@@ -3,7 +3,7 @@
 import React from 'react';
 import { CheckCircle, XCircle, GitBranch, Trash2 } from 'lucide-react';
 import { TestStep, TestStepCardProps } from '@/types';
-import { getTranslatedActionByType, ActionType } from '@/lib/actions';
+import { getTranslatedActionByType, ActionType } from '@/utils/actions';
 import { useI18n } from '@/contexts';
 
 // ============================================================================

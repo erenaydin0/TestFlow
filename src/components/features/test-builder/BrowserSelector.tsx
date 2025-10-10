@@ -2,7 +2,7 @@
 
 import { BrowserType } from '@/types';
 import { CustomSelect } from '@/components/common';
-import { BASIC_BROWSER_OPTIONS } from '@/lib/browserUtils';
+import { BASIC_BROWSER_OPTIONS } from '@/utils/browserUtils';
 
 interface BrowserSelectorProps {
   selectedBrowser: BrowserType;

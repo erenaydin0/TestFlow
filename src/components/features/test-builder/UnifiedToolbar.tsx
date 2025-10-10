@@ -22,7 +22,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { TestStep, BrowserType, FloatingToolbarProps } from '@/types';
-import { getTranslatedActions, ActionType } from '@/lib/actions';
+import { getTranslatedActions, ActionType } from '@/utils/actions';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components';
 import { useI18n } from '@/contexts';

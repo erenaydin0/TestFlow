@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, ButtonGroup } from '@/components';
-import { useModal } from '@/hooks/ui';
+import { useModal } from '@/hooks';
 import { useI18n } from '@/contexts';
 
 interface ConfirmDialogProps {

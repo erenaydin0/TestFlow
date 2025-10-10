@@ -5,8 +5,8 @@ import { Check, X } from 'lucide-react';
 import { BrowserType } from '@/types';
 import MultiSelect from './MultiSelect';
 import { BrowserSelector } from '@/components/features/test-builder';
-import { useDropdown } from '@/hooks/ui';
-import { getDropdownContainerStyle } from '@/lib/dropdownStyles';
+import { useDropdown } from '@/hooks';
+import { getDropdownContainerStyle } from '@/utils/dropdownStyles';
 import { useI18n } from '@/contexts';
 
 interface EditableSuiteCellProps {

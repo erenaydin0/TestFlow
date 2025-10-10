@@ -5,8 +5,8 @@ import { X, Clock, Calendar } from 'lucide-react';
 import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
 import { Button,CustomSelect } from '@/components';
 import { useI18n, useSidebar } from '@/contexts';
-import { useModal } from '@/hooks/ui';
-import { API_URL } from '@/lib/config';
+import { useModal } from '@/hooks';
+import { API_URL } from '@/utils/config';
 
 interface ScheduleModalProps {
   isOpen: boolean;

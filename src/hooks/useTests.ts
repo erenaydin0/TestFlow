@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Test, TestFilters } from '@/types';
-import { filterTests, getUniqueFilterOptions } from '@/lib/exportUtils';
-import { API_URL } from '@/lib/config';
+import { filterTests, getUniqueFilterOptions } from '@/utils/exportUtils';
+import { API_URL } from '@/utils/config';
 
 interface UseTestsOptions {
   autoLoad?: boolean;

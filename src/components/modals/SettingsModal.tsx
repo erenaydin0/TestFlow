@@ -5,9 +5,9 @@ import { X, Settings, Palette, Code, Globe } from 'lucide-react';
 import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/contexts';
 import { Theme } from '@/types';
 import { IconButton } from '@/components';
-import { useModal } from '@/hooks/ui';
+import { useModal } from '@/hooks';
 import { CustomSelect } from '@/components/common';
-import { SETTINGS_BROWSER_OPTIONS } from '@/lib/browserUtils';
+import { SETTINGS_BROWSER_OPTIONS } from '@/utils/browserUtils';
 
 export default function SettingsModal() {
   const { isSettingsOpen, closeSettingsModal } = useSettingsModal();

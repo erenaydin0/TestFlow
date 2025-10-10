@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {  X } from 'lucide-react';
 import { IconButton } from '@/components';
 import { TestStep } from '@/types';
-import { getTranslatedActionByType, ActionField } from '@/lib/actions';
+import { getTranslatedActionByType, ActionField } from '@/utils/actions';
 import { CustomSelect } from '@/components/common';
 import { useI18n } from '@/contexts';
 

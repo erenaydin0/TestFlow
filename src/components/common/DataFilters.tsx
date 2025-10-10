@@ -8,7 +8,7 @@ import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components';
 import { BrowserType } from '@/types';
 import { useI18n } from '@/contexts';
-import { BASIC_BROWSER_OPTIONS } from '@/lib/browserUtils';
+import { BASIC_BROWSER_OPTIONS } from '@/utils/browserUtils';
 
 interface FilterState {
   search: string;

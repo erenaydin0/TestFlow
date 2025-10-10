@@ -29,11 +29,11 @@ import ConfirmDialog from '@/components/modals/ConfirmDialog';
 import { Button, IconButton, ButtonGroup } from '@/components';
 
 import { ExecutionResult, BrowserType } from '@/types';
-import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/lib/utils';
+import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
 import { StatusBadge } from '@/components/common';
 import { useTestNotifications, useReports } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
-import { API_URL } from '@/lib/config';
+import { API_URL } from '@/utils/config';
 
 const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 

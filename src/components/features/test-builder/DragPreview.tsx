@@ -3,7 +3,7 @@
 import React from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { TestStep } from '@/types';
-import { getTranslatedActionByType, ActionType } from '@/lib/actions';
+import { getTranslatedActionByType, ActionType } from '@/utils/actions';
 import { useI18n } from '@/contexts';
 
 interface DragPreviewProps {

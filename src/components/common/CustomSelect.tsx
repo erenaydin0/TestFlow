@@ -1,8 +1,8 @@
 'use client';
 
 import { ChevronDown, Check } from 'lucide-react';
-import { useDropdown } from '@/hooks/ui';
-import { getDropdownContainerStyle, getDropdownOptionHandlers, getButtonHoverHandlers } from '@/lib/dropdownStyles';
+import { useDropdown } from '@/hooks';
+import { getDropdownContainerStyle, getDropdownOptionHandlers, getButtonHoverHandlers } from '@/utils/dropdownStyles';
 
 interface CustomSelectProps {
   value: string;

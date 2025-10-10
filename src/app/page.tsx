@@ -10,9 +10,8 @@ import {
   RecentTests,
   UpcomingTests
 } from '@/components/features/dashboard';
-import { useExecutions } from '@/hooks/data';
-import { useScheduledTests } from '@/hooks/data';
-import { getConsistentColorFromString } from '@/lib/colorUtils';
+import { useExecutions, useScheduledTests } from '@/hooks';
+import { getConsistentColorFromString } from '@/utils/colorUtils';
 import { useI18n } from '@/contexts';
 
 export default function Dashboard() {

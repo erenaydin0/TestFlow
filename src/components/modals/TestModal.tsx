@@ -6,8 +6,8 @@ import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react
 import AutocompleteInput from '@/components/common/AutocompleteInput';
 import { Button, ButtonGroup } from '@/components/common';
 import { BrowserType, TestModalProps } from '@/types';
-import { getExistingTags, getExistingSuites } from '@/lib/utils';
-import { useModal } from '@/hooks/ui';
+import { getExistingTags, getExistingSuites } from '@/utils/utils';
+import { useModal } from '@/hooks';
 import { useI18n } from '@/contexts';
 
 

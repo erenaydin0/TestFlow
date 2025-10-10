@@ -4,10 +4,10 @@ import React from 'react';
 import { Trash2, Copy, Download, Play, Edit, Settings } from 'lucide-react';
 
 import {  BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
-import { formatDuration, formatRelativeTime } from '@/lib/utils';
+import { formatDuration, formatRelativeTime } from '@/utils/utils';
 import { StatusBadge } from './';
 import { useI18n } from '@/contexts';
-import { getBrowserName } from '@/lib/browserUtils';
+import { getBrowserName } from '@/utils/browserUtils';
 
 // Browser Cell Component
 

@@ -7,7 +7,7 @@ import {
   TrendingDown,
   Clock
 } from 'lucide-react';
-import { formatDuration } from '@/lib/utils';
+import { formatDuration } from '@/utils/utils';
 import { useI18n } from '@/contexts';
 
 interface StatsCardsProps {

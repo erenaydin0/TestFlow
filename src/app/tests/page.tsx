@@ -28,11 +28,11 @@ import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup, } from '@/components';
 
 import { Test } from '@/types';
-import { exportTestWorkflow } from '@/lib/utils';
-import { exportTestsToCSV } from '@/lib/exportUtils';
-import { useTestNotifications, useTests } from '@/hooks/test';
+import { exportTestWorkflow } from '@/utils/utils';
+import { exportTestsToCSV } from '@/utils/exportUtils';
+import { useTestNotifications, useTests } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
-import { API_URL } from '@/lib/config';
+import { API_URL } from '@/utils/config';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 

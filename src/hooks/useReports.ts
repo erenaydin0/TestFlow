@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats, UseReportsOptions } from '@/types';
-import { filterExecutions, getUniqueFilterOptions } from '@/lib/exportUtils';
-import { API_URL } from '@/lib/config';
+import { filterExecutions, getUniqueFilterOptions } from '@/utils/exportUtils';
+import { API_URL } from '@/utils/config';
 import useExecutions from './useExecutions';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';

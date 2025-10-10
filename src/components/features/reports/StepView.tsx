@@ -2,7 +2,7 @@ import React from 'react';
 import { ExecutionStepResult } from '@/types/execution';
 import { CheckCircle, XCircle, AlertCircle, ArrowRight, EyeOff } from 'lucide-react';
 import { useI18n } from '@/contexts';
-import { API_URL } from '@/lib/config';
+import { API_URL } from '@/utils/config';
 import { getStepStatus, getStatusIcon, getStatusColor, getStepDescription, getIfStepDetails, getExecutionReason, getSkippedReason, getConfigFieldLabel, shouldShowConfigField } from './stepUtils';
 
 interface StepViewProps {

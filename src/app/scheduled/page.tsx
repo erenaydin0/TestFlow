@@ -15,8 +15,8 @@ import { PageLayout } from '@/components/layout';
 import { StatusBadge, CustomSelect, LoadingErrorState } from '@/components/common';
 import { ScheduleModal, ConfirmDialog } from '@/components/modals';
 import { UpcomingTests } from '@/components/features/dashboard';
-import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/lib/utils';
-import { useScheduledTests } from '@/hooks/data';
+import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/utils/utils';
+import { useScheduledTests } from '@/hooks';
 import { ScheduledTest } from '@/types/test';
 import { useI18n } from '@/contexts';
 

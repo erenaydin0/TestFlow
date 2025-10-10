@@ -16,8 +16,8 @@ import {
 import { TestModal, StepModal, ConfirmDialog } from '@/components/modals';
 
 import { TestStep, BrowserType } from '@/types';
-import { getActionByType } from '@/lib/actions';
-import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/lib/utils';
+import { getActionByType } from '@/utils/actions';
+import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/utils/utils';
 import { 
   useTestSteps,
   useCanvasCore,
@@ -28,7 +28,7 @@ import {
   useTestNotifications
 } from '@/hooks';
 import { useSidebar, useBrowserSettings, useI18n } from '@/contexts';
-import { API_URL } from '@/lib/config';
+import { API_URL } from '@/utils/config';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();
