@@ -22,7 +22,7 @@ import {
 import { NotificationPanel } from '@/components/notifications';
 import { CustomSelect, StatusBadge, CosmicLogo, IconButton, Button } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
-import { useRealtimeNotifications } from '@/hooks';
+import { useNotifications } from '@/hooks';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
 import { Theme } from '@/types';
 
@@ -47,7 +47,7 @@ export default function Header() {
   const searchPanelRef = useRef<HTMLDivElement>(null);
   
   // Real-time notifications hook (destructuring removed as variables are unused)
-  useRealtimeNotifications();
+  useNotifications();
 
   // Initialize search query from URL params
   useEffect(() => {

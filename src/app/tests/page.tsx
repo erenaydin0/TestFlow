@@ -30,7 +30,7 @@ import { Button, IconButton, ButtonGroup, } from '@/components';
 import { Test } from '@/types';
 import { exportTestWorkflow } from '@/utils/utils';
 import { exportTestsToCSV } from '@/utils/exportUtils';
-import { useTestNotifications, useTests } from '@/hooks';
+import { useNotifications, useTests } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
 import { API_URL } from '@/utils/config';
 
@@ -75,7 +75,7 @@ export default function TestsPage() {
   const [sortField, setSortField] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useTestNotifications();
+  const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useNotifications();
 
   // Handle inline updates
   const handleUpdateSuite = (testId: string, suite: string) => {
@@ -343,7 +343,7 @@ export default function TestsPage() {
         }
       }));
       
-      const response = await fetch(`${API_URL}/api/execute`, {
+      const response = await fetch(`${API_URL}/api/executions/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -491,7 +491,7 @@ export default function TestsPage() {
           }
         }));
         
-        const response = await fetch(`${API_URL}/api/execute`, {
+        const response = await fetch(`${API_URL}/api/executions/execute`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
-import { useNotifications } from '@/contexts';
+import { useNotifications } from '@/hooks';
 import { Notification } from '@/types/notifications';
 
 interface ToastProps {

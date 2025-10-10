@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow, saveWorkflowToStorage } from '@/utils/utils';
 import { Button, ButtonGroup, IconButton } from '@/components';
-import { useTestNotifications } from '@/hooks';
+import { useNotifications } from '@/hooks';
 import { BrowserType, TestFormData } from '@/types';
 import { API_URL } from '@/utils/config';
 
@@ -36,7 +36,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [previews, setPreviews] = useState<ImportPreview[]>([]);
-  const { notifyTestFailure } = useTestNotifications();
+  const { notifyTestFailure } = useNotifications();
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState<{
     success: number;

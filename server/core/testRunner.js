@@ -4,12 +4,12 @@ const path = require('path');
 const fs = require('fs-extra');
 
 class TestRunner {
-  constructor() {
+  constructor(screenshotsDir = null) {
     this.browser = null;
     this.context = null;
     this.page = null;
     this.currentBrowserType = null; // Track current browser type
-    this.screenshotsDir = path.join(__dirname, 'screenshots');
+    this.screenshotsDir = screenshotsDir || path.join(__dirname, '../storage/screenshots');
     
     // Ensure screenshots directory exists
     fs.ensureDirSync(this.screenshotsDir);
@@ -323,16 +323,6 @@ class TestRunner {
       
     } catch (error) {
       console.error('Click action failed:', error.message);
-      
-      // Take a screenshot for debugging
-      try {
-        const debugScreenshotPath = path.join(this.screenshotsDir, `error-${Date.now()}.png`);
-        await this.page.screenshot({ path: debugScreenshotPath });
-        console.log('Debug screenshot taken:', debugScreenshotPath);
-      } catch (screenshotError) {
-        console.error('Failed to take debug screenshot:', screenshotError);
-      }
-      
       throw error;
     }
   }
@@ -371,16 +361,6 @@ class TestRunner {
       
     } catch (error) {
       console.error('Type action failed:', error.message);
-      
-      // Take a screenshot for debugging
-      try {
-        const debugScreenshotPath = path.join(this.screenshotsDir, `debug-type-error-${Date.now()}.png`);
-        await this.page.screenshot({ path: debugScreenshotPath });
-        console.log('Debug screenshot taken:', debugScreenshotPath);
-      } catch (screenshotError) {
-        console.error('Failed to take debug screenshot:', screenshotError);
-      }
-      
       throw error;
     }
   }
@@ -578,16 +558,6 @@ class TestRunner {
       
     } catch (error) {
       console.error('Dropdown action failed:', error.message);
-      
-      // Take a screenshot for debugging
-      try {
-        const debugScreenshotPath = path.join(this.screenshotsDir, `debug-dropdown-error-${Date.now()}.png`);
-        await this.page.screenshot({ path: debugScreenshotPath });
-        console.log('Debug screenshot taken:', debugScreenshotPath);
-      } catch (screenshotError) {
-        console.error('Failed to take debug screenshot:', screenshotError);
-      }
-      
       throw error;
     }
   }

@@ -169,7 +169,7 @@ async function executeTestWorkflow(executionId, execution) {
     const script = scriptGenerator.generateScript(execution.steps);
     
     // Execute with Playwright
-    const testRunner = new TestRunner();
+    const testRunner = new TestRunner(storageDirs.SCREENSHOTS_DIR);
     
     // Initialize browser with options
     await testRunner.initializeBrowser({ 

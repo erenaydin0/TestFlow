@@ -20,12 +20,10 @@ import { getActionByType } from '@/utils/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/utils/utils';
 import { 
   useTestSteps,
-  useCanvasCore,
-  useCanvasSelection,
-  useCanvasLayout,
+  useCanvas,
   useMouseEvents,
   useUnsavedChanges,
-  useTestNotifications
+  useNotifications
 } from '@/hooks';
 import { useSidebar, useBrowserSettings, useI18n } from '@/contexts';
 import { API_URL } from '@/utils/config';
@@ -47,9 +45,10 @@ export default function TestBuilder() {
     generateId
   } = useTestSteps();
   
-  const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded } = useTestNotifications();
+  const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded } = useNotifications();
 
   const {
+    // Canvas Core
     canvasRef,
     canvasOffset,
     setCanvasOffset,
@@ -60,6 +59,12 @@ export default function TestBuilder() {
     setIsPanning,
     panStart,
     setPanStart,
+    canvasStyles,
+    zoomIn,
+    zoomOut,
+    resetView,
+    
+    // Drag State
     draggedAction,
     setDraggedAction,
     draggedStep,
@@ -68,55 +73,51 @@ export default function TestBuilder() {
     setIsDragOver,
     dragPreview,
     setDragPreview,
-    isSelecting: canvasIsSelecting,
-    selectionBox: canvasSelectionBox,
-    setSelectionBox: setCanvasSelectionBox,
-    canvasStyles,
-    zoomIn,
-    zoomOut,
-    resetView,
-    handleActionDragStart,
-    handleStepDragStart,
-    handleDragEnd,
-    handleCanvasDragOver,
-    handleCanvasDragEnter,
-    handleCanvasDragLeave
-  } = useCanvasCore();
-
-  const {
+    
+    // Selection State
     selectedSteps,
     setSelectedSteps,
     selectedStep,
     setSelectedStep,
-    isSelecting: selectionIsSelecting,
-    selectionBox: selectionSelectionBox,
+    isSelecting,
+    selectionBox,
+    setSelectionBox,
     selectionStart,
     setSelectionStart,
     copiedSteps,
     setCopiedSteps,
-    selectAllSteps,
-    clearSelection,
-    toggleStepSelection,
-    copySteps,
-    pasteSteps,
-    duplicateSteps,
-    handleCanvasMouseDown: selectionHandleCanvasMouseDown,
-    handleCanvasMouseMove: selectionHandleCanvasMouseMove,
-    handleCanvasMouseUp: selectionHandleCanvasMouseUp,
-    getStepsInSelectionBox,
-    handleStepClick: selectionHandleStepClick
-  } = useCanvasSelection();
-
-  const {
+    
+    // Connection State
     isConnecting,
     setIsConnecting,
     connectionStart,
     setConnectionStart,
     connectionType,
     setConnectionType,
+    
+    // Snap State
     snapEnabled,
     snapLines,
     setSnapLines,
+    
+    // Operations
+    handleActionDragStart,
+    handleStepDragStart,
+    handleDragEnd,
+    handleCanvasDragOver,
+    handleCanvasDragEnter,
+    handleCanvasDragLeave,
+    selectAllSteps,
+    clearSelection,
+    toggleStepSelection,
+    copySteps,
+    pasteSteps,
+    duplicateSteps,
+    handleCanvasMouseDown,
+    handleCanvasMouseMove,
+    handleCanvasMouseUp,
+    getStepsInSelectionBox,
+    handleStepClick,
     startConnection,
     endConnection,
     removeConnection,
@@ -125,7 +126,7 @@ export default function TestBuilder() {
     toggleSnap,
     getStepCenter,
     getConnectionStyle
-  } = useCanvasLayout();
+  } = useCanvas();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -225,7 +226,7 @@ export default function TestBuilder() {
       setPanStart({ x: clientX, y: clientY });
     } else {
       // Delegate to selection handler for selection box
-      selectionHandleCanvasMouseMove(
+      handleCanvasMouseMove(
         e,
         canvasRef,
         zoom,
@@ -238,11 +239,11 @@ export default function TestBuilder() {
         setSelectedSteps
       );
     }
-  }, [isPanning, panStart, canvasOffset, zoom, testSteps, selectionHandleCanvasMouseMove]);
+  }, [isPanning, panStart, canvasOffset, zoom, testSteps, handleCanvasMouseMove]);
 
   // Mouse events
   useMouseEvents({
-    selectionIsSelecting,
+    selectionIsSelecting: isSelecting,
     isPanning,
     canvasRef,
     zoom,
@@ -250,7 +251,7 @@ export default function TestBuilder() {
     panStart,
     testSteps,
     selectionHandleCanvasMouseMove: handleMouseMove,
-    selectionHandleCanvasMouseUp,
+    selectionHandleCanvasMouseUp: handleCanvasMouseUp,
     setPan,
     setCanvasOffset,
     setSelectedSteps,
@@ -335,8 +336,8 @@ export default function TestBuilder() {
 
 
   // Canvas mouse event handlers using selection hook
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    selectionHandleCanvasMouseDown(
+  const handleCanvasMouseDownWrapper = (e: React.MouseEvent) => {
+    handleCanvasMouseDown(
       e,
       canvasRef,
       zoom,
@@ -351,8 +352,8 @@ export default function TestBuilder() {
     );
   };
 
-  const handleStepClick = (step: TestStep, ctrlKey: boolean = false) => {
-    selectionHandleStepClick(step, ctrlKey, selectedSteps, setSelectedSteps, setSelectedStep);
+  const handleStepClickWrapper = (step: TestStep, ctrlKey: boolean = false) => {
+    handleStepClick(step, ctrlKey, selectedSteps, setSelectedSteps, setSelectedStep);
     
     // Open modal only for single selection
     if (!ctrlKey) {
@@ -590,7 +591,7 @@ export default function TestBuilder() {
           falseConnection: step.falseConnection // For IF FALSE branch
         }
       }));
-      const response = await fetch(`${API_URL}/api/execute`, {
+      const response = await fetch(`${API_URL}/api/executions/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -789,7 +790,7 @@ export default function TestBuilder() {
             onDragEnter={(e) => handleCanvasDragEnter(e, snapToPosition, testSteps, setSnapLines)}
             onDragLeave={(e) => handleCanvasDragLeave(e, clearSnapLines)}
             onDragEnd={handleDragEnd}
-            onMouseDown={handleCanvasMouseDown}
+            onMouseDown={handleCanvasMouseDownWrapper}
             style={canvasStyles.canvasContainer}
           >
             <div style={canvasStyles.innerContainer}>
@@ -811,7 +812,7 @@ export default function TestBuilder() {
                 />
                 
                 {/* Selection box */}
-                <SelectionBox selectionBox={selectionSelectionBox} />
+                <SelectionBox selectionBox={selectionBox} />
               </svg>
               {/* Render drag preview */}
               {dragPreview && (
@@ -841,7 +842,7 @@ export default function TestBuilder() {
                     connectionType={connectionType}
                     onStepDragStart={handleStepDragStart}
                     onDragEnd={handleDragEnd}
-                    onStepClick={handleStepClick}
+                    onStepClick={handleStepClickWrapper}
                     onDeleteStep={deleteStep}
                     onStartConnection={startConnection}
                     onEndConnection={endConnection}

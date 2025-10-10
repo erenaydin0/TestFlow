@@ -31,7 +31,7 @@ import { Button, IconButton, ButtonGroup } from '@/components';
 import { ExecutionResult, BrowserType } from '@/types';
 import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
 import { StatusBadge } from '@/components/common';
-import { useTestNotifications, useReports } from '@/hooks';
+import { useNotifications, useReports } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
 import { API_URL } from '@/utils/config';
 
@@ -70,7 +70,7 @@ export default function ReportsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const { notifyTestDeleted, notifyTestFailure } = useTestNotifications();
+  const { notifyTestDeleted, notifyTestFailure } = useNotifications();
   
   const [highlightedExecutionId, setHighlightedExecutionId] = useState<string | null>(null);
   

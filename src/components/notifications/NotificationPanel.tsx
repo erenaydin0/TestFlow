@@ -17,7 +17,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale/tr';
 import { enUS } from 'date-fns/locale/en-US';
 
-import { useNotifications, useTheme, useI18n } from '@/contexts';
+import { useTheme, useI18n } from '@/contexts';
+import { useNotifications } from '@/hooks';
 
 const iconMap = {
   success: CheckCircle,
