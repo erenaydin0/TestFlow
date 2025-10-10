@@ -467,6 +467,129 @@ body {
   scrollbar-color: var(--border-secondary) var(--bg-primary);
 }
 
+/* Cosmic Button Styles */
+@keyframes cosmicRipple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes cosmicGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px rgba(208, 126, 71, 0.3),
+      0 0 10px rgba(166, 103, 148, 0.2),
+      0 0 15px rgba(232, 149, 88, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px rgba(208, 126, 71, 0.5),
+      0 0 20px rgba(166, 103, 148, 0.3),
+      0 0 30px rgba(232, 149, 88, 0.2);
+  }
+}
+
+@keyframes cosmicPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.cosmic-button {
+  background: linear-gradient(135deg, #D07E47 0%, #a66794 50%, #e89558 100%) !important;
+  background-size: 200% 200% !important;
+  color: white !important;
+  font-weight: 600 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border: none !important;
+  animation: cosmicGlow 3s ease-in-out infinite !important;
+}
+
+.cosmic-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.cosmic-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.8s ease;
+}
+
+.cosmic-button:hover {
+  background-position: 100% 100% !important;
+  animation: cosmicPulse 0.6s ease-in-out, cosmicGlow 1.5s ease-in-out infinite !important;
+  transform: translateY(-2px) !important;
+}
+
+.cosmic-button:hover::before {
+  width: 300px;
+  height: 300px;
+  animation: cosmicRipple 0.6s ease-out;
+}
+
+.cosmic-button:hover::after {
+  left: 100%;
+}
+
+.cosmic-button:active {
+  transform: translateY(0) !important;
+  animation: none !important;
+}
+
+/* Dark mode cosmic styles */
+.dark .cosmic-button {
+  background: linear-gradient(135deg, #e89558 0%, #b87aa6 50%, #f5a76a 100%) !important;
+  background-size: 200% 200% !important;
+  box-shadow: 
+    0 4px 15px rgba(232, 149, 88, 0.3),
+    0 0 20px rgba(184, 122, 166, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .cosmic-button:hover {
+  box-shadow: 
+    0 8px 25px rgba(232, 149, 88, 0.5),
+    0 0 40px rgba(184, 122, 166, 0.3),
+    0 0 60px rgba(245, 167, 106, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .cosmic-button::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(232, 149, 88, 0.2) 50%, transparent 70%);
+}
+
 /* Placeholder Colors */
 input::placeholder,
 textarea::placeholder {

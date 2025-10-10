@@ -56,7 +56,7 @@ export default function ScheduledPage() {
       }
       headerActions={
         <Button 
-          variant="primary"
+          variant="cosmic"
           icon={Plus}
           onClick={() => {
             setEditingSchedule(undefined);
@@ -136,7 +136,7 @@ export default function ScheduledPage() {
                     <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
                     <p>{t('scheduled.noSchedulesFound')}</p>
                     <Button 
-                      variant="primary"
+                      variant="cosmic"
                       onClick={() => setIsModalOpen(true)}
                       size="sm"
                       style={{ marginTop: '1rem' }}

@@ -758,7 +758,7 @@ export default function TestsPage() {
                     {t('common.import')}
                   </Button>
                   <Button 
-                    variant="primary"
+                    variant="cosmic"
                     icon={Plus}
                     onClick={handleCreateNewTest}
                     size="sm"
@@ -810,7 +810,7 @@ export default function TestsPage() {
               </p>
               <Button 
                 onClick={handleCreateNewTest}
-                variant="primary"
+                variant="cosmic"
                 icon={Plus}
                 size="sm"
                 style={{ margin: '0 auto' }}
