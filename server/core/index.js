@@ -269,20 +269,20 @@ async function executeTestWorkflow(executionId, execution) {
         // Determine next step
         const nextStepId = getNextStepId(step, result.conditionResult);
         
-        if (nextStepId) {
-          console.log(`Following connection to step ${nextStepId}`);
+          if (nextStepId) {
+            console.log(`Following connection to step ${nextStepId}`);
         } else {
           console.log(`No more steps to execute, ending workflow`);
         }
         
         // If step failed and it's critical, stop execution
         if (!result.success && step.config.critical !== false) {
-          execution.status = 'failed';
-          execution.error = errorHandler.createSafeErrorMessage(
-            new Error(result.error), 
-            { stepIndex: i, stepId: step.stepId }
-          );
-          break;
+        execution.status = 'failed';
+        execution.error = errorHandler.createSafeErrorMessage(
+          new Error(result.error), 
+          { stepIndex: i, stepId: step.stepId }
+        );
+        break;
         }
         
         // Set next step or end execution
@@ -447,4 +447,4 @@ process.on('SIGINT', () => {
     console.log('Server closed');
     process.exit(0);
   });
-});
+}); 
