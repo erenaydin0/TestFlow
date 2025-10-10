@@ -14,26 +14,19 @@ import {
   LogOut, 
   UserCircle, 
   TestTube, 
-  ChevronDown, 
   FileText, 
   BarChart3, 
-  Tag, 
   X 
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/features/notifications';
-import { CustomSelect, StatusBadge, getStatusText, CosmicLogo } from '@/components/common';
+import { CustomSelect, StatusBadge, CosmicLogo } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/lib/globalSearch';
 import { useRealtimeNotifications } from '@/hooks/data';
 import { useTheme, useSettingsModal, useI18n } from '@/contexts';
 import { Theme } from '@/types';
 
-interface HeaderProps {
-  title?: string;
-  subtitle?: string;
-}
-
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header() {
   const [isUserPanelOpen, setIsUserPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{
@@ -53,8 +46,8 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const userPanelRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useRef<HTMLDivElement>(null);
   
-  // Real-time notifications hook
-  const { isConnected, isConnecting, reconnect } = useRealtimeNotifications();
+  // Real-time notifications hook (destructuring removed as variables are unused)
+  useRealtimeNotifications();
 
   // Initialize search query from URL params
   useEffect(() => {

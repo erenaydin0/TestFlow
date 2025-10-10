@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, X, Filter, Chrome, Globe } from 'lucide-react';
+import { Search, X, Filter } from 'lucide-react';
 
 import { MultiSelect, CustomSelect } from './';
 import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components/ui';
-import { BrowserType, TestFilters, ExecutionFilters } from '@/types';
+import { BrowserType } from '@/types';
 import { useI18n } from '@/contexts';
-import { EXTENDED_BROWSER_OPTIONS } from '@/lib/browserUtils';
+import { BASIC_BROWSER_OPTIONS } from '@/lib/browserUtils';
 
 interface FilterState {
   search: string;
@@ -37,7 +37,7 @@ interface DataFiltersProps {
   className?: string;
 }
 
-const browserOptions = EXTENDED_BROWSER_OPTIONS;
+const browserOptions = BASIC_BROWSER_OPTIONS;
 
 const DataFilters: React.FC<DataFiltersProps> = ({
   filters,
@@ -215,7 +215,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           placeholder={t('common.allBrowsers')}
           className="min-w-full"
           renderOption={(browser) => {
-            const option = browserOptions.find(opt => opt.value === browser);
+            const option = browserOptions.find((opt: any) => opt.value === browser);
             if (!option) return browser;
             const IconComponent = option.icon;
             return (
@@ -331,7 +331,7 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           placeholder={t('common.allBrowsers')}
           className="min-w-[150px]"
           renderOption={(browser) => {
-            const option = browserOptions.find(opt => opt.value === browser);
+            const option = browserOptions.find((opt: any) => opt.value === browser);
             if (!option) return browser;
             const IconComponent = option.icon;
             return (

@@ -1,5 +1,6 @@
 import { BrowserType, Test, ExecutionResult } from '@/types';
 import { getBrowserName } from './browserUtils';
+import { getStatusText } from '@/components/common';
 
 // Re-export for backward compatibility
 export { getBrowserName };
@@ -68,20 +69,6 @@ const getStepTypeText = (type: string): string => {
     'dropdown': 'Açılır Menü'
   };
   return typeMap[type.toLowerCase()] || type;
-};
-
-// Helper for status text
-const getStatusText = (status: string): string => {
-  const statusMap: { [key: string]: string } = {
-    'passed': 'Başarılı',
-    'failed': 'Başarısız',
-    'pending': 'Beklemede',
-    'running': 'Çalışıyor',
-    'completed': 'Tamamlandı',
-    'cancelled': 'İptal Edildi',
-    'queued': 'Sırada'
-  };
-  return statusMap[status.toLowerCase()] || status;
 };
 
 // Execution results export to CSV
