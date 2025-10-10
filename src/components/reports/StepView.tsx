@@ -173,16 +173,32 @@ const StepView: React.FC<StepViewProps> = ({
               }}>
                 {step.type}
               </span>
-              {isExecuted && step.duration && (
-                <span style={{ 
-                  fontSize: '0.7rem', 
-                  color: 'var(--text-secondary)',
-                  backgroundColor: 'var(--bg-primary)',
-                  padding: '0.125rem 0.375rem',
-                  borderRadius: '0.25rem'
-                }}>
-                  {Math.round(step.duration)}ms
-                </span>
+              {isExecuted && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                  {step.startTime && (
+                    <span>
+                      {t('reports.startTime')}: {new Date(step.startTime).toLocaleTimeString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </span>
+                  )}
+                  {step.endTime && (
+                    <span>
+                      {t('reports.endTime')}: {new Date(step.endTime).toLocaleTimeString(locale === 'tr' ? 'tr-TR' : 'en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </span>
+                  )}
+                  {step.duration && (
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      {t('common.duration')}: {Math.round(step.duration)}ms
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -279,38 +295,6 @@ const StepView: React.FC<StepViewProps> = ({
         {/* IF Step Special Details */}
         {isExecuted && renderIfStepDetails(step, isExecuted)}
 
-        {/* Step Timing */}
-        {isExecuted && (
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', fontSize: '0.7rem' }}>
-            {step.startTime && (
-              <span style={{ color: 'var(--text-tertiary)' }}>
-                {t('reports.startTime')}: {new Date(step.startTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
-                })}
-              </span>
-            )}
-            {step.endTime && (
-              <span style={{ color: 'var(--text-tertiary)' }}>
-                {t('reports.endTime')}: {new Date(step.endTime).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
-                })}
-              </span>
-            )}
-            {step.duration && (
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
-                {t('common.duration')}: {Math.round(step.duration)}ms
-              </span>
-            )}
-          </div>
-        )}
 
         {/* Skipped Reason */}
         {isSkipped && (
