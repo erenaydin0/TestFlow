@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Sun, Moon, Monitor, Settings, Palette, Code, Globe } from 'lucide-react';
+import { useEffect } from 'react';
+import { X, Settings, Palette, Code, Globe } from 'lucide-react';
 import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/contexts';
 import { Theme } from '@/types';
 import { IconButton } from '@/components/ui';

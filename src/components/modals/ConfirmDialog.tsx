@@ -144,7 +144,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         {/* Actions */}
         <ButtonGroup 
           spacing="sm" 
-          align="end"
           style={{ marginTop: '24px' }}
         >
           <Button

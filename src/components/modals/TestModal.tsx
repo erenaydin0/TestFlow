@@ -5,7 +5,7 @@ import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react
 
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import { Button, ButtonGroup } from '@/components/ui';
-import { BrowserType, TestFormData, TestModalProps } from '@/types';
+import { BrowserType, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/lib/utils';
 import { useModal } from '@/hooks/ui';
 import { useI18n } from '@/contexts';
@@ -476,7 +476,6 @@ const TestModal: React.FC<TestModalProps> = ({
 
           {/* Actions */}
           <ButtonGroup 
-            align="end"
             spacing="md"
             style={{
               marginTop: '1.25rem',

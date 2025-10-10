@@ -31,7 +31,6 @@ interface AppContextType {
   locale: string;
   setLocale: (locale: string) => void;
   t: (key: string, params?: Record<string, any>) => string;
-  translations: Record<string, any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -257,8 +256,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // I18n
       locale,
       setLocale,
-      t,
-      translations
+      t
     }}>
       {children}
     </AppContext.Provider>
@@ -292,6 +290,6 @@ export function useTheme() {
 }
 
 export function useI18n() {
-  const { locale, setLocale, t, translations } = useApp();
-  return { locale, setLocale, t, translations };
+  const { locale, setLocale, t } = useApp();
+  return { locale, setLocale, t };
 }

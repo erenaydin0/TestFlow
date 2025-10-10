@@ -1,6 +1,9 @@
 import { BaseEntity, BaseFormData } from './base';
 import { TestStatus, ScheduleStatus, ScheduleFrequency } from './ui';
 
+// Re-export types from ui for convenience
+export type { ScheduleFrequency, ScheduleStatus, TestStatus };
+
 export type BrowserType = 'chromium' | 'firefox' | 'webkit' | 'msedge';
 
 export interface Test extends BaseEntity {
