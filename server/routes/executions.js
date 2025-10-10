@@ -156,7 +156,7 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
   });
 
   // Cancel execution
-  router.delete('/:id', async (req, res) => {
+  router.delete('/cancel/:id', async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -188,7 +188,7 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
   });
 
   // Delete execution record
-  router.delete('/delete/:id', async (req, res) => {
+  router.delete('/:id', async (req, res) => {
     try {
       const { id } = req.params;
       
