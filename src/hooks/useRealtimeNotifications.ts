@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useWebSocket } from '@/hooks';
 import { useTestNotifications } from '@/hooks';
-import { API_URL } from '@/utils/config';
+import { API_URL, config } from '@/utils/config';
 
 function useRealtimeNotifications() {
   const { 
@@ -14,7 +14,7 @@ function useRealtimeNotifications() {
   } = useTestNotifications();
 
   // WebSocket bağlantısını sadece browser'da dene
-  const wsUrl = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001') : '';
+  const wsUrl = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_WS_URL || config.wsUrl) : '';
   const { isConnected, isConnecting, lastMessage, connect } = useWebSocket(wsUrl, {
     autoConnect: typeof window !== 'undefined',
     reconnectAttempts: 5,

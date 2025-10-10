@@ -343,7 +343,7 @@ export default function TestsPage() {
         }
       }));
       
-      const response = await fetch('http://localhost:3001/api/execute', {
+      const response = await fetch(`${API_URL}/api/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
