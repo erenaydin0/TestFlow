@@ -10,16 +10,14 @@
  * @returns {string} Generated execution ID
  */
 function generateReadableExecutionId(workflowName, workflowId, baseTimestamp) {
-  // Local timezone'da timestamp oluştur (UTC+3)
-  const localTimestamp = baseTimestamp.toLocaleString('tr-TR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).replace(/[.\s]/g, '').replace(/(\d{2})(\d{2})(\d{4})(\d{2})(\d{2})(\d{2})/, '$3$2$1$4$5$6');
+  const year = baseTimestamp.getFullYear();
+  const month = String(baseTimestamp.getMonth() + 1).padStart(2, '0');
+  const day = String(baseTimestamp.getDate()).padStart(2, '0');
+  const hours = String(baseTimestamp.getHours()).padStart(2, '0');
+  const minutes = String(baseTimestamp.getMinutes()).padStart(2, '0');
+  const seconds = String(baseTimestamp.getSeconds()).padStart(2, '0');
+  
+  const localTimestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
   
   if (workflowId && workflowId !== 'manual' && !workflowId.includes('-') === false) {
     // Use existing readable ID + timestamp
@@ -43,15 +41,14 @@ function generateReadableExecutionId(workflowName, workflowId, baseTimestamp) {
  * @returns {string} Generated execution ID
  */
 function generateScheduledExecutionId(testId, baseTimestamp) {
-  const localTimestamp = baseTimestamp.toLocaleString('tr-TR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).replace(/[.\s]/g, '').replace(/(\d{2})(\d{2})(\d{4})(\d{2})(\d{2})(\d{2})/, '$3$2$1$4$5$6');
+  const year = baseTimestamp.getFullYear();
+  const month = String(baseTimestamp.getMonth() + 1).padStart(2, '0');
+  const day = String(baseTimestamp.getDate()).padStart(2, '0');
+  const hours = String(baseTimestamp.getHours()).padStart(2, '0');
+  const minutes = String(baseTimestamp.getMinutes()).padStart(2, '0');
+  const seconds = String(baseTimestamp.getSeconds()).padStart(2, '0');
+  
+  const localTimestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
   
   return `scheduled-${testId.slice(0, 8)}-${localTimestamp}`;
 }

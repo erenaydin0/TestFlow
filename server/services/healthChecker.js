@@ -41,11 +41,11 @@ class HealthChecker {
   // Dosya sistemi durumunu kontrol et
   async checkFileSystem() {
     const checks = {
-      executions: { status: 'ok', path: process.env.EXECUTIONS_DIR || './server/executions' },
-      screenshots: { status: 'ok', path: process.env.SCREENSHOTS_DIR || './server/screenshots' },
-      videos: { status: 'ok', path: process.env.VIDEOS_DIR || './server/videos' },
-      scheduledTests: { status: 'ok', path: process.env.SCHEDULED_TESTS_DIR || './server/scheduled-tests' },
-      tests: { status: 'ok', path: process.env.TESTS_DIR || './server/tests' },
+      executions: { status: 'ok', path: process.env.EXECUTIONS_DIR || './server/storage/executions' },
+      screenshots: { status: 'ok', path: process.env.SCREENSHOTS_DIR || './server/storage/screenshots' },
+      videos: { status: 'ok', path: process.env.VIDEOS_DIR || './server/storage/videos' },
+      scheduledTests: { status: 'ok', path: process.env.SCHEDULED_TESTS_DIR || './server/storage/scheduled-tests' },
+      tests: { status: 'ok', path: process.env.TESTS_DIR || './server/storage/tests' },
       logs: { status: 'ok', path: './server/logs' }
     };
 
@@ -67,7 +67,7 @@ class HealthChecker {
   // Test runner durumunu kontrol et
   async checkTestRunner() {
     try {
-      const TestRunner = require('../testRunner');
+      const TestRunner = require('../core/testRunner');
       const testRunner = new TestRunner();
       
       // Browser başlatma testi (headless)
