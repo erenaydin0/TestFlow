@@ -1,6 +1,14 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { 
+  ERROR_CODES, 
+  ERROR_TYPES, 
+  ERROR_CATEGORY, 
+  ERROR_SEVERITY,
+  ERROR_CONTEXT,
+  RECOVERY_STRATEGY 
+} from '../types/errors.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -9,6 +17,13 @@ const __dirname = path.dirname(__filename);
 class ErrorHandler {
   constructor() {
     this.logsDir = path.join(__dirname, '..', 'logs');
+    this.errorStats = new Map(); // Error statistics
+    this.alertThresholds = {
+      [ERROR_SEVERITY.CRITICAL]: 1,
+      [ERROR_SEVERITY.HIGH]: 10,
+      [ERROR_SEVERITY.MEDIUM]: 50,
+      [ERROR_SEVERITY.LOW]: 100
+    };
     this.ensureLogsDir();
   }
 
@@ -18,103 +33,276 @@ class ErrorHandler {
     }
   }
 
-  // Güvenli hata mesajı oluştur
-  createSafeErrorMessage(error, context = '') {
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    if (isProduction) {
-      // Production'da sadece genel hata mesajları
-      const errorTypes = {
-        'ValidationError': 'Geçersiz veri formatı',
-        'NotFoundError': 'İstenen kaynak bulunamadı',
-        'AuthenticationError': 'Kimlik doğrulama hatası',
-        'PermissionError': 'Yetki hatası',
-        'NetworkError': 'Ağ bağlantı hatası',
-        'DatabaseError': 'Veritabanı hatası',
-        'TimeoutError': 'İşlem zaman aşımı',
-        'FileSystemError': 'Dosya sistemi hatası'
+  // Custom error classes
+  createCustomError(code, message, context = {}) {
+    const errorType = ERROR_TYPES[code];
+    const error = new Error(message);
+    error.name = errorType?.name || 'CustomError';
+    error.code = code;
+    error.category = errorType?.category || ERROR_CATEGORY.SYSTEM;
+    error.severity = errorType?.severity || ERROR_SEVERITY.MEDIUM;
+    error.context = context;
+    error.timestamp = new Date().toISOString();
+    return error;
+  }
+
+  // Error classification
+  classifyError(error) {
+    // Check if it's already a custom error
+    if (error.code && ERROR_TYPES[error.code]) {
+      return ERROR_TYPES[error.code];
+    }
+
+    // Classify based on error properties
+    const errorName = error.name?.toLowerCase() || '';
+    const errorMessage = error.message?.toLowerCase() || '';
+
+    // Playwright errors
+    if (errorName.includes('playwright') || errorMessage.includes('browser')) {
+      return {
+        code: ERROR_CODES.PLAYWRIGHT_BROWSER_ERROR,
+        category: ERROR_CATEGORY.PLAYWRIGHT,
+        severity: ERROR_SEVERITY.MEDIUM
       };
-
-      const errorType = this.getErrorType(error);
-      return errorTypes[errorType] || 'Beklenmeyen bir hata oluştu';
     }
 
-    // Development'da detaylı hata mesajları
-    return error.message || 'Bilinmeyen hata';
-  }
-
-  // Hata tipini belirle
-  getErrorType(error) {
-    if (error.name) return error.name;
-    if (error.code) return error.code;
-    if (error.message) {
-      if (error.message.includes('not found')) return 'NotFoundError';
-      if (error.message.includes('permission')) return 'PermissionError';
-      if (error.message.includes('timeout')) return 'TimeoutError';
-      if (error.message.includes('network')) return 'NetworkError';
-      if (error.message.includes('database')) return 'DatabaseError';
+    // Network errors
+    if (errorName.includes('network') || errorName.includes('timeout') || 
+        errorMessage.includes('connection') || errorMessage.includes('timeout')) {
+      return {
+        code: ERROR_CODES.NETWORK_ERROR,
+        category: ERROR_CATEGORY.NETWORK,
+        severity: ERROR_SEVERITY.MEDIUM
+      };
     }
-    return 'UnknownError';
+
+    // Validation errors
+    if (errorName.includes('validation') || errorName.includes('invalid') ||
+        errorMessage.includes('required') || errorMessage.includes('invalid')) {
+      return {
+        code: ERROR_CODES.VALIDATION_ERROR,
+        category: ERROR_CATEGORY.VALIDATION,
+        severity: ERROR_SEVERITY.MEDIUM
+      };
+    }
+
+    // File system errors
+    if (errorName.includes('file') || errorName.includes('fs') ||
+        errorMessage.includes('file') || errorMessage.includes('directory')) {
+      return {
+        code: ERROR_CODES.FILE_NOT_FOUND,
+        category: ERROR_CATEGORY.FILESYSTEM,
+        severity: ERROR_SEVERITY.MEDIUM
+      };
+    }
+
+    // Database errors
+    if (errorName.includes('database') || errorName.includes('sql') ||
+        errorMessage.includes('database') || errorMessage.includes('query')) {
+      return {
+        code: ERROR_CODES.DATABASE_CONNECTION_ERROR,
+        category: ERROR_CATEGORY.DATABASE,
+        severity: ERROR_SEVERITY.CRITICAL
+      };
+    }
+
+    // Default to internal server error
+    return {
+      code: ERROR_CODES.INTERNAL_SERVER_ERROR,
+      category: ERROR_CATEGORY.SYSTEM,
+      severity: ERROR_SEVERITY.CRITICAL
+    };
   }
 
-  // Detaylı hata logla
+  // Enhanced error logging
   async logError(error, context = {}) {
+    const classification = this.classifyError(error);
     const timestamp = new Date().toISOString();
+    const errorId = this.generateErrorId();
+
     const logEntry = {
+      errorId,
       timestamp,
+      classification,
       error: {
         name: error.name,
         message: error.message,
         stack: error.stack,
-        code: error.code
+        code: error.code || classification.code,
+        category: classification.category,
+        severity: classification.severity
       },
       context: {
-        executionId: context.executionId,
-        stepId: context.stepId,
-        userId: context.userId,
+        ...context,
+        environment: process.env.NODE_ENV,
+        nodeVersion: process.version,
+        platform: process.platform
+      },
+      metadata: {
+        userAgent: context.userAgent,
+        ip: context.ip,
         requestId: context.requestId,
-        ...context
+        executionId: context.executionId,
+        stepId: context.stepId
       }
     };
 
-    // Log dosyasına yaz
-    const logFile = path.join(this.logsDir, `errors-${new Date().toISOString().split('T')[0]}.log`);
-    await fs.appendFile(logFile, JSON.stringify(logEntry) + '\n');
+    // Update error statistics
+    this.updateErrorStats(classification);
 
-    // Console'a da yaz (development için)
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('Error logged:', logEntry);
+    // Write to log file
+    await this.writeToLogFile(logEntry);
+
+    // Console logging based on severity
+    this.logToConsole(logEntry);
+
+    // Check for alerting
+    await this.checkAlerting(classification, logEntry);
+
+    return errorId;
+  }
+
+  // Generate unique error ID
+  generateErrorId() {
+    return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Update error statistics
+  updateErrorStats(classification) {
+    const key = `${classification.category}_${classification.severity}`;
+    const current = this.errorStats.get(key) || 0;
+    this.errorStats.set(key, current + 1);
+  }
+
+  // Write to log file
+  async writeToLogFile(logEntry) {
+    const date = new Date().toISOString().split('T')[0];
+    const logFile = path.join(this.logsDir, `errors-${date}.log`);
+    const jsonLine = JSON.stringify(logEntry) + '\n';
+    await fs.appendFile(logFile, jsonLine);
+  }
+
+  // Console logging
+  logToConsole(logEntry) {
+    const { error, classification } = logEntry;
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    const logLevel = {
+      [ERROR_SEVERITY.CRITICAL]: 'error',
+      [ERROR_SEVERITY.HIGH]: 'error',
+      [ERROR_SEVERITY.MEDIUM]: 'warn',
+      [ERROR_SEVERITY.LOW]: 'info'
+    }[classification.severity] || 'info';
+
+    const message = `[${classification.category.toUpperCase()}] ${error.message}`;
+    
+    if (logLevel === 'error') {
+      console.error(message, isProduction ? '' : error.stack);
+    } else if (logLevel === 'warn') {
+      console.warn(message);
+    } else {
+      console.log(message);
     }
   }
 
-  // API response için hata formatla
+  // Alerting system
+  async checkAlerting(classification, logEntry) {
+    const threshold = this.alertThresholds[classification.severity];
+    const key = `${classification.category}_${classification.severity}`;
+    const count = this.errorStats.get(key) || 0;
+
+    if (count >= threshold) {
+      await this.sendAlert(classification, count, logEntry);
+    }
+  }
+
+  // Send alert (placeholder for future implementation)
+  async sendAlert(classification, count, logEntry) {
+    // TODO: Implement actual alerting (email, Slack, etc.)
+    console.warn(`🚨 ALERT: ${count} ${classification.severity} errors in ${classification.category}`);
+  }
+
+  // Safe error message for client
+  createSafeErrorMessage(error, context = {}) {
+    const classification = this.classifyError(error);
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (isProduction) {
+      return ERROR_TYPES[classification.code]?.message || 'Beklenmeyen bir hata oluştu';
+    }
+
+    return error.message || 'Bilinmeyen hata';
+  }
+
+  // API error response
   formatApiError(error, context = {}) {
+    const classification = this.classifyError(error);
     const safeMessage = this.createSafeErrorMessage(error, context);
     
     return {
       error: safeMessage,
-      code: this.getErrorType(error),
+      code: classification.code,
+      category: classification.category,
+      severity: classification.severity,
       timestamp: new Date().toISOString(),
       ...(process.env.NODE_ENV !== 'production' && { 
         details: error.message,
-        stack: error.stack 
+        stack: error.stack,
+        errorId: context.errorId
       })
     };
   }
 
-  // WebSocket için hata formatla
+  // WebSocket error response
   formatWebSocketError(error, context = {}) {
+    const classification = this.classifyError(error);
     const safeMessage = this.createSafeErrorMessage(error, context);
     
     return {
       type: 'error',
       message: safeMessage,
-      code: this.getErrorType(error),
+      code: classification.code,
+      category: classification.category,
+      severity: classification.severity,
       timestamp: new Date().toISOString(),
       ...(process.env.NODE_ENV !== 'production' && { 
-        details: error.message 
+        details: error.message,
+        errorId: context.errorId
       })
     };
+  }
+
+  // Error recovery strategies
+  getRecoveryStrategy(error, context = {}) {
+    const classification = this.classifyError(error);
+    
+    // Critical errors should abort
+    if (classification.severity === ERROR_SEVERITY.CRITICAL) {
+      return RECOVERY_STRATEGY.ABORT;
+    }
+
+    // Network errors can be retried
+    if (classification.category === ERROR_CATEGORY.NETWORK) {
+      return RECOVERY_STRATEGY.RETRY;
+    }
+
+    // Validation errors should skip
+    if (classification.category === ERROR_CATEGORY.VALIDATION) {
+      return RECOVERY_STRATEGY.SKIP;
+    }
+
+    // Default to notify
+    return RECOVERY_STRATEGY.NOTIFY;
+  }
+
+  // Get error statistics
+  getErrorStats() {
+    return Object.fromEntries(this.errorStats);
+  }
+
+  // Clear error statistics
+  clearErrorStats() {
+    this.errorStats.clear();
   }
 }
 

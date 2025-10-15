@@ -27,6 +27,17 @@ import createExecutionRoutes from '../routes/executions.js';
 import createTestRoutes from '../routes/tests.js';
 import createScheduledRoutes from '../routes/scheduled.js';
 import createHealthRoutes from '../routes/health.js';
+import errorRoutes from '../routes/errors.js';
+
+// Error middleware
+import { 
+  globalErrorHandler, 
+  notFoundHandler, 
+  validationErrorHandler,
+  jwtErrorHandler,
+  rateLimitErrorHandler,
+  errorRecoveryMiddleware
+} from '../middleware/errorMiddleware.js';
 
 const app = express();
 const server = createServer(app);
@@ -35,6 +46,12 @@ const wss = new WebSocketServer({ server });
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Error handling middleware (order matters!)
+app.use(validationErrorHandler);
+app.use(jwtErrorHandler);
+app.use(rateLimitErrorHandler);
+app.use(errorRecoveryMiddleware);
 
 // Storage paths
 const storageDirs = {
@@ -407,10 +424,17 @@ app.use('/api/executions', createExecutionRoutes(activeExecutions, clients, broa
 app.use('/api/tests', createTestRoutes(storageDirs, broadcast));
 app.use('/api/scheduled-tests', createScheduledRoutes(storageDirs, broadcast, testScheduler));
 app.use('/api/health', createHealthRoutes(activeExecutions, clients, testScheduler, healthChecker));
+app.use('/api/errors', errorRoutes);
 
 // Serve screenshots and videos
 app.use('/screenshots', express.static(storageDirs.SCREENSHOTS_DIR));
 app.use('/videos', express.static(storageDirs.VIDEOS_DIR));
+
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
+// Global error handler (must be last)
+app.use(globalErrorHandler);
 
 // Start server
 const PORT = process.env.PORT || 3001;
