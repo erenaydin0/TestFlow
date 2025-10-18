@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Test, TestFilters } from '@/types';
-import { filterTests, getUniqueFilterOptions } from '@/utils/exportUtils';
+import { filterTests, getUniqueFilterOptions } from '@/utils/fileUtils';
 import { API_URL } from '@/utils/config';
 
 interface UseTestsOptions {

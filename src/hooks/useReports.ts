@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats, UseReportsOptions } from '@/types';
-import { filterExecutions, getUniqueFilterOptions } from '@/utils/exportUtils';
+import { filterExecutions, getUniqueFilterOptions } from '@/utils/fileUtils';
 import { API_URL } from '@/utils/config';
 import useExecutions from './useExecutions';
 

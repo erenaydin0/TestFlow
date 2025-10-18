@@ -1,4 +1,4 @@
-import { getSavedWorkflows } from './utils';
+import { getSavedWorkflows } from './storageUtils';
 import { API_URL } from './config';
 
 export interface SearchResult {

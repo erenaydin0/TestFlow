@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
-import { importTestWorkflow, saveWorkflowToStorage } from '@/utils/utils';
+import { importTestWorkflow } from '@/utils/fileUtils';
+import { saveWorkflowToStorage } from '@/utils/storageUtils';
 import { Button, ButtonGroup, IconButton } from '@/components';
 import { useNotifications } from '@/hooks';
 import { BrowserType, TestFormData } from '@/types';

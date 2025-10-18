@@ -17,7 +17,7 @@ import { TestModal, StepModal, ConfirmDialog } from '@/components/modals';
 
 import { TestStep, BrowserType } from '@/types';
 import { getActionByType } from '@/utils/actions';
-import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/utils/utils';
+import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/utils/fileUtils';
 import { 
   useTestSteps,
   useCanvas,

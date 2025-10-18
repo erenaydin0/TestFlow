@@ -1,11 +1,34 @@
-import { BrowserType, Test, ExecutionResult } from '@/types';
+import { BrowserType, Test, ExecutionResult, TestStep } from '@/types';
 import { getBrowserName } from '@/types/browser';
 import { getStatusText } from '@/components/common';
 
 // Re-export for backward compatibility
 export { getBrowserName };
 
-// Common CSV download function
+// Types
+export interface TestFormData {
+  name: string;
+  description: string;
+  steps: TestStep[];
+  tags?: string[];
+  suite?: string;
+  browserType?: BrowserType;
+  enableScreenshots?: boolean;
+  enableRecording?: boolean;
+  headlessMode?: boolean;
+}
+
+export interface WorkflowMetadata {
+  description?: string;
+  tags?: string[];
+  suite?: string;
+  browserType?: BrowserType;
+  enableScreenshots?: boolean;
+  enableRecording?: boolean;
+  headlessMode?: boolean;
+}
+
+// File download utilities
 export const downloadCSV = (content: string, filename: string): void => {
   const dataStr = `data:text/csv;charset=utf-8,\uFEFF${encodeURIComponent(content)}`;
   const linkElement = document.createElement('a');
@@ -14,7 +37,15 @@ export const downloadCSV = (content: string, filename: string): void => {
   linkElement.click();
 };
 
-// Test workflow export to CSV
+export const downloadJSON = (content: any, filename: string): void => {
+  const dataStr = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(content, null, 2))}`;
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataStr);
+  linkElement.setAttribute('download', filename);
+  linkElement.click();
+};
+
+// CSV Export functions
 export const exportTestsToCSV = (tests: Test[]): void => {
   const csvHeaders = [
     'Test Adı',
@@ -54,24 +85,6 @@ export const exportTestsToCSV = (tests: Test[]): void => {
   downloadCSV(csvContent, filename);
 };
 
-// Helper for step type text
-const getStepTypeText = (type: string): string => {
-  const typeMap: { [key: string]: string } = {
-    'navigate': 'Sayfaya Git',
-    'click': 'Tıkla',
-    'type': 'Metin Gir',
-    'wait': 'Bekle',
-    'scroll': 'Kaydır',
-    'screenshot': 'Ekran Görüntüsü',
-    'verify': 'Doğrula',
-    'condition': 'Koşul',
-    'keypress': 'Tuş Bas',
-    'dropdown': 'Açılır Menü'
-  };
-  return typeMap[type.toLowerCase()] || type;
-};
-
-// Execution results export to CSV
 export const exportExecutionsToCSV = (executions: ExecutionResult[]): void => {
   const csvHeaders = [
     'Test Adı',
@@ -144,7 +157,6 @@ export const exportExecutionsToCSV = (executions: ExecutionResult[]): void => {
   downloadCSV(csvContent, filename);
 };
 
-// Single execution detailed steps export
 export const exportExecutionStepsToCSV = (execution: ExecutionResult): void => {
   const csvHeaders = [
     'Adım No',
@@ -184,7 +196,139 @@ export const exportExecutionStepsToCSV = (execution: ExecutionResult): void => {
   downloadCSV(csvContent, filename);
 };
 
-// Common filter logic for tests
+// JSON Import/Export functions
+export const exportTestWorkflow = (
+  testSteps: TestStep[], 
+  fileName?: string, 
+  metadata?: WorkflowMetadata
+) => {
+  const workflow = {
+    version: '1.1',
+    name: fileName || 'test-workflow',
+    description: metadata?.description || '',
+    createdAt: new Date().toISOString(),
+    metadata: {
+      tags: metadata?.tags || [],
+      suite: metadata?.suite || 'Default',
+      browserType: metadata?.browserType || 'chromium',
+      enableScreenshots: metadata?.enableScreenshots || false,
+      enableRecording: metadata?.enableRecording || false,
+      headlessMode: metadata?.headlessMode || false
+    },
+    steps: testSteps.map(step => ({
+      ...step,
+      x: step.x,
+      y: step.y
+    }))
+  };
+
+  const filename = `${workflow.name}-${new Date().toISOString().split('T')[0]}.json`;
+  downloadJSON(workflow, filename);
+};
+
+export const importTestWorkflow = (file: File): Promise<{ 
+  steps: TestStep[]; 
+  name: string;
+  metadata?: WorkflowMetadata;
+}> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const workflow = JSON.parse(content);
+        
+        if (!workflow.steps || !Array.isArray(workflow.steps)) {
+          throw new Error('Geçersiz workflow dosyası: steps bulunamadı');
+        }
+        
+        const validSteps = workflow.steps.filter((step: any) => {
+          return step.id && step.type && typeof step.x === 'number' && typeof step.y === 'number';
+        });
+        
+        if (validSteps.length === 0) {
+          throw new Error('Geçersiz workflow dosyası: geçerli adım bulunamadı');
+        }
+        
+        resolve({
+          steps: validSteps,
+          name: workflow.name || 'imported-workflow',
+          metadata: {
+            description: workflow.description || '',
+            tags: workflow.metadata?.tags || workflow.tags || [],
+            suite: workflow.metadata?.suite || workflow.suite || 'Default',
+            browserType: workflow.metadata?.browserType || workflow.browserType || 'chromium',
+            enableScreenshots: workflow.metadata?.enableScreenshots || workflow.enableScreenshots || false,
+            enableRecording: workflow.metadata?.enableRecording || workflow.enableRecording || false,
+            headlessMode: workflow.metadata?.headlessMode || workflow.headlessMode || false
+          }
+        });
+      } catch (error) {
+        reject(new Error(`Dosya okuma hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`));
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Dosya okuma hatası'));
+    };
+    
+    reader.readAsText(file);
+  });
+};
+
+// Helper functions
+const getStepTypeText = (type: string): string => {
+  const typeMap: { [key: string]: string } = {
+    'navigate': 'Sayfaya Git',
+    'click': 'Tıkla',
+    'type': 'Metin Gir',
+    'wait': 'Bekle',
+    'scroll': 'Kaydır',
+    'screenshot': 'Ekran Görüntüsü',
+    'verify': 'Doğrula',
+    'condition': 'Koşul',
+    'keypress': 'Tuş Bas',
+    'dropdown': 'Açılır Menü'
+  };
+  return typeMap[type.toLowerCase()] || type;
+};
+
+// Workflow validation
+export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  const ids = steps.map(step => step.id);
+  const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+  if (duplicateIds.length > 0) {
+    errors.push(`Duplicate step IDs found: ${duplicateIds.join(', ')}`);
+  }
+  
+  steps.forEach(step => {
+    if (step.connections) {
+      step.connections.forEach(connectionId => {
+        if (!ids.includes(connectionId)) {
+          errors.push(`Step ${step.id} has invalid connection: ${connectionId}`);
+        }
+      });
+    }
+    
+    if (step.trueConnection && !ids.includes(step.trueConnection)) {
+      errors.push(`Step ${step.id} has invalid true connection: ${step.trueConnection}`);
+    }
+    
+    if (step.falseConnection && !ids.includes(step.falseConnection)) {
+      errors.push(`Step ${step.id} has invalid false connection: ${step.falseConnection}`);
+    }
+  });
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+// Filter functions
 export const filterTests = (
   tests: Test[], 
   filters: {
@@ -195,20 +339,16 @@ export const filterTests = (
   }
 ): Test[] => {
   return tests.filter(test => {
-    // Search filter
     const matchesSearch = !filters.search || 
       test.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       test.description.toLowerCase().includes(filters.search.toLowerCase()) ||
       test.tags.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase()));
 
-    // Suite filter  
     const matchesSuite = filters.suite.length === 0 || filters.suite.includes(test.suite);
     
-    // Tags filter
     const matchesTags = filters.tags.length === 0 || 
       filters.tags.some(filterTag => test.tags.includes(filterTag));
     
-    // Browser filter
     const matchesBrowser = filters.browserType.length === 0 || 
       filters.browserType.includes(test.browserType || 'chromium');
 
@@ -216,7 +356,6 @@ export const filterTests = (
   });
 };
 
-// Common filter logic for executions
 export const filterExecutions = (
   executions: ExecutionResult[], 
   filters: {
@@ -232,30 +371,23 @@ export const filterExecutions = (
   }
 ): ExecutionResult[] => {
   return executions.filter(execution => {
-    // Search filter (by workflow name)
     const matchesSearch = !filters.search || 
       execution.workflowName.toLowerCase().includes(filters.search.toLowerCase());
 
-    // Status filter
     const matchesStatus = !filters.status || execution.status === filters.status;
 
-    // Suite filter
     const matchesSuite = filters.suite.length === 0 || 
       (execution.suite && filters.suite.includes(execution.suite));
 
-    // Tags filter
     const matchesTags = filters.tags.length === 0 || 
       (execution.tags && execution.tags.some(tag => filters.tags.includes(tag)));
 
-    // Browser filter
     const matchesBrowser = filters.browserType.length === 0 || 
       filters.browserType.includes(execution.options?.browserType || 'chromium');
 
-    // Date filtering logic
     const executionDate = new Date(execution.startTime);
-    executionDate.setHours(0, 0, 0, 0); // Normalize to start of day
+    executionDate.setHours(0, 0, 0, 0);
     
-    // Custom date range filter (highest priority)
     if (filters.startDate && filters.endDate) {
       const startDate = new Date(filters.startDate);
       startDate.setHours(0, 0, 0, 0);
@@ -265,7 +397,6 @@ export const filterExecutions = (
       return matchesSearch && matchesStatus && matchesSuite && matchesTags && matchesBrowser && matchesCustomRange;
     }
 
-    // Specific date filter (second priority)
     if (filters.specificDate) {
       const specificDate = new Date(filters.specificDate);
       specificDate.setHours(0, 0, 0, 0);
@@ -273,7 +404,6 @@ export const filterExecutions = (
       return matchesSearch && matchesStatus && matchesSuite && matchesTags && matchesBrowser && matchesSpecificDate;
     }
 
-    // Old date range filter (backward compatibility)
     let matchesDateRange = true;
     if (filters.dateRange) {
       const today = new Date();
@@ -305,7 +435,6 @@ export const filterExecutions = (
   });
 };
 
-// Get unique values for filter options
 export const getUniqueFilterOptions = (
   tests: Test[], 
   executions?: ExecutionResult[]
@@ -320,14 +449,12 @@ export const getUniqueFilterOptions = (
   const browsers = new Set<BrowserType>();
   const statuses = new Set<string>();
 
-  // Process tests
   tests.forEach(test => {
     if (test.suite) suites.add(test.suite);
     test.tags?.forEach(tag => tags.add(tag));
     if (test.browserType) browsers.add(test.browserType);
   });
 
-  // Process executions if provided
   executions?.forEach(execution => {
     if (execution.suite) suites.add(execution.suite);
     execution.tags?.forEach(tag => tags.add(tag));

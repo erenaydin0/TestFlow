@@ -28,8 +28,7 @@ import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup, } from '@/components';
 
 import { Test } from '@/types';
-import { exportTestWorkflow } from '@/utils/utils';
-import { exportTestsToCSV } from '@/utils/exportUtils';
+import { exportTestWorkflow, exportTestsToCSV } from '@/utils/fileUtils';
 import { useNotifications, useTests } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
 import { API_URL } from '@/utils/config';
