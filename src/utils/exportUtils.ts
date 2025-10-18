@@ -1,5 +1,5 @@
 import { BrowserType, Test, ExecutionResult } from '@/types';
-import { getBrowserName } from './browserUtils';
+import { getBrowserName } from '@/types/browser';
 import { getStatusText } from '@/components/common';
 
 // Re-export for backward compatibility

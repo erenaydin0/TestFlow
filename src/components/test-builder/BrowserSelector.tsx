@@ -2,7 +2,7 @@
 
 import { BrowserType } from '@/types';
 import { CustomSelect } from '@/components/common';
-import { BASIC_BROWSER_OPTIONS } from '@/utils/browserUtils';
+import { BROWSER_OPTIONS } from '@/types/browser';
 
 interface BrowserSelectorProps {
   selectedBrowser: BrowserType;
@@ -13,7 +13,7 @@ interface BrowserSelectorProps {
   useFixedPosition?: boolean; // Tablo içinde kullanım için
 }
 
-const browserOptions = BASIC_BROWSER_OPTIONS;
+const browserOptions = BROWSER_OPTIONS;
 
 export default function BrowserSelector({ 
   selectedBrowser, 

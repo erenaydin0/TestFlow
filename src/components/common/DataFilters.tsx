@@ -8,7 +8,7 @@ import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components';
 import { BrowserType } from '@/types';
 import { useI18n } from '@/contexts';
-import { BASIC_BROWSER_OPTIONS } from '@/utils/browserUtils';
+import { BROWSER_OPTIONS } from '@/types/browser';
 
 interface FilterState {
   search: string;
@@ -37,7 +37,7 @@ interface DataFiltersProps {
   className?: string;
 }
 
-const browserOptions = BASIC_BROWSER_OPTIONS;
+const browserOptions = BROWSER_OPTIONS;
 
 const DataFilters: React.FC<DataFiltersProps> = ({
   filters,

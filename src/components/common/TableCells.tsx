@@ -7,7 +7,7 @@ import {  BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, A
 import { formatDuration, formatRelativeTime } from '@/utils/utils';
 import { StatusBadge, IconButton } from './';
 import { useI18n } from '@/contexts';
-import { getBrowserName } from '@/utils/browserUtils';
+import { getBrowserName } from '@/types/browser';
 
 // Browser Cell Component
 
