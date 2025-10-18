@@ -26,7 +26,7 @@ import {
   useNotifications
 } from '@/hooks';
 import { useSidebar, useBrowserSettings, useI18n } from '@/contexts';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();

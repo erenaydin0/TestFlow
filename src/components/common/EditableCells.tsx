@@ -6,7 +6,7 @@ import { BrowserType } from '@/types';
 import MultiSelect from './MultiSelect';
 import { BrowserSelector } from '@/components/test-builder';
 import { useDropdown } from '@/hooks';
-import { getDropdownContainerStyle } from '@/utils/dropdownStyles';
+import { getDropdownContainerStyle } from '@/utils/utils';
 import { useI18n } from '@/contexts';
 
 interface EditableSuiteCellProps {

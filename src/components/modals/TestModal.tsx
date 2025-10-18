@@ -6,10 +6,10 @@ import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react
 import AutocompleteInput from '@/components/common/AutocompleteInput';
 import { Button, ButtonGroup } from '@/components/common';
 import { BrowserType, TestModalProps } from '@/types';
-import { getExistingTags, getExistingSuites } from '@/utils/storageUtils';
+import { getExistingTags, getExistingSuites } from '@/utils/fileUtils';
 import { useModal } from '@/hooks';
 import { useI18n } from '@/contexts';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 
 const TestModal: React.FC<TestModalProps> = ({

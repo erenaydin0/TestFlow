@@ -1,6 +1,6 @@
-import { BaseEntity, BaseStats } from './base';
-import { BrowserType } from './test';
-import { ExecutionStatus, StepStatus } from './ui';
+import { BaseEntity, BaseStats } from './types';
+import { BrowserType } from './browser';
+import { ExecutionStatus, StepStatus } from './types';
 
 export interface ExecutionResult extends BaseEntity {
   workflowId: string;

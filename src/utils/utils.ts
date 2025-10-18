@@ -1,4 +1,227 @@
 import { type ClassValue, clsx } from 'clsx';
+import { CSSProperties } from 'react';
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+// Client-side environment configuration
+export const config = {
+  // API URLs
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001',
+  
+  // App info
+  appName: process.env.NEXT_PUBLIC_APP_NAME || 'CosmicQA',
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+  
+  // Environment
+  isDevelopment: process.env.NODE_ENV === 'development',
+  isProduction: process.env.NODE_ENV === 'production',
+} as const;
+
+// API URL helper - most commonly used
+export const API_URL = config.apiUrl;
+
+// ============================================================================
+// COLOR UTILITIES
+// ============================================================================
+
+// Types
+export interface ColorPalette {
+  primary: string;
+  secondary: string;
+  tertiary?: string;
+}
+
+export interface StatusColors extends ColorPalette {
+  success: string;
+  error: string;
+  warning: string;
+  info: string;
+  purple: string;
+}
+
+// Constants
+const COSMIC_COLORS = [
+  '#D07E47', // Orange
+  '#a66794', // Purple
+  '#e89558', // Light Orange
+  '#b87aa6', // Light Purple
+  '#d88575', // Coral
+  '#c96d3d', // Dark Orange
+  '#955b84', // Dark Purple
+  '#d88446', // Amber
+  '#6b9bd1', // Blue
+  '#88b87a', // Green
+  '#c77435', // Brown Orange
+  '#845075', // Deep Purple
+  '#7daee0', // Light Blue
+  '#9bc98d', // Light Green
+  '#b85e34', // Rust
+  '#a66794', // Mauve
+] as const;
+
+// Default color values for SSR
+const DEFAULT_COLORS = {
+  status: {
+    primary: '#D07E47',
+    success: '#88b87a',
+    error: '#d87575',
+    warning: '#e89558',
+    info: '#6b9bd1',
+    purple: '#a66794',
+  },
+  text: {
+    primary: '#2a2520',
+    secondary: '#6b5d52',
+    tertiary: '#9a8a7d',
+  },
+  border: {
+    primary: '#e8e3df',
+    secondary: '#d4ccc4',
+  },
+  background: {
+    primary: '#ffffff',
+    secondary: '#faf9f8',
+    tertiary: '#f5f3f1',
+  },
+} as const;
+
+// Utility functions
+const isServerSide = (): boolean => typeof window === 'undefined';
+
+const getComputedColor = (property: string): string => {
+  if (isServerSide()) return '';
+  return getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+};
+
+const createColorGetter = <T extends Record<string, string>>(
+  cssPrefix: string,
+  defaultColors: T
+): () => T => {
+  return () => {
+    if (isServerSide()) return defaultColors;
+    
+    const result = {} as T;
+    for (const key in defaultColors) {
+      (result as any)[key] = getComputedColor(`--${cssPrefix}-${key}`);
+    }
+    return result;
+  };
+};
+
+/**
+ * String'den tutarlı bir renk üretir (aynı string her zaman aynı rengi verir)
+ * @param str - Renk üretilecek string (örn: test grubu adı)
+ * @returns Cosmic tema renginden bir renk kodu
+ */
+export function getConsistentColorFromString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 32-bit integer'a dönüştür
+  }
+  
+  const index = Math.abs(hash) % COSMIC_COLORS.length;
+  return COSMIC_COLORS[index];
+}
+
+// Color getter functions
+export const getChartColors = createColorGetter('status', DEFAULT_COLORS.status) as () => StatusColors;
+export const getTextColors = createColorGetter('text', DEFAULT_COLORS.text) as () => ColorPalette;
+export const getBorderColors = createColorGetter('border', DEFAULT_COLORS.border) as () => ColorPalette;
+export const getBgColors = createColorGetter('bg', DEFAULT_COLORS.background) as () => ColorPalette;
+
+// ============================================================================
+// DROPDOWN STYLES
+// ============================================================================
+
+type DropdownPosition = 'top' | 'bottom';
+
+interface FixedPosition {
+  top?: number;
+  left: number;
+  width: number;
+}
+
+/**
+ * Dropdown container için ortak stil döndürür
+ */
+export const getDropdownContainerStyle = (
+  dropdownPosition: DropdownPosition,
+  additionalStyles?: CSSProperties,
+  fixedPosition?: FixedPosition | null
+): CSSProperties => {
+  const baseStyles: CSSProperties = {
+    backgroundColor: 'var(--bg-primary)',
+    border: '1px solid var(--border-primary)',
+    borderRadius: '0.5rem',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    zIndex: 1000,
+    ...additionalStyles
+  };
+
+  // Fixed position kullanılıyorsa
+  if (fixedPosition) {
+    return {
+      ...baseStyles,
+      position: 'fixed',
+      top: fixedPosition.top,
+      left: fixedPosition.left,
+      width: fixedPosition.width
+    };
+  }
+
+  // Absolute position (default)
+  return {
+    ...baseStyles,
+    position: 'absolute',
+    ...(dropdownPosition === 'top' 
+      ? { bottom: '100%', marginBottom: '0.25rem' }
+      : { top: '100%', marginTop: '0.25rem' }
+    ),
+    left: 0,
+    right: 0
+  };
+};
+
+/**
+ * Dropdown option için hover efektli stil döndürür
+ */
+export const getDropdownOptionHandlers = (isSelected: boolean) => ({
+  onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isSelected) {
+      e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+    }
+  },
+  onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isSelected) {
+      e.currentTarget.style.backgroundColor = 'transparent';
+    }
+  }
+});
+
+/**
+ * Dropdown button için hover efektli stil döndürür
+ */
+export const getButtonHoverHandlers = (isOpen: boolean) => ({
+  onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isOpen) {
+      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+    }
+  },
+  onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isOpen) {
+      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+    }
+  }
+});
+
+// ============================================================================
+// GENERAL UTILITIES
+// ============================================================================
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -30,13 +253,6 @@ export function formatDate(date: Date, locale: string = 'tr'): string {
 }
 
 
-export function formatTime(date: Date, locale: string = 'tr'): string {
-  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(date);
-}
 
 // Get schedule description from cron expression
 export function getScheduleDescription(schedule: string, t?: (key: string, params?: Record<string, any>) => string): string {

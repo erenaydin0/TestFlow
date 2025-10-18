@@ -210,11 +210,7 @@ const baseActionsConfig: any[] = [
         descriptionKey: 'testSteps.operatorDescription'
       }
     ]
-  }
-];
-
-// Extended actions for future use
-const extendedActionsConfig: any[] = [
+  },
   {
     type: 'verify',
     titleKey: 'testSteps.verify',
@@ -403,11 +399,11 @@ export const getTranslatedActions = (t: TranslationFunction): ActionType[] => {
     }))
   });
 
-  return [...baseActionsConfig, ...extendedActionsConfig].map(translateAction);
+  return baseActionsConfig.map(translateAction);
 };
 
-// Default actions (for backward compatibility) - these will have empty titles
-export const availableActions: ActionType[] = [...baseActionsConfig, ...extendedActionsConfig].map(action => ({
+// Default actions (for backward compatibility)
+export const availableActions: ActionType[] = baseActionsConfig.map(action => ({
   ...action,
   title: action.titleKey || action.title || action.type,
   description: action.descriptionKey || action.description || '',
@@ -429,7 +425,7 @@ export const getActionByType = (type: string): ActionType | undefined => {
 
 // Translation-aware version of getActionByType
 export const getTranslatedActionByType = (type: string, t: TranslationFunction): ActionType | undefined => {
-  const action = [...baseActionsConfig, ...extendedActionsConfig].find(action => action.type === type);
+  const action = baseActionsConfig.find(action => action.type === type);
   if (!action) return undefined;
   
   return {

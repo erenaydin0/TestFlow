@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calendar } from 'lucide-react';
 
-import { getChartColors, getTextColors, getBorderColors, getBgColors } from '@/utils/colorUtils';
+import { getChartColors, getTextColors, getBorderColors, getBgColors } from '@/utils/utils';
 import { useI18n } from '@/contexts';
 
 interface DailyResult {

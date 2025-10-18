@@ -1,5 +1,4 @@
-import { BaseEntity, BaseFormData } from './base';
-import { TestStatus, ScheduleStatus, ScheduleFrequency } from './ui';
+import { BaseEntity, BaseFormData, TestStatus, ScheduleStatus, ScheduleFrequency } from './types';
 import { BrowserType } from './browser';
 
 // Re-export types from ui for convenience

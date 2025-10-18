@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats, UseReportsOptions } from '@/types';
 import { filterExecutions, getUniqueFilterOptions } from '@/utils/fileUtils';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 import useExecutions from './useExecutions';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';

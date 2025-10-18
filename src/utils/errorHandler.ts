@@ -1,5 +1,5 @@
 /**
- * Frontend error handling utilities
+ * Basitleştirilmiş frontend error handling utilities
  */
 
 export interface ErrorInfo {
@@ -23,7 +23,7 @@ export interface ErrorContext {
 
 class FrontendErrorHandler {
   private errorLog: ErrorInfo[] = [];
-  private maxLogSize = 100;
+  private maxLogSize = 50; // Reduced from 100
 
   /**
    * Handle and log frontend errors
@@ -39,26 +39,12 @@ class FrontendErrorHandler {
       timestamp: new Date().toISOString()
     };
 
-    // Add context
-    const enrichedError = {
-      ...errorInfo,
-      context: {
-        ...context,
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      }
-    };
-
     // Log error
-    this.logError(enrichedError);
+    this.logError(errorInfo);
 
-    // Show user notification
-    this.showUserNotification(errorInfo);
-
-    // Report to backend if critical
-    if (errorInfo.severity === 'critical' || errorInfo.severity === 'high') {
-      this.reportToBackend(enrichedError);
+    // Show user notification for critical errors
+    if (errorInfo.severity === 'critical') {
+      this.showUserNotification(errorInfo);
     }
 
     return errorInfo;
@@ -78,47 +64,7 @@ class FrontendErrorHandler {
       timestamp: response.timestamp || new Date().toISOString()
     };
 
-    const enrichedError = {
-      ...errorInfo,
-      context: {
-        ...context,
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-    this.logError(enrichedError);
-    this.showUserNotification(errorInfo);
-
-    return errorInfo;
-  }
-
-  /**
-   * Handle WebSocket errors
-   */
-  handleWebSocketError(error: any, context: ErrorContext = {}): ErrorInfo {
-    const errorInfo: ErrorInfo = {
-      code: error.code || 13001,
-      category: error.category || 'websocket',
-      severity: this.mapSeverity(error.severity),
-      message: error.message || 'WebSocket hatası',
-      details: error.details,
-      errorId: error.errorId,
-      timestamp: error.timestamp || new Date().toISOString()
-    };
-
-    const enrichedError = {
-      ...errorInfo,
-      context: {
-        ...context,
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-    this.logError(enrichedError);
+    this.logError(errorInfo);
     this.showUserNotification(errorInfo);
 
     return errorInfo;
@@ -128,27 +74,17 @@ class FrontendErrorHandler {
    * Extract error code from error
    */
   private extractErrorCode(error: Error): number {
-    // Check if error has a code property
     if ((error as any).code) {
       return (error as any).code;
     }
 
-    // Map common error types to codes
     const errorName = error.name?.toLowerCase() || '';
     const errorMessage = error.message?.toLowerCase() || '';
 
-    if (errorName.includes('network') || errorMessage.includes('fetch')) {
-      return 4001;
-    }
-    if (errorName.includes('timeout')) {
-      return 4002;
-    }
-    if (errorName.includes('validation')) {
-      return 1001;
-    }
-    if (errorName.includes('permission')) {
-      return 3001;
-    }
+    if (errorName.includes('network') || errorMessage.includes('fetch')) return 4001;
+    if (errorName.includes('timeout')) return 4002;
+    if (errorName.includes('validation')) return 1001;
+    if (errorName.includes('permission')) return 3001;
 
     return 9001; // Internal server error
   }
@@ -160,18 +96,10 @@ class FrontendErrorHandler {
     const errorName = error.name?.toLowerCase() || '';
     const errorMessage = error.message?.toLowerCase() || '';
 
-    if (errorName.includes('network') || errorMessage.includes('fetch')) {
-      return 'network';
-    }
-    if (errorName.includes('validation')) {
-      return 'validation';
-    }
-    if (errorName.includes('permission')) {
-      return 'authorization';
-    }
-    if (errorName.includes('timeout')) {
-      return 'timeout';
-    }
+    if (errorName.includes('network') || errorMessage.includes('fetch')) return 'network';
+    if (errorName.includes('validation')) return 'validation';
+    if (errorName.includes('permission')) return 'authorization';
+    if (errorName.includes('timeout')) return 'timeout';
 
     return 'system';
   }
@@ -183,21 +111,10 @@ class FrontendErrorHandler {
     const errorName = error.name?.toLowerCase() || '';
     const errorMessage = error.message?.toLowerCase() || '';
 
-    // Critical errors
-    if (errorName.includes('critical') || errorMessage.includes('critical')) {
-      return 'critical';
-    }
-
-    // High severity errors
+    if (errorName.includes('critical') || errorMessage.includes('critical')) return 'critical';
     if (errorName.includes('network') || errorName.includes('timeout') || 
-        errorMessage.includes('connection') || errorMessage.includes('server')) {
-      return 'high';
-    }
-
-    // Medium severity errors
-    if (errorName.includes('validation') || errorName.includes('permission')) {
-      return 'medium';
-    }
+        errorMessage.includes('connection') || errorMessage.includes('server')) return 'high';
+    if (errorName.includes('validation') || errorName.includes('permission')) return 'medium';
 
     return 'low';
   }
@@ -209,22 +126,13 @@ class FrontendErrorHandler {
     const isProduction = process.env.NODE_ENV === 'production';
     
     if (isProduction) {
-      // Return generic messages in production
       const errorName = error.name?.toLowerCase() || '';
       const errorMessage = error.message?.toLowerCase() || '';
 
-      if (errorName.includes('network') || errorMessage.includes('fetch')) {
-        return 'Ağ bağlantısında sorun oluştu';
-      }
-      if (errorName.includes('timeout')) {
-        return 'İşlem zaman aşımına uğradı';
-      }
-      if (errorName.includes('validation')) {
-        return 'Geçersiz veri formatı';
-      }
-      if (errorName.includes('permission')) {
-        return 'Bu işlem için yetkiniz yok';
-      }
+      if (errorName.includes('network') || errorMessage.includes('fetch')) return 'Ağ bağlantısında sorun oluştu';
+      if (errorName.includes('timeout')) return 'İşlem zaman aşımına uğradı';
+      if (errorName.includes('validation')) return 'Geçersiz veri formatı';
+      if (errorName.includes('permission')) return 'Bu işlem için yetkiniz yok';
 
       return 'Beklenmeyen bir hata oluştu';
     }
@@ -255,7 +163,7 @@ class FrontendErrorHandler {
   /**
    * Log error to console and memory
    */
-  private logError(errorInfo: any): void {
+  private logError(errorInfo: ErrorInfo): void {
     // Add to memory log
     this.errorLog.unshift(errorInfo);
     if (this.errorLog.length > this.maxLogSize) {
@@ -285,42 +193,16 @@ class FrontendErrorHandler {
    * Show user notification
    */
   private showUserNotification(errorInfo: ErrorInfo): void {
-    // This would integrate with your notification system
-    // For now, we'll use a simple alert for critical errors
     if (errorInfo.severity === 'critical') {
       alert(`Kritik Hata: ${errorInfo.message}`);
     }
   }
 
   /**
-   * Report error to backend
+   * Get recent errors
    */
-  private async reportToBackend(errorInfo: any): Promise<void> {
-    try {
-      await fetch('/api/errors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(errorInfo)
-      });
-    } catch (error) {
-      console.error('Failed to report error to backend:', error);
-    }
-  }
-
-  /**
-   * Get error statistics
-   */
-  getErrorStats(): { [key: string]: number } {
-    const stats: { [key: string]: number } = {};
-    
-    this.errorLog.forEach(error => {
-      const key = `${error.category}_${error.severity}`;
-      stats[key] = (stats[key] || 0) + 1;
-    });
-
-    return stats;
+  getRecentErrors(limit: number = 10): ErrorInfo[] {
+    return this.errorLog.slice(0, limit);
   }
 
   /**
@@ -331,10 +213,46 @@ class FrontendErrorHandler {
   }
 
   /**
-   * Get recent errors
+   * Handle WebSocket errors
    */
-  getRecentErrors(limit: number = 10): any[] {
-    return this.errorLog.slice(0, limit);
+  handleWebSocketError(error: any, context: ErrorContext = {}): ErrorInfo {
+    const errorInfo: ErrorInfo = {
+      code: 5001,
+      category: 'websocket',
+      severity: 'high',
+      message: error.message || 'WebSocket bağlantı hatası',
+      details: error.details,
+      errorId: this.generateErrorId(),
+      timestamp: new Date().toISOString()
+    };
+
+    this.logError(errorInfo);
+    this.showUserNotification(errorInfo);
+
+    return errorInfo;
+  }
+
+  /**
+   * Get error statistics
+   */
+  getErrorStats(): {
+    total: number;
+    bySeverity: Record<string, number>;
+    byCategory: Record<string, number>;
+  } {
+    const bySeverity: Record<string, number> = {};
+    const byCategory: Record<string, number> = {};
+
+    this.errorLog.forEach(error => {
+      bySeverity[error.severity] = (bySeverity[error.severity] || 0) + 1;
+      byCategory[error.category] = (byCategory[error.category] || 0) + 1;
+    });
+
+    return {
+      total: this.errorLog.length,
+      bySeverity,
+      byCategory
+    };
   }
 }
 
@@ -363,4 +281,108 @@ if (typeof window !== 'undefined') {
 
 export default frontendErrorHandler;
 
+// ============================================================================
+// ERROR HANDLER HOOK
+// ============================================================================
 
+import { useCallback, useRef } from 'react';
+
+export interface UseErrorHandlerOptions {
+  component?: string;
+  onError?: (error: Error, errorInfo: any) => void;
+  fallbackMessage?: string;
+}
+
+export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
+  const { component = 'unknown', onError, fallbackMessage } = options;
+  const errorCountRef = useRef(0);
+
+  const handleError = useCallback((error: Error, context: ErrorContext = {}) => {
+    errorCountRef.current += 1;
+    
+    const errorContext: ErrorContext = {
+      ...context,
+      component,
+      sessionId: sessionStorage.getItem('sessionId') || undefined,
+      userId: localStorage.getItem('userId') || undefined
+    };
+
+    const errorInfo = frontendErrorHandler.handleError(error, errorContext);
+    
+    // Call custom error handler if provided
+    if (onError) {
+      onError(error, errorInfo);
+    }
+
+    return errorInfo;
+  }, [component, onError]);
+
+  const handleApiError = useCallback((response: any, context: ErrorContext = {}) => {
+    const errorContext: ErrorContext = {
+      ...context,
+      component,
+      sessionId: sessionStorage.getItem('sessionId') || undefined,
+      userId: localStorage.getItem('userId') || undefined
+    };
+
+    const errorInfo = frontendErrorHandler.handleApiError(response, errorContext);
+    
+    if (onError) {
+      onError(new Error(response.error || 'API Error'), errorInfo);
+    }
+
+    return errorInfo;
+  }, [component, onError]);
+
+  const handleWebSocketError = useCallback((error: any, context: ErrorContext = {}) => {
+    const errorContext: ErrorContext = {
+      ...context,
+      component,
+      sessionId: sessionStorage.getItem('sessionId') || undefined,
+      userId: localStorage.getItem('userId') || undefined
+    };
+
+    const errorInfo = frontendErrorHandler.handleWebSocketError(error, errorContext);
+    
+    if (onError) {
+      onError(new Error(error.message || 'WebSocket Error'), errorInfo);
+    }
+
+    return errorInfo;
+  }, [component, onError]);
+
+  const handleAsyncError = useCallback(async <T>(
+    asyncFn: () => Promise<T>,
+    context: ErrorContext = {}
+  ): Promise<T | null> => {
+    try {
+      return await asyncFn();
+    } catch (error) {
+      handleError(error as Error, context);
+      return null;
+    }
+  }, [handleError]);
+
+  const getErrorStats = useCallback(() => {
+    return frontendErrorHandler.getErrorStats();
+  }, []);
+
+  const getRecentErrors = useCallback((limit?: number) => {
+    return frontendErrorHandler.getRecentErrors(limit);
+  }, []);
+
+  const clearErrorLog = useCallback(() => {
+    frontendErrorHandler.clearErrorLog();
+  }, []);
+
+  return {
+    handleError,
+    handleApiError,
+    handleWebSocketError,
+    handleAsyncError,
+    getErrorStats,
+    getRecentErrors,
+    clearErrorLog,
+    errorCount: errorCountRef.current
+  };
+}

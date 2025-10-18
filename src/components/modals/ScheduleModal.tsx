@@ -6,7 +6,7 @@ import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
 import { Button,CustomSelect } from '@/components';
 import { useI18n, useSidebar } from '@/contexts';
 import { useModal } from '@/hooks';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 interface ScheduleModalProps {
   isOpen: boolean;

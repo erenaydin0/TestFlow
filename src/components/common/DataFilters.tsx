@@ -217,10 +217,8 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           renderOption={(browser) => {
             const option = browserOptions.find((opt: any) => opt.value === browser);
             if (!option) return browser;
-            const IconComponent = option.icon;
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {IconComponent && <IconComponent size={14} style={{ color: option.color }} />}
                 <span>{option.label}</span>
               </div>
             );
@@ -333,10 +331,8 @@ const DataFilters: React.FC<DataFiltersProps> = ({
           renderOption={(browser) => {
             const option = browserOptions.find((opt: any) => opt.value === browser);
             if (!option) return browser;
-            const IconComponent = option.icon;
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {IconComponent && <IconComponent size={14} style={{ color: option.color }} />}
                 <span>{option.label}</span>
               </div>
             );

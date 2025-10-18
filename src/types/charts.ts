@@ -1,5 +1,5 @@
 // Chart and dashboard specific types
-import { TestStatus } from './ui';
+import { TestStatus } from './types';
 
 export interface DailyResult {
   date: string;

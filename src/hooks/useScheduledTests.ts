@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScheduledTest, ScheduledTestFilters, UpcomingRun } from '@/types/test';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 interface UseScheduledTestsReturn {
   scheduledTests: ScheduledTest[];

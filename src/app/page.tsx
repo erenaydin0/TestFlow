@@ -11,7 +11,7 @@ import {
   UpcomingTests
 } from '@/components/dashboard';
 import { useExecutions, useScheduledTests } from '@/hooks';
-import { getConsistentColorFromString } from '@/utils/colorUtils';
+import { getConsistentColorFromString } from '@/utils/utils';
 import { useI18n } from '@/contexts';
 
 export default function Dashboard() {

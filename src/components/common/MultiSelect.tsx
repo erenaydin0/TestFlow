@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X, Check, Search } from 'lucide-react';
 import { useDropdown } from '@/hooks';
-import { getDropdownContainerStyle, getDropdownOptionHandlers } from '@/utils/dropdownStyles';
+import { getDropdownContainerStyle, getDropdownOptionHandlers } from '@/utils/utils';
 import { useI18n } from '@/contexts';
 
 interface MultiSelectProps {

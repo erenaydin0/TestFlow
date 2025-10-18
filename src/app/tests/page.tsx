@@ -31,7 +31,7 @@ import { Test } from '@/types';
 import { exportTestWorkflow, exportTestsToCSV } from '@/utils/fileUtils';
 import { useNotifications, useTests } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 

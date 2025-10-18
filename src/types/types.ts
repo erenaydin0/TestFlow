@@ -1,7 +1,117 @@
-import { BaseModalProps, BaseTableProps, BaseCellProps } from './base';
-import { Test, TestFormData, TestFilters } from './test';
+// ============================================================================
+// BASE TYPES
+// ============================================================================
+
+// Base interface'ler - ortak özellikler için
+export interface BaseEntity {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface BaseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export interface BaseFormData {
+  name: string;
+  description?: string;
+}
+
+export interface BaseTableProps<T = any> {
+  data: T[];
+  loading?: boolean;
+  emptyMessage?: string;
+  className?: string;
+}
+
+export interface BaseFilterState {
+  search: string;
+}
+
+export interface BaseHookOptions {
+  autoLoad?: boolean;
+  autoFetch?: boolean;
+}
+
+export interface BaseStats {
+  total: number;
+  completed: number;
+  failed: number;
+  successRate: number;
+}
+
+export interface BaseCellProps {
+  value?: any;
+  item?: any;
+  index?: number;
+}
+
+// ============================================================================
+// HOOK TYPES
+// ============================================================================
+
+import { Test, TestFilters, TestFormData } from './test';
+import { ExecutionFilters } from './execution';
+
+// Test Hooks
+export interface UseTestsOptions extends BaseHookOptions {
+  filters?: TestFilters;
+}
+
+// Execution Hooks
+export interface UseExecutionsOptions extends BaseHookOptions {
+  filters?: ExecutionFilters;
+}
+
+// Reports Hooks
+export interface UseReportsOptions extends BaseHookOptions {
+  filters?: ExecutionFilters;
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface UseTestStepsReturn {
+  testSteps: any[];
+  setTestSteps: (steps: any[]) => void;
+  history: any[][];
+  historyIndex: number;
+  canUndo: boolean;
+  canRedo: boolean;
+  saveToHistory: (steps: any[]) => void;
+  undo: (callback?: () => void) => void;
+  redo: (callback?: () => void) => void;
+  addStep: (step: any) => void;
+  deleteStep: (stepId: string, callback?: () => void) => void;
+  updateStepProperty: (stepId: string, property: string, value: any) => void;
+  autoArrangeSteps: () => void;
+  generateId: () => string;
+}
+
+export interface UseUnsavedChangesProps {
+  testSteps: any[];
+  onSave: () => Promise<void>;
+}
+
+export interface UseUnsavedChangesReturn {
+  hasUnsavedChanges: boolean;
+  showUnsavedDialog: boolean;
+  pendingNavigation: string | null;
+  handleNavigation: (path: string) => void;
+  confirmNavigation: () => void;
+  cancelNavigation: () => void;
+  saveAndNavigate: () => void;
+  markAsSaved: () => void;
+  resetUnsavedChanges: () => void;
+}
+
+// ============================================================================
+// UI TYPES
+// ============================================================================
+
 import { BrowserType, BrowserOption } from './browser';
-import { ExecutionResult, ExecutionFilters } from './execution';
+import { ExecutionResult } from './execution';
 
 // Theme Types
 export type Theme = 'light' | 'dark' | 'system';
@@ -12,7 +122,6 @@ export type ExecutionStatus = 'queued' | 'running' | 'completed' | 'failed' | 'c
 export type StepStatus = 'pending' | 'running' | 'passed' | 'failed';
 export type ScheduleStatus = 'active' | 'paused' | 'disabled';
 export type ScheduleFrequency = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
-
 
 // Modal Props
 export interface TestModalProps extends BaseModalProps {

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useI18n } from '@/contexts';
 import { useWebSocket } from '@/hooks';
-import { API_URL, config } from '@/utils/config';
+import { API_URL, config } from '@/utils/utils';
 import { Notification } from '@/types/notifications';
 
 // ============================================================================

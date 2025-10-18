@@ -33,7 +33,7 @@ import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/util
 import { StatusBadge } from '@/components/common';
 import { useNotifications, useReports } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 

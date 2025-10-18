@@ -12,3 +12,5 @@ export { default as useTests } from './useTests';
 export { default as useTestSteps } from './useTestSteps';
 // UI hooks
 export { useDropdown, useModal, useUnsavedChanges } from './useUIInteractions';
+// Error handling
+export { useErrorHandler } from '@/utils/errorHandler';

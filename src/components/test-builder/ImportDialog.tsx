@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow } from '@/utils/fileUtils';
-import { saveWorkflowToStorage } from '@/utils/storageUtils';
+import { saveWorkflowToStorage } from '@/utils/fileUtils';
 import { Button, ButtonGroup, IconButton } from '@/components';
 import { useNotifications } from '@/hooks';
 import { BrowserType, TestFormData } from '@/types';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 interface ImportDialogProps {
   isOpen: boolean;

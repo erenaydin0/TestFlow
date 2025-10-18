@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Test, TestFilters } from '@/types';
 import { filterTests, getUniqueFilterOptions } from '@/utils/fileUtils';
-import { API_URL } from '@/utils/config';
+import { API_URL } from '@/utils/utils';
 
 interface UseTestsOptions {
   autoLoad?: boolean;
