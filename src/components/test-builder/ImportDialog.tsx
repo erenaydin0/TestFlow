@@ -7,7 +7,7 @@ import { saveWorkflowToStorage } from '@/utils/fileUtils';
 import { Button, ButtonGroup, IconButton } from '@/components';
 import { useNotifications } from '@/hooks';
 import { BrowserType, TestFormData } from '@/types';
-import { API_URL } from '@/utils/utils';
+import { TestService } from '@/utils/api';
 
 interface ImportDialogProps {
   isOpen: boolean;
@@ -261,29 +261,20 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
       try {
         // Backend'e kaydet
-        const response = await fetch(`${API_URL}/api/tests`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: preview.name,
-            description: preview.description,
-            workflow: workflowData.steps || [],
-            tags: preview.tags,
-            suite: preview.suite,
-            browserType: preview.browserType,
-            enableScreenshots: preview.enableScreenshots,
-            enableRecording: preview.enableRecording,
-            headlessMode: preview.headlessMode,
-            isExecutable: true,
-            status: '',
-            duration: 0
-          })
+        await TestService.createTest({
+          name: preview.name,
+          description: preview.description,
+          workflow: workflowData.steps || [],
+          tags: preview.tags,
+          suite: preview.suite,
+          browserType: preview.browserType,
+          enableScreenshots: preview.enableScreenshots,
+          enableRecording: preview.enableRecording,
+          headlessMode: preview.headlessMode,
+          isExecutable: true,
+          status: 'pending' as const,
+          duration: 0
         });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Test kaydedilemedi');
-        }
 
         success++;
       } catch (error) {

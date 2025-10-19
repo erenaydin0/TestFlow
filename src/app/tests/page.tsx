@@ -31,7 +31,7 @@ import { Test } from '@/types';
 import { exportTestWorkflow, exportTestsToCSV } from '@/utils/fileUtils';
 import { useNotifications, useTests } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
-import { API_URL } from '@/utils/utils';
+import { ExecutionService } from '@/utils/api';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 
@@ -78,21 +78,21 @@ export default function TestsPage() {
 
   // Handle inline updates
   const handleUpdateSuite = (testId: string, suite: string) => {
-    const test = tests.find((t: any) => t.id === testId);
+    const test = tests?.find((t: any) => t.id === testId);
     if (test) {
       updateTest(testId, { ...test, suite });
     }
   };
 
   const handleUpdateTags = (testId: string, tags: string[]) => {
-    const test = tests.find((t: any) => t.id === testId);
+    const test = tests?.find((t: any) => t.id === testId);
     if (test) {
       updateTest(testId, { ...test, tags });
     }
   };
 
   const handleUpdateBrowser = (testId: string, browserType: any) => {
-    const test = tests.find((t: any) => t.id === testId);
+    const test = tests?.find((t: any) => t.id === testId);
     if (test) {
       updateTest(testId, { ...test, browserType });
     }
@@ -109,7 +109,7 @@ export default function TestsPage() {
   // Handle testId parameter to highlight specific test
   useEffect(() => {
     const testId = searchParams.get('testId');
-    if (testId && tests.length > 0) {
+    if (testId && tests && tests.length > 0) {
       setHighlightedTestId(testId);
       // Auto-scroll to the highlighted test after a short delay
       setTimeout(() => {
@@ -304,9 +304,9 @@ export default function TestsPage() {
   const goToPreviousPage = () => goToPage(currentPage - 1);
   const goToNextPage = () => goToPage(currentPage + 1);
 
-  // Handle run test - Updated to use backend API
+  // Handle run test - Updated to use ExecutionService
   const handleRunTest = async (testId: string) => {
-    const test = tests.find((t: any) => t.id === testId);
+    const test = tests?.find((t: any) => t.id === testId);
     if (!test || !test.workflow || test.workflow.length === 0) {
       notifyTestFailure(test?.name || t('tests.unknownTest'), testId, t('tests.workflowNotFound'));
       return;
@@ -342,31 +342,20 @@ export default function TestsPage() {
         }
       }));
       
-      const response = await fetch(`${API_URL}/api/executions/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workflowId: test.id,
-          workflowName: test.name,
-          steps: backendSteps,
-          suite: test.suite,
-          tags: test.tags,
-          options: {
-            enableScreenshots: test.enableScreenshots !== undefined ? test.enableScreenshots : browserSettings.defaultScreenshots,
-            enableRecording: test.enableRecording !== undefined ? test.enableRecording : browserSettings.defaultRecording,
-            headlessMode: test.headlessMode !== undefined ? test.headlessMode : browserSettings.defaultHeadless,
-            browserType: test.browserType !== undefined ? test.browserType : browserSettings.defaultBrowser
-          }
-        })
+      const data = await ExecutionService.executeWorkflow({
+        workflowId: test.id,
+        workflowName: test.name,
+        steps: backendSteps,
+        suite: test.suite,
+        tags: test.tags,
+        options: {
+          enableScreenshots: test.enableScreenshots !== undefined ? test.enableScreenshots : browserSettings.defaultScreenshots,
+          enableRecording: test.enableRecording !== undefined ? test.enableRecording : browserSettings.defaultRecording,
+          headlessMode: test.headlessMode !== undefined ? test.headlessMode : browserSettings.defaultHeadless,
+          browserType: test.browserType !== undefined ? test.browserType : browserSettings.defaultBrowser
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       notifyTestStart(test.name, data.executionId);
       
     } catch (error) {
@@ -385,20 +374,20 @@ export default function TestsPage() {
   // Handle duplicate test
   const handleDuplicateTest = async (testId: string) => {
     try {
-      const test = tests.find((t: any) => t.id === testId);
+      const test = tests?.find((t: any) => t.id === testId);
       const duplicatedId = await duplicateTest(testId);
       if (duplicatedId && test) {
         notifyTestDuplicated(test.name, duplicatedId);
       }
     } catch (error) {
-      const test = tests.find((t: any) => t.id === testId);
+      const test = tests?.find((t: any) => t.id === testId);
       notifyTestFailure(test?.name || t('tests.unknownTest'), testId, t('tests.duplicateError'));
     }
   };
 
   // Handle delete test
   const handleDeleteTest = (testId: string) => {
-    const test = tests.find((t: any) => t.id === testId);
+    const test = tests?.find((t: any) => t.id === testId);
     if (test) {
       setSingleDeleteDialog({
         show: true,
@@ -456,11 +445,11 @@ export default function TestsPage() {
     }
   };
 
-  // Handle bulk run - Updated to use backend API
+  // Handle bulk run - Updated to use ExecutionService
   const handleBulkRun = async () => {
     if (selectedTests.size === 0) return;
     
-    const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
+    const selectedTestsData = tests?.filter((test: any) => selectedTests.has(test.id)) || [];
     const validTests = selectedTestsData.filter((test: any) => test.workflow && test.workflow.length > 0);
     
     if (validTests.length === 0) {
@@ -490,31 +479,19 @@ export default function TestsPage() {
           }
         }));
         
-        const response = await fetch(`${API_URL}/api/executions/execute`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            workflowId: test.id,
-            workflowName: test.name,
-            steps: backendSteps,
-            suite: test.suite,
-            tags: test.tags,
-            options: {
-              enableScreenshots: test.enableScreenshots || false,
-              enableRecording: test.enableRecording || false,
-              headlessMode: test.headlessMode || false,
-              browserType: test.browserType || 'chromium'
-            }
-          })
+        return await ExecutionService.executeWorkflow({
+          workflowId: test.id,
+          workflowName: test.name,
+          steps: backendSteps,
+          suite: test.suite,
+          tags: test.tags,
+          options: {
+            enableScreenshots: test.enableScreenshots || false,
+            enableRecording: test.enableRecording || false,
+            headlessMode: test.headlessMode || false,
+            browserType: test.browserType || 'chromium'
+          }
         });
-
-        if (!response.ok) {
-          throw new Error(`${test.name}: HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
       });
 
       const results = await Promise.all(executionPromises);
@@ -535,7 +512,7 @@ export default function TestsPage() {
 
   // Handle single test export
   const handleExportTest = (testId: string) => {
-    const test = tests.find((t: any) => t.id === testId);
+    const test = tests?.find((t: any) => t.id === testId);
     if (test && test.workflow) {
       try {
         exportTestWorkflow(
@@ -566,7 +543,7 @@ export default function TestsPage() {
       return;
     }
 
-    const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
+    const selectedTestsData = tests?.filter((test: any) => selectedTests.has(test.id)) || [];
     exportTestsToCSV(selectedTestsData);
     notifyTestImported(t('tests.csvExportSuccess', { count: selectedTestsData.length }), '');
   };
@@ -577,7 +554,7 @@ export default function TestsPage() {
       return;
     }
 
-    const selectedTestsData = tests.filter((test: any) => selectedTests.has(test.id));
+    const selectedTestsData = tests?.filter((test: any) => selectedTests.has(test.id)) || [];
     
     if (selectedTestsData.length === 1) {
       // Single test export
@@ -652,7 +629,7 @@ export default function TestsPage() {
   return (
     <PageLayout
       title={t('tests.title')}
-      subtitle={t('tests.subtitle', { count: tests.length })}
+      subtitle={t('tests.subtitle', { count: tests?.length || 0 })}
     >
       <LoadingErrorState
         loading={loading}
@@ -795,14 +772,14 @@ export default function TestsPage() {
                 color: 'var(--text-primary)',
                 margin: '0 0 0.5rem 0'
               }}>
-                {tests.length === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
+                {(tests?.length || 0) === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
               </h3>
               <p style={{ 
                 fontSize: '0.875rem', 
                 color: 'var(--text-secondary)',
                 margin: '0 0 1.5rem 0'
               }}>
-                {tests.length === 0 
+                {(tests?.length || 0) === 0 
                   ? t('filters.createFirstWorkflow')
                   : t('filters.tryDifferentFilters')
                 }

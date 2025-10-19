@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScheduledTest, ScheduledTestFilters, UpcomingRun } from '@/types/test';
-import { API_URL } from '@/utils/utils';
+import { useApiQuery, useApiMutation, ScheduledTestService } from '@/utils/api';
 
 interface UseScheduledTestsReturn {
   scheduledTests: ScheduledTest[];
@@ -20,10 +20,6 @@ interface UseScheduledTestsReturn {
 }
 
 export function useScheduledTests(): UseScheduledTestsReturn {
-  const [scheduledTests, setScheduledTests] = useState<ScheduledTest[]>([]);
-  const [upcomingRuns, setUpcomingRuns] = useState<UpcomingRun[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ScheduledTestFilters>({
     search: '',
     status: [],
@@ -31,28 +27,18 @@ export function useScheduledTests(): UseScheduledTestsReturn {
     suite: []
   });
 
-  const fetchScheduledTests = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`${API_URL}/api/scheduled-tests`);
-      if (!response.ok) throw new Error('Zamanlanmış testler yüklenemedi');
-      
-      const data = await response.json();
-      setScheduledTests(data.scheduledTests || []);
-      setUpcomingRuns(data.upcomingRuns || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
-      console.error('Zamanlanmış testler yüklenirken hata:', err);
-    } finally {
-      setLoading(false);
+  // Use API query hook for fetching scheduled tests
+  const fetchScheduledTestsFn = useCallback(() => ScheduledTestService.fetchScheduledTests(), []);
+  const { data, loading, error, refetch } = useApiQuery(
+    fetchScheduledTestsFn,
+    {
+      enabled: true,
+      refetchOnMount: true,
     }
-  }, []);
+  );
 
-  useEffect(() => {
-    fetchScheduledTests();
-  }, [fetchScheduledTests]);
+  const scheduledTests = data?.scheduledTests || [];
+  const upcomingRuns = data?.upcomingRuns || [];
 
   const filteredTests = scheduledTests.filter(test => {
     if (filters.search && !test.name.toLowerCase().includes(filters.search.toLowerCase()) &&
@@ -71,74 +57,84 @@ export function useScheduledTests(): UseScheduledTestsReturn {
     return true;
   });
 
-  const createSchedule = async (schedule: Partial<ScheduledTest>): Promise<ScheduledTest | null> => {
-    try {
-      const response = await fetch(`${API_URL}/api/scheduled-tests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(schedule)
-      });
-      
-      if (!response.ok) throw new Error('Zamanlama oluşturulamadı');
-      
-      const newSchedule = await response.json();
-      setScheduledTests(prev => [...prev, newSchedule]);
-      return newSchedule;
-    } catch (err) {
-      console.error('Zamanlama oluşturma hatası:', err);
-      return null;
+  // Create schedule mutation
+  const createScheduleMutation = useApiMutation(
+    (schedule: Partial<ScheduledTest>) => ScheduledTestService.createScheduledTest(schedule as any),
+    {
+      onSuccess: () => refetch(),
     }
+  );
+
+  // Update schedule mutation
+  const updateScheduleMutation = useApiMutation(
+    ({ id, schedule }: { id: string; schedule: Partial<ScheduledTest> }) => 
+      ScheduledTestService.updateScheduledTest(id, schedule),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Delete schedule mutation
+  const deleteScheduleMutation = useApiMutation(
+    (id: string) => ScheduledTestService.deleteScheduledTest(id),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Toggle schedule mutation
+  const toggleScheduleMutation = useApiMutation(
+    (id: string) => ScheduledTestService.toggleScheduledTest(id),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Pause schedule mutation
+  const pauseScheduleMutation = useApiMutation(
+    (id: string) => ScheduledTestService.pauseScheduledTest(id),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Resume schedule mutation
+  const resumeScheduleMutation = useApiMutation(
+    (id: string) => ScheduledTestService.resumeScheduledTest(id),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Wrapper functions for backward compatibility
+  const createSchedule = async (schedule: Partial<ScheduledTest>): Promise<ScheduledTest | null> => {
+    const result = await createScheduleMutation.mutate(schedule);
+    return result;
   };
 
   const updateSchedule = async (id: string, schedule: Partial<ScheduledTest>): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API_URL}/api/scheduled-tests/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(schedule)
-      });
-      
-      if (!response.ok) throw new Error('Zamanlama güncellenemedi');
-      
-      const updatedSchedule = await response.json();
-      setScheduledTests(prev => prev.map(s => s.id === id ? updatedSchedule : s));
-      return true;
-    } catch (err) {
-      console.error('Zamanlama güncelleme hatası:', err);
-      return false;
-    }
+    const result = await updateScheduleMutation.mutate({ id, schedule });
+    return result !== null;
   };
 
   const deleteSchedule = async (id: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API_URL}/api/scheduled-tests/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) throw new Error('Zamanlama silinemedi');
-      
-      setScheduledTests(prev => prev.filter(s => s.id !== id));
-      return true;
-    } catch (err) {
-      console.error('Zamanlama silme hatası:', err);
-      return false;
-    }
+    const result = await deleteScheduleMutation.mutate(id);
+    return result !== null;
   };
 
   const toggleSchedule = async (id: string): Promise<boolean> => {
-    const schedule = scheduledTests.find(s => s.id === id);
-    if (!schedule) return false;
-    
-    const newStatus: 'active' | 'paused' = schedule.status === 'active' ? 'paused' : 'active';
-    return updateSchedule(id, { status: newStatus, enabled: newStatus === 'active' });
+    const result = await toggleScheduleMutation.mutate(id);
+    return result !== null;
   };
 
   const pauseSchedule = async (id: string): Promise<boolean> => {
-    return updateSchedule(id, { status: 'paused', enabled: false });
+    const result = await pauseScheduleMutation.mutate(id);
+    return result !== null;
   };
 
   const resumeSchedule = async (id: string): Promise<boolean> => {
-    return updateSchedule(id, { status: 'active', enabled: true });
+    const result = await resumeScheduleMutation.mutate(id);
+    return result !== null;
   };
 
   return {
@@ -149,7 +145,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
     filters,
     setFilters,
     filteredTests,
-    refresh: fetchScheduledTests,
+    refresh: refetch,
     createSchedule,
     updateSchedule,
     deleteSchedule,

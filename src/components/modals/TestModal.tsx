@@ -9,7 +9,7 @@ import { BrowserType, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/utils/fileUtils';
 import { useModal } from '@/hooks';
 import { useI18n } from '@/contexts';
-import { API_URL } from '@/utils/utils';
+import { TestService } from '@/utils/api';
 
 
 const TestModal: React.FC<TestModalProps> = ({
@@ -42,43 +42,34 @@ const TestModal: React.FC<TestModalProps> = ({
       const fetchExistingData = async () => {
         // First try backend API
         try {
-          const response = await fetch(`${API_URL}/api/tests`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
+          const tests = await TestService.fetchTests();
+          const allTags = new Set<string>();
+          const allSuites = new Set<string>();
           
-          if (response.ok) {
-            const tests = await response.json();
-            const allTags = new Set<string>();
-            const allSuites = new Set<string>();
-            
-            // Extract tags and suites from all tests
-            if (Array.isArray(tests)) {
-              tests.forEach((test: any) => {
-                if (test.tags && Array.isArray(test.tags)) {
-                  test.tags.forEach((tag: string) => {
-                    if (tag && tag.trim()) {
-                      allTags.add(tag.trim());
-                    }
-                  });
-                }
-                if (test.suite && test.suite.trim()) {
-                  allSuites.add(test.suite.trim());
-                }
-              });
-            }
-            
-            // Add default suite if no suites exist
-            if (allSuites.size === 0) {
-              allSuites.add('Default');
-            }
-            
-            setExistingTags(Array.from(allTags).sort());
-            setExistingSuites(Array.from(allSuites).sort());
-            return; // Success, exit early
+          // Extract tags and suites from all tests
+          if (Array.isArray(tests)) {
+            tests.forEach((test: any) => {
+              if (test.tags && Array.isArray(test.tags)) {
+                test.tags.forEach((tag: string) => {
+                  if (tag && tag.trim()) {
+                    allTags.add(tag.trim());
+                  }
+                });
+              }
+              if (test.suite && test.suite.trim()) {
+                allSuites.add(test.suite.trim());
+              }
+            });
           }
+          
+          // Add default suite if no suites exist
+          if (allSuites.size === 0) {
+            allSuites.add('Default');
+          }
+          
+          setExistingTags(Array.from(allTags).sort());
+          setExistingSuites(Array.from(allSuites).sort());
+          return; // Success, exit early
         } catch (apiError) {
           console.warn('Backend API not available, falling back to local storage:', apiError);
         }

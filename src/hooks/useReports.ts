@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats, UseReportsOptions } from '@/types';
 import { filterExecutions, getUniqueFilterOptions } from '@/utils/fileUtils';
-import { API_URL } from '@/utils/utils';
+import { useApiMutation, ExecutionService } from '@/utils/api';
 import useExecutions from './useExecutions';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
@@ -47,7 +47,7 @@ const useReports = (options: UseReportsOptions = {}) => {
 
   // Filter executions
   const filteredExecutions = useMemo(() => {
-    return filterExecutions(executions, filters);
+    return filterExecutions(executions || [], filters);
   }, [executions, filters]);
 
   // Sort executions
@@ -118,7 +118,7 @@ const useReports = (options: UseReportsOptions = {}) => {
 
   // Get unique filter options
   const filterOptions = useMemo(() => {
-    return getUniqueFilterOptions([], executions);
+    return getUniqueFilterOptions([], executions || []);
   }, [executions]);
 
   // Check if filters are active
@@ -156,35 +156,31 @@ const useReports = (options: UseReportsOptions = {}) => {
     });
   };
 
-  // Delete execution (if needed)
-  const deleteExecution = async (executionId: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API_URL}/api/executions/${executionId}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        refreshExecutions(); // Refresh data after deletion
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error deleting execution:', error);
-      return false;
+  // Delete execution mutation
+  const deleteExecutionMutation = useApiMutation(
+    (executionId: string) => ExecutionService.deleteExecution(executionId),
+    {
+      onSuccess: () => refreshExecutions(),
     }
+  );
+
+  // Bulk delete executions mutation
+  const bulkDeleteMutation = useApiMutation(
+    (executionIds: string[]) => ExecutionService.bulkDeleteExecutions(executionIds),
+    {
+      onSuccess: () => refreshExecutions(),
+    }
+  );
+
+  // Wrapper functions for backward compatibility
+  const deleteExecution = async (executionId: string): Promise<boolean> => {
+    const result = await deleteExecutionMutation.mutate(executionId);
+    return result !== null;
   };
 
-  // Bulk delete executions
   const bulkDeleteExecutions = async (executionIds: string[]): Promise<number> => {
-    let deletedCount = 0;
-    
-    for (const id of executionIds) {
-      if (await deleteExecution(id)) {
-        deletedCount++;
-      }
-    }
-    
-    return deletedCount;
+    const result = await bulkDeleteMutation.mutate(executionIds);
+    return result?.deletedCount || 0;
   };
 
   return {

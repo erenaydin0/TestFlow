@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { Test, TestFilters } from '@/types';
 import { filterTests, getUniqueFilterOptions } from '@/utils/fileUtils';
-import { API_URL } from '@/utils/utils';
+import { useApiQuery, useApiMutation, TestService } from '@/utils/api';
 
 interface UseTestsOptions {
   autoLoad?: boolean;
@@ -13,9 +13,6 @@ interface UseTestsOptions {
 const useTests = (options: UseTestsOptions = {}) => {
   const { autoLoad = true } = options;
   
-  const [tests, setTests] = useState<Test[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TestFilters>({
     search: '',
     suite: [],
@@ -23,139 +20,96 @@ const useTests = (options: UseTestsOptions = {}) => {
     browserType: []
   });
 
-  // Load tests from backend
-  const loadTests = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`${API_URL}/api/tests`);
-      if (!response.ok) throw new Error('Testler yüklenemedi');
-      
-      const data = await response.json();
-      setTests(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
-      console.error('Testler yüklenirken hata:', err);
-    } finally {
-      setLoading(false);
+  // Use API query hook for fetching tests
+  const fetchTestsFn = useCallback(() => TestService.fetchTests(), []);
+  const { data: tests = [], loading, error, refetch } = useApiQuery(
+    fetchTestsFn,
+    {
+      enabled: autoLoad,
+      refetchOnMount: true,
     }
-  }, []);
+  );
 
-  // Auto load on mount
-  useEffect(() => {
-    if (autoLoad) {
-      loadTests();
-    }
-  }, [autoLoad]);
 
   // Filter tests
   const filteredTests = useMemo(() => {
-    return filterTests(tests, filters);
+    return filterTests(tests || [], filters);
   }, [tests, filters]);
 
   // Get unique filter options
   const filterOptions = useMemo(() => {
-    return getUniqueFilterOptions(tests);
+    return getUniqueFilterOptions(tests || []);
   }, [tests]);
 
-  // Delete test
+  // Delete test mutation
+  const deleteTestMutation = useApiMutation(
+    (testId: string) => TestService.deleteTest(testId),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Duplicate test mutation
+  const duplicateTestMutation = useApiMutation(
+    (testId: string) => TestService.duplicateTest(testId),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Update test mutation
+  const updateTestMutation = useApiMutation(
+    ({ testId, updatedTest }: { testId: string; updatedTest: Test }) => 
+      TestService.updateTest(testId, updatedTest),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Bulk operations mutations
+  const bulkDeleteMutation = useApiMutation(
+    (testIds: string[]) => TestService.bulkDeleteTests(testIds),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  const bulkDuplicateMutation = useApiMutation(
+    (testIds: string[]) => TestService.bulkDuplicateTests(testIds),
+    {
+      onSuccess: () => refetch(),
+    }
+  );
+
+  // Wrapper functions for backward compatibility
   const deleteTest = async (testId: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API_URL}/api/tests/${testId}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) throw new Error('Test silinemedi');
-      
-      await loadTests();
-      return true;
-    } catch (error) {
-      console.error('Test silinirken hata:', error);
-      return false;
-    }
+    const result = await deleteTestMutation.mutate(testId);
+    return result !== null;
   };
 
-  // Duplicate test
   const duplicateTest = async (testId: string): Promise<string | null> => {
-    try {
-      const test = tests.find(t => t.id === testId);
-      if (!test) return null;
-      
-      const duplicatedTest = {
-        ...test,
-        id: undefined, // Backend yeni ID oluşturacak
-        name: `${test.name} (Kopya)`,
-        createdAt: undefined,
-        updatedAt: undefined
-      };
-      
-      const response = await fetch(`${API_URL}/api/tests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(duplicatedTest)
-      });
-      
-      if (!response.ok) throw new Error('Test kopyalanamadı');
-      
-      const newTest = await response.json();
-      await loadTests();
-      return newTest.id;
-    } catch (error) {
-      console.error('Test kopyalanırken hata:', error);
-      return null;
-    }
+    const result = await duplicateTestMutation.mutate(testId);
+    return result?.id || null;
   };
 
-  // Update test
   const updateTest = async (testId: string, updatedTest: Test): Promise<boolean> => {
-    try {
-      const response = await fetch(`${API_URL}/api/tests/${testId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTest)
-      });
-      
-      if (!response.ok) throw new Error('Test güncellenemedi');
-      
-      const updated = await response.json();
-      setTests(prev => prev.map(t => t.id === testId ? updated : t));
-      return true;
-    } catch (error) {
-      console.error('Test güncellenirken hata:', error);
-      return false;
-    }
+    const result = await updateTestMutation.mutate({ testId, updatedTest });
+    return result !== null;
   };
 
-  // Bulk delete tests
   const bulkDeleteTests = async (testIds: string[]): Promise<number> => {
-    let deletedCount = 0;
-    
-    for (const testId of testIds) {
-      if (await deleteTest(testId)) {
-        deletedCount++;
-      }
-    }
-    
-    return deletedCount;
+    const result = await bulkDeleteMutation.mutate(testIds);
+    return result?.deletedCount || 0;
   };
 
-  // Bulk duplicate tests
   const bulkDuplicateTests = async (testIds: string[]): Promise<number> => {
-    let duplicatedCount = 0;
-    
-    for (const testId of testIds) {
-      if (await duplicateTest(testId)) {
-        duplicatedCount++;
-      }
-    }
-    
-    return duplicatedCount;
+    const result = await bulkDuplicateMutation.mutate(testIds);
+    return result?.duplicatedCount || 0;
   };
 
   // Refresh function
   const refresh = () => {
-    loadTests();
+    refetch();
   };
 
   return {
@@ -166,7 +120,7 @@ const useTests = (options: UseTestsOptions = {}) => {
     filters,
     setFilters,
     filterOptions,
-    loadTests,
+    loadTests: refresh, // Alias for backward compatibility
     refresh,
     deleteTest,
     duplicateTest,

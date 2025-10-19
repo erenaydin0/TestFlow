@@ -26,7 +26,7 @@ import {
   useNotifications
 } from '@/hooks';
 import { useSidebar, useBrowserSettings, useI18n } from '@/contexts';
-import { API_URL } from '@/utils/utils';
+import { TestService, ExecutionService } from '@/utils/api';
 
 export default function TestBuilder() {
   const { isCollapsed } = useSidebar();
@@ -491,7 +491,7 @@ export default function TestBuilder() {
         headlessMode,
         browserType: data.browserType,
         isExecutable: true,
-        status: '',
+        status: 'pending' as const,
         duration: 0
       };
 
@@ -500,14 +500,7 @@ export default function TestBuilder() {
       // Backend'e kaydet
       if (loadedWorkflowId) {
         // Güncelleme
-        const response = await fetch(`${API_URL}/api/tests/${loadedWorkflowId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(testData)
-        });
-        
-        if (!response.ok) throw new Error(t('testBuilder.testUpdateFailed'));
-        const updated = await response.json();
+        const updated = await TestService.updateTest(loadedWorkflowId, testData);
         workflowId = updated.id;
         
         // Update loadedWorkflowData with new data
@@ -516,14 +509,7 @@ export default function TestBuilder() {
         notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
       } else {
         // Yeni kayıt
-        const response = await fetch(`${API_URL}/api/tests`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(testData)
-        });
-        
-        if (!response.ok) throw new Error('Test kaydedilemedi');
-        const saved = await response.json();
+        const saved = await TestService.createTest(testData);
         workflowId = saved.id;
         setLoadedWorkflowId(workflowId);
         
@@ -599,32 +585,20 @@ export default function TestBuilder() {
           falseConnection: step.falseConnection // For IF FALSE branch
         }
       }));
-      const response = await fetch(`${API_URL}/api/executions/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workflowId: loadedWorkflowId || 'test-builder',
-          workflowName: actualWorkflowName,
-          steps: backendSteps,
-          suite: loadedWorkflowName ? 'Saved Tests' : 'Test Builder',
-          tags: loadedWorkflowName ? ['saved', 'edited'] : ['manual', 'builder'],
-          options: {
-            enableScreenshots,
-            enableRecording,
-            headlessMode,
-            browserType: selectedBrowser
-          }
-        })
+      const data = await ExecutionService.executeWorkflow({
+        workflowId: loadedWorkflowId || 'test-builder',
+        workflowName: actualWorkflowName,
+        steps: backendSteps,
+        suite: loadedWorkflowName ? 'Saved Tests' : 'Test Builder',
+        tags: loadedWorkflowName ? ['saved', 'edited'] : ['manual', 'builder'],
+        options: {
+          enableScreenshots,
+          enableRecording,
+          headlessMode,
+          browserType: selectedBrowser
+        }
       });
 
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       notifyTestStart(actualWorkflowName, data.executionId);
       
       // Optional: Navigate to tests page to see results
@@ -647,11 +621,7 @@ export default function TestBuilder() {
     
     if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
       // Backend'den workflow yükle
-      fetch(`${API_URL}/api/tests/${loadWorkflowId}`)
-        .then(response => {
-          if (!response.ok) throw new Error('Test bulunamadı');
-          return response.json();
-        })
+      TestService.fetchTestById(loadWorkflowId)
         .then(workflow => {
           if (workflow && workflow.workflow) {
             console.log(t('testBuilder.loadingWorkflow'), workflow.name);

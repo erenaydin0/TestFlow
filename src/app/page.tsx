@@ -30,7 +30,7 @@ export default function Dashboard() {
     }).reverse();
 
     const dailyResults = days.map(date => {
-      const dayExecutions = executions.filter((e: any) => 
+      const dayExecutions = (executions || []).filter((e: any) => 
         new Date(e.startTime).toISOString().split('T')[0] === date
       );
       return {
@@ -42,7 +42,7 @@ export default function Dashboard() {
     });
 
     // Test suite distribution with success rate
-    const testSuiteData = executions.reduce((acc: any, execution: any) => {
+    const testSuiteData = (executions || []).reduce((acc: any, execution: any) => {
       const suite = execution.suite || t('dashboard.other');
       if (!acc[suite]) {
         acc[suite] = { total: 0, passed: 0 };
@@ -66,7 +66,7 @@ export default function Dashboard() {
     });
 
     // Browser distribution with success rate
-    const browserData = executions.reduce((acc: any, execution: any) => {
+    const browserData = (executions || []).reduce((acc: any, execution: any) => {
       const browser = execution.options?.browserType || 'chromium';
       if (!acc[browser]) {
         acc[browser] = { total: 0, passed: 0 };
@@ -94,7 +94,7 @@ export default function Dashboard() {
     });
 
     // Recent tests (last 5) - map to RecentTest interface
-    const recentTests = executions
+    const recentTests = (executions || [])
       .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
       .slice(0, 5)
       .map((execution: any, index: number) => ({

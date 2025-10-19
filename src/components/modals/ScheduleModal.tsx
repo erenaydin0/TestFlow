@@ -6,7 +6,7 @@ import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
 import { Button,CustomSelect } from '@/components';
 import { useI18n, useSidebar } from '@/contexts';
 import { useModal } from '@/hooks';
-import { API_URL } from '@/utils/utils';
+import { TestService } from '@/utils/api';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -82,9 +82,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
     const loadTests = async () => {
       try {
         setLoadingTests(true);
-        const response = await fetch(`${API_URL}/api/tests`);
-        if (!response.ok) throw new Error('Testler yüklenemedi');
-        const data = await response.json();
+        const data = await TestService.fetchTests();
         setTests(data);
       } catch (error) {
         console.error('Testler yüklenirken hata:', error);

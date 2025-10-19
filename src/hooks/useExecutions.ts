@@ -1,42 +1,22 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { ExecutionResult, ExecutionStats, UseExecutionsOptions } from '@/types';
-import { API_URL } from '@/utils/utils';
+import { useApiQuery, ExecutionService } from '@/utils/api';
 
 const useExecutions = (options: UseExecutionsOptions = {}) => {
   const { autoFetch = true } = options;
   
-  const [executions, setExecutions] = useState<ExecutionResult[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch executions from backend
-  const fetchExecutions = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/api/executions`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setExecutions(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching executions:', err);
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
-    } finally {
-      setLoading(false);
+  // Use API query hook for fetching executions
+  const fetchExecutionsFn = useCallback(() => ExecutionService.fetchExecutions(), []);
+  const { data: executions = [], loading, error, refetch } = useApiQuery(
+    fetchExecutionsFn,
+    {
+      enabled: autoFetch,
+      refetchOnMount: true,
     }
-  };
-
-  // Auto fetch on mount
-  useEffect(() => {
-    if (autoFetch) {
-      fetchExecutions();
-    }
-  }, [autoFetch]);
+  );
 
   // Calculate stats from executions
   const calculateStats = (executionList: ExecutionResult[]): ExecutionStats => {
@@ -52,11 +32,11 @@ const useExecutions = (options: UseExecutionsOptions = {}) => {
   };
 
   // Stats for all executions
-  const stats = useMemo(() => calculateStats(executions), [executions]);
+  const stats = useMemo(() => calculateStats(executions || []), [executions]);
 
   // Refresh function
   const refresh = () => {
-    fetchExecutions();
+    refetch();
   };
 
   return {
@@ -64,7 +44,7 @@ const useExecutions = (options: UseExecutionsOptions = {}) => {
     loading,
     error,
     stats,
-    fetchExecutions,
+    fetchExecutions: refresh, // Alias for backward compatibility
     refresh,
     calculateStats
   };
