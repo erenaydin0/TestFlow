@@ -341,13 +341,13 @@ export const filterTests = (
   return tests.filter(test => {
     const matchesSearch = !filters.search || 
       test.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      test.description.toLowerCase().includes(filters.search.toLowerCase()) ||
-      test.tags.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase()));
+      test.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      test.tags?.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase()));
 
-    const matchesSuite = filters.suite.length === 0 || filters.suite.includes(test.suite);
+    const matchesSuite = filters.suite.length === 0 || filters.suite.includes(test.suite || '');
     
     const matchesTags = filters.tags.length === 0 || 
-      filters.tags.some(filterTag => test.tags.includes(filterTag));
+      (test.tags || []).some(filterTag => (test.tags || []).includes(filterTag));
     
     const matchesBrowser = filters.browserType.length === 0 || 
       filters.browserType.includes(test.browserType || 'chromium');
