@@ -8,7 +8,6 @@
   },
   "scheduled": {
     "title": "Zamanlanmış Testler",
-    "subtitle": "Zamanlanmış testleri kontrol edin",
     "tests": "test",
     "testName": "Test Adı",
     "status": "Durum",
@@ -61,7 +60,6 @@
   },
   "tests": {
     "title": "Testler",
-    "subtitle": "Toplam {{count}} kayıtlı test bulunuyor.",
     "createNew": "Yeni Test",
     "runTest": "Testi Çalıştır",
     "editTest": "Testi Düzenle",
@@ -105,7 +103,6 @@
   },
   "reports": {
     "title": "Test Sonuçları",
-    "subtitle": "Çalıştırılan testlerin detaylı sonuçları",
     "results": "sonuç",
     "loadingResults": "Test sonuçları yükleniyor...",
     "deleteRecords": "Test Kayıtlarını Sil",
@@ -183,7 +180,6 @@
   },
   "testBuilder": {
     "title": "Test Oluşturucu",
-    "subtitle": "Görsel test workflow'u oluşturun",
     "addStep": "Adım Ekle",
     "editStep": "Adımı Düzenle",
     "deleteStep": "Adımı Sil",

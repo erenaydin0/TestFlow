@@ -8,7 +8,6 @@
   },
   "scheduled": {
     "title": "Scheduled Tests",
-    "subtitle": "Check scheduled tests",
     "tests": "tests",
     "testName": "Test Name",
     "status": "Status",
@@ -61,7 +60,6 @@
   },
   "tests": {
     "title": "Tests",
-    "subtitle": "Total {{count}} registered tests found.",
     "createNew": "New Test",
     "runTest": "Run Test",
     "editTest": "Edit Test",
@@ -105,7 +103,6 @@
   },
   "reports": {
     "title": "Test Results",
-    "subtitle": "Detailed results of executed tests",
     "results": "results",
     "loadingResults": "Loading test results...",
     "deleteRecords": "Delete Test Records",
@@ -183,7 +180,6 @@
   },
   "testBuilder": {
     "title": "Test Builder",
-    "subtitle": "Create visual test workflows",
     "addStep": "Add Step",
     "editStep": "Edit Step",
     "deleteStep": "Delete Step",
