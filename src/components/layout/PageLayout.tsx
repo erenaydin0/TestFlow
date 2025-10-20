@@ -7,7 +7,6 @@ import { useSidebar } from '@/contexts';
 interface PageLayoutProps {
   children: React.ReactNode;
   title?: string;
-  subtitle?: string;
   headerActions?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -16,7 +15,6 @@ interface PageLayoutProps {
 export default function PageLayout({ 
   children, 
   title, 
-  subtitle, 
   headerActions,
   className = '',
   style = {}
@@ -54,33 +52,23 @@ export default function PageLayout({
         <Header />
         
         <main style={{ padding: '1.5rem' }} className={className}>
-          {(title || subtitle || headerActions) && (
+          {(title || headerActions) && (
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center', 
               marginBottom: '2rem' 
             }}>
-              {(title || subtitle) && (
+              {title && (
                 <div>
-                  {title && (
-                    <h1 style={{ 
-                      fontSize: '1.875rem', 
-                      fontWeight: 'bold', 
-                      color: 'var(--text-primary)', 
-                      margin: 0 
-                    }}>
-                      {title}
-                    </h1>
-                  )}
-                  {subtitle && (
-                    <p style={{ 
-                      color: 'var(--text-secondary)', 
-                      margin: '0.5rem 0 0 0' 
-                    }}>
-                      {subtitle}
-                    </p>
-                  )}
+                  <h1 style={{ 
+                    fontSize: '1.875rem', 
+                    fontWeight: 'bold', 
+                    color: 'var(--text-primary)', 
+                    margin: 0 
+                  }}>
+                    {title}
+                  </h1>
                 </div>
               )}
               

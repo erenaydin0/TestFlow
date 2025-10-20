@@ -629,7 +629,6 @@ export default function TestsPage() {
   return (
     <PageLayout
       title={t('tests.title')}
-      subtitle={t('tests.subtitle', { count: tests?.length || 0 })}
     >
       <LoadingErrorState
         loading={loading}
