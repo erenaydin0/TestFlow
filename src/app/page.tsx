@@ -117,7 +117,7 @@ export default function Dashboard() {
   }, [executions, dateRange]);
 
   return (
-    <PageLayout>
+    <PageLayout title={t('dashboard.title')}>
       <LoadingErrorState 
         loading={loading} 
         error={error} 

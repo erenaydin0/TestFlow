@@ -223,11 +223,6 @@ export default function ScheduledPage() {
   return (
     <PageLayout
       title={t('scheduled.title')}
-      subtitle={
-        scheduledTests.length > 0 
-          ? `${t('scheduled.subtitle')} (${filteredTests.length} / ${scheduledTests.length} ${t('scheduled.tests')})`
-          : t('scheduled.subtitle')
-      }
     >
 
       {loading ? (

@@ -778,7 +778,6 @@ export default function ReportsPage() {
   return (
     <PageLayout
       title={t('reports.title')}
-      subtitle={`${t('reports.subtitle')}${hasActiveFilters ? ` (${sortedExecutions.length} / ${executions.length} ${t('reports.results')})` : ''}`}
     >
       <LoadingErrorState
         loading={loading}
