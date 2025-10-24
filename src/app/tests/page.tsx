@@ -28,6 +28,8 @@ import { exportTestWorkflow, exportTestsToCSV } from '@/utils/fileUtils';
 import { useNotifications, useTests, usePagination, useSorting, useBulkSelection } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
 import { ExecutionService } from '@/utils/api';
+import { executeTest, executeBulkTests, validateTestForExecution, processExecutionResults } from '@/utils/testExecutionUtils';
+import { getTestsTableColumns } from '@/config/tableColumns';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 
@@ -142,100 +144,6 @@ export default function TestsPage() {
 
   // filterOptions artık useTests hook'undan geliyor
 
-  // Define table columns for DataTable
-  const columns: Column<Test>[] = [
-    {
-      key: 'name',
-      label: t('tests.testName'),
-      sortable: true,
-      width: '300px',
-      render: (value, test) => (
-        <TestNameCell 
-          name={test.name} 
-          description={test.description} 
-          id={test.id}
-        />
-      )
-    },
-
-    {
-      key: 'suite',
-      label: t('tests.testGroup'),
-      sortable: true,
-      width: '150px',
-      render: (value, test) => (
-        <EditableSuiteCell
-          value={value}
-          testId={test.id}
-          availableSuites={filterOptions.suites}
-          onUpdate={handleUpdateSuite}
-        />
-      )
-    },
-    {
-      key: 'tags',
-      label: t('tests.tags'),
-      sortable: true,
-      width: '200px',
-      render: (value, test) => (
-        <EditableTagsCell
-          tags={test.tags}
-          testId={test.id}
-          availableTags={filterOptions.tags}
-          onUpdate={handleUpdateTags}
-        />
-      )
-    },
-    {
-      key: 'browserType',
-      label: t('tests.browser'),
-      sortable: true,
-      width: '100px',
-      render: (value, test) => (
-        <EditableBrowserCell
-          browserType={test.browserType || 'chromium'}
-          testId={test.id}
-          onUpdate={handleUpdateBrowser}
-        />
-      )
-    },
-    {
-      key: 'stepCount',
-      label: t('tests.stepCount'),
-      sortable: true,
-      width: '100px',
-      render: (value, test) => (
-        <StepCountCell count={test.workflow?.length || 0} />
-      )
-    },
-    {
-      key: 'createdAt',
-      label: t('tests.createdAt'),
-      sortable: true,
-      width: '100px',
-      render: (value, test) => (
-        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {test.createdAt ? new Date(test.createdAt).toLocaleDateString('tr-TR') : '-'}
-        </span>
-      )
-    },
-    {
-      key: 'actions',
-      label: t('tests.actions'),
-      sortable: false,
-      width: '200px',
-      render: (value, test) => (
-        <ActionsCell
-          onRun={() => handleRunTest(test.id)}
-          onEdit={() => handleEditTest(test.id)}
-          onDuplicate={() => handleDuplicateTest(test.id)}
-          onExport={() => handleExportTest(test.id)}
-          onDelete={() => handleDeleteTest(test.id)}
-        />
-      )
-    }
-  ];
-
   // Handle test selection
   const handleTestSelection = (testId: string, checked: boolean) => {
     const newSelection = new Set(selectedTests);
@@ -249,60 +157,23 @@ export default function TestsPage() {
 
 
 
-  // Handle run test - Updated to use ExecutionService
+  // Handle run test - Updated to use utility functions
   const handleRunTest = async (testId: string) => {
     const test = tests?.find((t: any) => t.id === testId);
-    if (!test || !test.workflow || test.workflow.length === 0) {
-      notifyTestFailure(test?.name || t('tests.unknownTest'), testId, t('tests.workflowNotFound'));
+    if (!test) {
+      notifyTestFailure(t('tests.unknownTest'), testId, t('tests.testNotFound'));
+      return;
+    }
+
+    const validation = validateTestForExecution(test);
+    if (!validation.isValid) {
+      notifyTestFailure(test.name, testId, validation.error || t('tests.workflowNotFound'));
       return;
     }
     
     try {
-      // Convert frontend steps to backend format
-      const backendSteps = test.workflow.map((step: any) => ({
-        id: step.id,
-        type: step.type,
-        config: {
-          url: step.url,
-          selector: step.selector,
-          value: step.value,
-          text: step.value, // For type actions
-          target: step.selector, // Alternative selector name
-          duration: step.duration,
-          condition: step.condition,
-          conditionType: step.conditionType, // For IF actions
-          expectedValue: step.expectedValue,
-          operator: step.operator, // For IF actions
-          verificationType: step.verificationType, // For verify actions
-          direction: step.direction,
-          amount: step.amount,
-          filename: step.filename,
-          key: step.key,
-          optionType: step.optionType, // For dropdown actions
-          optionValue: step.optionValue, // For dropdown actions
-          // Connection properties for flow control
-          connections: step.connections,
-          trueConnection: step.trueConnection, // For IF TRUE branch
-          falseConnection: step.falseConnection // For IF FALSE branch
-        }
-      }));
-      
-      const data = await ExecutionService.executeWorkflow({
-        workflowId: test.id,
-        workflowName: test.name,
-        steps: backendSteps,
-        suite: test.suite,
-        tags: test.tags,
-        options: {
-          enableScreenshots: test.enableScreenshots !== undefined ? test.enableScreenshots : browserSettings.defaultScreenshots,
-          enableRecording: test.enableRecording !== undefined ? test.enableRecording : browserSettings.defaultRecording,
-          headlessMode: test.headlessMode !== undefined ? test.headlessMode : browserSettings.defaultHeadless,
-          browserType: test.browserType !== undefined ? test.browserType : browserSettings.defaultBrowser
-        }
-      });
-
+      const data = await executeTest(test, {}, browserSettings);
       notifyTestStart(test.name, data.executionId);
-      
     } catch (error) {
       console.error('Test execution error:', error);
       notifyTestFailure(test.name, testId, error instanceof Error ? error.message : t('common.unknownError'));
@@ -390,7 +261,7 @@ export default function TestsPage() {
     }
   };
 
-  // Handle bulk run - Updated to use ExecutionService
+  // Handle bulk run - Updated to use utility functions
   const handleBulkRun = async () => {
     if (selectedTests.size === 0) return;
     
@@ -403,46 +274,16 @@ export default function TestsPage() {
     }
 
     try {
-      const executionPromises = validTests.map(async (test: any) => {
-        // Convert frontend steps to backend format
-        const backendSteps = test.workflow!.map((step: any) => ({
-          id: step.id,
-          type: step.type,
-          config: {
-            url: step.url,
-            selector: step.selector,
-            value: step.value,
-            text: step.value, // For type actions
-            target: step.selector, // Alternative selector name
-            duration: step.duration,
-            condition: step.condition,
-            expectedValue: step.expectedValue,
-            direction: step.direction,
-            amount: step.amount,
-            filename: step.filename,
-            key: step.key
-          }
-        }));
-        
-        return await ExecutionService.executeWorkflow({
-          workflowId: test.id,
-          workflowName: test.name,
-          steps: backendSteps,
-          suite: test.suite,
-          tags: test.tags,
-          options: {
-            enableScreenshots: test.enableScreenshots || false,
-            enableRecording: test.enableRecording || false,
-            headlessMode: test.headlessMode || false,
-            browserType: test.browserType || 'chromium'
-          }
-        });
-      });
-
-      const results = await Promise.all(executionPromises);
-      const executionIds = results.map((r: any) => r.executionId);
+      const results = await executeBulkTests(validTests);
+      const { executionIds, successCount, failureCount } = processExecutionResults(results);
       
-      notifyTestStart(`${validTests.length} test`, executionIds.join(','));
+      if (successCount > 0) {
+        notifyTestStart(`${successCount} test`, executionIds.join(','));
+      }
+      
+      if (failureCount > 0) {
+        notifyTestFailure(t('tests.bulkRun'), '', `${failureCount} test failed to execute`);
+      }
       
     } catch (error) {
       console.error('Bulk test execution error:', error);
@@ -570,6 +411,18 @@ export default function TestsPage() {
     setIsImportDialogOpen(false);
     notifyTestImported(t('tests.importSuccess', { count: importedCount }), '');
   };
+
+  // Define table columns for DataTable
+  const columns: Column<Test>[] = getTestsTableColumns(t, filterOptions, {
+    onUpdateSuite: handleUpdateSuite,
+    onUpdateTags: handleUpdateTags,
+    onUpdateBrowser: handleUpdateBrowser,
+    onRun: handleRunTest,
+    onEdit: handleEditTest,
+    onDuplicate: handleDuplicateTest,
+    onExport: handleExportTest,
+    onDelete: handleDeleteTest
+  });
 
   return (
     <PageLayout

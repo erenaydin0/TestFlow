@@ -9,6 +9,7 @@ export interface UseSortingOptions<T> {
   defaultSortField?: string;
   defaultSortOrder?: SortOrder;
   onSortChange?: (field: string, order: SortOrder) => void;
+  customSorters?: Record<string, (a: T, b: T) => number>;
 }
 
 export interface UseSortingReturn<T> {
@@ -30,7 +31,8 @@ const useSorting = <T extends Record<string, any>>({
   data,
   defaultSortField,
   defaultSortOrder = 'asc',
-  onSortChange
+  onSortChange,
+  customSorters
 }: UseSortingOptions<T>): UseSortingReturn<T> => {
   const [sortField, setSortField] = useState<string>(defaultSortField || '');
   const [sortOrder, setSortOrder] = useState<SortOrder>(defaultSortOrder);
@@ -43,6 +45,12 @@ const useSorting = <T extends Record<string, any>>({
 
     const sorted = [...data];
     sorted.sort((a, b) => {
+      // Use custom sorter if available
+      if (customSorters && customSorters[sortField]) {
+        const result = customSorters[sortField](a, b);
+        return sortOrder === 'asc' ? result : -result;
+      }
+
       let aValue: any;
       let bValue: any;
 
@@ -88,7 +96,7 @@ const useSorting = <T extends Record<string, any>>({
     });
 
     return sorted;
-  }, [data, sortField, sortOrder]);
+  }, [data, sortField, sortOrder, customSorters]);
 
   // Handle sort field change
   const handleSort = useCallback((field: string) => {

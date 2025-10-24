@@ -30,6 +30,9 @@ import { StatusBadge } from '@/components/common';
 import { useNotifications, useReports, usePagination, useBulkSelection } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
 import { API_URL } from '@/utils/utils';
+import { downloadExecutionReport, downloadBulkExecutionReports } from '@/utils/reportUtils';
+import { getExecutionPath, getConditionResults } from '@/utils/executionFlowUtils';
+import { getReportsTableColumns } from '@/config/tableColumns';
 
 const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCell, SuccessRateCell } = TableCells;
 
@@ -84,80 +87,9 @@ export default function ReportsPage() {
     onSelectionChange: setSelectedExecutions
   });
 
-  // Execution flow helper functions
-  const getExecutionPath = (execution: ExecutionResult): string[] => {
-    const path: string[] = [];
-    const stepMap = new Map();
-    execution.steps.forEach((step, index) => {
-      stepMap.set(step.stepId, { step, index });
-    });
-
-    // Find start step (step with no incoming connections)
-    const hasIncomingConnection = new Set();
-    execution.steps.forEach(step => {
-      if (step.config.connections) {
-        step.config.connections.forEach((targetId: string) => hasIncomingConnection.add(targetId));
-      }
-      if (step.config.trueConnection) {
-        hasIncomingConnection.add(step.config.trueConnection);
-      }
-      if (step.config.falseConnection) {
-        hasIncomingConnection.add(step.config.falseConnection);
-      }
-    });
-
-    let currentStepId = execution.steps.find(s => !hasIncomingConnection.has(s.stepId))?.stepId;
-    const visitedSteps = new Set();
-    const maxIterations = execution.steps.length * 10;
-    let iterations = 0;
-
-    while (currentStepId && iterations < maxIterations) {
-      iterations++;
-      
-      if (visitedSteps.has(currentStepId)) {
-        break; // Prevent infinite loops
-      }
-      visitedSteps.add(currentStepId);
-      path.push(currentStepId);
-
-      const currentStepData = stepMap.get(currentStepId);
-      if (!currentStepData) break;
-
-      const { step } = currentStepData;
-      
-      // Determine next step based on step type and connections
-      let nextStepId = null;
-      
-      // Handle IF step conditional navigation
-      if (step.type === 'if' && step.conditionResult !== undefined) {
-        // Gerçek koşul sonucuna göre yön belirle
-        nextStepId = step.conditionResult 
-          ? step.config.trueConnection 
-          : step.config.falseConnection;
-      }
-      // Handle normal connections (non-IF steps)
-      else if (step.type !== 'if' && step.config.connections && step.config.connections.length > 0) {
-        nextStepId = step.config.connections[0];
-      }
-
-      currentStepId = nextStepId;
-    }
-
-    return path;
-  };
-
-  const getConditionResults = (execution: ExecutionResult): Map<string, boolean> => {
-    const results = new Map<string, boolean>();
-    
-    // Gerçek conditionResult'ı kullan
-    execution.steps.forEach(step => {
-      if (step.type === 'if' && step.conditionResult !== undefined) {
-        results.set(step.stepId, step.conditionResult);
-      }
-    });
-
-    return results;
-  };
+  // Execution flow helper functions - now using utility functions
+  const getExecutionPathHelper = (execution: ExecutionResult): string[] => getExecutionPath(execution);
+  const getConditionResultsHelper = (execution: ExecutionResult): Map<string, boolean> => getConditionResults(execution);
 
   // Handle URL search parameter
   useEffect(() => {
@@ -255,488 +187,49 @@ export default function ReportsPage() {
     setIsModalOpen(!!selectedExecution);
   }, [selectedExecution, setIsModalOpen]);
 
-  // Define table columns for DataTable
-  const columns: Column<ExecutionResult>[] = [
-    {
-      key: 'workflowName',
-      label: t('reports.testName'),
-      sortable: true,
-      render: (value, execution) => (
-        <TestNameCell 
-          name={execution.workflowName} 
-          id={execution.id}
-        />
-      )
-    },
-    {
-      key: 'status',
-      label: t('reports.status'),
-      sortable: true,
-      width: '100px',
-      render: (value, execution) => (
-        <StatusCell status={execution.status} size="sm" />
-      )
-    },
-    {
-      key: 'successRate',
-      label: t('reports.success'),
-      sortable: true,
-      width: '100px',
-      render: (value, execution) => (
-        <SuccessRateCell rate={execution.successRate} />
-      )
-    },
-    {
-      key: 'startTime',
-      label: t('reports.startTime'),
-      sortable: true,
-      width: '150px',
-      render: (value, execution) => {
-        const { locale } = useI18n();
-        const fullDateTime = formatDateForTooltip(execution.startTime, locale);
-        
-        return (
-          <span 
-            style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}
-            title={fullDateTime}
-          >
-            {formatRelativeTime(execution.startTime, t)}
-          </span>
-        );
-      }
-    },
-    {
-      key: 'duration',
-      label: t('reports.duration'),
-      sortable: true,
-      align: 'center',
-      width: '100px',
-      render: (value, execution) => (
-        <DurationCell duration={execution.duration} />
-      )
-    },
-    {
-      key: 'suite',
-      label: t('reports.testGroup'),
-      width: '200px',
-      sortable: true,
-      render: (value) => (
-        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {value || '-'}
-        </span>
-      )
-    },
-    {
-      key: 'tags',
-      label: t('reports.tags'),
-      sortable: true,
-      width: '250px',
-      render: (value, execution) => (
-        <TagsCell tags={execution.tags || []} maxVisible={2} />
-      )
-    },
-    {
-      key: 'browserType',
-      label: t('reports.browser'),
-      sortable: true,
-      align: 'center',
-      width: '120px',
-      render: (value, execution) => (
-        <BrowserCell browserType={execution.options?.browserType} />
-      )
-    },
-    {
-      key: 'actions',
-      label: t('reports.downloadReport'),
-      sortable: false,
-      width: '80px',
-      render: (value, execution) => (
-        <ActionsCell
-          onDownload={() => downloadSingleExecution(execution)}
-        />
-      )
-    }
-  ];
+  // Define table columns for DataTable - will be defined after downloadSingleExecution function
 
   // Reset to first page when filters change
   useEffect(() => {
     pagination.resetToFirstPage();
   }, [filters, sortField, sortOrder]);
 
-  // Helper function to get translated status text
-  const getTranslatedStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'passed':
-        return t('status.passed');
-      case 'failed':
-        return t('status.failed');
-      case 'running':
-        return t('status.running');
-      case 'queued':
-        return t('status.queued');
-      case 'cancelled':
-        return t('status.cancelled');
-      case 'pending':
-        return t('status.pending');
-      case 'active':
-        return t('status.active');
-      case 'paused':
-        return t('status.paused');
-      case 'disabled':
-        return t('status.disabled');
-      default:
-        return status;
-    }
+  // Handle row click for execution details
+  const handleRowClick = (execution: ExecutionResult) => {
+    setSelectedExecution(execution);
   };
 
-  // Helper function to get translated step type text
-  const getTranslatedStepTypeText = (type: string) => {
-    switch (type) {
-      case 'navigate':
-        return t('testSteps.navigate');
-      case 'click':
-        return t('testSteps.click');
-      case 'input':
-      case 'type':
-        return t('testSteps.input');
-      case 'wait':
-        return t('testSteps.wait');
-      case 'refresh':
-        return t('testSteps.refresh');
-      case 'screenshot':
-        return t('testSteps.screenshot');
-      case 'verify':
-        return t('testSteps.verify');
-      case 'scroll':
-        return t('testSteps.scroll');
-      case 'hover':
-        return t('testSteps.hover');
-      case 'key':
-        return t('testSteps.key');
-      case 'dropdown':
-        return t('testSteps.dropdown');
-      case 'if':
-        return t('testSteps.condition');
-      default:
-        return type;
-    }
-  };
+  // Helper functions removed - now using utility functions
 
-  // Create single CSV report for test execution
-  const createTestCSVReport = (executions: ExecutionResult[]) => {
-    const csvHeaders = [
-      t('reports.testName'),
-      t('reports.executionId'),
-      t('reports.status'),
-      t('reports.startTime'),
-      t('reports.endTime'),
-      t('reports.totalDuration'),
-      t('reports.successRate'),
-      t('reports.testGroup'),
-      t('reports.tags'),
-      t('reports.browser'),
-      t('reports.totalSteps'),
-      t('reports.passedSteps'),
-      t('reports.failedSteps'),
-      t('reports.videoAvailable'),
-      t('reports.screenshotCount'),
-      t('reports.firstStepType'),
-      t('reports.lastStepType'),
-      t('reports.firstError'),
-      t('reports.lastStepDuration'),
-      t('reports.averageStepDuration'),
-      t('reports.longestStepDuration'),
-      t('reports.reportingDate')
-    ];
-    
-    const csvRows = executions.map(execution => {
-      const stepDurations = execution.steps.filter(s => s.duration).map(s => s.duration!);
-      const avgStepDuration = stepDurations.length > 0 ? Math.round(stepDurations.reduce((a, b) => a + b, 0) / stepDurations.length) : 0;
-      const maxStepDuration = stepDurations.length > 0 ? Math.max(...stepDurations) : 0;
-      const firstError = execution.steps.find(s => s.error)?.error || '';
-      const lastStepDuration = execution.steps[execution.steps.length - 1]?.duration || 0;
-      
-      return [
-        execution.workflowName,
-        execution.id,
-        getTranslatedStatusText(execution.status),
-        execution.startTime ? new Date(execution.startTime).toLocaleString('tr-TR') : '',
-        execution.endTime ? new Date(execution.endTime).toLocaleString('tr-TR') : '',
-        execution.duration || '',
-        execution.successRate || '',
-        execution.suite || '',
-        (execution.tags || []).join(', '),
-        (() => {
-          const browserType = execution.options?.browserType || 'chromium';
-          switch(browserType) {
-            case 'chromium': return 'Chrome';
-            case 'firefox': return 'Firefox';
-            case 'webkit': return 'Safari';
-            case 'msedge': return 'Edge';
-            default: return 'Chrome';
-          }
-        })(),
-        execution.steps.length,
-        execution.steps.filter(s => s.status === 'passed').length,
-        execution.steps.filter(s => s.status === 'failed').length,
-        execution.videoPath ? t('common.yes') : t('common.no'),
-        execution.steps.filter(s => s.screenshot).length,
-        execution.steps[0]?.type ? getStepTypeText(execution.steps[0].type) : '',
-        execution.steps[execution.steps.length - 1]?.type ? getStepTypeText(execution.steps[execution.steps.length - 1].type) : '',
-        firstError ? `"${firstError.replace(/"/g, '""')}"` : '',
-        lastStepDuration,
-        avgStepDuration,
-        maxStepDuration,
-        new Date().toLocaleString('tr-TR')
-      ];
-    });
-    
-    return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  };
-
-  // Create detailed steps CSV report
-  const createStepsCSVReport = (execution: ExecutionResult) => {
-    const csvHeaders = [
-      t('reports.stepNumber'),
-      t('reports.stepId'),
-      t('reports.stepType'),
-      t('reports.status'),
-      t('reports.startTime'),
-      t('reports.endTime'),
-      t('reports.duration'),
-      t('reports.url'),
-      t('reports.selector'),
-      t('reports.value'),
-      t('reports.expectedValue'),
-      t('reports.error'),
-      t('reports.screenshot')
-    ];
-    
-    const csvRows = execution.steps.map((step, index) => {
-      return [
-        index + 1,
-        step.stepId || '',
-        getTranslatedStepTypeText(step.type),
-        getTranslatedStatusText(step.status),
-        step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
-        step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
-        step.duration || '',
-        step.config?.url || '',
-        step.config?.selector || '',
-        step.config?.value || step.config?.text || '',
-        step.config?.expectedValue || '',
-        step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
-        step.screenshot ? t('common.yes') : t('common.no')
-      ];
-    });
-    
-    return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  };
-
-  // Create consolidated steps CSV for multiple executions
-  const createBulkStepsCSVReport = (executions: ExecutionResult[]) => {
-    const csvHeaders = [
-      t('reports.testName'),
-      t('reports.executionId'),
-      t('reports.stepNumber'),
-      t('reports.stepId'),
-      t('reports.stepType'),
-      t('reports.status'),
-      t('reports.startTime'),
-      t('reports.endTime'),
-      t('reports.duration'),
-      t('reports.url'),
-      t('reports.selector'),
-      t('reports.value'),
-      t('reports.expectedValue'),
-      t('reports.error'),
-      t('reports.screenshot')
-    ];
-    
-    const csvRows: any[] = [];
-    
-    executions.forEach(execution => {
-      execution.steps.forEach((step, index) => {
-        csvRows.push([
-          execution.workflowName,
-          execution.id,
-          index + 1,
-          step.stepId || '',
-          getTranslatedStepTypeText(step.type),
-          getTranslatedStatusText(step.status),
-          step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
-          step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
-          step.duration || '',
-          step.config?.url || '',
-          step.config?.selector || '',
-          step.config?.value || step.config?.text || '',
-          step.config?.expectedValue || '',
-          step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
-          step.screenshot ? t('common.yes') : t('common.no')
-        ]);
-      });
-    });
-    
-    return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  };
-
-  const getStepTypeText = (type: string) => {
-    switch (type) {
-      case 'navigate': return t('testSteps.navigate');
-      case 'click': return t('testSteps.click');
-      case 'input': return t('testSteps.input');
-      case 'wait': return t('testSteps.wait');
-      case 'screenshot': return t('testSteps.screenshot');
-      case 'verify': return t('testSteps.verify');
-      case 'scroll': return t('testSteps.scroll');
-      case 'hover': return t('testSteps.hover');
-      case 'key': return t('testSteps.key');
-      case 'refresh': return t('testSteps.refresh');
-      case 'if': return t('testSteps.condition');
-      default: return type;
-    }
-  };
-
-  // Single execution CSV + screenshots download
+  // Single execution download - now using utility function
   const downloadSingleExecution = async (execution: ExecutionResult) => {
     try {
-      // Import JSZip dynamically
-      const JSZip = (await import('jszip')).default;
-      const zip = new JSZip();
-      
-      // Create CSV reports
-      const csvContent = createTestCSVReport([execution]);
-      const stepsCSVContent = createStepsCSVReport(execution);
-      
-      zip.file(`${t('reports.testReport')}.csv`, '\uFEFF' + csvContent);
-      zip.file(`${t('reports.stepDetails')}.csv`, '\uFEFF' + stepsCSVContent);
-      
-      // Add screenshots
-      const screenshotsFolder = zip.folder('screenshots');
-      for (let i = 0; i < execution.steps.length; i++) {
-        const step = execution.steps[i];
-        if (step.screenshot) {
-          try {
-            const response = await fetch(`${API_URL}${step.screenshot}`);
-            if (response.ok) {
-              const blob = await response.blob();
-              const filename = `step_${i + 1}_${step.type}_${step.stepId?.slice(0, 8) || 'unknown'}.png`;
-              screenshotsFolder?.file(filename, blob);
-            }
-          } catch (error) {
-            console.error('Error downloading screenshot:', error);
-          }
-        }
-      }
-      
-      // Add video if exists
-      if (execution.videoPath) {
-        try {
-          const response = await fetch(`${API_URL}${execution.videoPath}`);
-          if (response.ok) {
-            const blob = await response.blob();
-            zip.file('test_video.webm', blob);
-          }
-        } catch (error) {
-          console.error('Error downloading video:', error);
-        }
-      }
-      
-      // Generate and download ZIP
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${execution.workflowName}_${execution.id.slice(0, 8)}_rapor.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
+      await downloadExecutionReport(execution, t);
     } catch (error) {
       console.error('Error creating report package:', error);
-      notifyTestFailure('Single Download', '', t('reports.reportPackageError') + ': ' + (error instanceof Error ? error.message : t('common.unknownError')));
+      notifyTestFailure('Single Download', '', error instanceof Error ? error.message : t('common.unknownError'));
     }
   };
+
+  // Define table columns for DataTable
+  const columns: Column<ExecutionResult>[] = getReportsTableColumns(t, locale, {
+    onDownload: downloadSingleExecution
+  });
 
 
   const downloadSelectedTests = async () => {
     if (selectedExecutions.size === 0) return;
     
     try {
-      // Import JSZip dynamically
-      const JSZip = (await import('jszip')).default;
-      const zip = new JSZip();
-      
-      const selectedExecutionsList = sortedExecutions.filter(e => selectedExecutions.has(e.id));
-      
-      // Create main CSV report
-      const csvContent = createTestCSVReport(selectedExecutionsList);
-      zip.file(`${t('reports.bulkTestReport')}.csv`, '\uFEFF' + csvContent);
-      
-      // Create consolidated steps CSV
-      const allStepsCSV = createBulkStepsCSVReport(selectedExecutionsList);
-      zip.file(`${t('reports.allStepDetails')}.csv`, '\uFEFF' + allStepsCSV);
-      
-      // Add screenshots and videos for each execution
-      for (let execIndex = 0; execIndex < selectedExecutionsList.length; execIndex++) {
-        const execution = selectedExecutionsList[execIndex];
-        const executionFolder = zip.folder(`${execIndex + 1}_${execution.workflowName.replace(/[^a-zA-Z0-9]/g, '_')}_${execution.id.slice(0, 8)}`);
-        
-        // Add individual execution reports
-        const stepsCSV = createStepsCSVReport(execution);
-        executionFolder?.file(`${t('reports.stepDetails')}.csv`, '\uFEFF' + stepsCSV);
-        
-        // Add screenshots for this execution
-        const screenshotsFolder = executionFolder?.folder('screenshots');
-        for (let i = 0; i < execution.steps.length; i++) {
-          const step = execution.steps[i];
-          if (step.screenshot) {
-            try {
-              const response = await fetch(`${API_URL}${step.screenshot}`);
-              if (response.ok) {
-                const blob = await response.blob();
-                const filename = `step_${i + 1}_${step.type}_${step.stepId?.slice(0, 8) || 'unknown'}.png`;
-                screenshotsFolder?.file(filename, blob);
-              }
-            } catch (error) {
-              console.error('Error downloading screenshot:', error);
-            }
-          }
-        }
-        
-        // Add video for this execution
-        if (execution.videoPath) {
-          try {
-            const response = await fetch(`${API_URL}${execution.videoPath}`);
-            if (response.ok) {
-              const blob = await response.blob();
-              executionFolder?.file('test_video.webm', blob);
-            }
-          } catch (error) {
-            console.error('Error downloading video:', error);
-          }
-        }
-      }
-      
-      // Generate and download ZIP
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `CosmicQA_${t('reports.bulkReport')}_${new Date().toISOString().split('T')[0]}_${selectedExecutions.size}test.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const selectedExecutionsList = sortedExecutions.filter((e: ExecutionResult) => selectedExecutions.has(e.id));
+      await downloadBulkExecutionReports(selectedExecutionsList, t);
       
       // Clear selection
       setSelectedExecutions(new Set());
       
     } catch (error) {
       console.error('Error creating bulk report package:', error);
-      notifyTestFailure('Bulk Download', '', 'Toplu rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      notifyTestFailure('Bulk Download', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
     }
   };
 
@@ -756,7 +249,7 @@ export default function ReportsPage() {
       setShowBulkDeleteDialog(false);
       
       notifyTestDeleted(`${deletedCount} test kaydı`, '');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting tests:', error);
       notifyTestFailure('Bulk Delete', '', 'Testler silinirken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     }
@@ -899,7 +392,7 @@ export default function ReportsPage() {
                   }}
                   sortField={sortField}
                   sortOrder={sortOrder}
-                  onRowClick={(execution) => setSelectedExecution(execution)}
+                  onRowClick={handleRowClick}
                 />
 
                 {/* Pagination Controls */}
@@ -1165,8 +658,8 @@ export default function ReportsPage() {
             {/* Unified Step View */}
             <StepView 
               steps={selectedExecution.steps}
-              executionPath={getExecutionPath(selectedExecution)}
-              conditionResults={getConditionResults(selectedExecution)}
+              executionPath={getExecutionPathHelper(selectedExecution)}
+              conditionResults={getConditionResultsHelper(selectedExecution)}
             />
               
             {/* Screenshots and Video */}

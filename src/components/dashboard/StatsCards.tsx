@@ -31,7 +31,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
   });
   const prevStatsRef = useRef(stats);
 
-  // Counter animation effect
+  // Counter animation effect - only animate when individual values change
   useEffect(() => {
     if (loading) return;
 
@@ -64,7 +64,7 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
     }, stepDuration);
 
     return () => clearInterval(interval);
-  }, [stats, loading]);
+  }, [stats.totalExecutions, stats.completedExecutions, stats.failedExecutions, stats.successRate, loading]);
 
   return (
     <>

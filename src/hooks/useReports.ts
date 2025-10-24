@@ -6,9 +6,9 @@ import { ExecutionResult, BrowserType, ExecutionFilters, ExecutionStats, UseRepo
 import { filterExecutions, getUniqueFilterOptions } from '@/utils/fileUtils';
 import { useApiMutation, ExecutionService } from '@/utils/api';
 import useExecutions from './useExecutions';
+import useSorting from './useSorting';
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
-type SortOrder = 'asc' | 'desc';
 
 interface ReportFilters {
   search: string;
@@ -41,8 +41,6 @@ const useReports = (options: UseReportsOptions = {}) => {
     browserType: []
   });
   
-  const [sortField, setSortField] = useState<SortField>('startTime');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedExecutions, setSelectedExecutions] = useState<Set<string>>(new Set());
 
   // Filter executions
@@ -50,69 +48,53 @@ const useReports = (options: UseReportsOptions = {}) => {
     return filterExecutions(executions || [], filters);
   }, [executions, filters]);
 
-  // Sort executions
-  const sortedExecutions = useMemo(() => {
-    const sorted = [...filteredExecutions];
-    sorted.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+  // Use sorting hook
+  const sorting = useSorting({
+    data: filteredExecutions,
+    defaultSortField: 'startTime',
+    defaultSortOrder: 'desc',
+    customSorters: {
+      workflowName: (a: ExecutionResult, b: ExecutionResult) => 
+        a.workflowName.toLowerCase().localeCompare(b.workflowName.toLowerCase()),
+      startTime: (a: ExecutionResult, b: ExecutionResult) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      duration: (a: ExecutionResult, b: ExecutionResult) => 
+        (a.duration || 0) - (b.duration || 0),
+      status: (a: ExecutionResult, b: ExecutionResult) => 
+        a.status.localeCompare(b.status),
+      successRate: (a: ExecutionResult, b: ExecutionResult) => 
+        (a.successRate || 0) - (b.successRate || 0),
+      suite: (a: ExecutionResult, b: ExecutionResult) => 
+        (a.suite || '').toLowerCase().localeCompare((b.suite || '').toLowerCase()),
+      tags: (a: ExecutionResult, b: ExecutionResult) => 
+        (a.tags || []).length - (b.tags || []).length,
+      browserType: (a: ExecutionResult, b: ExecutionResult) => 
+        (a.options?.browserType || 'chromium').localeCompare(b.options?.browserType || 'chromium')
+    }
+  });
 
-      switch (sortField) {
-        case 'workflowName':
-          aValue = a.workflowName.toLowerCase();
-          bValue = b.workflowName.toLowerCase();
-          break;
-        case 'startTime':
-          aValue = new Date(a.startTime).getTime();
-          bValue = new Date(b.startTime).getTime();
-          break;
-        case 'duration':
-          aValue = a.duration || 0;
-          bValue = b.duration || 0;
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case 'successRate':
-          aValue = a.successRate || 0;
-          bValue = b.successRate || 0;
-          break;
-        case 'suite':
-          aValue = (a.suite || '').toLowerCase();
-          bValue = (b.suite || '').toLowerCase();
-          break;
-        case 'tags':
-          aValue = (a.tags || []).length;
-          bValue = (b.tags || []).length;
-          break;
-        case 'browserType':
-          aValue = a.options?.browserType || 'chromium';
-          bValue = b.options?.browserType || 'chromium';
-          break;
-        default:
-          return 0;
-      }
+  const sortedExecutions = sorting.sortedData;
 
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [filteredExecutions, sortField, sortOrder]);
-
-  // Calculate stats for filtered results
+  // Calculate stats for filtered results - stable reference
   const filteredStats = useMemo(() => {
     const filtered = sortedExecutions;
+    const completedCount = filtered.filter(e => e.status === 'completed').length;
+    const failedCount = filtered.filter(e => e.status === 'failed').length;
+    const totalCount = filtered.length;
+    
+    const executionsWithDuration = filtered.filter(e => e.duration);
+    const avgDuration = executionsWithDuration.length > 0 ? 
+      Math.round(executionsWithDuration.reduce((sum, e) => sum + (e.duration || 0), 0) / executionsWithDuration.length) : 0;
+    
+    const successRate = totalCount > 0 ? 
+      Math.round((completedCount / totalCount) * 100) : 0;
+
     return {
-      totalExecutions: filtered.length,
-      completedExecutions: filtered.filter(e => e.status === 'completed').length,
-      failedExecutions: filtered.filter(e => e.status === 'failed').length,
-      avgDuration: filtered.length > 0 ? 
-        Math.round(filtered.filter(e => e.duration).reduce((sum, e) => sum + (e.duration || 0), 0) / filtered.filter(e => e.duration).length) : 0,
-      successRate: filtered.length > 0 ? 
-        Math.round((filtered.filter(e => e.status === 'completed').length / filtered.length) * 100) : 0
+      totalExecutions: totalCount,
+      completedExecutions: completedCount,
+      failedExecutions: failedCount,
+      avgDuration,
+      successRate
     };
   }, [sortedExecutions]);
 
@@ -131,14 +113,9 @@ const useReports = (options: UseReportsOptions = {}) => {
     });
   }, [filters]);
 
-  // Handle sorting
+  // Handle sorting - delegate to sorting hook
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('desc');
-    }
+    sorting.handleSort(field);
   };
 
   // Clear all filters
@@ -205,8 +182,8 @@ const useReports = (options: UseReportsOptions = {}) => {
     filterOptions,
     hasActiveFilters,
     clearFilters,
-    sortField,
-    sortOrder,
+    sortField: sorting.sortField,
+    sortOrder: sorting.sortOrder,
     handleSort,
     
     // Selection
