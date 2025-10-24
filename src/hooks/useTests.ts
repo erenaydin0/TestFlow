@@ -10,7 +10,40 @@ interface UseTestsOptions {
   autoLoad?: boolean;
 }
 
-const useTests = (options: UseTestsOptions = {}) => {
+interface UseTestsReturn {
+  // Data
+  tests: Test[];
+  loading: boolean;
+  error: string | null;
+  filteredTests: Test[];
+  
+  // Filtering
+  filters: TestFilters;
+  setFilters: (filters: TestFilters) => void;
+  filterOptions: {
+    suites: string[];
+    tags: string[];
+    browsers: string[];
+  };
+  
+  // Actions
+  loadTests: () => void;
+  refresh: () => void;
+  deleteTest: (testId: string) => Promise<boolean>;
+  duplicateTest: (testId: string) => Promise<string | null>;
+  updateTest: (testId: string, updatedTest: Test) => Promise<boolean>;
+  bulkDeleteTests: (testIds: string[]) => Promise<number>;
+  bulkDuplicateTests: (testIds: string[]) => Promise<number>;
+  
+  // Loading states
+  isDeleting: boolean;
+  isDuplicating: boolean;
+  isUpdating: boolean;
+  isBulkDeleting: boolean;
+  isBulkDuplicating: boolean;
+}
+
+const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
   const { autoLoad = true } = options;
   
   const [filters, setFilters] = useState<TestFilters>({
@@ -45,7 +78,9 @@ const useTests = (options: UseTestsOptions = {}) => {
   const deleteTestMutation = useApiMutation(
     (testId: string) => TestService.deleteTest(testId),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -53,7 +88,9 @@ const useTests = (options: UseTestsOptions = {}) => {
   const duplicateTestMutation = useApiMutation(
     (testId: string) => TestService.duplicateTest(testId),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -62,7 +99,9 @@ const useTests = (options: UseTestsOptions = {}) => {
     ({ testId, updatedTest }: { testId: string; updatedTest: Test }) => 
       TestService.updateTest(testId, updatedTest),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -70,41 +109,70 @@ const useTests = (options: UseTestsOptions = {}) => {
   const bulkDeleteMutation = useApiMutation(
     (testIds: string[]) => TestService.bulkDeleteTests(testIds),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
   const bulkDuplicateMutation = useApiMutation(
     (testIds: string[]) => TestService.bulkDuplicateTests(testIds),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
   // Wrapper functions for backward compatibility
   const deleteTest = async (testId: string): Promise<boolean> => {
-    const result = await deleteTestMutation.mutate(testId);
-    return result !== null;
+    try {
+      const result = await deleteTestMutation.mutate(testId);
+      return result !== null;
+    } catch (error) {
+      console.error('Delete test error:', error);
+      return false;
+    }
   };
 
   const duplicateTest = async (testId: string): Promise<string | null> => {
-    const result = await duplicateTestMutation.mutate(testId);
-    return result?.id || null;
+    try {
+      const result = await duplicateTestMutation.mutate(testId);
+      return result?.id || null;
+    } catch (error) {
+      console.error('Duplicate test error:', error);
+      return null;
+    }
   };
 
   const updateTest = async (testId: string, updatedTest: Test): Promise<boolean> => {
-    const result = await updateTestMutation.mutate({ testId, updatedTest });
-    return result !== null;
+    try {
+      const result = await updateTestMutation.mutate({ testId, updatedTest });
+      return result !== null;
+    } catch (error) {
+      console.error('Update test error:', error);
+      return false;
+    }
   };
 
   const bulkDeleteTests = async (testIds: string[]): Promise<number> => {
-    const result = await bulkDeleteMutation.mutate(testIds);
-    return result?.deletedCount || 0;
+    try {
+      const result = await bulkDeleteMutation.mutate(testIds);
+      return result?.deletedCount || 0;
+    } catch (error) {
+      console.error('Bulk delete tests error:', error);
+      return 0;
+    }
   };
 
   const bulkDuplicateTests = async (testIds: string[]): Promise<number> => {
-    const result = await bulkDuplicateMutation.mutate(testIds);
-    return result?.duplicatedCount || 0;
+    try {
+      const result = await bulkDuplicateMutation.mutate(testIds);
+      return result?.duplicatedCount || 0;
+    } catch (error) {
+      console.error('Bulk duplicate tests error:', error);
+      return 0;
+    }
   };
 
   // Refresh function
@@ -113,7 +181,7 @@ const useTests = (options: UseTestsOptions = {}) => {
   };
 
   return {
-    tests,
+    tests: tests || [],
     loading,
     error,
     filteredTests,
@@ -126,7 +194,13 @@ const useTests = (options: UseTestsOptions = {}) => {
     duplicateTest,
     updateTest,
     bulkDeleteTests,
-    bulkDuplicateTests
+    bulkDuplicateTests,
+    // Mutation loading states
+    isDeleting: deleteTestMutation.loading,
+    isDuplicating: duplicateTestMutation.loading,
+    isUpdating: updateTestMutation.loading,
+    isBulkDeleting: bulkDeleteMutation.loading,
+    isBulkDuplicating: bulkDuplicateMutation.loading
   };
 };
 

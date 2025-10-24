@@ -9,10 +9,6 @@ import {
   RefreshCw,
   X,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   AlertCircle,
   FileText,
   Tag
@@ -26,12 +22,12 @@ import TableCells from '@/components/common/TableCells';
 import { StatsCards } from '@/components/dashboard';
 import { StepView } from '@/components/reports';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
-import { Button, IconButton, ButtonGroup } from '@/components';
+import { Button, IconButton, ButtonGroup, PaginationControls, BulkActionsBar } from '@/components';
 
 import { ExecutionResult, BrowserType } from '@/types';
 import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
 import { StatusBadge } from '@/components/common';
-import { useNotifications, useReports } from '@/hooks';
+import { useNotifications, useReports, usePagination, useBulkSelection } from '@/hooks';
 import { useSidebar, useI18n } from '@/contexts';
 import { API_URL } from '@/utils/utils';
 
@@ -73,10 +69,20 @@ export default function ReportsPage() {
   const { notifyTestDeleted, notifyTestFailure } = useNotifications();
   
   const [highlightedExecutionId, setHighlightedExecutionId] = useState<string | null>(null);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+
+  // Use pagination hook
+  const pagination = usePagination({
+    totalItems: sortedExecutions.length,
+    data: sortedExecutions,
+    itemsPerPage: 10
+  });
+
+  // Use bulk selection hook
+  const bulkSelection = useBulkSelection({
+    items: sortedExecutions,
+    getItemId: (execution) => execution.id,
+    onSelectionChange: setSelectedExecutions
+  });
 
   // Execution flow helper functions
   const getExecutionPath = (execution: ExecutionResult): string[] => {
@@ -182,7 +188,7 @@ export default function ReportsPage() {
   // Handle execution ID parameter to open details modal
   useEffect(() => {
     const executionId = searchParams.get('executionId');
-    if (executionId && executions.length > 0) {
+    if (executionId && executions && executions.length > 0) {
       const execution = executions.find(e => e.id === executionId);
       if (execution) {
         setSelectedExecution(execution);
@@ -193,7 +199,7 @@ export default function ReportsPage() {
   // Handle test ID parameter to find and open related execution modal
   useEffect(() => {
     const testId = searchParams.get('testId');
-    if (testId && executions.length > 0) {
+    if (testId && executions && executions.length > 0) {
       console.log(t('reports.lookingForTestId'), testId);
       console.log(t('reports.availableExecutions'), executions.map(e => ({ id: e.id, workflowId: e.workflowId, workflowName: e.workflowName })));
       
@@ -216,7 +222,7 @@ export default function ReportsPage() {
       } else {
         // Eğer testId ile eşleşen bir execution bulunamadıysa, en son execution'ı seç
         console.log(t('reports.noMatchingExecutions'));
-        const latestExecution = executions.sort((a, b) => 
+        const latestExecution = executions!.sort((a, b) => 
           new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
         )[0];
         if (latestExecution) {
@@ -352,29 +358,10 @@ export default function ReportsPage() {
     }
   ];
 
-  // Pagination logic
-  const totalItems = sortedExecutions.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPageExecutions = sortedExecutions.slice(startIndex, endIndex);
-
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1);
+    pagination.resetToFirstPage();
   }, [filters, sortField, sortOrder]);
-
-  // Pagination functions
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const goToFirstPage = () => goToPage(1);
-  const goToLastPage = () => goToPage(totalPages);
-  const goToPreviousPage = () => goToPage(currentPage - 1);
-  const goToNextPage = () => goToPage(currentPage + 1);
 
   // Helper function to get translated status text
   const getTranslatedStatusText = (status: string) => {
@@ -833,42 +820,28 @@ export default function ReportsPage() {
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                {selectedExecutions.size > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <span style={{ 
-                      fontSize: '0.875rem', 
-                      color: 'var(--text-secondary)' 
-                    }}>
-                      {t('bulkActions.testsSelected', { count: selectedExecutions.size })}
-                    </span>
-                    <ButtonGroup spacing="xs">
-                      <Button
-                        variant="success"
-                        size="xs"
-                        icon={Download}
-                        onClick={downloadSelectedTests}
-                      >
-                        {t('bulkActions.downloadSelected')}
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="xs"
-                        icon={Trash2}
-                        onClick={deleteSelectedTests}
-                      >
-                        {t('bulkActions.delete')}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="xs"
-                        icon={X}
-                        onClick={() => setSelectedExecutions(new Set())}
-                      >
-                        {t('bulkActions.clearSelection')}
-                      </Button>
-                    </ButtonGroup>
-                  </div>
-                )}
+                <BulkActionsBar
+                  selectedCount={selectedExecutions.size}
+                  actions={[
+                    {
+                      id: 'download',
+                      label: t('bulkActions.downloadSelected'),
+                      icon: Download as any,
+                      variant: 'success',
+                      onClick: downloadSelectedTests
+                    },
+                    {
+                      id: 'delete',
+                      label: t('bulkActions.delete'),
+                      icon: Trash2 as any,
+                      variant: 'danger',
+                      onClick: deleteSelectedTests
+                    }
+                  ]}
+                  onClearSelection={() => setSelectedExecutions(new Set())}
+                  clearButtonText={t('bulkActions.clearSelection')}
+                  selectedText={t('bulkActions.testsSelected', { count: selectedExecutions.size })}
+                />
               </div>
             </div>
 
@@ -911,7 +884,7 @@ export default function ReportsPage() {
             ) : (
               <div>
                 <DataTable
-                  data={currentPageExecutions}
+                  data={pagination.currentPageItems}
                   allData={sortedExecutions}
                   columns={columns}
                   loading={loading}
@@ -930,109 +903,15 @@ export default function ReportsPage() {
                 />
 
                 {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '1.5rem',
-                    padding: '0.75rem 0',
-                    borderTop: '1px solid var(--border-primary)'
-                  }}>
-                    {/* Pagination Info */}
-                    <div style={{ 
-                      color: 'var(--text-secondary)', 
-                      fontSize: '0.875rem' 
-                    }}>
-                      {totalItems > 0 ? (
-                        <>
-                          <span>{startIndex + 1} - {Math.min(endIndex, totalItems)}</span>
-                          <span style={{ margin: '0 0.25rem' }}>•</span>
-                          <span>{totalItems} toplam sonuç</span>
-                        </>
-                      ) : (
-                        'Sonuç bulunamadı'
-                      )}
-                    </div>
-
-                    {/* Pagination Buttons */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <IconButton
-                        icon={ChevronsLeft}
-                        onClick={goToFirstPage}
-                        disabled={currentPage === 1}
-                        variant="outline"
-                        size="sm"
-                        tooltip={t('common.firstPage')}
-                        style={{ width: '2rem', height: '2rem' }}
-                      />
-
-                      <IconButton
-                        icon={ChevronLeft}
-                        onClick={goToPreviousPage}
-                        disabled={currentPage === 1}
-                        variant="outline"
-                        size="sm"
-                        tooltip={t('common.previousPage')}
-                        style={{ width: '2rem', height: '2rem' }}
-                      />
-
-                      {/* Page Numbers */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        {(() => {
-                          const pages = [];
-                          const maxVisiblePages = 5;
-                          let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-                          let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                          
-                          if (endPage - startPage + 1 < maxVisiblePages) {
-                            startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                          }
-
-                          for (let i = startPage; i <= endPage; i++) {
-                            pages.push(
-                              <Button
-                                key={i}
-                                onClick={() => goToPage(i)}
-                                variant={i === currentPage ? 'primary' : 'outline'}
-                                size="sm"
-                                style={{ 
-                                  width: '2rem', 
-                                  height: '2rem',
-                                  minWidth: '2rem',
-                                  padding: '0'
-                                }}
-                              >
-                                {i}
-                              </Button>
-                            );
-                          }
-                          return pages;
-                        })()}
-                      </div>
-
-                      <IconButton
-                        icon={ChevronRight}
-                        onClick={goToNextPage}
-                        disabled={currentPage === totalPages}
-                        variant="outline"
-                        size="sm"
-                        tooltip="Sonraki sayfa"
-                        style={{ width: '2rem', height: '2rem' }}
-                      />
-
-                      <IconButton
-                        icon={ChevronsRight}
-                        onClick={goToLastPage}
-                        disabled={currentPage === totalPages}
-                        variant="outline"
-                        size="sm"
-                        tooltip="Son sayfa"
-                        style={{ width: '2rem', height: '2rem' }}
-                      />
-                    </div>
-                  </div>
-                )}
+                <PaginationControls
+                  paginationInfo={pagination.paginationInfo}
+                  onFirstPage={pagination.goToFirstPage}
+                  onPreviousPage={pagination.goToPreviousPage}
+                  onNextPage={pagination.goToNextPage}
+                  onLastPage={pagination.goToLastPage}
+                  onPageChange={pagination.goToPage}
+                  itemName="sonuç"
+                />
               </div>
             )}
                         </div>

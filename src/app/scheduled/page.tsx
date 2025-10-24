@@ -9,20 +9,16 @@ import {
   Plus,
   Clock,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   X
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters } from '@/components/common';
+import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
 import { Column } from '@/components/common/DataTable';
 import { ScheduleModal, ConfirmDialog } from '@/components/modals';
 import { UpcomingTests } from '@/components/dashboard';
 import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/utils/utils';
-import { useScheduledTests } from '@/hooks';
+import { useScheduledTests, usePagination, useSorting, useBulkSelection } from '@/hooks';
 import { ScheduledTest } from '@/types/test';
 import { useI18n } from '@/contexts';
 import TableCells from '@/components/common/TableCells';
@@ -58,60 +54,30 @@ export default function ScheduledPage() {
   // Selection state
   const [selectedSchedules, setSelectedSchedules] = useState<Set<string>>(new Set());
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
-  // Sorting state
-  const [sortField, setSortField] = useState<string>('nextRun');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  
-  // Sort schedules
-  const sortedSchedules = useMemo(() => {
-    const sorted = [...filteredTests];
-    sorted.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+  // Use sorting hook
+  const sorting = useSorting({
+    data: filteredTests,
+    defaultSortField: 'nextRun',
+    defaultSortOrder: 'asc'
+  });
 
-      switch (sortField) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case 'schedule':
-          aValue = a.schedule;
-          bValue = b.schedule;
-          break;
-        case 'nextRun':
-          aValue = a.nextRun ? new Date(a.nextRun).getTime() : 0;
-          bValue = b.nextRun ? new Date(b.nextRun).getTime() : 0;
-          break;
-        default:
-          return 0;
-      }
+  // Use pagination hook
+  const pagination = usePagination({
+    totalItems: sorting.sortedData.length,
+    data: sorting.sortedData,
+    itemsPerPage: 10
+  });
 
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [filteredTests, sortField, sortOrder]);
-
-  // Pagination logic
-  const totalItems = sortedSchedules.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPageSchedules = sortedSchedules.slice(startIndex, endIndex);
+  // Use bulk selection hook
+  const bulkSelection = useBulkSelection({
+    items: sorting.sortedData,
+    getItemId: (schedule) => schedule.id,
+    onSelectionChange: setSelectedSchedules
+  });
 
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1);
+    pagination.resetToFirstPage();
   }, [filters]);
 
   // Define table columns
@@ -193,17 +159,6 @@ export default function ScheduledPage() {
     }
   ];
 
-  // Pagination functions
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const goToFirstPage = () => goToPage(1);
-  const goToLastPage = () => goToPage(totalPages);
-  const goToPreviousPage = () => goToPage(currentPage - 1);
-  const goToNextPage = () => goToPage(currentPage + 1);
 
   // Bulk operations
   const handleBulkToggle = () => {
@@ -255,22 +210,15 @@ export default function ScheduledPage() {
               <div className="card">
                 
                 {filteredTests.length === 0 ? (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '3rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                    <p>{t('scheduled.noSchedulesFound')}</p>
-                    <Button 
-                      variant="cosmic"
-                      onClick={() => setIsModalOpen(true)}
-                      size="sm"
-                      style={{ marginTop: '1rem' }}
-                    >
-                      {t('scheduled.createFirstSchedule')}
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={<Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />}
+                    title={t('scheduled.noSchedulesFound')}
+                    actionButton={{
+                      label: t('scheduled.createFirstSchedule'),
+                      onClick: () => setIsModalOpen(true),
+                      variant: 'cosmic'
+                    }}
+                  />
                 ) : (
                   <div>
                     {/* Filters */}
@@ -317,51 +265,36 @@ export default function ScheduledPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {/* Bulk Actions */}
-                        {selectedSchedules.size > 0 && (
-                          <>
-                            <span style={{ 
-                              fontSize: '0.875rem', 
-                              color: 'var(--text-secondary)' 
-                            }}>
-                              {selectedSchedules.size} seçili
-                            </span>
-                            
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={X}
-                              onClick={() => setSelectedSchedules(new Set())}
-                            >
-                              {t('common.clear')}
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              icon={Pause}
-                              onClick={handleBulkToggle}
-                              style={{ 
+                        <BulkActionsBar
+                          selectedCount={selectedSchedules.size}
+                          actions={[
+                            {
+                              id: 'toggle',
+                              label: t('scheduled.toggleAll'),
+                              icon: Pause as any,
+                              variant: 'outline',
+                              onClick: handleBulkToggle,
+                              style: { 
                                 color: 'var(--status-warning)', 
                                 borderColor: 'var(--status-warning)' 
-                              }}
-                            >
-                              {t('scheduled.toggleAll')}
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              icon={Trash2}
-                              onClick={handleBulkDelete}
-                              style={{ 
+                              }
+                            },
+                            {
+                              id: 'delete',
+                              label: t('common.delete'),
+                              icon: Trash2 as any,
+                              variant: 'outline',
+                              onClick: handleBulkDelete,
+                              style: { 
                                 color: 'var(--status-error)', 
                                 borderColor: 'var(--status-error)' 
-                              }}
-                            >
-                              {t('common.delete')}
-                            </Button>
-                          </>
-                        )}
+                              }
+                            }
+                          ]}
+                          onClearSelection={() => setSelectedSchedules(new Set())}
+                          clearButtonText={t('common.clear')}
+                          selectedText={`${selectedSchedules.size} seçili`}
+                        />
                         
                         <Button 
                           variant="cosmic"
@@ -383,8 +316,8 @@ export default function ScheduledPage() {
 
                     {/* Data Table */}
                     <DataTable
-                      data={currentPageSchedules}
-                      allData={filteredTests}
+                      data={pagination.currentPageItems}
+                      allData={sorting.sortedData}
                       columns={columns}
                       loading={loading}
                       emptyMessage={t('scheduled.noTestsFound')}
@@ -393,117 +326,22 @@ export default function ScheduledPage() {
                       onSelectionChange={setSelectedSchedules}
                       getItemId={(schedule) => schedule.id}
                       onSort={(field: string, order: 'asc' | 'desc') => {
-                        setSortField(field);
-                        setSortOrder(order);
+                        sorting.handleSort(field);
                       }}
-                      sortField={sortField}
-                      sortOrder={sortOrder}
+                      sortField={sorting.sortField}
+                      sortOrder={sorting.sortOrder}
                     />
 
                     {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginTop: '1.5rem',
-                        padding: '0.75rem 1.5rem',
-                        borderTop: '1px solid var(--border-primary)'
-                      }}>
-                        {/* Pagination Info */}
-                        <div style={{ 
-                          color: 'var(--text-secondary)', 
-                          fontSize: '0.875rem' 
-                        }}>
-                          {totalItems > 0 ? (
-                            <>
-                              <span>{startIndex + 1} - {Math.min(endIndex, totalItems)}</span>
-                              <span style={{ margin: '0 0.25rem' }}>•</span>
-                              <span>{totalItems} toplam zamanlama</span>
-                            </>
-                          ) : (
-                            'Zamanlama bulunamadı'
-                          )}
-                        </div>
-
-                        {/* Pagination Buttons */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <IconButton
-                            icon={ChevronsLeft}
-                            onClick={goToFirstPage}
-                            disabled={currentPage === 1}
-                            variant="outline"
-                            size="sm"
-                            tooltip={t('common.firstPage')}
-                            style={{ width: '2rem', height: '2rem' }}
-                          />
-
-                          <IconButton
-                            icon={ChevronLeft}
-                            onClick={goToPreviousPage}
-                            disabled={currentPage === 1}
-                            variant="outline"
-                            size="sm"
-                            tooltip={t('common.previousPage')}
-                            style={{ width: '2rem', height: '2rem' }}
-                          />
-
-                          {/* Page Numbers */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            {(() => {
-                              const pages = [];
-                              const maxVisiblePages = 5;
-                              let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-                              let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                              
-                              if (endPage - startPage + 1 < maxVisiblePages) {
-                                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                              }
-
-                              for (let i = startPage; i <= endPage; i++) {
-                                pages.push(
-                                  <Button
-                                    key={i}
-                                    onClick={() => goToPage(i)}
-                                    variant={i === currentPage ? 'primary' : 'outline'}
-                                    size="sm"
-                                    style={{ 
-                                      width: '2rem', 
-                                      height: '2rem',
-                                      minWidth: '2rem',
-                                      padding: '0'
-                                    }}
-                                  >
-                                    {i}
-                                  </Button>
-                                );
-                              }
-                              return pages;
-                            })()}
-                          </div>
-
-                          <IconButton
-                            icon={ChevronRight}
-                            onClick={goToNextPage}
-                            disabled={currentPage === totalPages}
-                            variant="outline"
-                            size="sm"
-                            tooltip={t('common.nextPage')}
-                            style={{ width: '2rem', height: '2rem' }}
-                          />
-
-                          <IconButton
-                            icon={ChevronsRight}
-                            onClick={goToLastPage}
-                            disabled={currentPage === totalPages}
-                            variant="outline"
-                            size="sm"
-                            tooltip={t('common.lastPage')}
-                            style={{ width: '2rem', height: '2rem' }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                    <PaginationControls
+                      paginationInfo={pagination.paginationInfo}
+                      onFirstPage={pagination.goToFirstPage}
+                      onPreviousPage={pagination.goToPreviousPage}
+                      onNextPage={pagination.goToNextPage}
+                      onLastPage={pagination.goToLastPage}
+                      onPageChange={pagination.goToPage}
+                      itemName="zamanlama"
+                    />
                   </div>
                 )}
               </div>

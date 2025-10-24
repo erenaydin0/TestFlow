@@ -11,3 +11,8 @@ export { default as MultiSelect } from './MultiSelect';
 export { default as StatusBadge, getStatusColor, getStatusText } from './StatusBadge';
 export { default as CosmicLogo } from './CosmicLogo';
 export { default as AstronautIcon } from './AstronautIcon';
+
+// New common components
+export { default as PaginationControls } from './PaginationControls';
+export { default as BulkActionsBar } from './BulkActionsBar';
+export { default as EmptyState } from './EmptyState';

@@ -10,11 +10,7 @@ import {
   Upload,
   X,
   Play,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight
+  Trash2
 } from 'lucide-react';
 
 import PageLayout from '@/components/layout/PageLayout';
@@ -22,14 +18,14 @@ import LoadingErrorState from '@/components/common/LoadingErrorState';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import TableCells from '@/components/common/TableCells';
-import { EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from '@/components/common';
+import { EditableSuiteCell, EditableTagsCell, EditableBrowserCell, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup, } from '@/components';
 
-import { Test } from '@/types';
+import { Test, BrowserType, TestFilters } from '@/types';
 import { exportTestWorkflow, exportTestsToCSV } from '@/utils/fileUtils';
-import { useNotifications, useTests } from '@/hooks';
+import { useNotifications, useTests, usePagination, useSorting, useBulkSelection } from '@/hooks';
 import { useBrowserSettings, useI18n } from '@/contexts';
 import { ExecutionService } from '@/utils/api';
 
@@ -66,15 +62,28 @@ export default function TestsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
-  // Sorting state
-  const [sortField, setSortField] = useState<string>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
   const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useNotifications();
+
+  // Use sorting hook
+  const sorting = useSorting({
+    data: filteredTests,
+    defaultSortField: 'createdAt',
+    defaultSortOrder: 'desc'
+  });
+
+  // Use pagination hook
+  const pagination = usePagination({
+    totalItems: sorting.sortedData.length,
+    data: sorting.sortedData,
+    itemsPerPage: 10
+  });
+
+  // Use bulk selection hook
+  const bulkSelection = useBulkSelection({
+    items: sorting.sortedData,
+    getItemId: (test) => test.id,
+    onSelectionChange: setSelectedTests
+  });
 
   // Handle inline updates
   const handleUpdateSuite = (testId: string, suite: string) => {
@@ -102,7 +111,7 @@ export default function TestsPage() {
   useEffect(() => {
     const searchQuery = searchParams.get('search');
     if (searchQuery) {
-      setFilters((prev: any) => ({ ...prev, search: searchQuery }));
+      setFilters({ ...filters, search: searchQuery });
     }
   }, [searchParams]);
 
@@ -126,62 +135,9 @@ export default function TestsPage() {
     }
   }, [searchParams, tests]);
 
-  // filteredTests artık useTests hook'undan geliyor
-
-  // Sort tests
-  const sortedTests = useMemo(() => {
-    const sorted = [...filteredTests];
-    sorted.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortField) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'stepCount':
-          aValue = a.workflow?.length || 0;
-          bValue = b.workflow?.length || 0;
-          break;
-        case 'createdAt':
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-          break;
-        case 'suite':
-          aValue = (a.suite || '').toLowerCase();
-          bValue = (b.suite || '').toLowerCase();
-          break;
-        case 'tags':
-          aValue = (a.tags || []).length;
-          bValue = (b.tags || []).length;
-          break;
-        case 'browserType':
-          aValue = a.browserType || 'chromium';
-          bValue = b.browserType || 'chromium';
-          break;
-        default:
-          return 0;
-      }
-
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [filteredTests, sortField, sortOrder]);
-
-  // Pagination logic
-  const totalItems = sortedTests.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPageTests = sortedTests.slice(startIndex, endIndex);
-
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1);
+    pagination.resetToFirstPage();
   }, [filters]);
 
   // filterOptions artık useTests hook'undan geliyor
@@ -292,17 +248,6 @@ export default function TestsPage() {
   };
 
 
-  // Pagination functions
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const goToFirstPage = () => goToPage(1);
-  const goToLastPage = () => goToPage(totalPages);
-  const goToPreviousPage = () => goToPage(currentPage - 1);
-  const goToNextPage = () => goToPage(currentPage + 1);
 
   // Handle run test - Updated to use ExecutionService
   const handleRunTest = async (testId: string) => {
@@ -656,7 +601,7 @@ export default function TestsPage() {
                   availableOptions={{
                     suites: filterOptions.suites,
                     tags: filterOptions.tags,
-                    browsers: filterOptions.browsers || []
+                    browsers: (filterOptions.browsers || []) as BrowserType[]
                   }}
                   searchPlaceholder={t('tests.searchTests')}
                   showStatus={false}
@@ -666,62 +611,45 @@ export default function TestsPage() {
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 {/* Import/Export Buttons */}
-                {selectedTests.size > 0 && (
-                  <>
-                    <span style={{ 
-                      fontSize: '0.875rem', 
-                      color: 'var(--text-secondary)' 
-                    }}>
-                      {t('tests.selectedTests', { count: selectedTests.size })}
-                    </span>
-                    
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon={X}
-                      onClick={() => setSelectedTests(new Set())}
-                    >
-                      {t('common.clear')}
-                    </Button>
-                    <ButtonGroup spacing="sm">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Play}
-                        onClick={handleBulkRun}
-                        style={{ color: 'var(--status-success)', borderColor: 'var(--status-success)' }}
-                      >
-                        {t('tests.runTest')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Copy}
-                        onClick={handleBulkDuplicate}
-                        style={{ color: 'var(--status-purple)', borderColor: 'var(--status-purple)' }}
-                      >
-                        {t('tests.duplicateTest')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Trash2}
-                        onClick={handleBulkDelete}
-                        style={{ color: 'var(--status-error)', borderColor: 'var(--status-error)' }}
-                      >
-                        {t('common.delete')}
-                      </Button>
-                    </ButtonGroup>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon={Download}
-                      onClick={handleBulkExport}
-                    >
-                      {t('common.export')}
-                    </Button>
-                  </>
-                )}
+                <BulkActionsBar
+                  selectedCount={selectedTests.size}
+                  actions={[
+                    {
+                      id: 'run',
+                      label: t('tests.runTest'),
+                      icon: Play as any,
+                      variant: 'outline',
+                      onClick: handleBulkRun,
+                      style: { color: 'var(--status-success)', borderColor: 'var(--status-success)' }
+                    },
+                    {
+                      id: 'duplicate',
+                      label: t('tests.duplicateTest'),
+                      icon: Copy as any,
+                      variant: 'outline',
+                      onClick: handleBulkDuplicate,
+                      style: { color: 'var(--status-purple)', borderColor: 'var(--status-purple)' }
+                    },
+                    {
+                      id: 'delete',
+                      label: t('common.delete'),
+                      icon: Trash2 as any,
+                      variant: 'outline',
+                      onClick: handleBulkDelete,
+                      style: { color: 'var(--status-error)', borderColor: 'var(--status-error)' }
+                    },
+                    {
+                      id: 'export',
+                      label: t('common.export'),
+                      icon: Download as any,
+                      variant: 'secondary',
+                      onClick: handleBulkExport
+                    }
+                  ]}
+                  onClearSelection={() => setSelectedTests(new Set())}
+                  clearButtonText={t('common.clear')}
+                  selectedText={t('tests.selectedTests', { count: selectedTests.size })}
+                />
 
                 <ButtonGroup spacing="sm">
                   <Button
@@ -752,52 +680,38 @@ export default function TestsPage() {
 
             {/* Test Content */}
             {filteredTests.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-              <div style={{ 
-                width: '4rem', 
-                height: '4rem', 
-                backgroundColor: 'var(--bg-tertiary)', 
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1rem'
-              }}>
-                <FileText size={24} color="var(--text-secondary)" />
-              </div>
-              <h3 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: 500, 
-                color: 'var(--text-primary)',
-                margin: '0 0 0.5rem 0'
-              }}>
-                {(tests?.length || 0) === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
-              </h3>
-              <p style={{ 
-                fontSize: '0.875rem', 
-                color: 'var(--text-secondary)',
-                margin: '0 0 1.5rem 0'
-              }}>
-                {(tests?.length || 0) === 0 
+              <EmptyState
+                icon={
+                  <div style={{ 
+                    width: '4rem', 
+                    height: '4rem', 
+                    backgroundColor: 'var(--bg-tertiary)', 
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem'
+                  }}>
+                    <FileText size={24} color="var(--text-secondary)" />
+                  </div>
+                }
+                title={(tests?.length || 0) === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
+                description={(tests?.length || 0) === 0 
                   ? t('filters.createFirstWorkflow')
                   : t('filters.tryDifferentFilters')
                 }
-              </p>
-              <Button 
-                onClick={handleCreateNewTest}
-                variant="cosmic"
-                icon={Plus}
-                size="sm"
-                style={{ margin: '0 auto' }}
-              >
-                {t('filters.createFirstTest')}
-              </Button>
-              </div>
+                actionButton={{
+                  label: t('filters.createFirstTest'),
+                  onClick: handleCreateNewTest,
+                  variant: 'cosmic',
+                  icon: Plus as any
+                }}
+              />
             ) : (
               <div>
                 <DataTable
-                  data={currentPageTests}
-                  allData={filteredTests}
+                  data={pagination.currentPageItems}
+                  allData={sorting.sortedData}
                   columns={columns}
                   loading={loading}
                   emptyMessage={t('tests.noTestsFound')}
@@ -808,117 +722,22 @@ export default function TestsPage() {
                   highlightedItemId={highlightedTestId}
                   onRowDoubleClick={(test) => handleEditTest(test.id)}
                   onSort={(field: string, order: 'asc' | 'desc') => {
-                    setSortField(field);
-                    setSortOrder(order);
+                    sorting.handleSort(field);
                   }}
-                  sortField={sortField}
-                  sortOrder={sortOrder}
+                  sortField={sorting.sortField}
+                  sortOrder={sorting.sortOrder}
                 />
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '1.5rem',
-                  padding: '0.75rem 1.5rem',
-                  borderTop: '1px solid var(--border-primary)'
-                }}>
-                  {/* Pagination Info */}
-                  <div style={{ 
-                    color: 'var(--text-secondary)', 
-                    fontSize: '0.875rem' 
-                  }}>
-                    {totalItems > 0 ? (
-                      <>
-                        <span>{startIndex + 1} - {Math.min(endIndex, totalItems)}</span>
-                        <span style={{ margin: '0 0.25rem' }}>•</span>
-                        <span>{totalItems} toplam test</span>
-                      </>
-                    ) : (
-                      'Test bulunamadı'
-                    )}
-                  </div>
-
-                  {/* Pagination Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <IconButton
-                      icon={ChevronsLeft}
-                      onClick={goToFirstPage}
-                      disabled={currentPage === 1}
-                      variant="outline"
-                      size="sm"
-                      tooltip={t('common.firstPage')}
-                      style={{ width: '2rem', height: '2rem' }}
-                    />
-
-                    <IconButton
-                      icon={ChevronLeft}
-                      onClick={goToPreviousPage}
-                      disabled={currentPage === 1}
-                      variant="outline"
-                      size="sm"
-                      tooltip={t('common.previousPage')}
-                      style={{ width: '2rem', height: '2rem' }}
-                    />
-
-                    {/* Page Numbers */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      {(() => {
-                        const pages = [];
-                        const maxVisiblePages = 5;
-                        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-                        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                        
-                        if (endPage - startPage + 1 < maxVisiblePages) {
-                          startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                        }
-
-                        for (let i = startPage; i <= endPage; i++) {
-                          pages.push(
-                            <Button
-                              key={i}
-                              onClick={() => goToPage(i)}
-                              variant={i === currentPage ? 'primary' : 'outline'}
-                              size="sm"
-                              style={{ 
-                                width: '2rem', 
-                                height: '2rem',
-                                minWidth: '2rem',
-                                padding: '0'
-                              }}
-                            >
-                              {i}
-                            </Button>
-                          );
-                        }
-                        return pages;
-                      })()}
-                    </div>
-
-                    <IconButton
-                      icon={ChevronRight}
-                      onClick={goToNextPage}
-                      disabled={currentPage === totalPages}
-                      variant="outline"
-                      size="sm"
-                      tooltip="Sonraki sayfa"
-                      style={{ width: '2rem', height: '2rem' }}
-                    />
-
-                    <IconButton
-                      icon={ChevronsRight}
-                      onClick={goToLastPage}
-                      disabled={currentPage === totalPages}
-                      variant="outline"
-                      size="sm"
-                      tooltip="Son sayfa"
-                      style={{ width: '2rem', height: '2rem' }}
-                    />
-                  </div>
-                </div>
-              )}
+              <PaginationControls
+                paginationInfo={pagination.paginationInfo}
+                onFirstPage={pagination.goToFirstPage}
+                onPreviousPage={pagination.goToPreviousPage}
+                onNextPage={pagination.goToNextPage}
+                onLastPage={pagination.goToLastPage}
+                onPageChange={pagination.goToPage}
+                itemName="test"
+              />
               </div>
             )}
           </div>

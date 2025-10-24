@@ -141,9 +141,9 @@ export default function TestBuilder() {
   const { defaultBrowser, defaultHeadless, defaultRecording, defaultScreenshots } = useBrowserSettings();
   const [selectedBrowser, setSelectedBrowser] = useState<BrowserType>(defaultBrowser);
   
-  const handleBrowserChange = (browser: string) => {
+  const handleBrowserChange = useCallback((browser: string) => {
     setSelectedBrowser(browser as BrowserType);
-  };
+  }, []);
   
   // Context'teki defaultBrowser değiştiğinde selectedBrowser'ı güncelle (sadece ilk yükleme için)
   useEffect(() => {
@@ -312,12 +312,12 @@ export default function TestBuilder() {
     clearSnapLines(); // Clear snap lines
   }, [draggedAction, draggedStep, canvasOffset, zoom, snapToPosition]);
 
-  const deleteSelectedSteps = () => {
+  const deleteSelectedSteps = useCallback(() => {
     if (selectedSteps.size === 0) return;
     setShowDeleteConfirm(true);
-  };
+  }, [selectedSteps.size]);
 
-  const confirmDeleteSteps = () => {
+  const confirmDeleteSteps = useCallback(() => {
     if (selectedSteps.size === 0) return;
     
     // Delete all selected steps
@@ -332,7 +332,7 @@ export default function TestBuilder() {
     }
     
     setShowDeleteConfirm(false);
-  };
+  }, [selectedSteps, testSteps, saveToHistory, selectedStep]);
 
 
   // Canvas mouse event handlers using selection hook
@@ -361,10 +361,10 @@ export default function TestBuilder() {
     }
   };
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedStep(null);
-  };
+  }, []);
 
   // Handle export workflow
   const handleExport = useCallback(() => {

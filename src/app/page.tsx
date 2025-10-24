@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
 import { 
@@ -19,6 +19,11 @@ export default function Dashboard() {
   const { scheduledTests, loading: scheduledLoading } = useScheduledTests();
   const { t } = useI18n();
   const [dateRange, setDateRange] = useState(14);
+
+  // Memoized date range change handler
+  const handleDateRangeChange = useCallback((newDateRange: number) => {
+    setDateRange(newDateRange);
+  }, []);
 
   // Process data for charts
   const chartData = useMemo(() => {
@@ -130,7 +135,7 @@ export default function Dashboard() {
           <div className="lg:col-span-8">
             <DailyTestResults 
               data={chartData.dailyResults} 
-              onDateRangeChange={setDateRange}
+              onDateRangeChange={handleDateRangeChange}
             />
           </div>
           <div className="lg:col-span-4">

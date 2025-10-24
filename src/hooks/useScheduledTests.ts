@@ -61,7 +61,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const createScheduleMutation = useApiMutation(
     (schedule: Partial<ScheduledTest>) => ScheduledTestService.createScheduledTest(schedule as any),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -70,7 +72,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
     ({ id, schedule }: { id: string; schedule: Partial<ScheduledTest> }) => 
       ScheduledTestService.updateScheduledTest(id, schedule),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -78,7 +82,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const deleteScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.deleteScheduledTest(id),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -86,7 +92,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const toggleScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.toggleScheduledTest(id),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -94,7 +102,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const pauseScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.pauseScheduledTest(id),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 
@@ -102,7 +112,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const resumeScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.resumeScheduledTest(id),
     {
-      onSuccess: () => refetch(),
+      onSuccess: async () => {
+        await refetch();
+      },
     }
   );
 

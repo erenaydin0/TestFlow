@@ -44,8 +44,25 @@ export function useApiQuery<T>(
   }, [queryFn, enabled, onSuccess, onError]);
 
   const refetch = useCallback(async () => {
-    await executeQuery();
-  }, [executeQuery]);
+    // Force refetch even if enabled is false
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await queryFn();
+      
+      setData(result);
+      onSuccess?.(result);
+    } catch (err) {
+      if (mountedRef.current) {
+        const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred';
+        setError(errorMessage);
+        onError?.(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [queryFn, onSuccess, onError]);
 
   useEffect(() => {
     if (enabled) {
@@ -71,7 +88,7 @@ export function useApiQuery<T>(
 export function useApiMutation<T, P = any>(
   mutationFn: (params: P) => Promise<T>,
   options: {
-    onSuccess?: (data: T, params: P) => void;
+    onSuccess?: (data: T, params: P) => void | Promise<void>;
     onError?: (error: string, params: P) => void;
     onMutate?: (params: P) => void;
   } = {}
@@ -93,7 +110,7 @@ export function useApiMutation<T, P = any>(
       
       if (mountedRef.current) {
         setData(result);
-        onSuccess?.(result, params);
+        await onSuccess?.(result, params);
       }
       
       return result;

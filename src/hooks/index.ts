@@ -14,3 +14,8 @@ export { default as useTestSteps } from './useTestSteps';
 export { useDropdown, useModal, useUnsavedChanges } from './useUIInteractions';
 // Error handling
 export { useErrorHandler } from '@/utils/errorHandler';
+
+// New common hooks
+export { default as usePagination } from './usePagination';
+export { default as useSorting } from './useSorting';
+export { default as useBulkSelection } from './useBulkSelection';
