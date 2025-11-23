@@ -1,10 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '@/assets/styles/globals.css';
-import { 
-  AppProvider,
-  UIProvider
-} from '@/contexts';
 import { ToastContainer } from '@/components/notifications';
 import { SettingsModal } from '@/components/modals';
 
@@ -26,13 +22,9 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <AppProvider>
-          <UIProvider>
-            {children}
-            <ToastContainer />
-            <SettingsModal />
-          </UIProvider>
-        </AppProvider>
+        {children}
+        <ToastContainer />
+        <SettingsModal />
       </body>
     </html>
   );

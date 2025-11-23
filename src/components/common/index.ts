@@ -16,3 +16,4 @@ export { default as AstronautIcon } from './AstronautIcon';
 export { default as PaginationControls } from './PaginationControls';
 export { default as BulkActionsBar } from './BulkActionsBar';
 export { default as EmptyState } from './EmptyState';
+export { default as TableCells } from './TableCells';

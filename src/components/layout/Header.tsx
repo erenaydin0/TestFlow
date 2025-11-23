@@ -21,7 +21,7 @@ import { NotificationPanel } from '@/components/notifications';
 import { CustomSelect, StatusBadge, CosmicLogo, IconButton, Button, AstronautIcon } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
 import { useNotifications } from '@/hooks';
-import { useTheme, useSettingsModal, useI18n } from '@/contexts';
+import { useTheme, useSettingsModal, useI18n } from '@/hooks';
 import { Theme } from '@/types';
 
 export default function Header() {

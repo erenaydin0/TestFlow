@@ -8,7 +8,7 @@ import {
   Clock
 } from 'lucide-react';
 import { formatDuration } from '@/utils/utils';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 interface StatsCardsProps {
   stats: {

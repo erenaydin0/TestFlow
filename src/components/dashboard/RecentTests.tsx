@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 
 import { StatusBadge } from '@/components/common';
 import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 import { TestStatus } from '@/types';
 
 interface RecentTest {

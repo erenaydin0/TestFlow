@@ -6,7 +6,7 @@ import { IconButton } from '@/components';
 import { TestStep } from '@/types';
 import { getTranslatedActionByType, ActionField } from '@/utils/actions';
 import { CustomSelect } from '@/components/common';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 // Props interface
 interface StepConfigurationPanelProps {

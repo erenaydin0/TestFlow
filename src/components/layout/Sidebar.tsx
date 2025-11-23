@@ -12,7 +12,7 @@ import {
   Settings,
   FileText
 } from 'lucide-react';
-import { useSidebar, useSettingsModal, useI18n } from '@/contexts';
+import { useSidebar, useSettingsModal, useI18n } from '@/hooks';
 import { IconButton } from '@/components/common';
 
 interface SidebarProps {

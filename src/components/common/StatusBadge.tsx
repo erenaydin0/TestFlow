@@ -1,4 +1,4 @@
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 interface StatusBadgeProps {
   status: string;

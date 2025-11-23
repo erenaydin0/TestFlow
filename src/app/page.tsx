@@ -12,7 +12,7 @@ import {
 } from '@/components/dashboard';
 import { useExecutions, useScheduledTests } from '@/hooks';
 import { getConsistentColorFromString } from '@/utils/utils';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();

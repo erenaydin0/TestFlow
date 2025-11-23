@@ -3,11 +3,7 @@ import {
   Type,
   Clock,
   RefreshCw,
-  GitBranch,
   CheckCircle,
-  Scroll,
-  MousePointer2,
-  Keyboard,
   ChevronDown,
   Link
 } from 'lucide-react';

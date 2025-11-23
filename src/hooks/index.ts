@@ -1,6 +1,4 @@
 
-export { useMouseEvents } from './useMouseEvents';
-
 // Data hooks
 export { default as useExecutions } from './useExecutions';
 export { default as useReports } from './useReports';
@@ -19,3 +17,10 @@ export { useErrorHandler } from '@/utils/errorHandler';
 export { default as usePagination } from './usePagination';
 export { default as useSorting } from './useSorting';
 export { default as useBulkSelection } from './useBulkSelection';
+
+// App state hooks (moved from contexts)
+export { useBrowserSettings } from './useBrowserSettings';
+export { useTheme } from './useTheme';
+export { useI18n } from './useI18n';
+export { useSidebar } from './useSidebar';
+export { useSettingsModal } from './useSettingsModal';

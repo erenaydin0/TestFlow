@@ -6,7 +6,7 @@ import { Trash2, Copy, Download, Play, Edit, Settings, Pause } from 'lucide-reac
 import {  BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/utils/utils';
 import { StatusBadge, IconButton } from './';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 import { getBrowserName } from '@/types/browser';
 
 // Browser Cell Component

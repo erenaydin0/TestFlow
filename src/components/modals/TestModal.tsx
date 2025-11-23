@@ -8,7 +8,7 @@ import { Button, ButtonGroup } from '@/components/common';
 import { BrowserType, TestModalProps } from '@/types';
 import { getExistingTags, getExistingSuites } from '@/utils/fileUtils';
 import { useModal } from '@/hooks';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 import { TestService } from '@/utils/api';
 
 

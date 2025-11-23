@@ -4,7 +4,7 @@ import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { TestStep } from '@/types';
 import { getTranslatedActionByType, ActionType } from '@/utils/actions';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 export interface TestStepCardProps {
   step: TestStep;
@@ -15,15 +15,6 @@ export interface TestStepCardProps {
   onDragEnd: () => void;
   onStepClick: (step: TestStep, isMultiSelect: boolean) => void;
   onDeleteStep: (stepId: string, callback: () => void) => void;
-  // Connection props (kept for compatibility but unused)
-  onStartConnection: (stepId: string, type: 'true' | 'false' | 'normal') => void;
-  onEndConnection: (stepId: string) => void;
-  isConnecting: boolean;
-  connectionStart: { stepId: string; type: 'true' | 'false' | 'normal' } | null;
-  connectionType: 'normal' | 'true' | 'false';
-  setIsConnecting: (isConnecting: boolean) => void;
-  setConnectionStart: (start: { stepId: string; type: 'true' | 'false' | 'normal' } | null) => void;
-  setConnectionType: (type: 'normal' | 'true' | 'false') => void;
   setSelectedSteps: (steps: Set<string>) => void;
   setSelectedStep: (step: TestStep | null) => void;
   selectedSteps: Set<string>;

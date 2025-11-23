@@ -6,7 +6,7 @@ import { tr } from 'date-fns/locale/tr';
 import { enUS } from 'date-fns/locale/en-US';
 import { Calendar, ChevronDown, X } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 // Locale'leri kaydet
 registerLocale('tr', tr);

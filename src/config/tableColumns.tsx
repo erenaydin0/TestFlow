@@ -2,11 +2,10 @@
 
 import React from 'react';
 import { Column } from '@/components/common/DataTable';
-import TableCells from '@/components/common/TableCells';
-import { EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from '@/components/common';
+import { TableCells, EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from '@/components/common';
 import { Test, ExecutionResult, ScheduledTest, BrowserType } from '@/types';
 import { formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell, StatusCell, DurationCell, SuccessRateCell, ScheduleCell, NextRunCell, ScheduledActionsCell } = TableCells;
 

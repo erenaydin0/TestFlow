@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 import { getTranslatedActions } from '@/utils/actions';
 
 interface ActionsSidebarProps {

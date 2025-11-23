@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 import { useWebSocket } from '@/hooks';
 import { API_URL, config } from '@/utils/utils';
 import { Notification } from '@/types/notifications';
@@ -109,7 +109,7 @@ function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Notification[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [idCounter, setIdCounter] = useState(0);
+  const idCounterRef = useRef<number>(0);
 
   // ============================================================================
   // Core Notification Functions
@@ -121,7 +121,7 @@ function useNotifications() {
     const loadedCounter = loadCounterFromStorage();
     
     setNotifications(loadedNotifications);
-    setIdCounter(loadedCounter);
+    idCounterRef.current = loadedCounter;
     setIsInitialized(true);
   }, []);
 
@@ -132,19 +132,29 @@ function useNotifications() {
     }
   }, [notifications, isInitialized]);
 
-  // Save counter to storage
+  // Save counter to storage periodically
   useEffect(() => {
-    if (isInitialized) {
-      saveCounterToStorage(idCounter);
-    }
-  }, [idCounter, isInitialized]);
+    if (!isInitialized) return;
+    
+    const interval = setInterval(() => {
+      saveCounterToStorage(idCounterRef.current);
+    }, 5000); // Her 5 saniyede bir kaydet
+
+    return () => clearInterval(interval);
+  }, [isInitialized]);
 
   const generateUniqueId = useCallback((prefix: string) => {
     const timestamp = Date.now();
-    const counter = idCounter;
-    setIdCounter(prev => prev + 1);
+    const counter = idCounterRef.current;
+    idCounterRef.current = counter + 1;
+    
+    // Counter'ı localStorage'a kaydet
+    if (isInitialized) {
+      saveCounterToStorage(idCounterRef.current);
+    }
+    
     return `${prefix}-${timestamp}-${counter}`;
-  }, [idCounter]);
+  }, [isInitialized]);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const now = new Date();

@@ -17,16 +17,15 @@ import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
 import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
-import TableCells from '@/components/common/TableCells';
-import { EditableSuiteCell, EditableTagsCell, EditableBrowserCell, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
+import { TableCells, EditableSuiteCell, EditableTagsCell, EditableBrowserCell, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
 import ImportDialog from '@/components/test-builder/ImportDialog';
 import { ConfirmDialog, TestModal } from '@/components/modals';
 import { Button, IconButton, ButtonGroup, } from '@/components';
 
-import { Test, BrowserType, TestFilters } from '@/types';
-import { exportTestWorkflow, exportTestsToCSV } from '@/utils/fileUtils';
-import { useNotifications, useTests, usePagination, useSorting, useBulkSelection } from '@/hooks';
-import { useBrowserSettings, useI18n } from '@/contexts';
+import { Test, BrowserType } from '@/types';
+import { exportTestWorkflow } from '@/utils/fileUtils';
+import { useNotifications, useTests, usePagination, useSorting } from '@/hooks';
+import { useBrowserSettings, useI18n } from '@/hooks';
 import { ExecutionService } from '@/utils/api';
 import { executeTest, executeBulkTests, validateTestForExecution, processExecutionResults } from '@/utils/testExecutionUtils';
 import { getTestsTableColumns } from '@/config/tableColumns';
@@ -78,13 +77,6 @@ export default function TestsPage() {
     totalItems: sorting.sortedData.length,
     data: sorting.sortedData,
     itemsPerPage: 10
-  });
-
-  // Use bulk selection hook
-  const bulkSelection = useBulkSelection({
-    items: sorting.sortedData,
-    getItemId: (test) => test.id,
-    onSelectionChange: setSelectedTests
   });
 
   // Handle inline updates
@@ -322,18 +314,6 @@ export default function TestsPage() {
   };
 
   // Handle bulk export (selected tests)
-  // Handle CSV export (selected tests)
-  const handleBulkCSVExport = () => {
-    if (selectedTests.size === 0) {
-      notifyTestFailure(t('tests.csvExport'), '', t('tests.selectTestsToExport'));
-      return;
-    }
-
-    const selectedTestsData = tests?.filter((test: any) => selectedTests.has(test.id)) || [];
-    exportTestsToCSV(selectedTestsData);
-    notifyTestImported(t('tests.csvExportSuccess', { count: selectedTestsData.length }), '');
-  };
-
   const handleBulkExport = () => {
     if (selectedTests.size === 0) {
       notifyTestFailure(t('tests.export'), '', t('tests.selectTestsToExport'));

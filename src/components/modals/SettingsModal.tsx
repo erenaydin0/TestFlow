@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { X, Settings, Palette, Code, Globe } from 'lucide-react';
-import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/contexts';
+import { useTheme, useBrowserSettings, useI18n, useSidebar, useSettingsModal } from '@/hooks';
 import { Theme } from '@/types';
 import { IconButton } from '@/components';
 import { useModal } from '@/hooks';

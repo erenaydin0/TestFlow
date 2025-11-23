@@ -4,7 +4,7 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduledTest } from '@/types/test';
 import { getScheduleDescription } from '@/utils/utils';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 interface UpcomingTestsProps {
   scheduledTests: ScheduledTest[];

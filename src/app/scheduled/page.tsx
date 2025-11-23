@@ -8,20 +8,18 @@ import {
   Trash2, 
   Plus,
   Clock,
-  Calendar,
   X
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
+import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters, PaginationControls, BulkActionsBar, EmptyState, TableCells } from '@/components/common';
 import { Column } from '@/components/common/DataTable';
 import { ScheduleModal, ConfirmDialog } from '@/components/modals';
 import { UpcomingTests } from '@/components/dashboard';
-import { formatDuration, formatRelativeTime, getScheduleDescription, formatDateForTooltip } from '@/utils/utils';
-import { useScheduledTests, usePagination, useSorting, useBulkSelection } from '@/hooks';
+import { getScheduleDescription } from '@/utils/utils';
+import { useScheduledTests, usePagination, useSorting } from '@/hooks';
 import { ScheduledTest } from '@/types/test';
-import { useI18n } from '@/contexts';
-import TableCells from '@/components/common/TableCells';
+import { useI18n } from '@/hooks';
 
 const { TestNameCell, StatusCell, ScheduleCell, NextRunCell, ScheduledActionsCell } = TableCells;
 
@@ -29,7 +27,6 @@ export default function ScheduledPage() {
   const { t, locale } = useI18n();
   const { 
     scheduledTests, 
-    upcomingRuns, 
     loading, 
     error,
     filters,
@@ -66,13 +63,6 @@ export default function ScheduledPage() {
     totalItems: sorting.sortedData.length,
     data: sorting.sortedData,
     itemsPerPage: 10
-  });
-
-  // Use bulk selection hook
-  const bulkSelection = useBulkSelection({
-    items: sorting.sortedData,
-    getItemId: (schedule) => schedule.id,
-    onSelectionChange: setSelectedSchedules
   });
 
   // Reset to first page when filters change

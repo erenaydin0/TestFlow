@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Calendar } from 'lucide-react';
 
 import { getChartColors, getTextColors, getBorderColors, getBgColors } from '@/utils/utils';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 interface DailyResult {
   date: string;

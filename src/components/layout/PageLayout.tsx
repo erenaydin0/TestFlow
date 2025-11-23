@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Sidebar, Header } from './';
-import { useSidebar } from '@/contexts';
+import { useSidebar } from '@/hooks';
 
 interface PageLayoutProps {
   children: React.ReactNode;

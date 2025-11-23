@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { TestStep } from '@/types';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 // ============================================================================
 // useDropdown Hook

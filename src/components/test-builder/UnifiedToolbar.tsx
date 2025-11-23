@@ -8,25 +8,18 @@ import {
   Upload,
   Undo,
   Redo,
-  Magnet,
   Copy,
   Clipboard,
   Files,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  GitBranch,
   Camera,
   Video,
   Eye,
   EyeOff,
-  Layout
 } from 'lucide-react';
 import { TestStep, BrowserType } from '@/types';
-import { getTranslatedActions, ActionType } from '@/utils/actions';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 // Ortak toolbar props interface
 interface UnifiedToolbarProps {
@@ -41,8 +34,6 @@ interface UnifiedToolbarProps {
   onDuplicate: () => void;
   selectedStepsCount: number;
   copiedStepsCount: number;
-  isConnecting: boolean;
-  connectionType: 'normal' | 'true' | 'false';
   onExport: () => void;
   onImport: (file: File) => void;
   onSave: () => void;
@@ -100,8 +91,6 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
   onDuplicate,
   selectedStepsCount,
   copiedStepsCount,
-  isConnecting,
-  connectionType,
   onExport,
   onImport,
   onSave,
@@ -275,40 +264,6 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
         />
 
       </ButtonGroup>
-
-      {/* Connection mode indicator */}
-      {isConnecting && (
-        <div
-          style={{
-            padding: '0.5rem',
-            backgroundColor: connectionType === 'true' ? '#22c55e' :
-              connectionType === 'false' ? '#ef4444' : '#3b82f6',
-            color: 'white',
-            borderRadius: '0.5rem',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            position: 'relative',
-            cursor: 'help',
-            whiteSpace: 'nowrap',
-            flexShrink: 0
-          }}
-          title={`${connectionType === 'true' ? t('testBuilder.trueBranch') :
-            connectionType === 'false' ? t('testBuilder.falseBranch') :
-              t('testBuilder.connectionMode')} - ${t('testBuilder.connectionTypeDesc')}`}
-        >
-          {connectionType === 'true' ? <CheckCircle size={14} /> :
-            connectionType === 'false' ? <XCircle size={14} /> :
-              <GitBranch size={14} />}
-          <span style={{ whiteSpace: 'nowrap' }}>
-            {connectionType === 'true' ? t('testBuilder.trueBranch') :
-              connectionType === 'false' ? t('testBuilder.falseBranch') :
-                t('testBuilder.connectionMode')}
-          </span>
-        </div>
-      )}
     </>
   );
 };

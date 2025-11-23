@@ -1,4 +1,4 @@
-import { BaseEntity, BaseStats } from './types';
+import { BaseEntity } from './types';
 import { BrowserType } from './browser';
 import { ExecutionStatus, StepStatus } from './types';
 
@@ -31,7 +31,6 @@ export interface ExecutionStepResult {
   config: any;
   error?: string;
   screenshot?: string;
-  conditionResult?: boolean; // IF adımları için koşul sonucu
 }
 
 export interface ExecutionOptions {

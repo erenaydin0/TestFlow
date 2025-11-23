@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button, ButtonGroup } from '@/components';
 import { useModal } from '@/hooks';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 
 interface ConfirmDialogProps {
   isOpen: boolean;

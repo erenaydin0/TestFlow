@@ -2,7 +2,6 @@
 
 import { Test, BrowserType } from '@/types';
 import { ExecutionService } from '@/utils/api';
-import { useBrowserSettings } from '@/contexts';
 
 export interface TestExecutionOptions {
   enableScreenshots?: boolean;
@@ -21,20 +20,10 @@ export interface BackendStep {
     text?: string;
     target?: string;
     duration?: number;
-    condition?: string;
-    conditionType?: string;
     expectedValue?: string;
-    operator?: string;
     verificationType?: string;
-    direction?: string;
-    amount?: number;
-    filename?: string;
-    key?: string;
     optionType?: string;
     optionValue?: string;
-    connections?: string[];
-    trueConnection?: string;
-    falseConnection?: string;
   };
 }
 
@@ -52,21 +41,10 @@ export const convertStepsToBackendFormat = (workflow: any[]): BackendStep[] => {
       text: step.value, // For type actions
       target: step.selector, // Alternative selector name
       duration: step.duration,
-      condition: step.condition,
-      conditionType: step.conditionType, // For IF actions
       expectedValue: step.expectedValue,
-      operator: step.operator, // For IF actions
       verificationType: step.verificationType, // For verify actions
-      direction: step.direction,
-      amount: step.amount,
-      filename: step.filename,
-      key: step.key,
       optionType: step.optionType, // For dropdown actions
-      optionValue: step.optionValue, // For dropdown actions
-      // Connection properties for flow control
-      connections: step.connections,
-      trueConnection: step.trueConnection, // For IF TRUE branch
-      falseConnection: step.falseConnection // For IF FALSE branch
+      optionValue: step.optionValue // For dropdown actions
     }
   }));
 };
@@ -84,7 +62,7 @@ export const executeTest = async (
   }
 
   const backendSteps = convertStepsToBackendFormat(test.workflow);
-  
+
   const data = await ExecutionService.executeWorkflow({
     workflowId: test.id,
     workflowName: test.name,
@@ -111,14 +89,14 @@ export const executeBulkTests = async (
   options: TestExecutionOptions = {}
 ) => {
   const validTests = tests.filter(test => test.workflow && test.workflow.length > 0);
-  
+
   if (validTests.length === 0) {
     throw new Error('No valid workflows found');
   }
 
   const executionPromises = validTests.map(async (test) => {
     const backendSteps = convertStepsToBackendFormat(test.workflow!);
-    
+
     return await ExecutionService.executeWorkflow({
       workflowId: test.id,
       workflowName: test.name,

@@ -21,7 +21,7 @@ import {
   useUnsavedChanges,
   useNotifications
 } from '@/hooks';
-import { useSidebar, useBrowserSettings, useI18n } from '@/contexts';
+import { useSidebar, useBrowserSettings, useI18n } from '@/hooks';
 import { TestService, ExecutionService } from '@/utils/api';
 
 export default function TestBuilder() {
@@ -558,8 +558,6 @@ export default function TestBuilder() {
                   }}
                   selectedStepsCount={selectedSteps.size}
                   copiedStepsCount={copiedSteps.length}
-                  isConnecting={false}
-                  connectionType={'normal'}
                   onExport={handleExport}
                   onImport={handleImport}
                   onSave={handleSave}
@@ -632,14 +630,6 @@ export default function TestBuilder() {
                                 setTestSteps(newSteps);
                                 saveToHistory(newSteps);
                               }}
-                              onStartConnection={() => { }} // No-op
-                              onEndConnection={() => { }} // No-op
-                              isConnecting={false}
-                              connectionStart={null}
-                              connectionType={'normal'}
-                              setIsConnecting={() => { }}
-                              setConnectionStart={() => { }}
-                              setConnectionType={() => { }}
                               setSelectedSteps={setSelectedSteps}
                               setSelectedStep={setSelectedStep}
                               selectedSteps={selectedSteps}

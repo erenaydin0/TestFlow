@@ -17,7 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale/tr';
 import { enUS } from 'date-fns/locale/en-US';
 
-import { useTheme, useI18n } from '@/contexts';
+import { useTheme, useI18n } from '@/hooks';
 import { useNotifications } from '@/hooks';
 
 const iconMap = {

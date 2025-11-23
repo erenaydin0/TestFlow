@@ -7,7 +7,7 @@ import { MultiSelect, CustomSelect } from './';
 import DateRangeFilter from './DateRangeFilter';
 import { Button } from '@/components';
 import { BrowserType } from '@/types';
-import { useI18n } from '@/contexts';
+import { useI18n } from '@/hooks';
 import { BROWSER_OPTIONS } from '@/types/browser';
 
 interface FilterState {
