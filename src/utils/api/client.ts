@@ -1,4 +1,4 @@
-import { API_URL } from '@/utils/utils';
+import { API_URL, config } from '@/utils/config';
 import { ApiResponse, RequestConfig, HttpMethod, ApiClientConfig } from './types';
 
 // Custom ApiError class
@@ -28,10 +28,10 @@ export class ApiClient {
     };
   }
 
-  private async request<T = any>(
+  private async request<T = unknown>(
     method: HttpMethod,
     endpoint: string,
-    data?: any,
+    data?: unknown,
     config?: RequestConfig
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
@@ -108,23 +108,23 @@ export class ApiClient {
   }
 
   // HTTP Methods
-  async get<T = any>(endpoint: string, config?: RequestConfig): Promise<T> {
+  async get<T = unknown>(endpoint: string, config?: RequestConfig): Promise<T> {
     return this.request<T>('GET', endpoint, undefined, config);
   }
 
-  async post<T = any>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+  async post<T = unknown>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>('POST', endpoint, data, config);
   }
 
-  async put<T = any>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+  async put<T = unknown>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>('PUT', endpoint, data, config);
   }
 
-  async delete<T = any>(endpoint: string, config?: RequestConfig): Promise<T> {
+  async delete<T = unknown>(endpoint: string, config?: RequestConfig): Promise<T> {
     return this.request<T>('DELETE', endpoint, undefined, config);
   }
 
-  async patch<T = any>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+  async patch<T = unknown>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>('PATCH', endpoint, data, config);
   }
 }
@@ -132,7 +132,7 @@ export class ApiClient {
 // Create singleton instance
 export const apiClient = new ApiClient({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: config.apiTimeout,
   defaultHeaders: {
     'Content-Type': 'application/json',
   },

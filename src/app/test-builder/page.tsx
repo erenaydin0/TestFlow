@@ -11,7 +11,15 @@ import {
   ActionsSidebar,
   StepConfigurationPanel
 } from '@/components/test-builder';
-import { TestModal, ConfirmDialog } from '@/components/modals';
+import dynamic from 'next/dynamic';
+
+// Lazy load modals (heavy components)
+const TestModal = dynamic(() => import('@/components/modals/TestModal').then(mod => ({ default: mod.default })), {
+  ssr: false
+});
+const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog').then(mod => ({ default: mod.default })), {
+  ssr: false
+});
 
 import { TestStep, BrowserType } from '@/types';
 import { getActionByType } from '@/utils/actions';

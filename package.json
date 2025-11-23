@@ -8,6 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "server": "node --no-deprecation server/core/index.js",
     "server:dev": "nodemon --exec \"node --no-deprecation\" server/core/index.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run server\""
@@ -46,12 +50,20 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/jszip": "^3.4.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.0.13",
+    "@vitest/ui": "^4.0.13",
     "autoprefixer": "^10.4.21",
     "concurrently": "^8.2.2",
+    "jsdom": "^25.0.1",
     "nodemon": "^3.0.2",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "vitest": "^4.0.13"
   },
   "keywords": [
     "playwright",

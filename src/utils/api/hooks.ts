@@ -150,7 +150,7 @@ export function useApiMutation<T, P = any>(
 }
 
 // Hook for managing multiple API calls with loading states
-export function useApiQueries<T extends Record<string, () => Promise<any>>>(
+export function useApiQueries<T extends Record<string, () => Promise<unknown>>>(
   queries: T,
   options: {
     enabled?: boolean;
@@ -230,7 +230,7 @@ export function useApiQueries<T extends Record<string, () => Promise<any>>>(
 }
 
 // Hook for optimistic updates
-export function useOptimisticMutation<T, P = any>(
+export function useOptimisticMutation<T, P = unknown>(
   mutationFn: (params: P) => Promise<T>,
   optimisticUpdateFn: (params: P) => T,
   rollbackFn: (params: P) => void,

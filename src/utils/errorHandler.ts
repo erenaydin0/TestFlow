@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Basitleştirilmiş frontend error handling utilities
  */
@@ -191,10 +193,14 @@ class FrontendErrorHandler {
 
   /**
    * Show user notification
+   * Note: This method is called but actual notification should be handled
+   * by the component using the error handler hook which has access to toast notifications
    */
   private showUserNotification(errorInfo: ErrorInfo): void {
+    // Alert removed - use toast notifications via useErrorHandler hook instead
+    // Critical errors will be shown via toast in components that use useErrorHandler
     if (errorInfo.severity === 'critical') {
-      alert(`Kritik Hata: ${errorInfo.message}`);
+      console.error('Critical error:', errorInfo);
     }
   }
 

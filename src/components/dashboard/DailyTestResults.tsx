@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calendar } from 'lucide-react';
@@ -20,7 +20,7 @@ interface DailyTestResultsProps {
 
 type DateRange = 7 | 14 | 30 | 60;
 
-export default function DailyTestResults({ data, onDateRangeChange }: DailyTestResultsProps) {
+function DailyTestResults({ data, onDateRangeChange }: DailyTestResultsProps) {
   const router = useRouter();
   const { t, locale } = useI18n();
   const [selectedRange, setSelectedRange] = useState<DateRange>(14);
@@ -199,4 +199,6 @@ export default function DailyTestResults({ data, onDateRangeChange }: DailyTestR
       </div>
     </div>
   );
-} 
+}
+
+export default React.memo(DailyTestResults); 

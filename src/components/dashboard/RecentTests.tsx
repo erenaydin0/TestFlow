@@ -1,3 +1,4 @@
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 
@@ -20,7 +21,7 @@ interface RecentTestsProps {
   data: RecentTest[];
 }
 
-export default function RecentTests({ data }: RecentTestsProps) {
+function RecentTests({ data }: RecentTestsProps) {
   const router = useRouter();
   const { t, locale } = useI18n();
 
@@ -112,4 +113,6 @@ export default function RecentTests({ data }: RecentTestsProps) {
       )}
     </div>
   );
-} 
+}
+
+export default React.memo(RecentTests); 

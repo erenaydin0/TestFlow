@@ -21,7 +21,12 @@ import DataTable, { Column } from '@/components/common/DataTable';
 import { TableCells, StatusBadge } from '@/components/common';
 import { StatsCards } from '@/components/dashboard';
 import { StepView } from '@/components/reports';
-import ConfirmDialog from '@/components/modals/ConfirmDialog';
+import dynamic from 'next/dynamic';
+
+// Lazy load ConfirmDialog (heavy component)
+const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog'), {
+  ssr: false
+});
 import { Button, IconButton, ButtonGroup, PaginationControls, BulkActionsBar } from '@/components';
 
 import { ExecutionResult, BrowserType } from '@/types';

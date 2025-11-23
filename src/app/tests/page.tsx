@@ -19,7 +19,15 @@ import DataFilters from '@/components/common/DataFilters';
 import DataTable, { Column } from '@/components/common/DataTable';
 import { TableCells, EditableSuiteCell, EditableTagsCell, EditableBrowserCell, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
 import ImportDialog from '@/components/test-builder/ImportDialog';
-import { ConfirmDialog, TestModal } from '@/components/modals';
+import dynamic from 'next/dynamic';
+
+// Lazy load modals (heavy components)
+const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog').then(mod => ({ default: mod.default })), {
+  ssr: false
+});
+const TestModal = dynamic(() => import('@/components/modals/TestModal').then(mod => ({ default: mod.default })), {
+  ssr: false
+});
 import { Button, IconButton, ButtonGroup, } from '@/components';
 
 import { Test, BrowserType } from '@/types';

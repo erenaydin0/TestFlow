@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ScheduledTest } from '@/types/test';
@@ -14,7 +15,7 @@ interface UpcomingTestsProps {
   onTestClick?: (schedule: ScheduledTest) => void;
 }
 
-export default function UpcomingTests({ 
+function UpcomingTests({ 
   scheduledTests, 
   loading = false, 
   maxItems = 5,
@@ -150,3 +151,5 @@ export default function UpcomingTests({
     </div>
   );
 }
+
+export default React.memo(UpcomingTests);

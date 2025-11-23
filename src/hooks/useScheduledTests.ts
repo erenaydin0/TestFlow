@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { ScheduledTest, ScheduledTestFilters, UpcomingRun } from '@/types/test';
 import { useApiQuery, useApiMutation, ScheduledTestService } from '@/utils/api';

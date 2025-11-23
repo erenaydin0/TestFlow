@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useI18n } from '@/hooks';
 import { useWebSocket } from '@/hooks';
-import { API_URL, config } from '@/utils/utils';
+import { API_URL, config } from '@/utils/config';
 import { Notification } from '@/types/notifications';
 
 // ============================================================================
@@ -47,9 +47,9 @@ interface UseNotificationsReturn {
 // useNotifications Hook
 // ============================================================================
 
-// Storage keys
-const NOTIFICATIONS_STORAGE_KEY = 'testflow_notifications';
-const ID_COUNTER_STORAGE_KEY = 'testflow_notification_counter';
+// Storage keys - use config
+const NOTIFICATIONS_STORAGE_KEY = config.storageKeys.notifications;
+const ID_COUNTER_STORAGE_KEY = config.storageKeys.idCounter;
 
 // Storage helper functions
 const saveNotificationsToStorage = (notifications: Notification[]) => {
@@ -138,7 +138,7 @@ function useNotifications() {
     
     const interval = setInterval(() => {
       saveCounterToStorage(idCounterRef.current);
-    }, 5000); // Her 5 saniyede bir kaydet
+    }, config.notification.autoSaveInterval);
 
     return () => clearInterval(interval);
   }, [isInitialized]);
@@ -163,7 +163,7 @@ function useNotifications() {
       existing.title === notification.title &&
       existing.testId === notification.testId &&
       existing.executionId === notification.executionId &&
-      (now.getTime() - existing.timestamp.getTime()) < 5000
+      (now.getTime() - existing.timestamp.getTime()) < config.notification.duplicateCheckWindow
     );
 
     if (isDuplicate) {
@@ -190,7 +190,7 @@ function useNotifications() {
       existing.message === toast.message &&
       existing.testId === toast.testId &&
       existing.executionId === toast.executionId &&
-      (now.getTime() - existing.timestamp.getTime()) < 3000
+      (now.getTime() - existing.timestamp.getTime()) < config.notification.toastDuplicateCheckWindow
     );
 
     if (isDuplicate) {
@@ -204,7 +204,7 @@ function useNotifications() {
       timestamp: new Date(),
       persistent: false,
       autoClose: toast.autoClose ?? true,
-      duration: toast.duration ?? 5000
+      duration: toast.duration ?? config.notification.defaultDuration
     };
 
     setToasts(prev => [...prev.slice(-4), newToast]);
@@ -254,7 +254,7 @@ function useNotifications() {
       setToasts(prev => prev.filter(toast => {
         if (!toast.autoClose) return true;
         const elapsed = Date.now() - toast.timestamp.getTime();
-        return elapsed < (toast.duration || 5000);
+        return elapsed < (toast.duration || config.notification.defaultDuration);
       }));
     }, 1000);
 
@@ -272,7 +272,7 @@ function useNotifications() {
       message: t('notifications.testStartMessage', { testName }),
       testId,
       autoClose: true,
-      duration: 3000
+      duration: config.notification.shortDuration
     });
 
     addNotification({
@@ -294,7 +294,7 @@ function useNotifications() {
       testId,
       executionId,
       autoClose: true,
-      duration: 5000
+      duration: config.notification.defaultDuration
     });
 
     addNotification({
@@ -318,7 +318,7 @@ function useNotifications() {
       testId,
       executionId,
       autoClose: true,
-      duration: 8000
+      duration: config.notification.longDuration
     });
 
     addNotification({
@@ -338,7 +338,7 @@ function useNotifications() {
       message: t('notifications.testSavedMessage', { testName }),
       testId,
       autoClose: true,
-      duration: 3000
+      duration: config.notification.shortDuration
     });
   };
 
@@ -349,7 +349,7 @@ function useNotifications() {
       message: t('notifications.testScheduledMessage', { testName, scheduleTime }),
       testId,
       autoClose: true,
-      duration: 4000
+      duration: config.notification.mediumDuration
     });
 
     addNotification({
@@ -401,7 +401,7 @@ function useNotifications() {
       message: (isSuccess ? t('notifications.executionCompletedMessage', { workflowName }) : t('notifications.executionFailedMessage', { workflowName })) + durationText,
       executionId,
       autoClose: true,
-      duration: isSuccess ? 5000 : 8000
+      duration: isSuccess ? config.notification.defaultDuration : config.notification.longDuration
     });
 
     addNotification({
@@ -420,7 +420,7 @@ function useNotifications() {
       message: t('notifications.testDeletedMessage', { testName }),
       testId,
       autoClose: true,
-      duration: 3000
+      duration: config.notification.shortDuration
     });
     addNotification({
       type: 'info',
@@ -438,7 +438,7 @@ function useNotifications() {
       message: t('notifications.testDuplicatedMessage', { testName }),
       testId,
       autoClose: true,
-      duration: 3000
+      duration: config.notification.shortDuration
     });
   };
 
@@ -448,7 +448,7 @@ function useNotifications() {
       title: t('notifications.workflowLoaded'),
       message: t('notifications.workflowLoadedMessage', { workflowName }),
       autoClose: true,
-      duration: 3000
+      duration: config.notification.shortDuration
     });
   };
 
@@ -461,7 +461,7 @@ function useNotifications() {
   const { isConnected, isConnecting, lastMessage, connect } = useWebSocket(wsUrl, {
     autoConnect: typeof window !== 'undefined',
     reconnectAttempts: 5,
-    reconnectInterval: 3000
+    reconnectInterval: config.wsReconnectInterval
   });
 
   // ============================================================================

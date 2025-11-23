@@ -8,6 +8,7 @@ import { Button, ButtonGroup, IconButton } from '@/components';
 import { useNotifications } from '@/hooks';
 import { BrowserType, TestFormData } from '@/types';
 import { TestService } from '@/utils/api';
+import { config } from '@/utils/config';
 
 interface ImportDialogProps {
   isOpen: boolean;
@@ -215,7 +216,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
 
     // Check if workflow with same name exists
-    const existingWorkflows = JSON.parse(localStorage.getItem('CosmicQA_saved_workflows') || '[]');
+    const existingWorkflows = JSON.parse(localStorage.getItem(config.storageKeys.workflows) || '[]');
     const willOverwrite = existingWorkflows.some((w: any) => w.name === workflow.name);
 
     return {

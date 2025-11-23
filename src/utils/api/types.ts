@@ -1,5 +1,5 @@
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   success: boolean;
   message?: string;
@@ -30,7 +30,7 @@ export interface UseApiQueryReturn<T> {
   refetch: () => Promise<void>;
 }
 
-export interface UseApiMutationReturn<T, P = any> {
+export interface UseApiMutationReturn<T, P = unknown> {
   data: T | null;
   loading: boolean;
   error: string | null;

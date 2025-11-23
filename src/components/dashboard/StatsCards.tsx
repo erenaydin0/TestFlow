@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   BarChart3,
   TrendingUp,
@@ -21,7 +21,7 @@ interface StatsCardsProps {
   loading?: boolean;
 }
 
-export default function StatsCards({ stats, loading = false }: StatsCardsProps) {
+function StatsCards({ stats, loading = false }: StatsCardsProps) {
   const { t } = useI18n();
   const [animatedStats, setAnimatedStats] = useState({
     totalExecutions: 0,
@@ -201,3 +201,5 @@ export default function StatsCards({ stats, loading = false }: StatsCardsProps) 
     </>
   );
 }
+
+export default React.memo(StatsCards);

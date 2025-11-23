@@ -1,24 +1,41 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
-import { 
-  StatsCards,
-  DailyTestResults, 
-  TestSuiteDistribution, 
-  RecentTests,
-  UpcomingTests
-} from '@/components/dashboard';
 import { useExecutions, useScheduledTests } from '@/hooks';
 import { getConsistentColorFromString } from '@/utils/utils';
 import { useI18n } from '@/hooks';
+import { ExecutionResult } from '@/types';
+import { config } from '@/utils/config';
+
+// Lazy load heavy dashboard components
+const StatsCards = dynamic(() => import('@/components/dashboard/StatsCards').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="card" style={{ height: '120px' }}><div className="spinner" /></div>
+});
+
+const DailyTestResults = dynamic(() => import('@/components/dashboard/DailyTestResults').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="card" style={{ height: '400px' }}><div className="spinner" /></div>
+});
+
+const TestSuiteDistribution = dynamic(() => import('@/components/dashboard/TestSuiteDistribution').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="card" style={{ height: '400px' }}><div className="spinner" /></div>
+});
+
+const RecentTests = dynamic(() => import('@/components/dashboard/RecentTests').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="card" style={{ height: '400px' }}><div className="spinner" /></div>
+});
+
+const UpcomingTests = dynamic(() => import('@/components/dashboard/UpcomingTests').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="card" style={{ height: '400px' }}><div className="spinner" /></div>
+});
 
 export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
   const { scheduledTests, loading: scheduledLoading } = useScheduledTests();
   const { t } = useI18n();
-  const [dateRange, setDateRange] = useState(14);
+  const [dateRange, setDateRange] = useState(config.defaultDateRange);
 
   // Memoized date range change handler
   const handleDateRangeChange = useCallback((newDateRange: number) => {
@@ -35,19 +52,19 @@ export default function Dashboard() {
     }).reverse();
 
     const dailyResults = days.map(date => {
-      const dayExecutions = (executions || []).filter((e: any) => 
+      const dayExecutions = (executions || []).filter((e: ExecutionResult) => 
         new Date(e.startTime).toISOString().split('T')[0] === date
       );
       return {
         date,
-        passed: dayExecutions.filter((e: any) => e.status === 'completed').length,
-        failed: dayExecutions.filter((e: any) => e.status === 'failed').length,
+        passed: dayExecutions.filter((e: ExecutionResult) => e.status === 'completed').length,
+        failed: dayExecutions.filter((e: ExecutionResult) => e.status === 'failed').length,
         total: dayExecutions.length
       };
     });
 
     // Test suite distribution with success rate
-    const testSuiteData = (executions || []).reduce((acc: any, execution: any) => {
+    const testSuiteData = (executions || []).reduce((acc: Record<string, { total: number; passed: number }>, execution: ExecutionResult) => {
       const suite = execution.suite || t('dashboard.other');
       if (!acc[suite]) {
         acc[suite] = { total: 0, passed: 0 };
@@ -71,7 +88,7 @@ export default function Dashboard() {
     });
 
     // Browser distribution with success rate
-    const browserData = (executions || []).reduce((acc: any, execution: any) => {
+    const browserData = (executions || []).reduce((acc: Record<string, { total: number; passed: number }>, execution: ExecutionResult) => {
       const browser = execution.options?.browserType || 'chromium';
       if (!acc[browser]) {
         acc[browser] = { total: 0, passed: 0 };
@@ -100,9 +117,9 @@ export default function Dashboard() {
 
     // Recent tests (last 5) - map to RecentTest interface
     const recentTests = (executions || [])
-      .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-      .slice(0, 5)
-      .map((execution: any, index: number) => ({
+      .sort((a: ExecutionResult, b: ExecutionResult) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+      .slice(0, config.maxRecentTests)
+      .map((execution: ExecutionResult, index: number) => ({
         id: index,
         executionId: execution.id,
         name: execution.workflowName,
@@ -155,7 +172,7 @@ export default function Dashboard() {
             <UpcomingTests 
               scheduledTests={scheduledTests}
               loading={scheduledLoading}
-              maxItems={5}
+              maxItems={config.maxRecentTests}
               showViewAll={true}
             />
           </div>

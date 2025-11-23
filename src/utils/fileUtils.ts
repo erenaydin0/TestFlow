@@ -475,7 +475,9 @@ export const getUniqueFilterOptions = (
 // ============================================================================
 
 // Storage constants
-const WORKFLOWS_STORAGE_KEY = 'CosmicQA_Workflows';
+import { config } from './config';
+
+const WORKFLOWS_STORAGE_KEY = config.storageKeys.workflows;
 
 // Types
 export interface WorkflowStorageData {

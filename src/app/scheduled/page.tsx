@@ -14,7 +14,15 @@ import {
 import { PageLayout } from '@/components/layout';
 import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters, PaginationControls, BulkActionsBar, EmptyState, TableCells } from '@/components/common';
 import { Column } from '@/components/common/DataTable';
-import { ScheduleModal, ConfirmDialog } from '@/components/modals';
+import dynamic from 'next/dynamic';
+
+// Lazy load modals (heavy components)
+const ScheduleModal = dynamic(() => import('@/components/modals/ScheduleModal').then(mod => ({ default: mod.ScheduleModal })), {
+  ssr: false
+});
+const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog').then(mod => ({ default: mod.default })), {
+  ssr: false
+});
 import { UpcomingTests } from '@/components/dashboard';
 import { getScheduleDescription } from '@/utils/utils';
 import { useScheduledTests, usePagination, useSorting } from '@/hooks';

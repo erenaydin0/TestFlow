@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -24,7 +24,7 @@ interface TestSuiteDistributionProps {
   browserData: BrowserDistribution[];
 }
 
-export default function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistributionProps) {
+function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistributionProps) {
   const router = useRouter();
   const { t } = useI18n();
   const [currentPage, setCurrentPage] = useState(0); // 0: Test Dağılımı, 1: Tarayıcı Dağılımı
@@ -307,4 +307,6 @@ export default function TestSuiteDistribution({ testSuiteData, browserData }: Te
       </div>
     </div>
   );
-} 
+}
+
+export default React.memo(TestSuiteDistribution); 

@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '@/assets/styles/globals.css';
 import { ToastContainer } from '@/components/notifications';
-import { SettingsModal } from '@/components/modals';
+import { ErrorBoundary } from '@/components/common';
+import SettingsModalWrapper from '@/components/modals/SettingsModalWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        {children}
-        <ToastContainer />
-        <SettingsModal />
+        <ErrorBoundary>
+          {children}
+          <ToastContainer />
+          <SettingsModalWrapper />
+        </ErrorBoundary>
       </body>
     </html>
   );

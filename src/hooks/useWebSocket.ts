@@ -17,6 +17,8 @@ export interface WebSocketHookReturn {
   connect: () => void;
 }
 
+import { config } from '@/utils/config';
+
 function useWebSocket(url: string, options?: {
   autoConnect?: boolean;
   reconnectAttempts?: number;
@@ -25,7 +27,7 @@ function useWebSocket(url: string, options?: {
   const {
     autoConnect = true,
     reconnectAttempts = 5,
-    reconnectInterval = 3000
+    reconnectInterval = config.wsReconnectInterval
   } = options || {};
 
   const [isConnected, setIsConnected] = useState(false);
