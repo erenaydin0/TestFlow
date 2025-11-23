@@ -96,8 +96,7 @@ export const getConfigFieldLabel = (key: string, t?: (key: string) => string) =>
 
 export const shouldShowConfigField = (step: ExecutionStepResult, key: string, value: any) => {
   // Internal fields
-  if (key === 'id' || key === 'type' || key === 'x' || key === 'y') return false;
-  if (key === 'trueConnection' || key === 'falseConnection' || key === 'connections') return false;
+  if (key === 'id' || key === 'type') return false;
   if (!value || value === '') return false;
 
   // Ana açıklamada zaten belirtilen alanları atla

@@ -92,11 +92,14 @@ router.delete('/stats', async (req, res) => {
 
 /**
  * Get error logs (admin only)
+ * Supports pagination, filtering, and sorting
  */
 router.get('/logs', async (req, res) => {
   try {
-    // TODO: Add authentication check
-    // TODO: Add pagination and filtering
+    // TODO: Add authentication check (middleware olarak eklenebilir)
+    // if (!req.user || !req.user.isAdmin) {
+    //   return res.status(403).json({ success: false, message: 'Forbidden' });
+    // }
     
     const fs = await import('fs-extra');
     const path = await import('path');
@@ -105,34 +108,123 @@ router.get('/logs', async (req, res) => {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     
-    const logsDir = path.join(__dirname, '..', 'logs');
-    const today = new Date().toISOString().split('T')[0];
-    const logFile = path.join(logsDir, `errors-${today}.log`);
+    // Parse query parameters
+    const limit = Math.min(parseInt(req.query.limit || '50', 10), 1000); // Max 1000
+    const offset = Math.max(parseInt(req.query.offset || '0', 10), 0);
+    const severity = req.query.severity;
+    const category = req.query.category;
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+    const sort = req.query.sort || 'desc'; // 'asc' or 'desc'
     
-    if (await fs.pathExists(logFile)) {
-      const logContent = await fs.readFile(logFile, 'utf8');
-      const logs = logContent.split('\n')
-        .filter(line => line.trim())
-        .map(line => JSON.parse(line))
-        .reverse(); // Most recent first
+    const logsDir = path.join(__dirname, '..', 'logs');
+    
+    // Get log files (today and optionally date range)
+    let logFiles = [];
+    if (startDate && endDate) {
+      // Date range: get all log files in range
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const current = new Date(start);
       
-      res.json({ 
-        success: true, 
-        logs,
-        count: logs.length
-      });
+      while (current <= end) {
+        const dateStr = current.toISOString().split('T')[0];
+        const logFile = path.join(logsDir, `errors-${dateStr}.log`);
+        if (await fs.pathExists(logFile)) {
+          logFiles.push(logFile);
+        }
+        current.setDate(current.getDate() + 1);
+      }
     } else {
-      res.json({ 
-        success: true, 
-        logs: [],
-        count: 0
+      // Default: today's log file
+      const today = new Date().toISOString().split('T')[0];
+      const logFile = path.join(logsDir, `errors-${today}.log`);
+      if (await fs.pathExists(logFile)) {
+        logFiles.push(logFile);
+      }
+    }
+    
+    // Read and parse all log files
+    let allLogs = [];
+    for (const logFile of logFiles) {
+      try {
+        const logContent = await fs.readFile(logFile, 'utf8');
+        const fileLogs = logContent.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            try {
+              return JSON.parse(line);
+            } catch (e) {
+              return null;
+            }
+          })
+          .filter(log => log !== null);
+        
+        allLogs.push(...fileLogs);
+      } catch (error) {
+        console.error(`Error reading log file ${logFile}:`, error);
+      }
+    }
+    
+    // Apply filters
+    let filteredLogs = allLogs;
+    
+    if (severity) {
+      filteredLogs = filteredLogs.filter(log => 
+        log.error?.severity?.toLowerCase() === severity.toLowerCase()
+      );
+    }
+    
+    if (category) {
+      filteredLogs = filteredLogs.filter(log => 
+        log.error?.category?.toLowerCase() === category.toLowerCase()
+      );
+    }
+    
+    if (startDate || endDate) {
+      filteredLogs = filteredLogs.filter(log => {
+        const logDate = new Date(log.timestamp);
+        if (startDate && logDate < new Date(startDate)) return false;
+        if (endDate && logDate > new Date(endDate)) return false;
+        return true;
       });
     }
+    
+    // Sort by timestamp
+    filteredLogs.sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      return sort === 'asc' ? timeA - timeB : timeB - timeA;
+    });
+    
+    // Apply pagination
+    const total = filteredLogs.length;
+    const paginatedLogs = filteredLogs.slice(offset, offset + limit);
+    
+    res.json({ 
+      success: true, 
+      logs: paginatedLogs,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total
+      },
+      filters: {
+        severity: severity || null,
+        category: category || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        sort
+      }
+    });
   } catch (error) {
     console.error('Failed to get error logs:', error);
+    await errorHandler.logError(error, { endpoint: '/api/errors/logs' });
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to get error logs' 
+      message: 'Failed to get error logs',
+      error: errorHandler.createSafeErrorMessage(error)
     });
   }
 });

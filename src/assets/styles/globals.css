@@ -380,52 +380,6 @@ body {
   box-shadow: var(--shadow-xl);
 }
 
-/* Canvas control styles */
-.canvas-control {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  background-color: transparent;
-  border: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.canvas-control:hover {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.canvas-control:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.canvas-control:disabled:hover {
-  background-color: transparent;
-  color: var(--text-secondary);
-}
-
-/* Canvas background grid */
-.canvas-background {
-  background-color: var(--bg-secondary);
-}
-
-.dark .canvas-background {
-  background-color: var(--bg-secondary);
-  background-image: 
-    radial-gradient(circle at 15% 20%, rgba(232, 149, 88, 0.05) 0%, transparent 25%),
-    radial-gradient(circle at 85% 80%, rgba(184, 122, 166, 0.05) 0%, transparent 25%),
-    radial-gradient(circle at 50% 50%, rgba(208, 126, 71, 0.03) 0%, transparent 50%),
-    linear-gradient(rgba(232, 149, 88, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(184, 122, 166, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 20px 20px, 20px 20px;
-}
-
 /* Smooth transitions for all elements */
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;

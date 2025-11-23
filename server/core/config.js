@@ -38,6 +38,13 @@ const config = {
   // Logging
   logLevel: process.env.LOG_LEVEL || 'info',
   enableDebugLogs: process.env.ENABLE_DEBUG_LOGS === 'true',
+  logToFile: process.env.LOG_TO_FILE !== 'false', // Default: true
+  
+  // Alerting
+  alertProvider: process.env.ALERT_PROVIDER || 'console',
+  alertWebhookUrl: process.env.ALERT_WEBHOOK_URL,
+  alertEmailTo: process.env.ALERT_EMAIL_TO,
+  alertEmailFrom: process.env.ALERT_EMAIL_FROM,
   
   // Helpers
   isDevelopment() {

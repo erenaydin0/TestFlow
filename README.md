@@ -127,9 +127,9 @@ Tüm environment variables için `env.example` dosyasına bakın.
 ## 🧪 Test Builder Kullanımı
 
 1. **Test Builder** sayfasına gidin
-2. Sol panelden action'ları sürükleyip canvas'a bırakın
+2. Sol panelden action'ları seçerek test adımlarını oluşturun
 3. Her adımı tıklayarak detaylarını düzenleyin
-4. Adımları birbirine bağlayarak flow oluşturun
+4. Adımlar sıralı (linear) olarak çalıştırılır
 5. **Save** ile testi kaydedin
 6. **Run** ile testi çalıştırın
 

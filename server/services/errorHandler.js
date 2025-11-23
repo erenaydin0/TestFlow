@@ -9,6 +9,7 @@ import {
   ERROR_CONTEXT,
   RECOVERY_STRATEGY 
 } from '../types/errors.js';
+import { createAlertProvider } from '../utils/alertProviders.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +25,33 @@ class ErrorHandler {
       [ERROR_SEVERITY.MEDIUM]: 50,
       [ERROR_SEVERITY.LOW]: 100
     };
+    this.alertProvider = this.createAlertProvider();
     this.ensureLogsDir();
+  }
+
+  /**
+   * Create alert provider based on configuration
+   * @returns {AlertProvider}
+   */
+  createAlertProvider() {
+    const providerType = process.env.ALERT_PROVIDER || 'console';
+    const config = {
+      webhookUrl: process.env.ALERT_WEBHOOK_URL,
+      emailConfig: {
+        to: process.env.ALERT_EMAIL_TO,
+        from: process.env.ALERT_EMAIL_FROM,
+        smtp: {
+          host: process.env.ALERT_EMAIL_SMTP_HOST,
+          port: process.env.ALERT_EMAIL_SMTP_PORT,
+          auth: {
+            user: process.env.ALERT_EMAIL_SMTP_USER,
+            pass: process.env.ALERT_EMAIL_SMTP_PASS
+          }
+        }
+      }
+    };
+    
+    return createAlertProvider(providerType, config);
   }
 
   ensureLogsDir() {
@@ -216,10 +243,15 @@ class ErrorHandler {
     }
   }
 
-  // Send alert (placeholder for future implementation)
+  // Send alert using configured provider
   async sendAlert(classification, count, logEntry) {
-    // TODO: Implement actual alerting (email, Slack, etc.)
-    console.warn(`🚨 ALERT: ${count} ${classification.severity} errors in ${classification.category}`);
+    try {
+      await this.alertProvider.send(classification, count, logEntry);
+    } catch (error) {
+      // Fallback to console if provider fails
+      console.error('Alert provider failed:', error);
+      console.warn(`🚨 ALERT: ${count} ${classification.severity} errors in ${classification.category}`);
+    }
   }
 
   // Safe error message for client

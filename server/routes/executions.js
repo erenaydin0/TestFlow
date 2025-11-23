@@ -127,7 +127,10 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
         res.status(404).json({ error: 'Results not found' });
       }
     } catch (error) {
-      console.error('Error getting results:', error);
+      logger.error('Error getting execution results', { 
+        executionId, 
+        error: error.message 
+      });
       res.status(500).json({ error: 'Failed to get results' });
     }
   });
@@ -145,7 +148,10 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
             const execution = await fs.readJson(executionPath);
             executions.push(execution);
           } catch (error) {
-            console.error(`Error reading execution file ${file}:`, error);
+            logger.error('Error reading execution file', { 
+              file, 
+              error: error.message 
+            });
           }
         }
       }
@@ -155,7 +161,7 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
 
       res.json(executions);
     } catch (error) {
-      console.error('Error getting executions:', error);
+      logger.error('Error getting executions', { error: error.message });
       res.status(500).json({ error: 'Failed to get executions' });
     }
   });
@@ -187,7 +193,10 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
         res.status(404).json({ error: 'Execution not found or already completed' });
       }
     } catch (error) {
-      console.error('Error cancelling execution:', error);
+      logger.error('Error cancelling execution', { 
+        executionId, 
+        error: error.message 
+      });
       res.status(500).json({ error: 'Failed to cancel execution' });
     }
   });
@@ -221,7 +230,10 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
             await fs.remove(videoPath);
           }
         } catch (mediaError) {
-          console.error('Error deleting media files:', mediaError);
+          logger.error('Error deleting media files', { 
+            executionId: id, 
+            error: mediaError.message 
+          });
           // Continue even if media deletion fails
         }
 
@@ -235,7 +247,10 @@ function createExecutionRoutes(activeExecutions, clients, broadcast, executeTest
         res.status(404).json({ error: 'Execution not found' });
       }
     } catch (error) {
-      console.error('Error deleting execution:', error);
+      logger.error('Error deleting execution', { 
+        executionId, 
+        error: error.message 
+      });
       res.status(500).json({ error: 'Failed to delete execution' });
     }
   });

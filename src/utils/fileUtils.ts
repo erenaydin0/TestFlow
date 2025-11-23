@@ -216,9 +216,7 @@ export const exportTestWorkflow = (
       headlessMode: metadata?.headlessMode || false
     },
     steps: testSteps.map(step => ({
-      ...step,
-      x: step.x,
-      y: step.y
+      ...step
     }))
   };
 
@@ -244,7 +242,7 @@ export const importTestWorkflow = (file: File): Promise<{
         }
 
         const validSteps = workflow.steps.filter((step: any) => {
-          return step.id && step.type && typeof step.x === 'number' && typeof step.y === 'number';
+          return step.id && step.type;
         });
 
         if (validSteps.length === 0) {
@@ -304,23 +302,7 @@ export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors:
     errors.push(`Duplicate step IDs found: ${duplicateIds.join(', ')}`);
   }
 
-  steps.forEach(step => {
-    if (step.connections) {
-      step.connections.forEach((connectionId: string) => {
-        if (!ids.includes(connectionId)) {
-          errors.push(`Step ${step.id} has invalid connection: ${connectionId}`);
-        }
-      });
-    }
-
-    if (step.trueConnection && !ids.includes(step.trueConnection)) {
-      errors.push(`Step ${step.id} has invalid true connection: ${step.trueConnection}`);
-    }
-
-    if (step.falseConnection && !ids.includes(step.falseConnection)) {
-      errors.push(`Step ${step.id} has invalid false connection: ${step.falseConnection}`);
-    }
-  });
+  // Canvas connections are no longer used - steps are executed in linear order
 
   return {
     isValid: errors.length === 0,

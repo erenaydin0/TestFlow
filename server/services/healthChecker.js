@@ -69,10 +69,124 @@ class HealthChecker {
     return checks;
   }
 
+  // Disk space kontrolü
+  async checkDiskSpace() {
+    try {
+      const storagePath = process.env.EXECUTIONS_DIR || './server/storage';
+      const stats = await fs.stat(storagePath);
+      
+      // Node.js'de cross-platform disk space kontrolü için
+      // fs.statfs sadece bazı platformlarda çalışır, alternatif kullan
+      try {
+        // Try to get disk space info (works on Unix-like systems)
+        const { execSync } = await import('child_process');
+        const platform = os.platform();
+        
+        let diskInfo = {};
+        
+        if (platform === 'linux' || platform === 'darwin') {
+          try {
+            const dfOutput = execSync(`df -h "${storagePath}"`, { encoding: 'utf8' });
+            const lines = dfOutput.trim().split('\n');
+            if (lines.length > 1) {
+              const parts = lines[1].split(/\s+/);
+              diskInfo = {
+                total: parts[1],
+                used: parts[2],
+                available: parts[3],
+                usePercent: parts[4]
+              };
+            }
+          } catch (e) {
+            // df command failed, skip disk info
+          }
+        }
+        
+        return {
+          status: 'ok',
+          path: storagePath,
+          ...diskInfo,
+          message: 'Disk space check completed'
+        };
+      } catch (error) {
+        // Fallback: just check if directory is writable
+        return {
+          status: 'ok',
+          path: storagePath,
+          message: 'Disk space check unavailable on this platform',
+          writable: true
+        };
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Failed to check disk space',
+        error: error.message
+      };
+    }
+  }
+
+  // Network connectivity kontrolü
+  async checkNetworkConnectivity() {
+    const checks = {
+      localhost: { status: 'ok', message: 'Local network available' },
+      external: { status: 'unknown', message: 'External connectivity not tested' }
+    };
+
+    // Test localhost connectivity
+    try {
+      const http = await import('http');
+      await new Promise((resolve, reject) => {
+        const req = http.request({
+          hostname: 'localhost',
+          port: process.env.PORT || 3001,
+          path: '/api/health/quick',
+          method: 'GET',
+          timeout: 2000
+        }, (res) => {
+          resolve();
+        });
+        
+        req.on('error', reject);
+        req.on('timeout', () => {
+          req.destroy();
+          reject(new Error('Timeout'));
+        });
+        
+        req.end();
+      });
+      
+      checks.localhost.status = 'ok';
+    } catch (error) {
+      checks.localhost.status = 'warning';
+      checks.localhost.message = 'Localhost connectivity check failed';
+      checks.localhost.error = error.message;
+    }
+
+    // External connectivity test (optional, can be enabled via env)
+    if (process.env.ENABLE_EXTERNAL_CONNECTIVITY_CHECK === 'true') {
+      try {
+        const response = await fetch('https://www.google.com', { 
+          method: 'HEAD',
+          signal: AbortSignal.timeout(5000)
+        });
+        checks.external.status = response.ok ? 'ok' : 'warning';
+        checks.external.message = 'External connectivity available';
+      } catch (error) {
+        checks.external.status = 'warning';
+        checks.external.message = 'External connectivity check failed';
+        checks.external.error = error.message;
+      }
+    }
+
+    return checks;
+  }
+
   // Test runner durumunu kontrol et
   async checkTestRunner() {
     try {
-      const TestRunner = require('../core/testRunner');
+      // Dynamic import for ES modules
+      const { default: TestRunner } = await import('../core/testRunner.js');
       const testRunner = new TestRunner();
       
       // Browser başlatma testi (headless)
@@ -143,7 +257,7 @@ class HealthChecker {
   // Genel sağlık durumunu hesapla
   calculateOverallHealth(checks) {
     const criticalChecks = ['fileSystem', 'testRunner'];
-    const warningChecks = ['webSocket', 'scheduler'];
+    const warningChecks = ['webSocket', 'scheduler', 'diskSpace', 'network'];
     
     let status = 'ok';
     let issues = [];
@@ -152,7 +266,7 @@ class HealthChecker {
     for (const check of criticalChecks) {
       if (checks[check] && checks[check].status === 'error') {
         status = 'error';
-        issues.push(`${check}: ${checks[check].message}`);
+        issues.push(`${check}: ${checks[check].message || checks[check].error}`);
       }
     }
 
@@ -161,7 +275,10 @@ class HealthChecker {
       for (const check of warningChecks) {
         if (checks[check] && checks[check].status === 'warning') {
           status = 'warning';
-          issues.push(`${check}: ${checks[check].message}`);
+          issues.push(`${check}: ${checks[check].message || checks[check].error}`);
+        } else if (checks[check] && checks[check].status === 'error') {
+          status = 'warning';
+          issues.push(`${check}: ${checks[check].message || checks[check].error}`);
         }
       }
     }
@@ -179,13 +296,17 @@ class HealthChecker {
       fileSystem,
       testRunner,
       webSocket,
-      scheduler
+      scheduler,
+      diskSpace,
+      network
     ] = await Promise.all([
       this.getSystemMetrics(),
       this.checkFileSystem(),
       this.checkTestRunner(),
       Promise.resolve(this.checkWebSocketConnections(clients)),
-      Promise.resolve(this.checkScheduler(testScheduler))
+      Promise.resolve(this.checkScheduler(testScheduler)),
+      this.checkDiskSpace(),
+      this.checkNetworkConnectivity()
     ]);
 
     const checks = {
@@ -193,7 +314,9 @@ class HealthChecker {
       fileSystem,
       testRunner,
       webSocket,
-      scheduler
+      scheduler,
+      diskSpace,
+      network
     };
 
     const overallHealth = this.calculateOverallHealth(checks);

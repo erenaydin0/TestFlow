@@ -229,7 +229,18 @@
     "updateWorkflow": "Update Test Workflow",
     "saveWorkflow": "Save Test Workflow",
     "updateWorkflowDesc": "Update existing workflow",
-    "saveWorkflowDesc": "Save your workflow for later use"
+    "saveWorkflowDesc": "Save your workflow for later use",
+    "dropHere": "Drop here",
+    "actions": "Actions",
+    "clickToAdd": "Click to add",
+    "selectStepToEdit": "Select a step to edit",
+    "waitingForKey": "Waiting for key...",
+    "updateTest": "Update Test",
+    "saveTest": "Save Test",
+    "save": "Save",
+    "deleteStepsConfirm": "Are you sure you want to delete {{count}} steps? This action cannot be undone.",
+    "import": "Import",
+    "export": "Export"
   },
   "common": {
     "save": "Save",

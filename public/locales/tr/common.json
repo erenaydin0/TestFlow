@@ -229,7 +229,18 @@
     "updateWorkflow": "Test Workflow'unu Güncelle",
     "saveWorkflow": "Test Workflow'unu Kaydet",
     "updateWorkflowDesc": "Mevcut workflow'u güncelleyin",
-    "saveWorkflowDesc": "Workflow'unuzu daha sonra kullanmak üzere kaydedin"
+    "saveWorkflowDesc": "Workflow'unuzu daha sonra kullanmak üzere kaydedin",
+    "dropHere": "Buraya sürükleyin",
+    "actions": "İşlemler",
+    "clickToAdd": "Eklemek için tıklayın",
+    "selectStepToEdit": "Düzenlemek için bir adım seçin",
+    "waitingForKey": "Tuş bekleniyor...",
+    "updateTest": "Testi Güncelle",
+    "saveTest": "Testi Kaydet",
+    "save": "Kaydet",
+    "deleteStepsConfirm": "{{count}} adımı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "import": "İçe Aktar",
+    "export": "Dışa Aktar"
   },
   "common": {
     "save": "Kaydet",

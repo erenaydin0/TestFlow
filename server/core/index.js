@@ -12,6 +12,7 @@ import ScriptGenerator from './scriptGenerator.js';
 import TestScheduler from './scheduler.js';
 import errorHandler from '../services/errorHandler.js';
 import healthChecker from '../services/healthChecker.js';
+import logger from '../utils/logger.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -77,11 +78,11 @@ const testScheduler = new TestScheduler(executeScheduledTest, storageDirs.SCHEDU
 // WebSocket connection handling
 wss.on('connection', (ws) => {
   clients.add(ws);
-  console.log('Client connected. Total clients:', clients.size);
+  logger.info('Client connected', { totalClients: clients.size });
 
   ws.on('close', () => {
     clients.delete(ws);
-    console.log('Client disconnected. Total clients:', clients.size);
+    logger.info('Client disconnected', { totalClients: clients.size });
   });
 });
 
@@ -96,21 +97,31 @@ function broadcast(data) {
 
 // Execute scheduled test function
 async function executeScheduledTest(schedule) {
-  console.log(`🚀 Zamanlanmış test başlatılıyor: ${schedule.name}`);
+  logger.info('Scheduled test starting', { 
+    scheduleId: schedule.id, 
+    scheduleName: schedule.name,
+    testId: schedule.testId 
+  });
 
   try {
     // Test workflow'unu backend'den yükle
     const testPath = path.join(storageDirs.TESTS_DIR, `${schedule.testId}.json`);
 
     if (!await fs.pathExists(testPath)) {
-      console.error(`❌ Test bulunamadı: ${schedule.testId}`);
+      logger.error('Scheduled test: Test not found', { 
+        scheduleId: schedule.id, 
+        testId: schedule.testId 
+      });
       return null;
     }
 
     const testWorkflow = await fs.readJson(testPath);
 
     if (!testWorkflow || !testWorkflow.workflow || testWorkflow.workflow.length === 0) {
-      console.error(`❌ Test workflow boş: ${schedule.testId}`);
+      logger.error('Scheduled test: Test workflow is empty', { 
+        scheduleId: schedule.id, 
+        testId: schedule.testId 
+      });
       return null;
     }
 
@@ -163,13 +174,20 @@ async function executeScheduledTest(schedule) {
     // Test'i asenkron olarak çalıştır (blocking olmadan)
     setImmediate(() => {
       executeTestWorkflow(executionId, execution).catch(error => {
-        console.error(`❌ Zamanlanmış test çalıştırma hatası (${executionId}):`, error);
+        logger.error('Scheduled test execution error', { 
+          executionId, 
+          scheduleId: schedule.id,
+          error: error.message 
+        });
       });
     });
 
     return executionId;
   } catch (error) {
-    console.error('Zamanlanmış test çalıştırma hatası:', error);
+    logger.error('Scheduled test execution failed', { 
+      scheduleId: schedule.id,
+      error: error.message 
+    });
     throw error;
   }
 }
@@ -202,7 +220,11 @@ async function executeTestWorkflow(executionId, execution) {
     });
 
     // Execute steps sequentially (linear flow)
-    console.log(`Starting execution of ${execution.steps.length} steps`);
+    logger.info('Execution starting', { 
+      executionId, 
+      stepCount: execution.steps.length,
+      workflowName: execution.workflowName 
+    });
 
     for (let i = 0; i < execution.steps.length; i++) {
       const step = execution.steps[i];
@@ -318,12 +340,22 @@ async function executeTestWorkflow(executionId, execution) {
           // Move/rename the file
           await fs.move(originalVideoPath, newVideoPath, { overwrite: true });
           execution.videoPath = `/videos/${executionId}.webm`;
-          console.log(`Video renamed from ${originalVideoPath} to ${newVideoPath}`);
+          logger.debug('Video file renamed', { 
+            executionId, 
+            originalPath: originalVideoPath, 
+            newPath: newVideoPath 
+          });
         } else {
-          console.log(`Original video file not found: ${originalVideoPath}`);
+          logger.warn('Original video file not found', { 
+            executionId, 
+            originalPath: originalVideoPath 
+          });
         }
       } catch (error) {
-        console.error('Error renaming video file:', error);
+        logger.error('Error renaming video file', { 
+          executionId, 
+          error: error.message 
+        });
       }
     }
 
@@ -341,10 +373,19 @@ async function executeTestWorkflow(executionId, execution) {
       error: execution.error
     });
 
-    console.log(`Execution ${executionId} completed with status: ${execution.status}`);
+    logger.info('Execution completed', { 
+      executionId, 
+      status: execution.status,
+      duration: execution.duration,
+      successRate: execution.successRate 
+    });
 
   } catch (error) {
-    console.error(`Execution ${executionId} failed:`, error);
+    logger.error('Execution failed', { 
+      executionId, 
+      error: error.message,
+      stack: error.stack 
+    });
 
     execution.status = 'failed';
     execution.endTime = new Date();
@@ -389,10 +430,12 @@ app.use(globalErrorHandler);
 // Start server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, async () => {
-  console.log(`🚀 CosmicQA Backend Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔌 WebSocket server ready for connections`);
-  console.log(`🌍 Environment: ${config.nodeEnv}`);
+  logger.info('CosmicQA Backend Server started', {
+    port: PORT,
+    healthCheck: `http://localhost:${PORT}/api/health`,
+    environment: config.nodeEnv,
+    nodeVersion: process.version
+  });
 
   // Initialize Test Scheduler
   await testScheduler.initialize();
@@ -403,7 +446,7 @@ server.listen(PORT, async () => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('Shutting down server...');
+  logger.info('Shutting down server...');
 
   // Stop all scheduled tasks
   if (testScheduler) {
@@ -417,7 +460,7 @@ process.on('SIGTERM', () => {
 });
 
 process.on('SIGINT', () => {
-  console.log('\nShutting down server...');
+  logger.info('Shutting down server (SIGTERM)...');
 
   // Stop all scheduled tasks
   if (testScheduler) {
