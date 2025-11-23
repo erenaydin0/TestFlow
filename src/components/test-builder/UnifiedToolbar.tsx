@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { 
+import {
   Play,
   Save,
   Download,
@@ -22,27 +22,45 @@ import {
   EyeOff,
   Layout
 } from 'lucide-react';
-import { TestStep, BrowserType, FloatingToolbarProps } from '@/types';
+import { TestStep, BrowserType } from '@/types';
 import { getTranslatedActions, ActionType } from '@/utils/actions';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components';
 import { useI18n } from '@/contexts';
 
 // Ortak toolbar props interface
-interface UnifiedToolbarProps extends FloatingToolbarProps {
-  // ActionsPanel props
-  draggedAction?: string | null;
-  onActionDragStart?: (actionType: string) => void;
-  onDragEnd?: (e: React.DragEvent) => void;
-  onMouseDown?: (e: React.MouseEvent) => void;
-  showActionsPanel?: boolean;
+interface UnifiedToolbarProps {
+  // MainToolbar props
+  testStepsCount: number;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onCopy: () => void;
+  onPaste: () => void;
+  onDuplicate: () => void;
+  selectedStepsCount: number;
+  copiedStepsCount: number;
+  isConnecting: boolean;
+  connectionType: 'normal' | 'true' | 'false';
+  onExport: () => void;
+  onImport: (file: File) => void;
+  onSave: () => void;
+  onRun: () => void;
+  isRunning?: boolean;
+  enableScreenshots?: boolean;
+  enableRecording?: boolean;
+  onToggleScreenshots?: () => void;
+  onToggleRecording?: () => void;
+  headlessMode?: boolean;
+  onToggleHeadless?: () => void;
+  selectedBrowser?: BrowserType;
+  onBrowserChange?: (browser: string) => void;
 }
 
 // Ortak stil sabitleri
 const TOOLBAR_STYLES = {
   container: {
-    position: 'absolute' as const,
-    zIndex: 10,
     display: 'flex',
     gap: '0.5rem',
     padding: '0.5rem',
@@ -70,77 +88,9 @@ const TOOLBAR_STYLES = {
   }
 };
 
-// Actions Panel komponenti
-const ActionsPanel: React.FC<{
-  draggedAction: string | null;
-  onActionDragStart: (actionType: string) => void;
-  onDragEnd: (e: React.DragEvent) => void;
-  onMouseDown: (e: React.MouseEvent) => void;
-}> = ({ draggedAction, onActionDragStart, onDragEnd, onMouseDown }) => {
-  const { t } = useI18n();
-  const actions = getTranslatedActions(t);
-
-  return (
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      {actions.map((action) => {
-        const Icon = action.icon;
-        return (
-          <div
-            key={action.type}
-            draggable
-            onDragStart={(e) => {
-              onActionDragStart(action.type);
-              e.dataTransfer.effectAllowed = 'copy';
-              const dragImage = document.createElement('div');
-              dragImage.style.width = '12rem';
-              dragImage.style.height = '4rem';
-              dragImage.style.backgroundColor = 'var(--bg-primary)';
-              dragImage.style.border = `2px solid ${action.color}`;
-              dragImage.style.borderRadius = '0.5rem';
-              dragImage.style.display = 'flex';
-              dragImage.style.alignItems = 'center';
-              dragImage.style.justifyContent = 'center';
-              dragImage.style.opacity = '0.8';
-              dragImage.innerHTML = `<span style="color: ${action.color}">${action.title}</span>`;
-              document.body.appendChild(dragImage);
-              e.dataTransfer.setDragImage(dragImage, 96, 32);
-              setTimeout(() => document.body.removeChild(dragImage), 0);
-            }}
-            onDragEnd={onDragEnd}
-            onMouseDown={onMouseDown}
-            style={{
-              ...TOOLBAR_STYLES.actionButton,
-              backgroundColor: `${action.color}10`,
-              border: `1px solid ${action.color}30`,
-              cursor: draggedAction === action.type ? 'grabbing' : 'grab',
-              opacity: draggedAction === action.type ? 0.5 : 1
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = `${action.color}20`;
-              e.currentTarget.style.borderColor = action.color;
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = `${action.color}10`;
-              e.currentTarget.style.borderColor = `${action.color}30`;
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title={action.title}
-          >
-            <Icon size={16} color={action.color} />
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 // Ana toolbar komponenti
 const MainToolbar: React.FC<UnifiedToolbarProps> = ({
-  onAutoArrange,
   testStepsCount,
-  snapEnabled,
-  onToggleSnap,
   onUndo,
   onRedo,
   canUndo,
@@ -148,7 +98,6 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
   onCopy,
   onPaste,
   onDuplicate,
-  onDeleteSelected,
   selectedStepsCount,
   copiedStepsCount,
   isConnecting,
@@ -168,7 +117,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
   onBrowserChange
 }) => {
   const { t } = useI18n();
-  
+
   const handleImportClick = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -230,9 +179,9 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           onClick={handleImportClick}
         />
       </ButtonGroup>
-      
+
       <div style={TOOLBAR_STYLES.separator}></div>
-      
+
       <ButtonGroup spacing="xs">
         <IconButton
           icon={Undo}
@@ -251,43 +200,16 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           onClick={onRedo}
         />
       </ButtonGroup>
-      
-      <div style={TOOLBAR_STYLES.separator}></div>
-      
-      <IconButton
-        icon={Layout}
-        onClick={onAutoArrange}
-        disabled={testStepsCount === 0}
-        variant="ghost"
-        size="sm"
-        tooltip={t('testBuilder.autoArrange')}
-        style={{ color: 'var(--text-secondary)' }}
-      />
-      
+
       <ButtonGroup spacing="xs">
-        <IconButton
-          icon={Magnet}
-          variant={snapEnabled ? "primary" : "ghost"}
-          size="sm"
-          tooltip={snapEnabled ? t('testBuilder.disableSnap') : t('testBuilder.enableSnap')}
-          onClick={onToggleSnap}
-          style={snapEnabled ? { 
-            backgroundColor: 'var(--accent-primary)', 
-            color: 'white',
-            border: '2px solid var(--accent-primary)',
-            boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.2)',
-            animation: 'pulse 2s infinite'
-          } : {}}
-        />
-        
         <IconButton
           icon={Camera}
           variant={enableScreenshots ? "warning" : "ghost"}
           size="sm"
           tooltip={enableScreenshots ? t('testBuilder.disableScreenshots') : t('testBuilder.enableScreenshots')}
           onClick={() => onToggleScreenshots?.()}
-          style={enableScreenshots ? { 
-            backgroundColor: 'var(--status-warning)', 
+          style={enableScreenshots ? {
+            backgroundColor: 'var(--status-warning)',
             color: 'white',
             border: '2px solid #f59e0b',
             boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)',
@@ -300,8 +222,8 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           size="sm"
           tooltip={enableRecording ? t('testBuilder.disableRecording') : t('testBuilder.enableRecording')}
           onClick={() => onToggleRecording?.()}
-          style={enableRecording ? { 
-            backgroundColor: 'var(--status-error)', 
+          style={enableRecording ? {
+            backgroundColor: 'var(--status-error)',
             color: 'white',
             border: '2px solid #ef4444',
             boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)',
@@ -314,8 +236,8 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           size="sm"
           tooltip={headlessMode ? t('testBuilder.visibleMode') : t('testBuilder.headlessMode')}
           onClick={() => onToggleHeadless?.()}
-          style={headlessMode ? { 
-            backgroundColor: 'var(--status-success)', 
+          style={headlessMode ? {
+            backgroundColor: 'var(--status-success)',
             color: 'white',
             border: '2px solid #22c55e',
             boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.2)',
@@ -323,9 +245,9 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           } : {}}
         />
       </ButtonGroup>
-      
+
       <div style={TOOLBAR_STYLES.separator}></div>
-      
+
       <ButtonGroup spacing="xs">
         <IconButton
           icon={Copy}
@@ -351,23 +273,16 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           disabled={selectedStepsCount === 0}
           onClick={onDuplicate}
         />
-        <IconButton
-          icon={Trash2}
-          variant={selectedStepsCount > 0 ? "danger" : "ghost"}
-          size="sm"
-          tooltip={`Sil (${selectedStepsCount} adım seçili) - Delete`}
-          disabled={selectedStepsCount === 0}
-          onClick={onDeleteSelected}
-        />
+
       </ButtonGroup>
-      
+
       {/* Connection mode indicator */}
       {isConnecting && (
-        <div 
+        <div
           style={{
             padding: '0.5rem',
-            backgroundColor: connectionType === 'true' ? '#22c55e' : 
-                            connectionType === 'false' ? '#ef4444' : '#3b82f6',
+            backgroundColor: connectionType === 'true' ? '#22c55e' :
+              connectionType === 'false' ? '#ef4444' : '#3b82f6',
             color: 'white',
             borderRadius: '0.5rem',
             fontSize: '0.7rem',
@@ -381,16 +296,16 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
             flexShrink: 0
           }}
           title={`${connectionType === 'true' ? t('testBuilder.trueBranch') :
-                   connectionType === 'false' ? t('testBuilder.falseBranch') :
-                   t('testBuilder.connectionMode')} - ${t('testBuilder.connectionTypeDesc')}`}
+            connectionType === 'false' ? t('testBuilder.falseBranch') :
+              t('testBuilder.connectionMode')} - ${t('testBuilder.connectionTypeDesc')}`}
         >
           {connectionType === 'true' ? <CheckCircle size={14} /> :
-           connectionType === 'false' ? <XCircle size={14} /> :
-           <GitBranch size={14} />}
+            connectionType === 'false' ? <XCircle size={14} /> :
+              <GitBranch size={14} />}
           <span style={{ whiteSpace: 'nowrap' }}>
             {connectionType === 'true' ? t('testBuilder.trueBranch') :
-             connectionType === 'false' ? t('testBuilder.falseBranch') :
-             t('testBuilder.connectionMode')}
+              connectionType === 'false' ? t('testBuilder.falseBranch') :
+                t('testBuilder.connectionMode')}
           </span>
         </div>
       )}
@@ -400,59 +315,19 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
 
 // Ana UnifiedToolbar komponenti
 const UnifiedToolbar: React.FC<UnifiedToolbarProps> = (props) => {
-  const {
-    draggedAction,
-    onActionDragStart,
-    onDragEnd,
-    onMouseDown,
-    showActionsPanel = false,
-    ...mainToolbarProps
-  } = props;
-
   return (
-    <>
-      {/* Ana Toolbar - Üst kısım */}
-      <div 
-        style={{
-          ...TOOLBAR_STYLES.container,
-          top: '1rem',
-          left: '1rem'
-        }}
-      >
-        <MainToolbar {...mainToolbarProps} />
-      </div>
-
-      {/* Actions Panel - Alt kısım */}
-      {showActionsPanel && draggedAction !== undefined && onActionDragStart && onDragEnd && onMouseDown && (
-        <div 
-          style={{
-            ...TOOLBAR_STYLES.container,
-            bottom: '1rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-          }}
-        >
-          <ActionsPanel
-            draggedAction={draggedAction}
-            onActionDragStart={onActionDragStart}
-            onDragEnd={onDragEnd}
-            onMouseDown={onMouseDown}
-          />
-        </div>
-      )}
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% {
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-          }
-          50% {
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-          }
-        }
-      `}</style>
-    </>
+    <div
+      style={{
+        ...TOOLBAR_STYLES.container,
+        top: '1rem',
+        left: '1rem',
+        // Position relative to the main content area, but since it's absolute, 
+        // we might need to adjust based on where it's rendered.
+        // For now, let's keep it simple.
+      }}
+    >
+      <MainToolbar {...props} />
+    </div>
   );
 };
 

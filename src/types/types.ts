@@ -85,7 +85,6 @@ export interface UseTestStepsReturn {
   addStep: (step: any) => void;
   deleteStep: (stepId: string, callback?: () => void) => void;
   updateStepProperty: (stepId: string, property: string, value: any) => void;
-  autoArrangeSteps: () => void;
   generateId: () => string;
 }
 

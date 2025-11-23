@@ -1,10 +1,37 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle, XCircle, GitBranch, Trash2 } from 'lucide-react';
-import { TestStep, TestStepCardProps } from '@/types';
+import { Trash2 } from 'lucide-react';
+import { TestStep } from '@/types';
 import { getTranslatedActionByType, ActionType } from '@/utils/actions';
 import { useI18n } from '@/contexts';
+
+export interface TestStepCardProps {
+  step: TestStep;
+  isSelected: boolean;
+  isMultiSelected?: boolean;
+  draggedStep: string | null;
+  onStepDragStart: (stepId: string) => void;
+  onDragEnd: () => void;
+  onStepClick: (step: TestStep, isMultiSelect: boolean) => void;
+  onDeleteStep: (stepId: string, callback: () => void) => void;
+  // Connection props (kept for compatibility but unused)
+  onStartConnection: (stepId: string, type: 'true' | 'false' | 'normal') => void;
+  onEndConnection: (stepId: string) => void;
+  isConnecting: boolean;
+  connectionStart: { stepId: string; type: 'true' | 'false' | 'normal' } | null;
+  connectionType: 'normal' | 'true' | 'false';
+  setIsConnecting: (isConnecting: boolean) => void;
+  setConnectionStart: (start: { stepId: string; type: 'true' | 'false' | 'normal' } | null) => void;
+  setConnectionType: (type: 'normal' | 'true' | 'false') => void;
+  setSelectedSteps: (steps: Set<string>) => void;
+  setSelectedStep: (step: TestStep | null) => void;
+  selectedSteps: Set<string>;
+  selectedStep: TestStep | null;
+  testSteps: TestStep[];
+  setTestSteps: (steps: TestStep[]) => void;
+  saveToHistory: (steps: TestStep[]) => void;
+}
 
 // ============================================================================
 // StepContent Component
@@ -17,25 +44,24 @@ interface StepContentProps {
 export const StepContent: React.FC<StepContentProps> = ({ step }) => {
   const { t } = useI18n();
   return (
-    <div style={{ 
-      fontSize: '0.75rem', 
+    <div style={{
+      fontSize: '0.875rem',
       color: 'var(--text-secondary)',
-      minHeight: '2rem',
+      marginTop: '0.5rem',
       wordBreak: 'break-all'
     }}>
       {/* Step description or configuration preview */}
       {step.description ? (
         <div style={{
-          fontSize: '0.75rem',
           color: 'var(--text-primary)',
           fontStyle: 'italic',
           marginBottom: '0.25rem',
-          lineHeight: '1.3'
+          lineHeight: '1.4'
         }}>
           "{step.description}"
         </div>
       ) : (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {/* Step configuration preview */}
           {step.type === 'navigate' && (
             <span>URL: {step.url || t('testSteps.notSpecified')}</span>
@@ -54,7 +80,7 @@ export const StepContent: React.FC<StepContentProps> = ({ step }) => {
           )}
           {step.type === 'refresh' && t('testSteps.refresh')}
           {step.type === 'verify' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <>
               {(step.verificationType === 'url' || step.verificationType === 'urlContains') ? (
                 <>
                   <span>{t('testSteps.type')}: {step.verificationType === 'url' ? t('testSteps.urlCheck') : t('testSteps.contains')}</span>
@@ -67,66 +93,22 @@ export const StepContent: React.FC<StepContentProps> = ({ step }) => {
                   {step.expectedValue && <span>{t('testSteps.value')}: {step.expectedValue}</span>}
                 </>
               )}
-            </div>
-          )}
-          {step.type === 'scroll' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {step.selector && <span>{t('testSteps.element')}: {step.selector}</span>}
-              <span>{t('testSteps.direction')}: {step.direction || t('testSteps.notSpecified')}</span>
-              {step.amount && <span>{t('testSteps.amount')}: {step.amount}px</span>}
-            </div>
-          )}
-          {step.type === 'hover' && (
-            <span>{t('testSteps.element')}: {step.selector || t('testSteps.notSpecified')}</span>
-          )}
-          {step.type === 'key' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>{t('testSteps.key')}: {step.key || t('testSteps.notSpecified')}</span>
-              {step.selector && <span>{t('testSteps.element')}: {step.selector}</span>}
-            </div>
+            </>
           )}
           {step.type === 'dropdown' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <>
               <span>{t('testSteps.element')}: {step.selector || t('testSteps.notSpecified')}</span>
               <span>{t('testSteps.type')}: {step.optionType || t('testSteps.notSpecified')}</span>
               <span>{t('testSteps.value')}: {step.optionValue || t('testSteps.notSpecified')}</span>
-            </div>
+            </>
           )}
-          {step.type === 'if' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span>{t('testSteps.type')}: {step.conditionType || 'visible'}</span>
-              {step.selector && <span>{t('testSteps.element')}: {step.selector}</span>}
-              {step.expectedValue && <span>{t('testSteps.value')}: {step.expectedValue}</span>}
-              {step.operator && step.conditionType === 'count' && <span>Operatör: {step.operator}</span>}
-              <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem', marginTop: '0.25rem' }}>
-                <span style={{ 
-                  color: step.trueConnection ? 'var(--status-success)' : 'var(--text-tertiary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}>
-                  <CheckCircle size={10} />
-                  TRUE: {step.trueConnection ? '✓' : t('testSteps.notConnected')}
-                </span>
-                <span style={{ 
-                  color: step.falseConnection ? 'var(--status-error)' : 'var(--text-tertiary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}>
-                  <XCircle size={10} />
-                  FALSE: {step.falseConnection ? '✓' : t('testSteps.notConnected')}
-                </span>
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
-      
-      {/* Show both description and config if description exists */}
+
+      {/* Show config details if description exists */}
       {step.description && (
         <div style={{
-          fontSize: '0.65rem',
+          fontSize: '0.75rem',
           color: 'var(--text-tertiary)',
           marginTop: '0.25rem'
         }}>
@@ -151,33 +133,12 @@ export const StepContent: React.FC<StepContentProps> = ({ step }) => {
               )}
             </div>
           )}
-          {step.type === 'scroll' && (
-            <div>
-              {step.selector && `${t('testSteps.element')}: ${step.selector}, `}
-              {`${t('testSteps.direction')}: ${step.direction || t('testSteps.notSpecified')}`}
-              {step.amount && `, ${t('testSteps.amount')}: ${step.amount}px`}
-            </div>
-          )}
-          {step.type === 'hover' && step.selector && `${t('testSteps.element')}: ${step.selector}`}
-          {step.type === 'key' && (
-            <div>
-              {`${t('testSteps.key')}: ${step.key || t('testSteps.notSpecified')}`}
-              {step.selector && `, ${t('testSteps.element')}: ${step.selector}`}
-            </div>
-          )}
           {step.type === 'dropdown' && (
             <div>
               {step.selector && `${t('testSteps.element')}: ${step.selector}, `}
               {`${t('testSteps.type')}: ${step.optionType || t('testSteps.notSpecified')}, `}
               {`${t('testSteps.value')}: ${step.optionValue || t('testSteps.notSpecified')}`}
             </div>
-          )}
-          {step.type === 'if' && (
-            <>
-              {step.conditionType && `${t('testSteps.type')}: ${step.conditionType}`}
-              {step.selector && `, ${t('testSteps.element')}: ${step.selector}`}
-              {step.expectedValue && `, ${t('testSteps.value')}: ${step.expectedValue}`}
-            </>
           )}
         </div>
       )}
@@ -192,232 +153,49 @@ export const StepContent: React.FC<StepContentProps> = ({ step }) => {
 interface StepHeaderProps {
   step: TestStep;
   action: ActionType;
-  isConnecting: boolean;
-  connectionStart: string | null;
-  connectionType: 'normal' | 'true' | 'false';
-  
-  // Event handlers
-  onStartConnection: (stepId: string, type?: 'normal' | 'true' | 'false') => void;
-  onEndConnection: (stepId: string, testSteps: TestStep[], setTestSteps: (steps: TestStep[]) => void, saveToHistory: (steps: TestStep[]) => void) => void;
   onDeleteStep: (stepId: string, callback: () => void) => void;
-  
-  // State setters
-  setIsConnecting: (connecting: boolean) => void;
-  setConnectionStart: (start: string | null) => void;
-  setConnectionType: (type: 'normal' | 'true' | 'false') => void;
   setSelectedSteps: (steps: Set<string>) => void;
   setSelectedStep: (step: TestStep | null) => void;
-  
-  // Selection state
   selectedSteps: Set<string>;
   selectedStep: TestStep | null;
-  
-  // Test steps data
-  testSteps: TestStep[];
-  setTestSteps: (steps: TestStep[]) => void;
-  saveToHistory: (steps: TestStep[]) => void;
 }
 
 export const StepHeader: React.FC<StepHeaderProps> = ({
   step,
   action,
-  isConnecting,
-  connectionStart,
-  connectionType,
-  onStartConnection,
-  onEndConnection,
   onDeleteStep,
-  setIsConnecting,
-  setConnectionStart,
-  setConnectionType,
   setSelectedSteps,
   setSelectedStep,
   selectedSteps,
-  selectedStep,
-  testSteps,
-  setTestSteps,
-  saveToHistory
+  selectedStep
 }) => {
-  const { t } = useI18n();
   const Icon = action.icon;
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: '0.5rem'
+      marginBottom: '0.25rem'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{
-          padding: '0.25rem',
+          padding: '0.375rem',
           backgroundColor: `${action.color}15`,
-          borderRadius: '0.25rem'
+          borderRadius: '0.375rem'
         }}>
-          <Icon size={14} color={action.color} />
+          <Icon size={16} color={action.color} />
         </div>
-        <span style={{ 
-          fontSize: '0.75rem', 
-          fontWeight: 500, 
+        <span style={{
+          fontSize: '0.875rem',
+          fontWeight: 600,
           color: 'var(--text-primary)'
         }}>
           {action.title}
         </span>
       </div>
-      
+
       <div style={{ display: 'flex', gap: '0.25rem' }}>
-        {/* If step special connection buttons */}
-        {step.type === 'if' ? (
-          <>
-            {/* True branch button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isConnecting && connectionStart === step.id && connectionType === 'true') {
-                  setIsConnecting(false);
-                  setConnectionStart(null);
-                  setConnectionType('normal');
-                } else if (isConnecting && connectionStart !== step.id) {
-                  onEndConnection(step.id, testSteps, setTestSteps, saveToHistory);
-                } else {
-                  onStartConnection(step.id, 'true');
-                }
-              }}
-              style={{
-                padding: '0.25rem',
-                backgroundColor: isConnecting && connectionStart === step.id && connectionType === 'true'
-                  ? 'var(--status-success)' 
-                  : 'transparent',
-                border: 'none',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                color: isConnecting && connectionStart === step.id && connectionType === 'true'
-                  ? 'white' 
-                  : 'var(--status-success)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (!(isConnecting && connectionStart === step.id && connectionType === 'true')) {
-                  e.currentTarget.style.backgroundColor = 'var(--status-success-bg)';
-                  e.currentTarget.style.color = 'var(--status-success-hover)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!(isConnecting && connectionStart === step.id && connectionType === 'true')) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--status-success)';
-                }
-              }}
-              title={isConnecting && connectionStart === step.id && connectionType === 'true'
-                ? t('testSteps.cancelTrueConnection')
-                : isConnecting 
-                  ? t('testSteps.connectToTrue')
-                  : t('testSteps.startTrueConnection')}
-            >
-              <CheckCircle size={12} />
-            </button>
-            
-            {/* False branch button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isConnecting && connectionStart === step.id && connectionType === 'false') {
-                  setIsConnecting(false);
-                  setConnectionStart(null);
-                  setConnectionType('normal');
-                } else if (isConnecting && connectionStart !== step.id) {
-                  onEndConnection(step.id, testSteps, setTestSteps, saveToHistory);
-                } else {
-                  onStartConnection(step.id, 'false');
-                }
-              }}
-              style={{
-                padding: '0.25rem',
-                backgroundColor: isConnecting && connectionStart === step.id && connectionType === 'false'
-                  ? 'var(--status-error)' 
-                  : 'transparent',
-                border: 'none',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                color: isConnecting && connectionStart === step.id && connectionType === 'false'
-                  ? 'white' 
-                  : 'var(--status-error)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (!(isConnecting && connectionStart === step.id && connectionType === 'false')) {
-                  e.currentTarget.style.backgroundColor = 'var(--status-error-bg)';
-                  e.currentTarget.style.color = 'var(--status-error-hover)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!(isConnecting && connectionStart === step.id && connectionType === 'false')) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--status-error)';
-                }
-              }}
-              title={isConnecting && connectionStart === step.id && connectionType === 'false'
-                ? t('testSteps.cancelFalseConnection')
-                : isConnecting 
-                  ? t('testSteps.connectToFalse')
-                : t('testSteps.startFalseConnection')}
-            >
-              <XCircle size={12} />
-            </button>
-          </>
-        ) : (
-          /* Regular connection button for non-if steps */
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isConnecting && connectionStart === step.id) {
-                // Cancel connection
-                setIsConnecting(false);
-                setConnectionStart(null);
-                setConnectionType('normal');
-              } else if (isConnecting && connectionStart !== step.id) {
-                // End connection
-                onEndConnection(step.id, testSteps, setTestSteps, saveToHistory);
-              } else {
-                // Start connection
-                onStartConnection(step.id);
-              }
-            }}
-            style={{
-              padding: '0.25rem',
-              backgroundColor: isConnecting && connectionStart === step.id 
-                ? 'var(--status-info)' 
-                : 'transparent',
-              border: 'none',
-              borderRadius: '0.25rem',
-              cursor: 'pointer',
-              color: isConnecting && connectionStart === step.id 
-                ? 'white' 
-                : 'var(--text-tertiary)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (!(isConnecting && connectionStart === step.id)) {
-                e.currentTarget.style.backgroundColor = 'var(--status-info-bg)';
-                e.currentTarget.style.color = 'var(--status-info)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!(isConnecting && connectionStart === step.id)) {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-              }
-            }}
-            title={isConnecting && connectionStart === step.id 
-              ? t('testSteps.cancelConnection')
-              : isConnecting 
-                ? t('testSteps.connectHere')
-                : t('testSteps.startConnection')}
-          >
-            <GitBranch size={12} />
-          </button>
-        )}
-        
         {/* Delete button */}
         <button
           onClick={(e) => {
@@ -432,7 +210,7 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
             });
           }}
           style={{
-            padding: '0.25rem',
+            padding: '0.375rem',
             backgroundColor: 'transparent',
             border: 'none',
             borderRadius: '0.25rem',
@@ -449,7 +227,7 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
             e.currentTarget.style.color = 'var(--text-tertiary)';
           }}
         >
-          <Trash2 size={12} />
+          <Trash2 size={14} />
         </button>
       </div>
     </div>
@@ -463,27 +241,15 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
 export const TestStepCard: React.FC<TestStepCardProps> = ({
   step,
   isSelected,
-  isMultiSelected,
   draggedStep,
   onStepDragStart,
   onDragEnd,
   onStepClick,
   onDeleteStep,
-  onStartConnection,
-  onEndConnection,
-  isConnecting,
-  connectionStart,
-  connectionType,
-  setIsConnecting,
-  setConnectionStart,
-  setConnectionType,
   setSelectedSteps,
   setSelectedStep,
   selectedSteps,
-  selectedStep,
-  testSteps,
-  setTestSteps,
-  saveToHistory
+  selectedStep
 }) => {
   const { t } = useI18n();
   const action = getTranslatedActionByType(step.type, t);
@@ -498,58 +264,41 @@ export const TestStepCard: React.FC<TestStepCardProps> = ({
         onStepDragStart(step.id);
         // Make drag image more visible
         const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
-        dragImage.style.transform = 'scale(1.1)';
-        dragImage.style.opacity = '0.8';
-        e.dataTransfer.setDragImage(dragImage, 96, 40);
+        dragImage.style.transform = 'scale(1.02)';
+        dragImage.style.opacity = '0.9';
+        e.dataTransfer.setDragImage(dragImage, 20, 20);
       }}
       onDragEnd={onDragEnd}
       onClick={(e) => {
         e.stopPropagation();
         onStepClick(step, e.ctrlKey || e.metaKey);
       }}
-      onMouseDown={(e) => {
-        // Prevent canvas panning when dragging steps
-        e.stopPropagation();
-      }}
       style={{
-        position: 'absolute',
-        left: step.x,
-        top: step.y,
-        width: '11rem',
-        padding: '0.75rem',
-        backgroundColor: isMultiSelected ? `${action.color}08` : 'var(--bg-primary)',
-        border: `1px solid ${isSelected ? action.color : isMultiSelected ? action.color : 'var(--border-primary)'}`,
-        borderRadius: '0.375rem',
+        position: 'relative',
+        width: '100%',
+        marginBottom: '0.75rem',
+        padding: '1rem',
+        backgroundColor: 'var(--bg-primary)',
+        border: `1px solid ${isSelected ? action.color : 'var(--border-primary)'}`,
+        borderRadius: '0.5rem',
         cursor: draggedStep === step.id ? 'grabbing' : 'grab',
-        boxShadow: isSelected || isMultiSelected
-          ? `0 2px 8px ${action.color}20` 
-          : '0 1px 3px rgba(0,0,0,0.05)',
-        transition: draggedStep === step.id ? 'none' : 'box-shadow 0.15s ease',
-        opacity: draggedStep === step.id ? 0.6 : 1,
-        zIndex: draggedStep === step.id ? 1000 : 5
+        boxShadow: isSelected
+          ? `0 2px 8px ${action.color}20`
+          : '0 1px 2px rgba(0,0,0,0.05)',
+        transition: draggedStep === step.id ? 'none' : 'all 0.15s ease',
+        opacity: draggedStep === step.id ? 0.5 : 1,
       }}
     >
       <StepHeader
         step={step}
         action={action}
-        isConnecting={isConnecting}
-        connectionStart={connectionStart}
-        connectionType={connectionType}
-        onStartConnection={onStartConnection}
-        onEndConnection={onEndConnection}
         onDeleteStep={onDeleteStep}
-        setIsConnecting={setIsConnecting}
-        setConnectionStart={setConnectionStart}
-        setConnectionType={setConnectionType}
         setSelectedSteps={setSelectedSteps}
         setSelectedStep={setSelectedStep}
         selectedSteps={selectedSteps}
         selectedStep={selectedStep}
-        testSteps={testSteps}
-        setTestSteps={setTestSteps}
-        saveToHistory={saveToHistory}
       />
-      
+
       <StepContent step={step} />
     </div>
   );

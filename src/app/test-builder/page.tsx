@@ -2,26 +2,22 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Plus, Save, Play, Download, Upload, Trash2 } from 'lucide-react';
 
 import { Sidebar, Header } from '@/components/layout';
-import { 
+import {
   UnifiedToolbar,
-  CanvasControls,
-  ConnectionRenderer,
   TestStepCard,
-  DragPreview,
-  SnapLines,
-  SelectionBox
+  ActionsSidebar,
+  StepConfigurationPanel
 } from '@/components/test-builder';
-import { TestModal, StepModal, ConfirmDialog } from '@/components/modals';
+import { TestModal, ConfirmDialog } from '@/components/modals';
 
 import { TestStep, BrowserType } from '@/types';
 import { getActionByType } from '@/utils/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/utils/fileUtils';
-import { 
+import {
   useTestSteps,
-  useCanvas,
-  useMouseEvents,
   useUnsavedChanges,
   useNotifications
 } from '@/hooks';
@@ -41,92 +37,21 @@ export default function TestBuilder() {
     redo,
     deleteStep,
     updateStepProperty,
-    autoArrangeSteps,
-    generateId
+    generateId,
+    addStep
   } = useTestSteps();
-  
+
   const { notifyTestSaved, notifyTestImported, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded } = useNotifications();
 
-  const {
-    // Canvas Core
-    canvasRef,
-    canvasOffset,
-    setCanvasOffset,
-    zoom,
-    pan,
-    setPan,
-    isPanning,
-    setIsPanning,
-    panStart,
-    setPanStart,
-    canvasStyles,
-    zoomIn,
-    zoomOut,
-    resetView,
-    
-    // Drag State
-    draggedAction,
-    setDraggedAction,
-    draggedStep,
-    setDraggedStep,
-    isDragOver,
-    setIsDragOver,
-    dragPreview,
-    setDragPreview,
-    
-    // Selection State
-    selectedSteps,
-    setSelectedSteps,
-    selectedStep,
-    setSelectedStep,
-    isSelecting,
-    selectionBox,
-    setSelectionBox,
-    selectionStart,
-    setSelectionStart,
-    copiedSteps,
-    setCopiedSteps,
-    
-    // Connection State
-    isConnecting,
-    setIsConnecting,
-    connectionStart,
-    setConnectionStart,
-    connectionType,
-    setConnectionType,
-    
-    // Snap State
-    snapEnabled,
-    snapLines,
-    setSnapLines,
-    
-    // Operations
-    handleActionDragStart,
-    handleStepDragStart,
-    handleDragEnd,
-    handleCanvasDragOver,
-    handleCanvasDragEnter,
-    handleCanvasDragLeave,
-    selectAllSteps,
-    clearSelection,
-    toggleStepSelection,
-    copySteps,
-    pasteSteps,
-    duplicateSteps,
-    handleCanvasMouseDown,
-    handleCanvasMouseMove,
-    handleCanvasMouseUp,
-    getStepsInSelectionBox,
-    handleStepClick,
-    startConnection,
-    endConnection,
-    removeConnection,
-    snapToPosition,
-    clearSnapLines,
-    toggleSnap,
-    getStepCenter,
-    getConnectionStyle
-  } = useCanvas();
+  // Selection State
+  const [selectedSteps, setSelectedSteps] = useState<Set<string>>(new Set());
+  const [selectedStep, setSelectedStep] = useState<TestStep | null>(null);
+  const [copiedSteps, setCopiedSteps] = useState<TestStep[]>([]);
+
+  // Drag State
+  const [draggedAction, setDraggedAction] = useState<string | null>(null);
+  const [draggedStep, setDraggedStep] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -136,19 +61,23 @@ export default function TestBuilder() {
   const [enableScreenshots, setEnableScreenshots] = useState(false);
   const [enableRecording, setEnableRecording] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // Browser settings
   const { defaultBrowser, defaultHeadless, defaultRecording, defaultScreenshots } = useBrowserSettings();
   const [selectedBrowser, setSelectedBrowser] = useState<BrowserType>(defaultBrowser);
-  
+  const [headlessMode, setHeadlessMode] = useState(defaultHeadless);
+
   const handleBrowserChange = useCallback((browser: string) => {
     setSelectedBrowser(browser as BrowserType);
   }, []);
-  
-  // Context'teki defaultBrowser değiştiğinde selectedBrowser'ı güncelle (sadece ilk yükleme için)
+
+  // Varsayılan ayarları uygula
   useEffect(() => {
+    setEnableScreenshots(defaultScreenshots);
+    setEnableRecording(defaultRecording);
+    setHeadlessMode(defaultHeadless);
     setSelectedBrowser(defaultBrowser);
-  }, []); // defaultBrowser dependency'si kaldırıldı - sadece mount'ta çalışsın
+  }, [defaultScreenshots, defaultRecording, defaultHeadless, defaultBrowser]);
 
   // Promise resolver for save operation
   const savePromiseRef = useRef<{
@@ -172,145 +101,78 @@ export default function TestBuilder() {
     canUndo,
     onSave: async () => {
       if (testSteps.length === 0) return;
-      
+
       return new Promise<void>((resolve, reject) => {
         savePromiseRef.current = { resolve, reject };
         setIsSaveDialogOpen(true);
       });
     }
   });
-  const [headlessMode, setHeadlessMode] = useState(defaultHeadless);
-  
-  // Varsayılan ayarları uygula
-  useEffect(() => {
-    setEnableScreenshots(defaultScreenshots);
-    setEnableRecording(defaultRecording);
-    setHeadlessMode(defaultHeadless);
-    setSelectedBrowser(defaultBrowser);
-  }, [defaultScreenshots, defaultRecording, defaultHeadless, defaultBrowser]);
-  
-  // When save dialog opens, hide unsaved changes dialog
-  useEffect(() => {
-    if (isSaveDialogOpen && showUnsavedDialog) {
-      // SaveDialog açıldığında UnsavedChangesDialog'u gizle
-      // Ancak bu geçici bir gizleme, gerçek kapatma handleSaveFromDialog'da olacak
-    }
-  }, [isSaveDialogOpen, showUnsavedDialog]);
-  
-  // Debug: Log initial state
-  useEffect(() => {
-  }, [enableScreenshots, enableRecording, headlessMode]);
+
   const searchParams = useSearchParams();
 
+  // Handle drop on list
+  const handleAddStep = (actionType: string) => {
+    const newStep: TestStep = {
+      id: generateId(),
+      type: actionType,
+      description: '',
+      // Add default values based on action type if needed
+    };
 
-  // Custom mouse move handler that handles both selection and panning
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!canvasRef.current) return;
+    const newSteps = [...testSteps, newStep];
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const clientX = e.clientX - rect.left;
-    const clientY = e.clientY - rect.top;
+    // Scroll to bottom or select the new step
+    setSelectedStep(newStep);
+  };
 
-    if (isPanning) {
-      // Handle panning
-      const deltaX = clientX - panStart.x;
-      const deltaY = clientY - panStart.y;
-      
-      // Update canvas offset
-      setCanvasOffset({ 
-        x: canvasOffset.x + deltaX, 
-        y: canvasOffset.y + deltaY 
-      });
-      
-      // Update pan start for next move
-      setPanStart({ x: clientX, y: clientY });
-    } else {
-      // Delegate to selection handler for selection box
-      handleCanvasMouseMove(
-        e,
-        canvasRef,
-        zoom,
-        canvasOffset,
-        isPanning,
-        panStart,
-        setPan,
-        setCanvasOffset,
-        testSteps,
-        setSelectedSteps
-      );
-    }
-  }, [isPanning, panStart, canvasOffset, zoom, testSteps, handleCanvasMouseMove]);
-
-  // Mouse events
-  useMouseEvents({
-    selectionIsSelecting: isSelecting,
-    isPanning,
-    canvasRef,
-    zoom,
-    canvasOffset,
-    panStart,
-    testSteps,
-    selectionHandleCanvasMouseMove: handleMouseMove,
-    selectionHandleCanvasMouseUp: handleCanvasMouseUp,
-    setPan,
-    setCanvasOffset,
-    setSelectedSteps,
-    setIsPanning
-  });
-
-  // Handle drop on canvas
-  const handleCanvasDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent, index?: number) => {
     e.preventDefault();
-    
-    if (!canvasRef.current) return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    // Calculate position considering canvas offset and zoom
-    const rawX = (e.clientX - rect.left - canvasOffset.x) / zoom;
-    const rawY = (e.clientY - rect.top - canvasOffset.y) / zoom;
-
-    // Center the step first
-    const centeredX = rawX - 96; // Center the step (12rem = 192px, so 96px offset)
-    const centeredY = rawY - 40;  // Center vertically
+    setIsDragOver(false);
 
     if (draggedAction) {
-      // Create new step with snap
+      // Create new step
       const action = getActionByType(draggedAction);
       if (action) {
-        const snapped = snapToPosition(centeredX, centeredY, testSteps);
         const newStep: TestStep = {
           id: generateId(),
-          type: action.type as any,
-          x: snapped.x,
-          y: snapped.y
+          type: action.type as any
         };
-        const newSteps = [...testSteps, newStep];
+
+        const newSteps = [...testSteps];
+        if (typeof index === 'number') {
+          newSteps.splice(index, 0, newStep);
+        } else {
+          newSteps.push(newStep);
+        }
+
         setTestSteps(newSteps);
         saveToHistory(newSteps);
       }
     } else if (draggedStep) {
-      // Move existing step with snap
-      const snapped = snapToPosition(centeredX, centeredY, testSteps, draggedStep);
-      const newSteps = testSteps.map(step => 
-        step.id === draggedStep 
-          ? { 
-              ...step, 
-              x: snapped.x,
-              y: snapped.y
-            }
-          : step
-      );
+      // Reorder existing step
+      const draggedStepIndex = testSteps.findIndex(s => s.id === draggedStep);
+      if (draggedStepIndex === -1) return;
+
+      const newSteps = [...testSteps];
+      const [removed] = newSteps.splice(draggedStepIndex, 1);
+
+      // Adjust index if dragging downwards
+      const targetIndex = typeof index === 'number' ? index : newSteps.length;
+      const adjustedIndex = (draggedStepIndex < targetIndex) ? targetIndex - 1 : targetIndex;
+
+      newSteps.splice(adjustedIndex, 0, removed);
+
       setTestSteps(newSteps);
       saveToHistory(newSteps);
     }
-    
-    // Always clear drag states after drop
+
+    // Clear drag states
     setDraggedAction(null);
     setDraggedStep(null);
-    setIsDragOver(false);
-    setDragPreview(null);
-    clearSnapLines(); // Clear snap lines
-  }, [draggedAction, draggedStep, canvasOffset, zoom, snapToPosition]);
+  }, [draggedAction, draggedStep, testSteps, generateId, setTestSteps, saveToHistory]);
 
   const deleteSelectedSteps = useCallback(() => {
     if (selectedSteps.size === 0) return;
@@ -319,47 +181,45 @@ export default function TestBuilder() {
 
   const confirmDeleteSteps = useCallback(() => {
     if (selectedSteps.size === 0) return;
-    
+
     // Delete all selected steps
     const newSteps = testSteps.filter(step => !selectedSteps.has(step.id));
     setTestSteps(newSteps);
     saveToHistory(newSteps);
-    
+
     // Clear selections
     setSelectedSteps(new Set());
     if (selectedStep && selectedSteps.has(selectedStep.id)) {
       setSelectedStep(null);
     }
-    
+
     setShowDeleteConfirm(false);
   }, [selectedSteps, testSteps, saveToHistory, selectedStep]);
 
+  const handleStepClick = useCallback((step: TestStep, isMultiSelect: boolean) => {
+    if (isMultiSelect) {
+      const newSelected = new Set(selectedSteps);
+      if (newSelected.has(step.id)) {
+        newSelected.delete(step.id);
+      } else {
+        newSelected.add(step.id);
+      }
+      setSelectedSteps(newSelected);
 
-  // Canvas mouse event handlers using selection hook
-  const handleCanvasMouseDownWrapper = (e: React.MouseEvent) => {
-    handleCanvasMouseDown(
-      e,
-      canvasRef,
-      zoom,
-      canvasOffset,
-      isPanning,
-      setIsPanning,
-      setPanStart,
-      testSteps,
-      selectedSteps,
-      setSelectedSteps,
-      setSelectedStep
-    );
-  };
-
-  const handleStepClickWrapper = (step: TestStep, ctrlKey: boolean = false) => {
-    handleStepClick(step, ctrlKey, selectedSteps, setSelectedSteps, setSelectedStep);
-    
-    // Open modal only for single selection
-    if (!ctrlKey) {
+      // If only one item remains selected, set it as selectedStep
+      if (newSelected.size === 1) {
+        const id = Array.from(newSelected)[0];
+        const s = testSteps.find(s => s.id === id);
+        setSelectedStep(s || null);
+      } else {
+        setSelectedStep(null);
+      }
+    } else {
+      setSelectedSteps(new Set([step.id]));
+      setSelectedStep(step);
       setIsModalOpen(true);
     }
-  };
+  }, [selectedSteps, testSteps]);
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -376,8 +236,8 @@ export default function TestBuilder() {
     try {
       const workflowName = `test-workflow-${new Date().toISOString().split('T')[0]}`;
       exportTestWorkflow(
-        testSteps, 
-        workflowName, 
+        testSteps,
+        workflowName,
         {
           description: '',
           tags: [],
@@ -399,7 +259,7 @@ export default function TestBuilder() {
   const handleImport = useCallback(async (file: File) => {
     try {
       const { steps, name, metadata } = await importTestWorkflow(file);
-      
+
       // Validate imported workflow
       const validation = validateWorkflow(steps);
       if (!validation.isValid) {
@@ -410,29 +270,8 @@ export default function TestBuilder() {
       // Generate new IDs to avoid conflicts
       const newSteps = steps.map(step => ({
         ...step,
-        id: generateId(),
-        // Offset position to avoid overlap
-        x: step.x + 50,
-        y: step.y + 50
+        id: generateId()
       }));
-
-      // Update connections with new IDs
-      const idMapping: { [oldId: string]: string } = {};
-      steps.forEach((step, index) => {
-        idMapping[step.id] = newSteps[index].id;
-      });
-
-      newSteps.forEach(step => {
-        if (step.connections) {
-          step.connections = step.connections.map(id => idMapping[id]).filter(Boolean);
-        }
-        if (step.trueConnection && idMapping[step.trueConnection]) {
-          step.trueConnection = idMapping[step.trueConnection];
-        }
-        if (step.falseConnection && idMapping[step.falseConnection]) {
-          step.falseConnection = idMapping[step.falseConnection];
-        }
-      });
 
       // Add imported steps to current workflow
       const updatedSteps = [...testSteps, ...newSteps];
@@ -461,13 +300,13 @@ export default function TestBuilder() {
     }
   }, [testSteps, setTestSteps, saveToHistory, generateId]);
 
-  // Handle save workflow - Updated to show save dialog
+  // Handle save workflow
   const handleSave = useCallback(() => {
     if (testSteps.length === 0) {
       notifyTestFailure(t('testBuilder.save'), '', t('testBuilder.noStepsToSave'));
       return;
     }
-    
+
     setIsSaveDialogOpen(true);
   }, [testSteps]);
 
@@ -496,34 +335,34 @@ export default function TestBuilder() {
       };
 
       let workflowId: string;
-      
+
       // Backend'e kaydet
       if (loadedWorkflowId) {
         // Güncelleme
         const updated = await TestService.updateTest(loadedWorkflowId, testData);
         workflowId = updated.id;
-        
+
         // Update loadedWorkflowData with new data
         setLoadedWorkflowData(updated);
-        
+
         notifyTestSaved(`${data.name} (güncellendi)`, workflowId);
       } else {
         // Yeni kayıt
         const saved = await TestService.createTest(testData);
         workflowId = saved.id;
         setLoadedWorkflowId(workflowId);
-        
+
         // Set loadedWorkflowData for new workflow
         setLoadedWorkflowData(saved);
-        
+
         notifyTestSaved(data.name, workflowId);
       }
-      
+
       setIsSaveDialogOpen(false);
-      
+
       // Mark as saved for unsaved changes tracking
       markAsSaved();
-      
+
       // Resolve the save promise if exists
       if (savePromiseRef.current) {
         savePromiseRef.current.resolve();
@@ -531,7 +370,7 @@ export default function TestBuilder() {
       }
     } catch (error) {
       notifyTestFailure('Test Kaydetme', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
-      
+
       // Reject the save promise if exists
       if (savePromiseRef.current) {
         savePromiseRef.current.reject(error);
@@ -540,9 +379,9 @@ export default function TestBuilder() {
     }
   }, [testSteps, loadedWorkflowId, enableScreenshots, enableRecording, headlessMode, markAsSaved]);
 
-  // Handle run workflow - Updated to use backend API
+  // Handle run workflow
   const [isRunning, setIsRunning] = useState(false);
-  
+
   const handleRun = useCallback(async () => {
     if (testSteps.length === 0) {
       notifyTestFailure(loadedWorkflowName || (loadedWorkflowId ? `Test ${loadedWorkflowId.slice(0, 8)}` : 'Test Builder'), '', 'Çalıştırılacak test adımı bulunamadı.');
@@ -550,13 +389,13 @@ export default function TestBuilder() {
     }
 
     // Get actual test name if workflow is loaded
-    const actualWorkflowName = loadedWorkflowName || 
+    const actualWorkflowName = loadedWorkflowName ||
       (loadedWorkflowId ? `Test ${loadedWorkflowId.slice(0, 8)}` : 'Test Builder Workflow');
-    
+
     setIsRunning(true);
 
     try {
-      
+
       // Convert frontend steps to backend format
       const backendSteps = testSteps.map(step => ({
         id: step.id,
@@ -568,21 +407,11 @@ export default function TestBuilder() {
           text: step.value, // For type actions
           target: step.selector, // Alternative selector name
           duration: step.duration,
-          condition: step.condition,
-          conditionType: step.conditionType, // For IF actions
-          expectedValue: step.expectedValue,
-          operator: step.operator, // For IF actions
           verificationType: step.verificationType, // For verify actions
-          direction: step.direction,
-          amount: step.amount,
+          expectedValue: step.expectedValue,
           filename: step.filename,
-          key: step.key,
           optionType: step.optionType, // For dropdown actions
           optionValue: step.optionValue, // For dropdown actions
-          // Connection properties for flow control
-          connections: step.connections,
-          trueConnection: step.trueConnection, // For IF TRUE branch
-          falseConnection: step.falseConnection // For IF FALSE branch
         }
       }));
       const data = await ExecutionService.executeWorkflow({
@@ -600,10 +429,7 @@ export default function TestBuilder() {
       });
 
       notifyTestStart(actualWorkflowName, data.executionId);
-      
-      // Optional: Navigate to tests page to see results
-      // router.push('/tests');
-      
+
     } catch (error) {
       console.error('Test execution error:', error);
       notifyTestFailure(actualWorkflowName, 'failed', error instanceof Error ? error.message : 'Bilinmeyen hata');
@@ -612,49 +438,44 @@ export default function TestBuilder() {
     }
   }, [testSteps, enableScreenshots, enableRecording, headlessMode, selectedBrowser, loadedWorkflowId, loadedWorkflowName]);
 
-  // Load workflow from URL parameter - Use ref to track shown notifications
+  // Load workflow from URL parameter
   const shownNotifications = useRef(new Set<string>());
-  
+
   useEffect(() => {
     const loadWorkflowId = searchParams.get('load');
-    console.log(t('testBuilder.useEffectRunning'), { loadWorkflowId, loadedWorkflowId });
-    
+
     if (loadWorkflowId && loadWorkflowId !== loadedWorkflowId) {
       // Backend'den workflow yükle
       TestService.fetchTestById(loadWorkflowId)
         .then(workflow => {
           if (workflow && workflow.workflow) {
-            console.log(t('testBuilder.loadingWorkflow'), workflow.name);
             setTestSteps(workflow.workflow);
             setLoadedWorkflowId(loadWorkflowId);
             setLoadedWorkflowName(workflow.name);
             setLoadedWorkflowData(workflow); // Store full workflow data
-            
+
             // Load screenshot and recording settings
             setEnableScreenshots(workflow.enableScreenshots || false);
             setEnableRecording(workflow.enableRecording || false);
             setHeadlessMode(workflow.headlessMode || false);
-            
+
             // Load browser settings
             if (workflow.browserType) {
               setSelectedBrowser(workflow.browserType);
             }
-            
+
             // Reset unsaved changes after workflow is loaded
             setTimeout(() => {
               resetUnsavedChanges();
             }, 0);
-            
+
             // Show success message only if not shown before for this workflow
             const notificationKey = `loaded-${loadWorkflowId}`;
             if (!shownNotifications.current.has(notificationKey)) {
-              console.log(t('testBuilder.showingNotification'), workflow.name);
               shownNotifications.current.add(notificationKey);
               setTimeout(() => {
                 notifyWorkflowLoaded(workflow.name);
               }, 100);
-            } else {
-              console.log(t('testBuilder.notificationAlreadyShown'));
             }
           } else {
             notifyTestFailure(t('navigation.testBuilder'), '', t('testBuilder.workflowNotFoundOrInvalid'));
@@ -665,7 +486,7 @@ export default function TestBuilder() {
           notifyTestFailure(t('navigation.testBuilder'), '', t('testBuilder.workflowLoadFailed'));
         });
     }
-    
+
     // Clear notification tracking when no workflow is loaded
     if (!loadWorkflowId) {
       shownNotifications.current.clear();
@@ -676,225 +497,229 @@ export default function TestBuilder() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
       <Sidebar onNavigationAttempt={handleNavigation} />
-      
-      <div style={{ 
-        flex: 1, 
-        marginLeft: isCollapsed ? '4rem' : '16rem', 
+
+      <div style={{
+        flex: 1,
+        marginLeft: isCollapsed ? '4rem' : '16rem',
         paddingTop: '4rem',
         transition: 'margin-left 0.3s ease'
       }}>
         <Header />
-        
-        <div style={{ 
+
+        <div style={{
           height: 'calc(100vh - 4rem)',
           backgroundColor: 'var(--bg-secondary)',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
-          {/* Canvas Controls */}
-          <CanvasControls
-            zoom={zoom}
-            onZoomIn={zoomIn}
-            onZoomOut={zoomOut}
-            onResetView={resetView}
-            testStepsCount={testSteps.length}
-          />
+          {/* 3-Column Layout */}
+          <div className="flex-1 flex overflow-hidden p-4 gap-4">
+            {/* Left Sidebar - Actions */}
+            <div className="w-64 flex-shrink-0 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-primary)] overflow-hidden shadow-sm">
+              <ActionsSidebar onAddStep={handleAddStep} />
+            </div>
 
-          {/* Unified Toolbar */}
-          <UnifiedToolbar
-            onAutoArrange={autoArrangeSteps}
-            testStepsCount={testSteps.length}
-            snapEnabled={snapEnabled}
-            onToggleSnap={toggleSnap}
-            onUndo={() => undo(() => {
-              setSelectedSteps(new Set());
-              setSelectedStep(null);
-            })}
-            onRedo={() => redo(() => {
-              setSelectedSteps(new Set());
-              setSelectedStep(null);
-            })}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onCopy={() => copySteps(testSteps)}
-            onPaste={() => pasteSteps(testSteps, generateId, (newSteps) => {
-              setTestSteps(newSteps);
-              saveToHistory(newSteps);
-            })}
-            onDuplicate={() => duplicateSteps(testSteps, generateId, (newSteps) => {
-              setTestSteps(newSteps);
-              saveToHistory(newSteps);
-            })}
-            onDeleteSelected={deleteSelectedSteps}
-            selectedStepsCount={selectedSteps.size}
-            copiedStepsCount={copiedSteps.length}
-            isConnecting={isConnecting}
-            connectionType={connectionType}
-            onExport={handleExport}
-            onImport={handleImport}
-            onSave={handleSave}
-            onRun={handleRun}
-            isRunning={isRunning}
-            enableScreenshots={enableScreenshots}
-            enableRecording={enableRecording}
-            headlessMode={headlessMode}
-            onToggleScreenshots={() => {
-              setEnableScreenshots(!enableScreenshots);
-            }}
-            onToggleRecording={() => {
-              setEnableRecording(!enableRecording);
-            }}
-            onToggleHeadless={() => {
-              setHeadlessMode(!headlessMode);
-            }}
-            selectedBrowser={selectedBrowser}
-            onBrowserChange={handleBrowserChange}
-            showActionsPanel={true}
-            draggedAction={draggedAction}
-            onActionDragStart={handleActionDragStart}
-            onDragEnd={handleDragEnd}
-            onMouseDown={(e) => {
-              // Prevent canvas panning when dragging actions
-              e.stopPropagation();
-            }}
-          />
+            {/* Center - Timeline & Toolbar */}
+            <div className="flex-1 flex flex-col min-w-0 gap-4">
+              {/* Toolbar - Centered */}
+              <div className="flex justify-center">
+                <UnifiedToolbar
+                  testStepsCount={testSteps.length}
+                  onUndo={() => undo(() => {
+                    setSelectedSteps(new Set());
+                    setSelectedStep(null);
+                  })}
+                  onRedo={() => redo(() => {
+                    setSelectedSteps(new Set());
+                    setSelectedStep(null);
+                  })}
+                  canUndo={canUndo}
+                  canRedo={canRedo}
+                  onCopy={() => {
+                    const selected = testSteps.filter(s => selectedSteps.has(s.id));
+                    setCopiedSteps(selected);
+                  }}
+                  onPaste={() => {
+                    if (copiedSteps.length === 0) return;
+                    const newSteps = copiedSteps.map(s => ({ ...s, id: generateId() }));
+                    const updatedSteps = [...testSteps, ...newSteps];
+                    setTestSteps(updatedSteps);
+                    saveToHistory(updatedSteps);
+                  }}
+                  onDuplicate={() => {
+                    const selected = testSteps.filter(s => selectedSteps.has(s.id));
+                    if (selected.length === 0) return;
+                    const newSteps = selected.map(s => ({ ...s, id: generateId() }));
+                    const updatedSteps = [...testSteps, ...newSteps];
+                    setTestSteps(updatedSteps);
+                    saveToHistory(updatedSteps);
+                  }}
+                  selectedStepsCount={selectedSteps.size}
+                  copiedStepsCount={copiedSteps.length}
+                  isConnecting={false}
+                  connectionType={'normal'}
+                  onExport={handleExport}
+                  onImport={handleImport}
+                  onSave={handleSave}
+                  onRun={handleRun}
+                  isRunning={isRunning}
+                  enableScreenshots={enableScreenshots}
+                  enableRecording={enableRecording}
+                  headlessMode={headlessMode}
+                  onToggleScreenshots={() => {
+                    setEnableScreenshots(!enableScreenshots);
+                  }}
+                  onToggleRecording={() => {
+                    setEnableRecording(!enableRecording);
+                  }}
+                  onToggleHeadless={() => {
+                    setHeadlessMode(!headlessMode);
+                  }}
+                  selectedBrowser={selectedBrowser}
+                  onBrowserChange={handleBrowserChange}
+                />
+              </div>
 
-          {/* Canvas */}
-          <div
-            ref={canvasRef}
-            className="canvas-background"
-            onDrop={handleCanvasDrop}
-            onDragOver={(e) => handleCanvasDragOver(e, snapToPosition, testSteps, setSnapLines)}
-            onDragEnter={(e) => handleCanvasDragEnter(e, snapToPosition, testSteps, setSnapLines)}
-            onDragLeave={(e) => handleCanvasDragLeave(e, clearSnapLines)}
-            onDragEnd={handleDragEnd}
-            onMouseDown={handleCanvasMouseDownWrapper}
-            style={canvasStyles.canvasContainer}
-          >
-            <div style={canvasStyles.innerContainer}>
-              {/* SVG Layer for connections and snap lines */}
-              <svg 
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                  overflow: 'visible'
-                }}
-                width="100%"
-                height="100%"
+              {/* Timeline List */}
+              <div
+                className="flex-1 overflow-y-auto bg-[var(--bg-primary)] rounded-xl border border-[var(--border-primary)] shadow-sm p-6"
+                onClick={() => setSelectedStep(null)} // Deselect when clicking empty space
               >
-                <ConnectionRenderer
-                  testSteps={testSteps}
-                  getStepCenter={getStepCenter}
-                  getConnectionStyle={getConnectionStyle}
-                  removeConnection={removeConnection}
-                  setTestSteps={setTestSteps}
-                  saveToHistory={saveToHistory}
-                />
-                
-                {/* Snap lines */}
-                <SnapLines
-                  snapEnabled={snapEnabled}
-                  snapLines={snapLines}
-                />
-                
-                {/* Selection box */}
-                <SelectionBox selectionBox={selectionBox} />
-              </svg>
-              {/* Render drag preview */}
-              {dragPreview && (
-                <DragPreview
-                  dragPreview={dragPreview}
-                  draggedStep={draggedStep}
-                  testSteps={testSteps}
-                />
-              )}
+                <div className="max-w-3xl mx-auto pb-20">
+                  <div className="relative">
+                    {/* Vertical Line */}
+                    <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-[var(--border-primary)] -z-10 transform -translate-x-1/2"></div>
 
-              {/* Render test steps */}
-              {testSteps.map((step) => {
-                const isSelected = selectedStep === step;
-                const isMultiSelected = selectedSteps.has(step.id);
-                
-                return (
-                  <TestStepCard
-                    key={step.id}
-                    step={step}
-                    isSelected={isSelected}
-                    isMultiSelected={isMultiSelected}
-                    draggedStep={draggedStep}
-                    selectedStep={selectedStep}
-                    selectedSteps={selectedSteps}
-                    isConnecting={isConnecting}
-                    connectionStart={connectionStart}
-                    connectionType={connectionType}
-                    onStepDragStart={handleStepDragStart}
-                    onDragEnd={handleDragEnd}
-                    onStepClick={handleStepClickWrapper}
-                    onDeleteStep={deleteStep}
-                    onStartConnection={startConnection}
-                    onEndConnection={endConnection}
-                    setIsConnecting={setIsConnecting}
-                    setConnectionStart={setConnectionStart}
-                    setConnectionType={setConnectionType}
-                    setSelectedSteps={setSelectedSteps}
-                    setSelectedStep={setSelectedStep}
-                    testSteps={testSteps}
-                    setTestSteps={setTestSteps}
-                    saveToHistory={saveToHistory}
-                  />
-                );
-              })}
+                    <div className="space-y-0">
+                      {testSteps.map((step, index) => (
+                        <div
+                          key={step.id}
+                          className="relative pl-16 group"
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.stopPropagation();
+                            handleDrop(e, index);
+                          }}
+                        >
+                          {/* Step Number/Dot */}
+                          <div className={`absolute left-8 top-8 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium transform -translate-x-1/2 -translate-y-1/2 z-10 transition-colors ${selectedSteps.has(step.id)
+                            ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white'
+                            : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)]'
+                            }`}>
+                            {index + 1}
+                          </div>
+
+                          <div className="mb-4">
+                            <TestStepCard
+                              step={step}
+                              isSelected={selectedSteps.has(step.id)}
+                              isMultiSelected={selectedSteps.has(step.id) && selectedSteps.size > 1}
+                              draggedStep={draggedStep}
+                              onStepDragStart={setDraggedStep}
+                              onDragEnd={() => {
+                                setDraggedAction(null);
+                                setDraggedStep(null);
+                                setIsDragOver(false);
+                              }}
+                              onStepClick={(step: TestStep, isMulti: boolean) => handleStepClick(step, isMulti)}
+                              onDeleteStep={(id: string) => {
+                                const newSteps = testSteps.filter(s => s.id !== id);
+                                setTestSteps(newSteps);
+                                saveToHistory(newSteps);
+                              }}
+                              onStartConnection={() => { }} // No-op
+                              onEndConnection={() => { }} // No-op
+                              isConnecting={false}
+                              connectionStart={null}
+                              connectionType={'normal'}
+                              setIsConnecting={() => { }}
+                              setConnectionStart={() => { }}
+                              setConnectionType={() => { }}
+                              setSelectedSteps={setSelectedSteps}
+                              setSelectedStep={setSelectedStep}
+                              selectedSteps={selectedSteps}
+                              selectedStep={selectedStep}
+                              testSteps={testSteps}
+                              setTestSteps={setTestSteps}
+                              saveToHistory={saveToHistory}
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Drop zone at the end */}
+                      <div
+                        className="relative pl-16 mt-4"
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDrop={(e) => {
+                          e.stopPropagation();
+                          handleDrop(e);
+                        }}
+                      >
+                        <div className="absolute left-8 top-1/2 w-3 h-3 rounded-full bg-[var(--border-primary)] transform -translate-x-1/2 -translate-y-1/2"></div>
+                        <div className="h-12 border-2 border-dashed border-[var(--border-primary)] rounded-lg flex items-center justify-center text-[var(--text-tertiary)] text-sm">
+                          {t('testBuilder.dropHere')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar - Configuration */}
+            <div className="w-80 flex-shrink-0 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-primary)] overflow-hidden shadow-xl z-20">
+              <StepConfigurationPanel
+                step={selectedStep}
+                onSave={(updatedStep) => {
+                  const newSteps = testSteps.map(s =>
+                    s.id === updatedStep.id ? updatedStep : s
+                  );
+                  setTestSteps(newSteps);
+                  saveToHistory(newSteps);
+                }}
+                onClose={() => setSelectedStep(null)}
+                onDelete={(id) => {
+                  const newSteps = testSteps.filter(s => s.id !== id);
+                  setTestSteps(newSteps);
+                  saveToHistory(newSteps);
+                  setSelectedStep(null);
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Modals */}
-      <StepModal
-        isOpen={isModalOpen}
-        step={selectedStep}
-        onClose={closeModal}
-        onUpdateProperty={updateStepProperty}
-      />
-
       <TestModal
         isOpen={isSaveDialogOpen}
         onClose={() => {
           setIsSaveDialogOpen(false);
-          // Reject save promise if canceled
           if (savePromiseRef.current) {
-            savePromiseRef.current.reject(new Error('Save canceled by user'));
+            // Don't reject, just resolve empty to allow navigation if needed
+            savePromiseRef.current.resolve();
             savePromiseRef.current = null;
           }
         }}
         onSave={handleSaveFromDialog}
-        initialData={loadedWorkflowId && loadedWorkflowData ? {
-          name: loadedWorkflowData.name || '',
-          description: loadedWorkflowData.description || '',
+        initialData={loadedWorkflowData ? {
+          name: loadedWorkflowData.name,
+          description: loadedWorkflowData.description,
           tags: loadedWorkflowData.tags || [],
           suite: loadedWorkflowData.suite || 'Default',
-          browserType: loadedWorkflowData.browserType || selectedBrowser
+          browserType: selectedBrowser
         } : undefined}
-        isUpdating={!!loadedWorkflowId}
-        mode={loadedWorkflowId ? 'edit' : 'save'}
-      />
-
-      <ConfirmDialog
-        isOpen={showUnsavedDialog}
-        onClose={cancelNavigation}
-        onConfirm={saveAndNavigate}
-        onDiscard={confirmNavigation}
-        title={t('unsavedChanges.title')}
-        message={t('unsavedChanges.message')}
-        confirmText={t('unsavedChanges.save')}
-        cancelText={t('unsavedChanges.cancel')}
-        discardText={t('unsavedChanges.dontSave')}
-        variant="unsaved"
-        isSaveDialogOpen={isSaveDialogOpen}
+        mode={loadedWorkflowId ? 'save' : 'create'}
+        title={loadedWorkflowId ? t('testBuilder.updateTest') : t('testBuilder.saveTest')}
       />
 
       <ConfirmDialog
@@ -902,10 +727,20 @@ export default function TestBuilder() {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={confirmDeleteSteps}
         title={t('testBuilder.deleteSteps')}
-        message={t('testBuilder.deleteStepsMessage', { count: selectedSteps.size })}
+        message={t('testBuilder.deleteStepsConfirm', { count: selectedSteps.size })}
         confirmText={t('common.delete')}
-        cancelText={t('common.cancel')}
         type="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showUnsavedDialog}
+        onClose={cancelNavigation}
+        onConfirm={confirmNavigation}
+        title={t('common.unsavedChanges')}
+        message={t('common.unsavedChangesMessage')}
+        confirmText={t('common.leave')}
+        cancelText={t('common.cancel')}
+        type="warning"
       />
     </div>
   );

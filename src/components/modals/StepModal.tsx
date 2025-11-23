@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {  X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { IconButton } from '@/components';
 import { TestStep } from '@/types';
 import { getTranslatedActionByType, ActionField } from '@/utils/actions';
@@ -13,14 +13,14 @@ interface StepModalProps {
   isOpen: boolean;
   step: TestStep | null;
   onClose: () => void;
-  onUpdateProperty: (stepId: string, property: string, value: any) => void;
+  onSave: (step: TestStep) => void;
 }
 
 const StepModal: React.FC<StepModalProps> = ({
   isOpen,
   step,
   onClose,
-  onUpdateProperty
+  onSave
 }) => {
   const { t } = useI18n();
   // Local state for form inputs
@@ -35,21 +35,33 @@ const StepModal: React.FC<StepModalProps> = ({
     }
   }, [step]);
 
-  // Debounced update to parent state
+  // Save changes when modal closes or save button is clicked
+  const handleSave = () => {
+    if (localStep) {
+      onSave(localStep);
+    }
+  };
+
+  // Auto-save on close is handled by parent passing onClose that might trigger save or just close
+  // But here we want to explicitly save when values change? 
+  // Actually, the previous logic was auto-saving. Let's keep auto-save behavior but using onSave.
+
   useEffect(() => {
     if (!localStep || !step) return;
 
     const timeoutId = setTimeout(() => {
-      // Update only changed properties
-      Object.keys(localStep).forEach(key => {
-        if (localStep[key as keyof TestStep] !== step[key as keyof TestStep]) {
-          onUpdateProperty(step.id, key, localStep[key as keyof TestStep]);
-        }
-      });
-    }, 500); // 500ms debounce
+      // Check if anything changed
+      const hasChanges = Object.keys(localStep).some(key =>
+        localStep[key as keyof TestStep] !== step[key as keyof TestStep]
+      );
+
+      if (hasChanges) {
+        onSave(localStep);
+      }
+    }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [localStep, step, onUpdateProperty]);
+  }, [localStep, step, onSave]);
 
   // Handle local state updates
   const handleLocalUpdate = (property: string, value: any) => {
@@ -62,9 +74,9 @@ const StepModal: React.FC<StepModalProps> = ({
   const handleKeyCapture = (fieldKey: string, event: React.KeyboardEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    
+
     let keyName = event.key;
-    
+
     // Special key mappings
     if (event.key === ' ') keyName = 'Space';
     if (event.key === 'ArrowUp') keyName = 'ArrowUp';
@@ -76,9 +88,9 @@ const StepModal: React.FC<StepModalProps> = ({
     if (event.key === 'Escape') keyName = 'Escape';
     if (event.key === 'Backspace') keyName = 'Backspace';
     if (event.key === 'Delete') keyName = 'Delete';
-    
+
     console.log('Key captured:', keyName); // Debug log
-    
+
     handleLocalUpdate(fieldKey, keyName);
     setIsCapturingKey(null);
   };
@@ -283,7 +295,7 @@ const StepModal: React.FC<StepModalProps> = ({
   const Icon = action.icon;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -298,20 +310,20 @@ const StepModal: React.FC<StepModalProps> = ({
       }}
       onClick={onClose}
     >
-      <div 
+      <div
         style={{
-        backgroundColor: 'var(--bg-primary)',
-        border: '1px solid var(--border-primary)',
-        borderRadius: '1rem',
-        padding: '1.5rem',
-        width: '90%',
-        maxWidth: '500px',
-        maxHeight: '80vh',
-        overflow: 'auto',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--border-primary)',
+          borderRadius: '1rem',
+          padding: '1.5rem',
+          width: '90%',
+          maxWidth: '500px',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div style={{
           display: 'flex',
@@ -339,10 +351,10 @@ const StepModal: React.FC<StepModalProps> = ({
               <Icon size={18} color={action.color} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem' 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
               }}>
                 <h3 style={{
                   fontSize: '1.25rem',
@@ -426,10 +438,10 @@ const StepModal: React.FC<StepModalProps> = ({
             // Selector is optional for URL verification
             const isUrlVerification = localStep?.verificationType === 'url' || localStep?.verificationType === 'urlContains';
             const isFieldRequired = field.key === 'selector' && isUrlVerification ? false : field.required;
-            
+
             return (
               <div key={field.key}>
-                <label 
+                <label
                   htmlFor={`field-${field.key}`}
                   style={{
                     display: 'block',

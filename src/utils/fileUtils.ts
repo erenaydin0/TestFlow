@@ -81,7 +81,7 @@ export const exportTestsToCSV = (tests: Test[]): void => {
 
   const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
   const filename = `CosmicQA-tests-${new Date().toISOString().split('T')[0]}.csv`;
-  
+
   downloadCSV(csvContent, filename);
 };
 
@@ -113,15 +113,15 @@ export const exportExecutionsToCSV = (executions: ExecutionResult[]): void => {
     'En Uzun Adım (ms)',
     'Raporlama Tarihi'
   ];
-  
+
   const csvRows = executions.map(execution => {
-    const avgStepDuration = execution.steps.length > 0 
+    const avgStepDuration = execution.steps.length > 0
       ? Math.round(execution.steps.reduce((sum, step) => sum + (step.duration || 0), 0) / execution.steps.length)
       : 0;
     const maxStepDuration = Math.max(...execution.steps.map(step => step.duration || 0));
     const firstError = execution.steps.find(step => step.error)?.error || '';
     const lastStepDuration = execution.steps[execution.steps.length - 1]?.duration || 0;
-    
+
     return [
       execution.workflowName,
       execution.id,
@@ -153,7 +153,7 @@ export const exportExecutionsToCSV = (executions: ExecutionResult[]): void => {
 
   const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
   const filename = `CosmicQA-executions-${new Date().toISOString().split('T')[0]}.csv`;
-  
+
   downloadCSV(csvContent, filename);
 };
 
@@ -173,7 +173,7 @@ export const exportExecutionStepsToCSV = (execution: ExecutionResult): void => {
     'Hata Mesajı',
     'Ekran Görüntüsü'
   ];
-  
+
   const csvRows = execution.steps.map((step, index) => [
     index + 1,
     step.stepId || '',
@@ -192,14 +192,14 @@ export const exportExecutionStepsToCSV = (execution: ExecutionResult): void => {
 
   const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
   const filename = `${execution.workflowName}-steps-${new Date().toISOString().split('T')[0]}.csv`;
-  
+
   downloadCSV(csvContent, filename);
 };
 
 // JSON Import/Export functions
 export const exportTestWorkflow = (
-  testSteps: TestStep[], 
-  fileName?: string, 
+  testSteps: TestStep[],
+  fileName?: string,
   metadata?: WorkflowMetadata
 ) => {
   const workflow = {
@@ -226,31 +226,31 @@ export const exportTestWorkflow = (
   downloadJSON(workflow, filename);
 };
 
-export const importTestWorkflow = (file: File): Promise<{ 
-  steps: TestStep[]; 
+export const importTestWorkflow = (file: File): Promise<{
+  steps: TestStep[];
   name: string;
   metadata?: WorkflowMetadata;
 }> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
         const workflow = JSON.parse(content);
-        
+
         if (!workflow.steps || !Array.isArray(workflow.steps)) {
           throw new Error('Geçersiz workflow dosyası: steps bulunamadı');
         }
-        
+
         const validSteps = workflow.steps.filter((step: any) => {
           return step.id && step.type && typeof step.x === 'number' && typeof step.y === 'number';
         });
-        
+
         if (validSteps.length === 0) {
           throw new Error('Geçersiz workflow dosyası: geçerli adım bulunamadı');
         }
-        
+
         resolve({
           steps: validSteps,
           name: workflow.name || 'imported-workflow',
@@ -268,11 +268,11 @@ export const importTestWorkflow = (file: File): Promise<{
         reject(new Error(`Dosya okuma hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`));
       }
     };
-    
+
     reader.onerror = () => {
       reject(new Error('Dosya okuma hatası'));
     };
-    
+
     reader.readAsText(file);
   });
 };
@@ -297,31 +297,31 @@ const getStepTypeText = (type: string): string => {
 // Workflow validation
 export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
-  
+
   const ids = steps.map(step => step.id);
   const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
   if (duplicateIds.length > 0) {
     errors.push(`Duplicate step IDs found: ${duplicateIds.join(', ')}`);
   }
-  
+
   steps.forEach(step => {
     if (step.connections) {
-      step.connections.forEach(connectionId => {
+      step.connections.forEach((connectionId: string) => {
         if (!ids.includes(connectionId)) {
           errors.push(`Step ${step.id} has invalid connection: ${connectionId}`);
         }
       });
     }
-    
+
     if (step.trueConnection && !ids.includes(step.trueConnection)) {
       errors.push(`Step ${step.id} has invalid true connection: ${step.trueConnection}`);
     }
-    
+
     if (step.falseConnection && !ids.includes(step.falseConnection)) {
       errors.push(`Step ${step.id} has invalid false connection: ${step.falseConnection}`);
     }
   });
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -330,7 +330,7 @@ export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors:
 
 // Filter functions
 export const filterTests = (
-  tests: Test[], 
+  tests: Test[],
   filters: {
     search: string;
     suite: string[];
@@ -339,17 +339,17 @@ export const filterTests = (
   }
 ): Test[] => {
   return tests.filter(test => {
-    const matchesSearch = !filters.search || 
+    const matchesSearch = !filters.search ||
       test.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       test.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
       test.tags?.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase()));
 
     const matchesSuite = filters.suite.length === 0 || filters.suite.includes(test.suite || '');
-    
-    const matchesTags = filters.tags.length === 0 || 
+
+    const matchesTags = filters.tags.length === 0 ||
       (test.tags || []).some(filterTag => (test.tags || []).includes(filterTag));
-    
-    const matchesBrowser = filters.browserType.length === 0 || 
+
+    const matchesBrowser = filters.browserType.length === 0 ||
       filters.browserType.includes(test.browserType || 'chromium');
 
     return matchesSearch && matchesSuite && matchesTags && matchesBrowser;
@@ -357,7 +357,7 @@ export const filterTests = (
 };
 
 export const filterExecutions = (
-  executions: ExecutionResult[], 
+  executions: ExecutionResult[],
   filters: {
     search: string;
     status?: string;
@@ -371,23 +371,23 @@ export const filterExecutions = (
   }
 ): ExecutionResult[] => {
   return executions.filter(execution => {
-    const matchesSearch = !filters.search || 
+    const matchesSearch = !filters.search ||
       execution.workflowName.toLowerCase().includes(filters.search.toLowerCase());
 
     const matchesStatus = !filters.status || execution.status === filters.status;
 
-    const matchesSuite = filters.suite.length === 0 || 
+    const matchesSuite = filters.suite.length === 0 ||
       (execution.suite && filters.suite.includes(execution.suite));
 
-    const matchesTags = filters.tags.length === 0 || 
+    const matchesTags = filters.tags.length === 0 ||
       (execution.tags && execution.tags.some(tag => filters.tags.includes(tag)));
 
-    const matchesBrowser = filters.browserType.length === 0 || 
+    const matchesBrowser = filters.browserType.length === 0 ||
       filters.browserType.includes(execution.options?.browserType || 'chromium');
 
     const executionDate = new Date(execution.startTime);
     executionDate.setHours(0, 0, 0, 0);
-    
+
     if (filters.startDate && filters.endDate) {
       const startDate = new Date(filters.startDate);
       startDate.setHours(0, 0, 0, 0);
@@ -410,7 +410,7 @@ export const filterExecutions = (
       today.setHours(0, 0, 0, 0);
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
-      
+
       switch (filters.dateRange) {
         case 'today':
           matchesDateRange = executionDate.toDateString() === today.toDateString();
@@ -436,7 +436,7 @@ export const filterExecutions = (
 };
 
 export const getUniqueFilterOptions = (
-  tests: Test[], 
+  tests: Test[],
   executions?: ExecutionResult[]
 ): {
   suites: string[];
@@ -495,7 +495,7 @@ export interface WorkflowStorageData {
 export const saveWorkflowToStorage = (workflow: WorkflowStorageData): string => {
   try {
     const savedWorkflows = getSavedWorkflows();
-    
+
     // Eğer ID varsa güncelleme modu
     if (workflow.id) {
       const existingIndex = savedWorkflows.findIndex(w => w.id === workflow.id);
@@ -514,15 +514,15 @@ export const saveWorkflowToStorage = (workflow: WorkflowStorageData): string => 
           browserType: workflow.browserType || 'chromium',
           updatedAt: new Date()
         };
-        
+
         localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(savedWorkflows));
         return workflow.id;
       }
     }
-    
+
     // Yeni workflow oluştur
     const id = workflow.id || generateReadableId(workflow.name, savedWorkflows);
-    
+
     const newWorkflow: Test = {
       id,
       name: workflow.name,
@@ -540,10 +540,10 @@ export const saveWorkflowToStorage = (workflow: WorkflowStorageData): string => 
       headlessMode: workflow.headlessMode || false,
       browserType: workflow.browserType || 'chromium'
     };
-    
+
     savedWorkflows.push(newWorkflow);
     localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(savedWorkflows));
-    
+
     return id;
   } catch (error) {
     throw new Error(`Workflow kaydedilemedi: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
@@ -554,9 +554,9 @@ export const getSavedWorkflows = (): Test[] => {
   try {
     const stored = localStorage.getItem(WORKFLOWS_STORAGE_KEY);
     if (!stored) return [];
-    
+
     const workflows = JSON.parse(stored);
-    
+
     // Convert date strings back to Date objects
     return workflows.map((workflow: any) => ({
       ...workflow,
@@ -578,17 +578,17 @@ export const updateWorkflow = (id: string, updates: Partial<Test>): boolean => {
   try {
     const workflows = getSavedWorkflows();
     const index = workflows.findIndex(w => w.id === id);
-    
+
     if (index === -1) {
       throw new Error('Workflow bulunamadı');
     }
-    
+
     workflows[index] = {
       ...workflows[index],
       ...updates,
       updatedAt: new Date()
     };
-    
+
     localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(workflows));
     return true;
   } catch (error) {
@@ -601,11 +601,11 @@ export const deleteWorkflow = (id: string): boolean => {
   try {
     const workflows = getSavedWorkflows();
     const filteredWorkflows = workflows.filter(w => w.id !== id);
-    
+
     if (workflows.length === filteredWorkflows.length) {
       throw new Error('Workflow bulunamadı');
     }
-    
+
     localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(filteredWorkflows));
     return true;
   } catch (error) {
@@ -620,19 +620,19 @@ export const duplicateWorkflow = (id: string, newName?: string): string | null =
     if (!workflow) {
       throw new Error('Workflow bulunamadı');
     }
-    
+
     // Benzersiz isim oluştur
     const baseName = newName || `${workflow.name} (Kopya)`;
     const savedWorkflows = getSavedWorkflows();
     let uniqueName = baseName;
     let counter = 1;
-    
+
     // Aynı isimde workflow var mı kontrol et
     while (savedWorkflows.some(w => w.name === uniqueName)) {
       uniqueName = `${baseName} (${counter})`;
       counter++;
     }
-    
+
     const duplicatedWorkflow = {
       name: uniqueName,
       description: workflow.description,
@@ -644,7 +644,7 @@ export const duplicateWorkflow = (id: string, newName?: string): string | null =
       headlessMode: workflow.headlessMode,
       browserType: workflow.browserType
     };
-    
+
     return saveWorkflowToStorage(duplicatedWorkflow);
   } catch (error) {
     console.error('Error duplicating workflow:', error);
@@ -657,7 +657,7 @@ export const getExistingTags = (): string[] => {
   try {
     const workflows = getSavedWorkflows();
     const allTags = new Set<string>();
-    
+
     workflows.forEach(workflow => {
       workflow.tags.forEach(tag => {
         if (tag.trim()) {
@@ -665,7 +665,7 @@ export const getExistingTags = (): string[] => {
         }
       });
     });
-    
+
     return Array.from(allTags).sort();
   } catch (error) {
     console.error('Error getting existing tags:', error);
@@ -677,16 +677,16 @@ export const getExistingSuites = (): string[] => {
   try {
     const workflows = getSavedWorkflows();
     const allSuites = new Set<string>();
-    
+
     workflows.forEach(workflow => {
       if (workflow.suite && workflow.suite.trim()) {
         allSuites.add(workflow.suite.trim());
       }
     });
-    
+
     // Add default suite if not present
     allSuites.add('Default');
-    
+
     return Array.from(allSuites).sort();
   } catch (error) {
     console.error('Error getting existing suites:', error);
@@ -704,21 +704,21 @@ export const generateReadableId = (testName: string, existingWorkflows: Test[]):
     .replace(/\s+/g, '-') // Boşlukları tire ile değiştir
     .replace(/-+/g, '-') // Çoklu tireleri tek tireye çevir
     .replace(/^-|-$/g, ''); // Başındaki ve sonundaki tireleri kaldır
-  
+
   // Eğer temizlenmiş ad boşsa, varsayılan isim kullan
   const baseSlug = cleanName || 'test';
-  
+
   // Mevcut ID'leri kontrol et ve bir sonraki numarayı bul
   const existingIds = existingWorkflows.map(w => w.id);
   let counter = 1;
   let proposedId = `${baseSlug}-${counter.toString().padStart(3, '0')}`;
-  
+
   // Benzersiz ID bulunana kadar counter'ı artır
   while (existingIds.includes(proposedId)) {
     counter++;
     proposedId = `${baseSlug}-${counter.toString().padStart(3, '0')}`;
   }
-  
+
   return proposedId;
 };
 
@@ -744,16 +744,16 @@ export const importWorkflowsFromJSON = (jsonData: string): boolean => {
     if (!Array.isArray(workflows)) {
       throw new Error('Geçersiz veri formatı');
     }
-    
+
     // Validate workflows
-    const validWorkflows = workflows.filter(workflow => 
+    const validWorkflows = workflows.filter(workflow =>
       workflow.id && workflow.name && workflow.workflow
     );
-    
+
     if (validWorkflows.length === 0) {
       throw new Error('Geçerli workflow bulunamadı');
     }
-    
+
     localStorage.setItem(WORKFLOWS_STORAGE_KEY, JSON.stringify(validWorkflows));
     return true;
   } catch (error) {
@@ -772,10 +772,10 @@ export const getStorageStats = (): {
   const totalSteps = workflows.reduce((sum, w) => sum + (w.workflow?.length || 0), 0);
   const storageData = localStorage.getItem(WORKFLOWS_STORAGE_KEY);
   const storageSize = storageData ? new Blob([storageData]).size : 0;
-  const lastUpdated = workflows.length > 0 
+  const lastUpdated = workflows.length > 0
     ? new Date(Math.max(...workflows.map(w => w.updatedAt.getTime())))
     : null;
-  
+
   return {
     totalWorkflows: workflows.length,
     totalSteps,

@@ -41,14 +41,13 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const errorId = frontendErrorHandler.handleError(error, {
       component: 'ErrorBoundary',
-      action: 'component_did_catch',
-      errorBoundary: true
+      action: 'component_did_catch'
     });
 
     this.setState({
       error,
       errorInfo,
-      errorId: errorId.errorId
+      errorId: errorId.errorId || null
     });
 
     // Call custom error handler if provided
@@ -84,7 +83,7 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
               <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
-            
+
             <div className="text-center">
               <h1 className="text-xl font-semibold text-gray-900 mb-2">
                 Bir Hata Oluştu
@@ -123,7 +122,7 @@ class ErrorBoundary extends Component<Props, State> {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Tekrar Dene
                 </button>
-                
+
                 <button
                   onClick={this.handleGoHome}
                   className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

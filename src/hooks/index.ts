@@ -1,4 +1,4 @@
-export { default as useCanvas } from './useCanvas';
+
 export { useMouseEvents } from './useMouseEvents';
 
 // Data hooks

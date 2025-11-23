@@ -151,67 +151,6 @@ const baseActionsConfig: any[] = [
     fields: []
   },
   {
-    type: 'if',
-    titleKey: 'testSteps.condition',
-    icon: GitBranch,
-    color: 'var(--status-error)',
-    borderColor: 'var(--status-error)',
-    descriptionKey: 'testSteps.conditionDesc',
-    category: 'advanced' as ActionCategory,
-    isAdvanced: true,
-    fields: [
-      {
-        key: 'conditionType',
-        labelKey: 'testSteps.conditionType',
-        type: 'select' as const,
-        required: true,
-        options: [
-          { value: 'exists', labelKey: 'testSteps.elementExists' },
-          { value: 'visible', labelKey: 'testSteps.elementVisible' },
-          { value: 'hidden', labelKey: 'testSteps.elementHidden' },
-          { value: 'text', labelKey: 'testSteps.textEquals' },
-          { value: 'textContains', labelKey: 'testSteps.textContains' },
-          { value: 'value', labelKey: 'testSteps.valueEquals' },
-          { value: 'valueContains', labelKey: 'testSteps.valueContains' },
-          { value: 'count', labelKey: 'testSteps.elementCount' },
-          { value: 'url', labelKey: 'testSteps.urlEquals' },
-          { value: 'urlContains', labelKey: 'testSteps.urlContains' }
-        ],
-        descriptionKey: 'testSteps.conditionTypeDescription'
-      },
-      {
-        key: 'selector',
-        labelKey: 'testSteps.selector',
-        type: 'text' as const,
-        placeholderKey: 'testSteps.conditionSelectorPlaceholder',
-        required: false,
-        descriptionKey: 'testSteps.conditionSelectorDescription'
-      },
-      {
-        key: 'expectedValue',
-        labelKey: 'testSteps.expectedValue',
-        type: 'text' as const,
-        placeholderKey: 'testSteps.expectedValuePlaceholder',
-        descriptionKey: 'testSteps.expectedValueDescription'
-      },
-      {
-        key: 'operator',
-        labelKey: 'testSteps.operator',
-        type: 'select' as const,
-        required: false,
-        options: [
-          { value: 'equals', labelKey: 'testSteps.equals' },
-          { value: 'notEquals', labelKey: 'testSteps.notEquals' },
-          { value: 'greaterThan', labelKey: 'testSteps.greaterThan' },
-          { value: 'lessThan', labelKey: 'testSteps.lessThan' },
-          { value: 'greaterOrEqual', labelKey: 'testSteps.greaterOrEqual' },
-          { value: 'lessOrEqual', labelKey: 'testSteps.lessOrEqual' }
-        ],
-        descriptionKey: 'testSteps.operatorDescription'
-      }
-    ]
-  },
-  {
     type: 'verify',
     titleKey: 'testSteps.verify',
     icon: CheckCircle,
@@ -252,92 +191,6 @@ const baseActionsConfig: any[] = [
         type: 'text' as const,
         placeholderKey: 'testSteps.verifyExpectedValuePlaceholder',
         descriptionKey: 'testSteps.verifyExpectedValueDescription'
-      }
-    ]
-  },
-  {
-    type: 'scroll',
-    titleKey: 'testSteps.scroll',
-    icon: Scroll,
-    color: 'var(--status-info)',
-    borderColor: 'var(--status-info)',
-    descriptionKey: 'testSteps.scrollDesc',
-    category: 'interaction' as ActionCategory,
-    fields: [
-      {
-        key: 'selector',
-        labelKey: 'testSteps.selector',
-        type: 'text' as const,
-        placeholderKey: 'testSteps.scrollSelectorPlaceholder',
-        descriptionKey: 'testSteps.scrollSelectorDescription'
-      },
-      {
-        key: 'direction',
-        labelKey: 'testSteps.direction',
-        type: 'select' as const,
-        required: true,
-        options: [
-          { value: 'top', labelKey: 'testSteps.up' },
-          { value: 'bottom', labelKey: 'testSteps.down' },
-          { value: 'left', labelKey: 'testSteps.left' },
-          { value: 'right', labelKey: 'testSteps.right' }
-        ],
-        descriptionKey: 'testSteps.directionDescription'
-      },
-      {
-        key: 'amount',
-        labelKey: 'testSteps.amount',
-        type: 'number' as const,
-        placeholder: '500',
-        min: 0,
-        max: 5000,
-        step: 50,
-        descriptionKey: 'testSteps.amountDescription'
-      }
-    ]
-  },
-  {
-    type: 'hover',
-    titleKey: 'testSteps.hover',
-    icon: MousePointer2,
-    color: 'var(--status-warning)',
-    borderColor: 'var(--status-warning)',
-    descriptionKey: 'testSteps.hoverDesc',
-    category: 'interaction' as ActionCategory,
-    fields: [
-      {
-        key: 'selector',
-        labelKey: 'testSteps.selector',
-        type: 'text' as const,
-        placeholderKey: 'testSteps.hoverSelectorPlaceholder',
-        required: true,
-        descriptionKey: 'testSteps.hoverSelectorDescription'
-      }
-    ]
-  },
-  {
-    type: 'key',
-    titleKey: 'testSteps.key',
-    icon: Keyboard,
-    color: 'var(--status-error)',
-    borderColor: 'var(--status-error)',
-    descriptionKey: 'testSteps.keyDesc',
-    category: 'input' as ActionCategory,
-    fields: [
-      {
-        key: 'key',
-        labelKey: 'testSteps.keyLabel',
-        type: 'text' as const,
-        placeholderKey: 'testSteps.keyCapturePlaceholder',
-        required: true,
-        descriptionKey: 'testSteps.keyDescription'
-      },
-      {
-        key: 'selector',
-        labelKey: 'testSteps.selector',
-        type: 'text' as const,
-        placeholderKey: 'testSteps.keySelectorPlaceholder',
-        descriptionKey: 'testSteps.keySelectorDescription'
       }
     ]
   },
@@ -427,7 +280,7 @@ export const getActionByType = (type: string): ActionType | undefined => {
 export const getTranslatedActionByType = (type: string, t: TranslationFunction): ActionType | undefined => {
   const action = baseActionsConfig.find(action => action.type === type);
   if (!action) return undefined;
-  
+
   return {
     ...action,
     title: action.titleKey ? t(action.titleKey) : action.title || action.type,
