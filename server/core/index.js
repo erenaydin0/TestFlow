@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 // Utils
 import { ensureDirectoriesExist } from '../utils/fileUtils.js';
 import { generateScheduledExecutionId } from '../utils/timestamp.js';
-import { findStartStepIndex, buildStepMap, getNextStepId, calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js';
+import { calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js';
 
 // Routes
 import createExecutionRoutes from '../routes/executions.js';
@@ -201,38 +201,10 @@ async function executeTestWorkflow(executionId, execution) {
       browserType: execution.options.browserType || 'chromium'
     });
 
-    // Build step map for conditional navigation
-    const stepMap = buildStepMap(execution.steps);
+    // Execute steps sequentially (linear flow)
+    console.log(`Starting execution of ${execution.steps.length} steps`);
 
-    // Find start step
-    const startIndex = findStartStepIndex(execution.steps);
-
-    console.log(`Starting execution from step ${startIndex}: ${execution.steps[startIndex].stepId}`);
-
-    // Track visited steps to prevent infinite loops
-    const visitedSteps = new Set();
-    const maxIterations = execution.steps.length * 10; // Safety limit
-    let iterations = 0;
-
-    let currentStepId = execution.steps[startIndex].stepId;
-
-    while (currentStepId && iterations < maxIterations) {
-      iterations++;
-
-      // Get current step index
-      const i = stepMap.get(currentStepId);
-      if (i === undefined) {
-        console.error(`Step not found: ${currentStepId}`);
-        break;
-      }
-
-      // Check for infinite loop
-      if (visitedSteps.has(currentStepId) && iterations > execution.steps.length) {
-        console.warn(`Possible infinite loop detected at step ${currentStepId}`);
-        break;
-      }
-      visitedSteps.add(currentStepId);
-
+    for (let i = 0; i < execution.steps.length; i++) {
       const step = execution.steps[i];
 
       if (execution.status === 'cancelled') {
@@ -283,15 +255,6 @@ async function executeTestWorkflow(executionId, execution) {
           progress: execution.progress
         });
 
-        // Determine next step
-        const nextStepId = getNextStepId(step, result.conditionResult);
-
-        if (nextStepId) {
-          console.log(`Following connection to step ${nextStepId}`);
-        } else {
-          console.log(`No more steps to execute, ending workflow`);
-        }
-
         // If step failed and it's critical, stop execution
         if (!result.success && step.config.critical !== false) {
           execution.status = 'failed';
@@ -300,14 +263,6 @@ async function executeTestWorkflow(executionId, execution) {
             { stepIndex: i, stepId: step.stepId }
           );
           break;
-        }
-
-        // Set next step or end execution
-        if (nextStepId && stepMap.has(nextStepId)) {
-          currentStepId = nextStepId;
-        } else {
-          console.log('No more steps to execute, ending workflow');
-          currentStepId = null;
         }
 
       } catch (error) {
