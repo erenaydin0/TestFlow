@@ -5,11 +5,7 @@ class ScriptGenerator {
       'click': this.generateClick,
       'type': this.generateType,
       'wait': this.generateWait,
-      'screenshot': this.generateScreenshot,
       'verify': this.generateVerify,
-      'scroll': this.generateScroll,
-      'hover': this.generateHover,
-      'key': this.generateKey,
       'dropdown': this.generateDropdown
     };
   }
@@ -57,12 +53,12 @@ class ScriptGenerator {
 
   generateNavigate(config, index) {
     let url = config.url || config.value || '';
-    
+
     // Yalın URL'leri destekle (örn: google.com -> https://google.com)
     if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
     }
-    
+
     return `await page.goto('${this.escapeString(url)}');`;
   }
 
@@ -77,11 +73,11 @@ class ScriptGenerator {
   generateType(config, index) {
     const selector = config.selector || config.target || '';
     const text = config.text || config.value || '';
-    
+
     if (!selector) {
       return `throw new Error('Type action requires a selector');`;
     }
-    
+
     return [
       `await page.fill('${this.escapeString(selector)}', '${this.escapeString(text)}');`
     ].join('\n    ');
@@ -92,25 +88,22 @@ class ScriptGenerator {
     return `await page.waitForTimeout(${duration});`;
   }
 
-  generateScreenshot(config, index) {
-    const filename = config.filename || `step-${index + 1}-screenshot.png`;
-    return `await page.screenshot({ path: './screenshots/${this.escapeString(filename)}' });`;
-  }
+
 
   generateVerify(config, index) {
     const selector = config.selector || config.target || '';
     const expectedValue = config.expectedValue || config.text || '';
     const verificationType = config.verificationType || 'text';
-    
+
     // URL kontrolü
     if (verificationType === 'url') {
       return `if (page.url() !== '${this.escapeString(expectedValue)}') { throw new Error(\`URL mismatch: expected "${this.escapeString(expectedValue)}", got "\${page.url()}"\`); }`;
     }
-    
+
     if (verificationType === 'urlContains') {
       return `if (!page.url().includes('${this.escapeString(expectedValue)}')) { throw new Error(\`URL does not contain "${this.escapeString(expectedValue)}": got "\${page.url()}"\`); }`;
     }
-    
+
     if (!selector) {
       return `throw new Error('Verify action requires a selector');`;
     }
@@ -135,53 +128,21 @@ class ScriptGenerator {
     }
   }
 
-  generateScroll(config, index) {
-    const direction = config.direction || 'down';
-    const amount = parseInt(config.amount || 500);
-    
-    switch (direction) {
-      case 'up':
-        return `await page.mouse.wheel(0, -${amount});`;
-      case 'down':
-        return `await page.mouse.wheel(0, ${amount});`;
-      case 'left':
-        return `await page.mouse.wheel(-${amount}, 0);`;
-      case 'right':
-        return `await page.mouse.wheel(${amount}, 0);`;
-      default:
-        return `await page.mouse.wheel(0, ${amount});`;
-    }
-  }
 
-  generateHover(config, index) {
-    const selector = config.selector || config.target || '';
-    if (!selector) {
-      return `throw new Error('Hover action requires a selector');`;
-    }
-    return `await page.hover('${this.escapeString(selector)}');`;
-  }
-
-  generateKey(config, index) {
-    const key = config.key || config.value || '';
-    if (!key) {
-      return `throw new Error('Key action requires a key value');`;
-    }
-    return `await page.keyboard.press('${this.escapeString(key)}');`;
-  }
 
   generateDropdown(config, index) {
     const selector = config.selector || config.target || '';
     const optionType = config.optionType || 'value';
     const optionValue = config.optionValue || config.value || '';
-    
+
     if (!selector) {
       return `throw new Error('Dropdown action requires a selector');`;
     }
-    
+
     if (!optionValue) {
       return `throw new Error('Dropdown action requires an option value');`;
     }
-    
+
     let selectCode = '';
     if (optionType === 'value') {
       selectCode = `await page.selectOption('${this.escapeString(selector)}', { value: '${this.escapeString(optionValue)}' });`;
@@ -196,7 +157,7 @@ class ScriptGenerator {
     } else {
       return `throw new Error('Unknown option type: ${optionType}');`;
     }
-    
+
     return selectCode;
   }
 
@@ -230,8 +191,8 @@ class ScriptGenerator {
       browserType = 'chromium'
     } = options;
 
-    const browserImports = browserType === 'firefox' ? 'firefox' : 
-                          browserType === 'webkit' ? 'webkit' : 'chromium';
+    const browserImports = browserType === 'firefox' ? 'firefox' :
+      browserType === 'webkit' ? 'webkit' : 'chromium';
 
     return `
 const { ${browserImports}, expect } = require('playwright/test');
@@ -284,33 +245,10 @@ async function executeTestSteps(steps, executionId, onStepUpdate) {
             await page.waitForTimeout(parseInt(step.config.duration || step.config.amount || 1000));
             break;
             
-          case 'screenshot':
-            const screenshotPath = \`./screenshots/\${executionId}-step-\${i + 1}.png\`;
-            await page.screenshot({ path: screenshotPath });
-            stepResult.screenshot = screenshotPath;
-            break;
-            
           case 'verify':
             const selector = step.config.selector || step.config.target;
             const expectedValue = step.config.expectedValue || step.config.text;
             await expect(page.locator(selector)).toHaveText(expectedValue);
-            break;
-            
-          case 'scroll':
-            const direction = step.config.direction || 'down';
-            const amount = parseInt(step.config.amount || 500);
-            if (direction === 'up') await page.mouse.wheel(0, -amount);
-            else if (direction === 'down') await page.mouse.wheel(0, amount);
-            else if (direction === 'left') await page.mouse.wheel(-amount, 0);
-            else if (direction === 'right') await page.mouse.wheel(amount, 0);
-            break;
-            
-          case 'hover':
-            await page.hover(step.config.selector || step.config.target);
-            break;
-            
-          case 'key':
-            await page.keyboard.press(step.config.key || step.config.value);
             break;
             
           case 'dropdown':
