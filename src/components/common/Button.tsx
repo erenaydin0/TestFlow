@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { LucideIcon } from 'lucide-react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'ghost' | 'outline' | 'cosmic';
@@ -32,8 +32,8 @@ interface ButtonGroupProps {
 }
 
 // Shared utility functions
-const getVariantStyles = (variant: ButtonVariant, isIconButton = false) => {
-  const baseStyles: any = {
+const getVariantStyles = (variant: ButtonVariant, isIconButton = false): CSSProperties => {
+  const baseStyles: CSSProperties = {
     border: 'none',
     borderRadius: '0.375rem',
     cursor: 'pointer',
@@ -43,7 +43,7 @@ const getVariantStyles = (variant: ButtonVariant, isIconButton = false) => {
     justifyContent: 'center',
     opacity: 1,
     outline: 'none',
-    position: 'relative' as const
+    position: 'relative'
   };
 
   // Add gap for regular buttons, not icon buttons
@@ -118,7 +118,7 @@ const getVariantStyles = (variant: ButtonVariant, isIconButton = false) => {
   }
 };
 
-const getSizeStyles = (size: ButtonSize, isIconButton = false) => {
+const getSizeStyles = (size: ButtonSize, isIconButton = false): CSSProperties => {
   if (isIconButton) {
     switch (size) {
       case 'xs':
@@ -198,27 +198,27 @@ const getIconSize = (size: ButtonSize) => {
   }
 };
 
-const getHoverStyles = (variant: ButtonVariant, isIconButton = false) => {
+const getHoverStyles = (variant: ButtonVariant, isIconButton = false): CSSProperties => {
   switch (variant) {
     case 'primary':
-      return { 
+      return {
         backgroundColor: 'var(--status-primary-hover)',
         ...(isIconButton ? {} : { boxShadow: '0 4px 12px var(--status-primary-bg)' })
       };
     case 'secondary':
       return { backgroundColor: 'var(--bg-tertiary)' };
     case 'success':
-      return { 
+      return {
         backgroundColor: 'var(--status-success-hover)',
         ...(isIconButton ? {} : { boxShadow: '0 4px 12px var(--status-success-bg)' })
       };
     case 'danger':
-      return { 
+      return {
         backgroundColor: 'var(--status-error-hover)',
         ...(isIconButton ? {} : { boxShadow: '0 4px 12px var(--status-error-bg)' })
       };
     case 'warning':
-      return { 
+      return {
         backgroundColor: 'var(--status-warning-hover)',
         ...(isIconButton ? {} : { boxShadow: '0 4px 12px var(--status-warning-bg)' })
       };
@@ -256,7 +256,7 @@ const createButtonHandlers = (
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const variantStyles = getVariantStyles(variant, isIconButton) as any;
+    const variantStyles = getVariantStyles(variant, isIconButton);
     e.currentTarget.style.backgroundColor = variantStyles.backgroundColor || 'transparent';
   };
 
@@ -285,8 +285,6 @@ const SpinAnimation = () => (
   `}</style>
 );
 
-const CosmicAnimation = () => null; // CSS artık globals.css'de
-
 const Button: React.FC<ButtonProps> = ({
   variant = 'secondary',
   size = 'md',
@@ -308,7 +306,7 @@ const Button: React.FC<ButtonProps> = ({
     onClick
   );
 
-  const buttonStyles = {
+  const buttonStyles: CSSProperties = {
     ...getVariantStyles(variant, false),
     ...getSizeStyles(size, false),
     width: 'auto',
@@ -334,13 +332,12 @@ const Button: React.FC<ButtonProps> = ({
       title={tooltip}
     >
       {loading && <LoadingSpinner size={iconSize} />}
-      
+
       {!loading && Icon && <Icon size={iconSize} />}
-      
+
       {children && <span>{children}</span>}
-      
+
       <SpinAnimation />
-      <CosmicAnimation />
     </button>
   );
 };
@@ -366,7 +363,7 @@ const IconButton: React.FC<IconButtonProps> = ({
     onClick
   );
 
-  const buttonStyles = {
+  const buttonStyles: CSSProperties = {
     ...getVariantStyles(variant, true),
     ...getSizeStyles(size, true),
     cursor: disabled || loading ? 'not-allowed' : 'pointer',
