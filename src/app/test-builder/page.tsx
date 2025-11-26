@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Save, Play, Download, Upload, Trash2 } from 'lucide-react';
 
 import { Sidebar, Header } from '@/components/layout';
+import LoadingErrorState from '@/components/common/LoadingErrorState';
 import {
   UnifiedToolbar,
   TestStepCard,
@@ -32,7 +33,7 @@ import {
 import { useSidebar, useBrowserSettings, useI18n } from '@/hooks';
 import { TestService, ExecutionService } from '@/utils/api';
 
-export default function TestBuilder() {
+function TestBuilderContent() {
   const { isCollapsed } = useSidebar();
   const { t } = useI18n();
   const {
@@ -741,5 +742,13 @@ export default function TestBuilder() {
         type="warning"
       />
     </div>
+  );
+}
+
+export default function TestBuilder() {
+  return (
+    <Suspense fallback={<LoadingErrorState loading={true} error={null} loadingMessage="Yükleniyor..."><div></div></LoadingErrorState>}>
+      <TestBuilderContent />
+    </Suspense>
   );
 }

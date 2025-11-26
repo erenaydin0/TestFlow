@@ -58,7 +58,7 @@ export function useI18n() {
   const router = useRouter();
   const [locale, setLocaleState] = useState(globalI18nState.locale);
   const [translations, setTranslations] = useState(globalI18nState.translations);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(globalI18nState.isInitialized);
 
   // Global state değişikliklerini dinle
   useEffect(() => {
@@ -66,13 +66,13 @@ export function useI18n() {
       setLocaleState(state.locale);
       setTranslations(state.translations);
     };
-    
+
     listeners.add(listener);
-    
+
     // İlk değerleri set et
     setLocaleState(globalI18nState.locale);
     setTranslations(globalI18nState.translations);
-    
+
     return () => {
       listeners.delete(listener);
     };
@@ -88,7 +88,7 @@ export function useI18n() {
     const savedLocale = getItem<string>(STORAGE_KEY, DEFAULT_LOCALE);
     globalI18nState.locale = savedLocale;
     globalI18nState.isInitialized = true;
-    
+
     // İlk çevirileri yükle
     loadTranslations(savedLocale).then(loadedTranslations => {
       globalI18nState.translations = loadedTranslations;
@@ -99,9 +99,15 @@ export function useI18n() {
 
   // Translation function
   const t = useCallback((key: string, params?: Record<string, any>): string => {
+    // Hydration mismatch fix: Always return key during server-side rendering and initial client render
+    // unless we are already initialized (client-side navigation)
+    if (!mounted) {
+      return key;
+    }
+
     const keys = key.split('.');
     let value: any = translations;
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
@@ -109,32 +115,32 @@ export function useI18n() {
         return key;
       }
     }
-    
+
     if (typeof value !== 'string') {
       return key;
     }
-    
+
     if (params) {
       return value.replace(/\{\{(\w+)\}\}/g, (match: string, paramKey: string) => {
         return params[paramKey] !== undefined ? String(params[paramKey]) : match;
       });
     }
-    
+
     return value;
-  }, [translations]);
+  }, [translations, mounted]);
 
   // Set locale function
   const setLocale = useCallback(async (newLocale: string) => {
     setItem(STORAGE_KEY, newLocale);
-    
+
     // Çevirileri yükle
     const loadedTranslations = await loadTranslations(newLocale);
-    
+
     // Global state'i güncelle ve tüm listener'ları bilgilendir
     globalI18nState.locale = newLocale;
     globalI18nState.translations = loadedTranslations;
     notifyListeners(globalI18nState);
-    
+
     // Router'ı refresh et (Next.js için)
     router.refresh();
   }, [router]);

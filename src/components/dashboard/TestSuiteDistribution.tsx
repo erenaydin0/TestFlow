@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { useI18n } from '@/hooks';
 
 interface TestSuite {
@@ -29,23 +29,23 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
   const { t } = useI18n();
   const [currentPage, setCurrentPage] = useState(0); // 0: Test Dağılımı, 1: Tarayıcı Dağılımı
   const [legendPage, setLegendPage] = useState(0); // Legend sayfalama
-  
+
   const ITEMS_PER_PAGE = 4; // Sayfa başına gösterilecek item sayısı
-  
+
   const pages = [
     { title: t('dashboard.testGroupDistribution'), data: testSuiteData, link: '/tests' },
     { title: t('dashboard.browserDistribution'), data: browserData, link: '/reports' }
   ];
-  
+
   const currentData = pages[currentPage].data;
   const totalValue = currentData.reduce((sum, item) => sum + item.value, 0);
-  
+
   // Legend sayfalama hesaplamaları
   const totalPages = Math.ceil(currentData.length / ITEMS_PER_PAGE);
   const startIndex = legendPage * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedData = currentData.slice(startIndex, endIndex);
-  
+
   // Sayfa değiştiğinde legend sayfasını sıfırla
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -69,11 +69,11 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
       const data = payload[0];
       const percentage = ((data.value / totalValue) * 100).toFixed(1);
       const successRate = data.payload.successRate;
-      
+
       return (
-        <div 
-          style={{ 
-            backgroundColor: 'var(--bg-primary)', 
+        <div
+          style={{
+            backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-primary)',
             borderRadius: '0.5rem',
             padding: '12px',
@@ -98,11 +98,11 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
           {successRate !== undefined && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Success:</span>
-              <span 
-                style={{ 
-                  fontWeight: '600', 
-                  color: successRate >= 80 ? 'var(--status-success)' : 
-                         successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
+              <span
+                style={{
+                  fontWeight: '600',
+                  color: successRate >= 80 ? 'var(--status-success)' :
+                    successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
                 }}
               >
                 %{successRate}
@@ -126,7 +126,7 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
             onClick={() => handlePageChange(currentPage === 0 ? 1 : 0)}
             disabled={currentPage === 0}
             className="p-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ 
+            style={{
               backgroundColor: 'transparent',
               color: 'var(--text-secondary)'
             }}
@@ -149,7 +149,7 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
             onClick={() => handlePageChange(currentPage === 1 ? 0 : 1)}
             disabled={currentPage === 1}
             className="p-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ 
+            style={{
               backgroundColor: 'transparent',
               color: 'var(--text-secondary)'
             }}
@@ -182,7 +182,7 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
             </ResponsiveContainer>
           </div>
           {/* Ortadaki toplam değer */}
-          <div 
+          <div
             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none"
             style={{ zIndex: 1 }}
           >
@@ -194,18 +194,18 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
             </div>
           </div>
         </div>
-        
+
         {/* Legend - Sağ taraf */}
         <div className="flex-1 min-w-0 flex flex-col" style={{ height: '340px' }}>
           <div className="space-y-2 flex-1">
             {paginatedData.map((item, index) => {
               const percentage = ((item.value / totalValue) * 100).toFixed(1);
               return (
-                <div 
-                  key={startIndex + index} 
+                <div
+                  key={startIndex + index}
                   onClick={() => handleItemClick(item)}
                   className="flex items-center justify-between p-2 rounded-lg transition-all duration-200 cursor-pointer"
-                  style={{ 
+                  style={{
                     backgroundColor: 'var(--bg-secondary)',
                     border: '1px solid var(--border-primary)'
                   }}
@@ -219,31 +219,31 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
                   }}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div 
+                    <div
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: item.color }}
                     />
                     <div className="min-w-0 flex-1">
-                      <div 
-                        className="text-sm font-medium truncate" 
+                      <div
+                        className="text-sm font-medium truncate"
                         style={{ color: 'var(--text-primary)' }}
                         title={item.name}
                       >
                         {item.name}
                       </div>
-                      <div 
-                        className="text-xs flex items-center gap-1.5" 
+                      <div
+                        className="text-xs flex items-center gap-1.5"
                         style={{ color: 'var(--text-secondary)' }}
                       >
                         <span>{item.value} {currentPage === 0 ? t('dashboard.tests') : t('dashboard.executions')}</span>
                         {item.successRate !== undefined && (
                           <>
                             <span>•</span>
-                            <span 
+                            <span
                               className="font-semibold"
-                              style={{ 
-                                color: item.successRate >= 80 ? 'var(--status-success)' : 
-                                       item.successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
+                              style={{
+                                color: item.successRate >= 80 ? 'var(--status-success)' :
+                                  item.successRate >= 50 ? 'var(--status-warning)' : 'var(--status-error)'
                               }}
                             >
                               %{item.successRate} {t('common.success') || 'başarı'}
@@ -253,9 +253,9 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
                       </div>
                     </div>
                   </div>
-                  <span 
+                  <span
                     className="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0 ml-2"
-                    style={{ 
+                    style={{
                       backgroundColor: `${item.color}15`,
                       color: item.color
                     }}
@@ -266,7 +266,7 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
               );
             })}
           </div>
-          
+
           {/* Legend Sayfalama */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
@@ -291,7 +291,7 @@ function TestSuiteDistribution({ testSuiteData, browserData }: TestSuiteDistribu
               </button>
             </div>
           )}
-          
+
           {/* Toplam istatistik */}
           <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-primary)' }}>
             <div className="flex items-center justify-between">

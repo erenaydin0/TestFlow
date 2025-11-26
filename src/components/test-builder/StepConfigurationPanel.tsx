@@ -56,7 +56,7 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
     }, [localStep, step, onSave]);
 
     // Handle local state updates
-    const handleLocalUpdate = (property: string, value: any) => {
+    const handleLocalUpdate = <K extends keyof TestStep>(property: K, value: TestStep[K]) => {
         if (localStep) {
             setLocalStep(prev => prev ? { ...prev, [property]: value } : null);
         }
@@ -81,7 +81,7 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
         if (event.key === 'Backspace') keyName = 'Backspace';
         if (event.key === 'Delete') keyName = 'Delete';
 
-        handleLocalUpdate(fieldKey, keyName);
+        handleLocalUpdate(fieldKey as keyof TestStep, keyName);
         setIsCapturingKey(null);
     };
 
@@ -91,46 +91,29 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
 
         const value = localStep[field.key as keyof TestStep] || '';
         const fieldId = `field-${field.key}`;
+        const action = step ? getTranslatedActionByType(step.type, t) : null;
+        const activeColor = action?.color || 'var(--color-selected)';
 
-        const baseStyle = {
-            width: '100%',
-            padding: '0.75rem',
-            border: '1px solid var(--border-primary)',
-            borderRadius: '0.5rem',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            fontSize: '0.875rem',
-            outline: 'none',
-            boxSizing: 'border-box' as const
-        };
+        const inputClasses = "w-full p-3 border border-[var(--border-primary)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm outline-none transition-all focus:border-[color:var(--active-color)] focus:shadow-[0_0_0_3px_rgba(var(--active-color-rgb),0.1)]";
 
-        const focusHandlers = {
-            onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-                e.currentTarget.style.borderColor = action?.color || 'var(--color-selected)';
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${action?.color || 'var(--color-selected)'}20`;
-            },
-            onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-                e.currentTarget.style.boxShadow = 'none';
-            }
-        };
+        // Helper to inject dynamic color for focus state
+        const focusStyle = {
+            '--active-color': activeColor,
+            '--active-color-rgb': activeColor.startsWith('#') ? hexToRgb(activeColor) : 'var(--color-selected-rgb)'
+        } as React.CSSProperties;
 
         // Special handling for key input in keyboard actions
         if (field.key === 'key' && step?.type === 'key') {
             const isCapturing = isCapturingKey === field.key;
             return (
-                <div style={{ position: 'relative' }}>
+                <div className="relative">
                     <input
                         key={fieldId}
                         id={fieldId}
                         type="text"
                         value={isCapturing ? t('testBuilder.waitingForKey') : (value as string)}
-                        onClick={() => {
-                            setIsCapturingKey(field.key);
-                        }}
-                        onKeyDown={(e) => {
-                            handleKeyCapture(field.key, e);
-                        }}
+                        onClick={() => setIsCapturingKey(field.key)}
+                        onKeyDown={(e) => handleKeyCapture(field.key, e)}
                         onKeyUp={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -138,13 +121,10 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                         placeholder={field.placeholder}
                         required={field.required}
                         readOnly
-                        style={{
-                            ...baseStyle,
-                            backgroundColor: isCapturing ? 'var(--color-capture)' : 'var(--bg-primary)',
-                            color: isCapturing ? 'var(--status-warning-hover)' : 'var(--text-primary)',
-                            cursor: 'pointer',
-                            border: isCapturing ? '2px solid var(--status-warning)' : '1px solid var(--border-primary)'
-                        }}
+                        className={`w-full p-3 border rounded-lg text-sm outline-none transition-all cursor-pointer ${isCapturing
+                                ? 'bg-[var(--color-capture)] text-[var(--status-warning-hover)] border-[var(--status-warning)] ring-2 ring-[var(--status-warning)] ring-opacity-20'
+                                : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)]'
+                            }`}
                         autoFocus={isCapturing}
                     />
                 </div>
@@ -160,11 +140,11 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                         id={fieldId}
                         type={field.type}
                         value={value as string}
-                        onChange={(e) => handleLocalUpdate(field.key, e.target.value)}
+                        onChange={(e) => handleLocalUpdate(field.key as keyof TestStep, e.target.value)}
                         placeholder={field.placeholder}
                         required={field.required}
-                        style={baseStyle}
-                        {...focusHandlers}
+                        className={inputClasses}
+                        style={focusStyle}
                     />
                 );
 
@@ -175,14 +155,14 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                         id={fieldId}
                         type="number"
                         value={value as number || ''}
-                        onChange={(e) => handleLocalUpdate(field.key, parseInt(e.target.value) || (field.min || 0))}
+                        onChange={(e) => handleLocalUpdate(field.key as keyof TestStep, parseInt(e.target.value) || (field.min || 0))}
                         placeholder={field.placeholder}
                         required={field.required}
                         min={field.min}
                         max={field.max}
                         step={field.step}
-                        style={baseStyle}
-                        {...focusHandlers}
+                        className={inputClasses}
+                        style={focusStyle}
                     />
                 );
 
@@ -192,16 +172,12 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                         key={fieldId}
                         id={fieldId}
                         value={value as string}
-                        onChange={(e) => handleLocalUpdate(field.key, e.target.value)}
+                        onChange={(e) => handleLocalUpdate(field.key as keyof TestStep, e.target.value)}
                         placeholder={field.placeholder}
                         required={field.required}
                         rows={3}
-                        style={{
-                            ...baseStyle,
-                            resize: 'vertical' as const,
-                            fontFamily: 'inherit'
-                        }}
-                        {...focusHandlers}
+                        className={`${inputClasses} resize-y font-inherit`}
+                        style={focusStyle}
                     />
                 );
 
@@ -210,19 +186,13 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                     <CustomSelect
                         key={fieldId}
                         value={value as string}
-                        onChange={(value) => handleLocalUpdate(field.key, value)}
+                        onChange={(value) => handleLocalUpdate(field.key as keyof TestStep, value)}
                         options={field.options?.map(option => ({
                             value: option.value || '',
                             label: option.label || ''
                         })) || []}
                         placeholder={t('common.select')}
-                        style={{
-                            backgroundColor: 'var(--bg-primary)',
-                            fontSize: '0.875rem',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                            padding: '0.75rem'
-                        }}
+                        className="w-full"
                     />
                 );
 
@@ -230,27 +200,15 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                 return (
                     <label
                         key={fieldId}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            cursor: 'pointer'
-                        }}
+                        className="flex items-center gap-2 cursor-pointer"
                     >
                         <input
                             type="checkbox"
                             checked={Boolean(value)}
-                            onChange={(e) => handleLocalUpdate(field.key, e.target.checked)}
-                            style={{
-                                width: '1rem',
-                                height: '1rem',
-                                cursor: 'pointer'
-                            }}
+                            onChange={(e) => handleLocalUpdate(field.key as keyof TestStep, e.target.checked)}
+                            className="w-4 h-4 cursor-pointer accent-[var(--color-primary)]"
                         />
-                        <span style={{
-                            fontSize: '0.875rem',
-                            color: 'var(--text-primary)'
-                        }}>
+                        <span className="text-sm text-[var(--text-primary)]">
                             {field.label}
                         </span>
                     </label>
@@ -276,6 +234,11 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
     if (!action) return null;
 
     const Icon = action.icon;
+    const activeColor = action.color;
+    const focusStyle = {
+        '--active-color': activeColor,
+        '--active-color-rgb': activeColor.startsWith('#') ? hexToRgb(activeColor) : 'var(--color-selected-rgb)'
+    } as React.CSSProperties;
 
     return (
         <div className="h-full flex flex-col bg-[var(--bg-secondary)] border-l border-[var(--border-primary)]">
@@ -331,15 +294,8 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
                         value={localStep.description || ''}
                         onChange={(e) => handleLocalUpdate('description', e.target.value)}
                         placeholder={t('testBuilder.stepDescriptionPlaceholder')}
-                        className="w-full p-3 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm focus:outline-none transition-shadow"
-                        onFocus={(e) => {
-                            e.currentTarget.style.borderColor = action.color;
-                            e.currentTarget.style.boxShadow = `0 0 0 3px ${action.color}20`;
-                        }}
-                        onBlur={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--border-primary)';
-                            e.currentTarget.style.boxShadow = 'none';
-                        }}
+                        className="w-full p-3 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm outline-none transition-all focus:border-[color:var(--active-color)] focus:shadow-[0_0_0_3px_rgba(var(--active-color-rgb),0.1)]"
+                        style={focusStyle}
                     />
                 </div>
 
@@ -373,5 +329,13 @@ const StepConfigurationPanel: React.FC<StepConfigurationPanelProps> = ({
         </div>
     );
 };
+
+// Helper function to convert hex to rgb for rgba usage
+function hexToRgb(hex: string): string {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ?
+        `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
+        '0, 0, 0';
+}
 
 export default StepConfigurationPanel;

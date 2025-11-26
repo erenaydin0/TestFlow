@@ -16,7 +16,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import { TestStep, BrowserType } from '@/types';
+import { BrowserType } from '@/types';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components';
 import { useI18n } from '@/hooks';
@@ -49,38 +49,8 @@ interface UnifiedToolbarProps {
   onBrowserChange?: (browser: string) => void;
 }
 
-// Ortak stil sabitleri
-const TOOLBAR_STYLES = {
-  container: {
-    display: 'flex',
-    gap: '0.5rem',
-    padding: '0.5rem',
-    backgroundColor: 'var(--bg-primary)',
-    border: '1px solid var(--border-primary)',
-    borderRadius: '0.5rem',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-  },
-  separator: {
-    width: '1px',
-    height: '2rem',
-    backgroundColor: 'var(--border-primary)',
-    margin: '0 0.25rem'
-  },
-  actionButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '2.5rem',
-    height: '2.5rem',
-    borderRadius: '0.5rem',
-    cursor: 'grab',
-    transition: 'all 0.2s ease',
-    position: 'relative' as const
-  }
-};
-
-// Ana toolbar komponenti
-const MainToolbar: React.FC<UnifiedToolbarProps> = ({
+// Ana UnifiedToolbar komponenti
+const UnifiedToolbar: React.FC<UnifiedToolbarProps> = ({
   testStepsCount,
   onUndo,
   onRedo,
@@ -121,7 +91,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
   };
 
   return (
-    <>
+    <div className="absolute top-4 left-4 flex gap-2 p-2 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg shadow-lg z-10">
       {/* Browser Selector */}
       {selectedBrowser && onBrowserChange && (
         <>
@@ -130,7 +100,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
             onBrowserChange={(browser: BrowserType) => onBrowserChange?.(browser)}
             disabled={isRunning}
           />
-          <div style={TOOLBAR_STYLES.separator}></div>
+          <div className="w-px h-8 bg-[var(--border-primary)] mx-1" />
         </>
       )}
 
@@ -148,7 +118,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           icon={Save}
           variant="ghost"
           size="sm"
-          tooltip="Workflow'u Kaydet"
+          tooltip={t('testBuilder.saveWorkflow') || "Workflow'u Kaydet"}
           disabled={testStepsCount === 0}
           onClick={onSave}
         />
@@ -169,14 +139,14 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
         />
       </ButtonGroup>
 
-      <div style={TOOLBAR_STYLES.separator}></div>
+      <div className="w-px h-8 bg-[var(--border-primary)] mx-1" />
 
       <ButtonGroup spacing="xs">
         <IconButton
           icon={Undo}
           variant="ghost"
           size="sm"
-          tooltip="Geri Al - Ctrl+Z"
+          tooltip={`${t('common.undo') || 'Geri Al'} - Ctrl+Z`}
           disabled={!canUndo}
           onClick={onUndo}
         />
@@ -197,13 +167,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           size="sm"
           tooltip={enableScreenshots ? t('testBuilder.disableScreenshots') : t('testBuilder.enableScreenshots')}
           onClick={() => onToggleScreenshots?.()}
-          style={enableScreenshots ? {
-            backgroundColor: 'var(--status-warning)',
-            color: 'white',
-            border: '2px solid #f59e0b',
-            boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)',
-            animation: 'pulse 2s infinite'
-          } : {}}
+          className={enableScreenshots ? "bg-[var(--status-warning)] text-white border-2 border-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.2)] animate-pulse" : ""}
         />
         <IconButton
           icon={Video}
@@ -211,13 +175,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           size="sm"
           tooltip={enableRecording ? t('testBuilder.disableRecording') : t('testBuilder.enableRecording')}
           onClick={() => onToggleRecording?.()}
-          style={enableRecording ? {
-            backgroundColor: 'var(--status-error)',
-            color: 'white',
-            border: '2px solid #ef4444',
-            boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)',
-            animation: 'pulse 2s infinite'
-          } : {}}
+          className={enableRecording ? "bg-[var(--status-error)] text-white border-2 border-red-500 shadow-[0_0_0_2px_rgba(239,68,68,0.2)] animate-pulse" : ""}
         />
         <IconButton
           icon={headlessMode ? EyeOff : Eye}
@@ -225,24 +183,18 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           size="sm"
           tooltip={headlessMode ? t('testBuilder.visibleMode') : t('testBuilder.headlessMode')}
           onClick={() => onToggleHeadless?.()}
-          style={headlessMode ? {
-            backgroundColor: 'var(--status-success)',
-            color: 'white',
-            border: '2px solid #22c55e',
-            boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.2)',
-            animation: 'pulse 2s infinite'
-          } : {}}
+          className={headlessMode ? "bg-[var(--status-success)] text-white border-2 border-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)] animate-pulse" : ""}
         />
       </ButtonGroup>
 
-      <div style={TOOLBAR_STYLES.separator}></div>
+      <div className="w-px h-8 bg-[var(--border-primary)] mx-1" />
 
       <ButtonGroup spacing="xs">
         <IconButton
           icon={Copy}
           variant="ghost"
           size="sm"
-          tooltip={`Kopyala (${selectedStepsCount} adım seçili) - Ctrl+C`}
+          tooltip={`${t('common.copy') || 'Kopyala'} (${selectedStepsCount}) - Ctrl+C`}
           disabled={selectedStepsCount === 0}
           onClick={onCopy}
         />
@@ -250,7 +202,7 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           icon={Clipboard}
           variant="ghost"
           size="sm"
-          tooltip={`Yapıştır (${copiedStepsCount} adım panoda) - Ctrl+V`}
+          tooltip={`${t('common.paste') || 'Yapıştır'} (${copiedStepsCount}) - Ctrl+V`}
           disabled={copiedStepsCount === 0}
           onClick={onPaste}
         />
@@ -258,30 +210,11 @@ const MainToolbar: React.FC<UnifiedToolbarProps> = ({
           icon={Files}
           variant="ghost"
           size="sm"
-          tooltip={`Çoğalt (${selectedStepsCount} adım seçili) - Ctrl+D`}
+          tooltip={`${t('common.duplicate') || 'Çoğalt'} (${selectedStepsCount}) - Ctrl+D`}
           disabled={selectedStepsCount === 0}
           onClick={onDuplicate}
         />
-
       </ButtonGroup>
-    </>
-  );
-};
-
-// Ana UnifiedToolbar komponenti
-const UnifiedToolbar: React.FC<UnifiedToolbarProps> = (props) => {
-  return (
-    <div
-      style={{
-        ...TOOLBAR_STYLES.container,
-        top: '1rem',
-        left: '1rem',
-        // Position relative to the main content area, but since it's absolute, 
-        // we might need to adjust based on where it's rendered.
-        // For now, let's keep it simple.
-      }}
-    >
-      <MainToolbar {...props} />
     </div>
   );
 };

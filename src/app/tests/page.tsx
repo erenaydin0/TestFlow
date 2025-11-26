@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
+import {
   Plus,
   Copy,
   FileText,
@@ -40,16 +40,16 @@ import { getTestsTableColumns } from '@/config/tableColumns';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell } = TableCells;
 
-export default function TestsPage() {
+function TestsPageContent() {
   const browserSettings = useBrowserSettings();
   const { t } = useI18n();
-  const { 
-    tests, 
-    loading, 
-    filteredTests, 
-    filters, 
-    setFilters, 
-    filterOptions, 
+  const {
+    tests,
+    loading,
+    filteredTests,
+    filters,
+    setFilters,
+    filterOptions,
     refresh,
     deleteTest,
     duplicateTest,
@@ -57,20 +57,20 @@ export default function TestsPage() {
     bulkDeleteTests,
     bulkDuplicateTests
   } = useTests();
-  
+
   const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [highlightedTestId, setHighlightedTestId] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
-  const [singleDeleteDialog, setSingleDeleteDialog] = useState<{show: boolean; testId: string; testName: string}>({
+  const [singleDeleteDialog, setSingleDeleteDialog] = useState<{ show: boolean; testId: string; testName: string }>({
     show: false,
     testId: '',
     testName: ''
   });
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const { notifyTestStart, notifyTestImported, notifyTestFailure, notifyTestDeleted, notifyTestDuplicated } = useNotifications();
 
   // Use sorting hook
@@ -129,7 +129,7 @@ export default function TestsPage() {
           testElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 100);
-      
+
       // Remove highlight after 3 seconds
       setTimeout(() => {
         setHighlightedTestId(null);
@@ -170,7 +170,7 @@ export default function TestsPage() {
       notifyTestFailure(test.name, testId, validation.error || t('tests.workflowNotFound'));
       return;
     }
-    
+
     try {
       const data = await executeTest(test, {}, browserSettings);
       notifyTestStart(test.name, data.executionId);
@@ -232,11 +232,11 @@ export default function TestsPage() {
   // Handle bulk duplicate
   const handleBulkDuplicate = async () => {
     if (selectedTests.size === 0) return;
-    
+
     try {
       const duplicatedCount = await bulkDuplicateTests(Array.from(selectedTests));
       setSelectedTests(new Set());
-      
+
       if (duplicatedCount > 0) {
         notifyTestDuplicated(`${duplicatedCount} test`, '');
       }
@@ -264,10 +264,10 @@ export default function TestsPage() {
   // Handle bulk run - Updated to use utility functions
   const handleBulkRun = async () => {
     if (selectedTests.size === 0) return;
-    
+
     const selectedTestsData = tests?.filter((test: any) => selectedTests.has(test.id)) || [];
     const validTests = selectedTestsData.filter((test: any) => test.workflow && test.workflow.length > 0);
-    
+
     if (validTests.length === 0) {
       notifyTestFailure(t('tests.bulkRun'), '', t('tests.noValidWorkflows'));
       return;
@@ -276,15 +276,15 @@ export default function TestsPage() {
     try {
       const results = await executeBulkTests(validTests);
       const { executionIds, successCount, failureCount } = processExecutionResults(results);
-      
+
       if (successCount > 0) {
         notifyTestStart(`${successCount} test`, executionIds.join(','));
       }
-      
+
       if (failureCount > 0) {
         notifyTestFailure(t('tests.bulkRun'), '', `${failureCount} test failed to execute`);
       }
-      
+
     } catch (error) {
       console.error('Bulk test execution error:', error);
       notifyTestFailure(t('tests.bulkRun'), '', `${t('tests.bulkRunError')}: ${error instanceof Error ? error.message : t('common.unknownError')}. ${t('tests.checkBackend')}`);
@@ -302,7 +302,7 @@ export default function TestsPage() {
     if (test && test.workflow) {
       try {
         exportTestWorkflow(
-          test.workflow, 
+          test.workflow,
           `${test.name}.json`,
           {
             description: test.description,
@@ -329,13 +329,13 @@ export default function TestsPage() {
     }
 
     const selectedTestsData = tests?.filter((test: any) => selectedTests.has(test.id)) || [];
-    
+
     if (selectedTestsData.length === 1) {
       // Single test export
       const test = selectedTestsData[0];
       if (test.workflow) {
         exportTestWorkflow(
-          test.workflow, 
+          test.workflow,
           `${test.name}.json`,
           {
             description: test.description,
@@ -374,10 +374,10 @@ export default function TestsPage() {
       };
 
       const dataStr = JSON.stringify(exportData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
       const exportFileName = `CosmicQA-workflows-${selectedTestsData.length}-tests-${new Date().toISOString().split('T')[0]}.json`;
-      
+
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
       linkElement.setAttribute('download', exportFileName);
@@ -423,151 +423,151 @@ export default function TestsPage() {
         onRetry={refresh}
       >
 
-          {/* Tests List */}
-          <div className="card">
-          <div style={{ 
-            display: 'flex', 
-              justifyContent: 'space-between', 
+        {/* Tests List */}
+        <div className="card">
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
+          }}>
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              alignItems: 'center',
+              flexWrap: 'wrap'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                gap: '0.75rem',
-                alignItems: 'center',
-                flexWrap: 'wrap'
-              }}>
-                <DataFilters
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  availableOptions={{
-                    suites: filterOptions.suites,
-                    tags: filterOptions.tags,
-                    browsers: (filterOptions.browsers || []) as BrowserType[]
-                  }}
-                  searchPlaceholder={t('tests.searchTests')}
-                  showStatus={false}
-                  showDateRange={false}
-                />
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {/* Import/Export Buttons */}
-                <BulkActionsBar
-                  selectedCount={selectedTests.size}
-                  actions={[
-                    {
-                      id: 'run',
-                      label: t('tests.runTest'),
-                      icon: Play as any,
-                      variant: 'outline',
-                      onClick: handleBulkRun,
-                      style: { color: 'var(--status-success)', borderColor: 'var(--status-success)' }
-                    },
-                    {
-                      id: 'duplicate',
-                      label: t('tests.duplicateTest'),
-                      icon: Copy as any,
-                      variant: 'outline',
-                      onClick: handleBulkDuplicate,
-                      style: { color: 'var(--status-purple)', borderColor: 'var(--status-purple)' }
-                    },
-                    {
-                      id: 'delete',
-                      label: t('common.delete'),
-                      icon: Trash2 as any,
-                      variant: 'outline',
-                      onClick: handleBulkDelete,
-                      style: { color: 'var(--status-error)', borderColor: 'var(--status-error)' }
-                    },
-                    {
-                      id: 'export',
-                      label: t('common.export'),
-                      icon: Download as any,
-                      variant: 'secondary',
-                      onClick: handleBulkExport
-                    }
-                  ]}
-                  onClearSelection={() => setSelectedTests(new Set())}
-                  clearButtonText={t('common.clear')}
-                  selectedText={t('tests.selectedTests', { count: selectedTests.size })}
-                />
-
-                <ButtonGroup spacing="sm">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon={Upload}
-                    onClick={handleImport}
-                  >
-                    {t('common.import')}
-                  </Button>
-                  <Button 
-                    variant="cosmic"
-                    icon={Plus}
-                    onClick={handleCreateNewTest}
-                    size="sm"
-                  >
-                    {t('tests.createNew')}
-                  </Button>
-                </ButtonGroup>
-              </div>
+              <DataFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                availableOptions={{
+                  suites: filterOptions.suites,
+                  tags: filterOptions.tags,
+                  browsers: (filterOptions.browsers || []) as BrowserType[]
+                }}
+                searchPlaceholder={t('tests.searchTests')}
+                showStatus={false}
+                showDateRange={false}
+              />
             </div>
 
-            {/* Separator */}
-            <div style={{ 
-              borderTop: '1px solid var(--border-primary)', 
-              margin: '1rem 0 0 0' 
-            }}></div>
-
-            {/* Test Content */}
-            {filteredTests.length === 0 ? (
-              <EmptyState
-                icon={
-                  <div style={{ 
-                    width: '4rem', 
-                    height: '4rem', 
-                    backgroundColor: 'var(--bg-tertiary)', 
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1rem'
-                  }}>
-                    <FileText size={24} color="var(--text-secondary)" />
-                  </div>
-                }
-                title={(tests?.length || 0) === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
-                description={(tests?.length || 0) === 0 
-                  ? t('filters.createFirstWorkflow')
-                  : t('filters.tryDifferentFilters')
-                }
-                actionButton={{
-                  label: t('filters.createFirstTest'),
-                  onClick: handleCreateNewTest,
-                  variant: 'cosmic',
-                  icon: Plus as any
-                }}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Import/Export Buttons */}
+              <BulkActionsBar
+                selectedCount={selectedTests.size}
+                actions={[
+                  {
+                    id: 'run',
+                    label: t('tests.runTest'),
+                    icon: Play as any,
+                    variant: 'outline',
+                    onClick: handleBulkRun,
+                    style: { color: 'var(--status-success)', borderColor: 'var(--status-success)' }
+                  },
+                  {
+                    id: 'duplicate',
+                    label: t('tests.duplicateTest'),
+                    icon: Copy as any,
+                    variant: 'outline',
+                    onClick: handleBulkDuplicate,
+                    style: { color: 'var(--status-purple)', borderColor: 'var(--status-purple)' }
+                  },
+                  {
+                    id: 'delete',
+                    label: t('common.delete'),
+                    icon: Trash2 as any,
+                    variant: 'outline',
+                    onClick: handleBulkDelete,
+                    style: { color: 'var(--status-error)', borderColor: 'var(--status-error)' }
+                  },
+                  {
+                    id: 'export',
+                    label: t('common.export'),
+                    icon: Download as any,
+                    variant: 'secondary',
+                    onClick: handleBulkExport
+                  }
+                ]}
+                onClearSelection={() => setSelectedTests(new Set())}
+                clearButtonText={t('common.clear')}
+                selectedText={t('tests.selectedTests', { count: selectedTests.size })}
               />
-            ) : (
-              <div>
-                <DataTable
-                  data={pagination.currentPageItems}
-                  allData={sorting.sortedData}
-                  columns={columns}
-                  loading={loading}
-                  emptyMessage={t('tests.noTestsFound')}
-                  selectable={true}
-                  selectedItems={selectedTests}
-                  onSelectionChange={setSelectedTests}
-                  getItemId={(test) => test.id}
-                  highlightedItemId={highlightedTestId}
-                  onRowDoubleClick={(test) => handleEditTest(test.id)}
-                  onSort={(field: string, order: 'asc' | 'desc') => {
-                    sorting.handleSort(field);
-                  }}
-                  sortField={sorting.sortField}
-                  sortOrder={sorting.sortOrder}
-                />
+
+              <ButtonGroup spacing="sm">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={Upload}
+                  onClick={handleImport}
+                >
+                  {t('common.import')}
+                </Button>
+                <Button
+                  variant="cosmic"
+                  icon={Plus}
+                  onClick={handleCreateNewTest}
+                  size="sm"
+                >
+                  {t('tests.createNew')}
+                </Button>
+              </ButtonGroup>
+            </div>
+          </div>
+
+          {/* Separator */}
+          <div style={{
+            borderTop: '1px solid var(--border-primary)',
+            margin: '1rem 0 0 0'
+          }}></div>
+
+          {/* Test Content */}
+          {filteredTests.length === 0 ? (
+            <EmptyState
+              icon={
+                <div style={{
+                  width: '4rem',
+                  height: '4rem',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem'
+                }}>
+                  <FileText size={24} color="var(--text-secondary)" />
+                </div>
+              }
+              title={(tests?.length || 0) === 0 ? t('filters.noWorkflowsYet') : t('filters.noTestsFound')}
+              description={(tests?.length || 0) === 0
+                ? t('filters.createFirstWorkflow')
+                : t('filters.tryDifferentFilters')
+              }
+              actionButton={{
+                label: t('filters.createFirstTest'),
+                onClick: handleCreateNewTest,
+                variant: 'cosmic',
+                icon: Plus as any
+              }}
+            />
+          ) : (
+            <div>
+              <DataTable
+                data={pagination.currentPageItems}
+                allData={sorting.sortedData}
+                columns={columns}
+                loading={loading}
+                emptyMessage={t('tests.noTestsFound')}
+                selectable={true}
+                selectedItems={selectedTests}
+                onSelectionChange={setSelectedTests}
+                getItemId={(test) => test.id}
+                highlightedItemId={highlightedTestId}
+                onRowDoubleClick={(test) => handleEditTest(test.id)}
+                onSort={(field: string, order: 'asc' | 'desc') => {
+                  sorting.handleSort(field);
+                }}
+                sortField={sorting.sortField}
+                sortOrder={sorting.sortOrder}
+              />
 
               {/* Pagination Controls */}
               <PaginationControls
@@ -579,9 +579,9 @@ export default function TestsPage() {
                 onPageChange={pagination.goToPage}
                 itemName="test"
               />
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
       </LoadingErrorState>
 
       {/* Import Dialog */}
@@ -606,7 +606,7 @@ export default function TestsPage() {
       {/* Single Delete Confirm Dialog */}
       <ConfirmDialog
         isOpen={singleDeleteDialog.show}
-        onClose={() => setSingleDeleteDialog({show: false, testId: '', testName: ''})}
+        onClose={() => setSingleDeleteDialog({ show: false, testId: '', testName: '' })}
         onConfirm={confirmSingleDelete}
         title={t('confirmDialog.deleteTest')}
         message={t('confirmDialog.deleteTestMessage', { testName: singleDeleteDialog.testName })}
@@ -616,5 +616,13 @@ export default function TestsPage() {
       />
 
     </PageLayout>
+  );
+}
+
+export default function TestsPage() {
+  return (
+    <Suspense fallback={<LoadingErrorState loading={true} error={null} loadingMessage="Yükleniyor..."><div></div></LoadingErrorState>}>
+      <TestsPageContent />
+    </Suspense>
   );
 } 

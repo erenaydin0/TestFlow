@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Download,
@@ -41,7 +41,7 @@ const { BrowserCell, TagsCell, ActionsCell, StatusCell, DurationCell, TestNameCe
 
 type SortField = 'startTime' | 'duration' | 'workflowName' | 'status' | 'successRate' | 'suite' | 'tags' | 'browserType';
 
-export default function ReportsPage() {
+function ReportsPageContent() {
   const { setIsModalOpen } = useSidebar();
   const { t, locale } = useI18n();
   const {
@@ -727,4 +727,12 @@ export default function ReportsPage() {
       />
     </PageLayout>
   );
-} 
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={<LoadingErrorState loading={true} error={null} loadingMessage="Yükleniyor..."><div></div></LoadingErrorState>}>
+      <ReportsPageContent />
+    </Suspense>
+  );
+}

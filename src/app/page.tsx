@@ -35,7 +35,7 @@ export default function Dashboard() {
   const { executions, loading, error, stats, refresh } = useExecutions();
   const { scheduledTests, loading: scheduledLoading } = useScheduledTests();
   const { t } = useI18n();
-  const [dateRange, setDateRange] = useState(config.defaultDateRange);
+  const [dateRange, setDateRange] = useState<number>(config.defaultDateRange);
 
   // Memoized date range change handler
   const handleDateRangeChange = useCallback((newDateRange: number) => {
@@ -52,7 +52,7 @@ export default function Dashboard() {
     }).reverse();
 
     const dailyResults = days.map(date => {
-      const dayExecutions = (executions || []).filter((e: ExecutionResult) => 
+      const dayExecutions = (executions || []).filter((e: ExecutionResult) =>
         new Date(e.startTime).toISOString().split('T')[0] === date
       );
       return {
@@ -103,9 +103,9 @@ export default function Dashboard() {
     // Her tarayıcı için tutarlı renk üret
     const browserDataWithColors = Object.entries(browserData).map(([browserType, data]) => {
       const browserStats = data as { total: number; passed: number };
-      const displayName = browserType === 'chromium' ? 'Chrome' : 
-                          browserType === 'firefox' ? 'Firefox' : 
-                          browserType === 'webkit' ? 'Safari' : browserType;
+      const displayName = browserType === 'chromium' ? 'Chrome' :
+        browserType === 'firefox' ? 'Firefox' :
+          browserType === 'webkit' ? 'Safari' : browserType;
       return {
         name: displayName,
         browserType: browserType, // Gerçek browser type'ı sakla
@@ -123,8 +123,8 @@ export default function Dashboard() {
         id: index,
         executionId: execution.id,
         name: execution.workflowName,
-        status: execution.status === 'completed' ? 'passed' as const : 
-                execution.status === 'failed' ? 'failed' as const : 'running' as const,
+        status: execution.status === 'completed' ? 'passed' as const :
+          execution.status === 'failed' ? 'failed' as const : 'running' as const,
         duration: execution.duration || 0,
         lastRun: new Date(execution.startTime),
         environment: execution.suite || t('dashboard.default')
@@ -140,9 +140,9 @@ export default function Dashboard() {
 
   return (
     <PageLayout title={t('dashboard.title')}>
-      <LoadingErrorState 
-        loading={loading} 
-        error={error} 
+      <LoadingErrorState
+        loading={loading}
+        error={error}
         loadingMessage={t('dashboard.loadingData')}
         onRetry={refresh}
       >
@@ -150,8 +150,8 @@ export default function Dashboard() {
         {/* İlk satır: Günlük Test Sonuçları + Son Testler */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
           <div className="lg:col-span-8">
-            <DailyTestResults 
-              data={chartData.dailyResults} 
+            <DailyTestResults
+              data={chartData.dailyResults}
               onDateRangeChange={handleDateRangeChange}
             />
           </div>
@@ -159,17 +159,17 @@ export default function Dashboard() {
             <RecentTests data={chartData.recentTests} />
           </div>
         </div>
-        
+
         {/* İkinci satır: Son Testler altında Yaklaşan Testler */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
           <div className="lg:col-span-8">
-            <TestSuiteDistribution 
-              testSuiteData={chartData.testSuiteData} 
+            <TestSuiteDistribution
+              testSuiteData={chartData.testSuiteData}
               browserData={chartData.browserData}
             />
           </div>
           <div className="lg:col-span-4">
-            <UpcomingTests 
+            <UpcomingTests
               scheduledTests={scheduledTests}
               loading={scheduledLoading}
               maxItems={config.maxRecentTests}
