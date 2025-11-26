@@ -34,5 +34,6 @@ next-env.d.ts
 
 # Backend server files
 /server/storage/
+/server/logs/
 
 .cursor

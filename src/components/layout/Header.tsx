@@ -669,30 +669,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .user-panel {
-          position: absolute;
-          right: 0;
-          width: 16rem;
-          background-color: var(--bg-primary);
-          border: 1px solid var(--border-primary);
-          border-radius: 0.5rem;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(-0.5rem);
-          transition: all 0.2s ease;
-          z-index: 50;
-        }
-
-        .user-panel.open {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
-        }
-
-      `}</style>
     </header>
   );
 } 
