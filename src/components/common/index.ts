@@ -9,8 +9,7 @@ export { EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from './Edit
 export { default as LoadingErrorState } from './LoadingErrorState';
 export { default as MultiSelect } from './MultiSelect';
 export { default as StatusBadge, getStatusColor, getStatusText } from './StatusBadge';
-export { default as CosmicLogo } from './CosmicLogo';
-export { default as AstronautIcon } from './AstronautIcon';
+
 
 // New common components
 export { default as PaginationControls } from './PaginationControls';

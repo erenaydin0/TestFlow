@@ -3,22 +3,24 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  Bell, 
-  Search, 
-  Settings, 
-  Sun, 
-  Moon, 
-  Monitor, 
-  LogOut, 
-  TestTube, 
-  FileText, 
-  BarChart3, 
-  X 
+import {
+  Bell,
+  Search,
+  Settings,
+  Sun,
+  Moon,
+  Monitor,
+  LogOut,
+  TestTube,
+  FileText,
+  BarChart3,
+  X,
+  User
 } from 'lucide-react';
 
 import { NotificationPanel } from '@/components/notifications';
-import { CustomSelect, StatusBadge, CosmicLogo, IconButton, Button, AstronautIcon } from '@/components/common';
+import Image from 'next/image';
+import { CustomSelect, StatusBadge, IconButton, Button } from '@/components/common';
 import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
 import { useNotifications } from '@/hooks';
 import { useTheme, useSettingsModal, useI18n } from '@/hooks';
@@ -43,7 +45,7 @@ export default function Header() {
   const searchParams = useSearchParams();
   const userPanelRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useRef<HTMLDivElement>(null);
-  
+
   // Real-time notifications hook (destructuring removed as variables are unused)
   useNotifications();
 
@@ -84,11 +86,11 @@ export default function Header() {
   // Handle search input changes
   const handleSearchChange = async (query: string) => {
     setSearchQuery(query);
-    
+
     if (query.trim().length >= 2) {
       setIsSearching(true);
       setShowSearchResults(true);
-      
+
       try {
         const results = await performGlobalSearch(query.trim());
         setSearchResults(results);
@@ -98,10 +100,10 @@ export default function Header() {
       } finally {
         setIsSearching(false);
       }
-      } else {
-        setShowSearchResults(false);
-        setSearchResults({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
-      }
+    } else {
+      setShowSearchResults(false);
+      setSearchResults({ tests: [], reports: [], total: 0, totalTests: 0, totalReports: 0 });
+    }
   };
 
   // Handle clear search
@@ -127,14 +129,14 @@ export default function Header() {
   };
 
   return (
-    <header style={{ 
+    <header style={{
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       zIndex: 1000,
-      backgroundColor: 'var(--bg-primary)', 
-      borderBottom: '1px solid var(--border-primary)', 
+      backgroundColor: 'var(--bg-primary)',
+      borderBottom: '1px solid var(--border-primary)',
       padding: '0.75rem 1.5rem',
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       height: '4rem',
@@ -143,19 +145,19 @@ export default function Header() {
       backdropFilter: 'blur(8px)',
       boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
     }}>
-      <div style={{ 
-        display: 'grid', 
+      <div style={{
+        display: 'grid',
         gridTemplateColumns: '200px 1fr 200px',
-        alignItems: 'center', 
+        alignItems: 'center',
         width: '100%',
         maxWidth: '100%',
         gap: '1rem'
       }}>
         {/* Logo and App Name Section */}
         <div style={{ justifySelf: 'start' }}>
-          <Link href="/" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <Link href="/" style={{
+            display: 'flex',
+            alignItems: 'center',
             gap: '0.75rem',
             textDecoration: 'none',
             cursor: 'pointer',
@@ -164,17 +166,17 @@ export default function Header() {
             borderRadius: '0.5rem',
             marginLeft: '-0.5rem'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}>
-            <CosmicLogo size={36} animated={true} />
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}>
+            <Image src="/icon.svg" alt="CosmicQA Logo" width={36} height={36} />
             <div>
-              <h1 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: 'bold', 
+              <h1 style={{
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
                 color: 'var(--text-primary)',
                 margin: 0,
                 lineHeight: 1,
@@ -190,19 +192,19 @@ export default function Header() {
         </div>
 
         {/* Centered Search Section */}
-        <div style={{ 
+        <div style={{
           justifySelf: 'center',
           width: '100%',
           maxWidth: '500px'
         }}>
           <div style={{ position: 'relative' }} ref={searchPanelRef}>
-            <Search style={{ 
-              position: 'absolute', 
-              left: '1rem', 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              color: 'var(--accent-primary)', 
-              width: '1.125rem', 
+            <Search style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--accent-primary)',
+              width: '1.125rem',
               height: '1.125rem',
               strokeWidth: 2
             }} />
@@ -239,9 +241,9 @@ export default function Header() {
               }}
               onBlurCapture={(e) => {
                 setTimeout(() => {
-                e.target.style.borderColor = 'var(--border-primary)';
-                e.target.style.boxShadow = 'none';
-                e.target.style.backgroundColor = 'var(--bg-secondary)';
+                  e.target.style.borderColor = 'var(--border-primary)';
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.backgroundColor = 'var(--bg-secondary)';
                 }, 200);
               }}
             />
@@ -338,7 +340,7 @@ export default function Header() {
                               gap: '0.5rem'
                             }}>
                               <span>{result.title}</span>
-                              <span 
+                              <span
                                 title={`Test ID: ${result.id}`}
                                 style={{
                                   fontSize: '0.625rem',
@@ -373,7 +375,7 @@ export default function Header() {
                           </div>
                         ))}
                         {searchResults.totalTests > searchResults.tests.length && (
-                          <div 
+                          <div
                             onClick={() => {
                               setShowSearchResults(false);
                               router.push(`/tests?search=${encodeURIComponent(searchQuery.trim())}`);
@@ -446,7 +448,7 @@ export default function Header() {
                               gap: '0.5rem'
                             }}>
                               <span>{result.title}</span>
-                              <span 
+                              <span
                                 title={`Test ID: ${result.id}`}
                                 style={{
                                   fontSize: '0.625rem',
@@ -481,7 +483,7 @@ export default function Header() {
                           </div>
                         ))}
                         {searchResults.totalReports > searchResults.reports.length && (
-                          <div 
+                          <div
                             onClick={() => {
                               setShowSearchResults(false);
                               router.push(`/reports?search=${encodeURIComponent(searchQuery.trim())}`);
@@ -518,23 +520,23 @@ export default function Header() {
         </div>
 
         {/* Right Actions Section */}
-        <div style={{ 
+        <div style={{
           justifySelf: 'end',
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '1rem' 
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
         }}>
           {/* Notifications */}
           <NotificationPanel />
 
           {/* User Profile */}
           <div style={{ position: 'relative' }} ref={userPanelRef}>
-            <button 
+            <button
               onClick={() => setIsUserPanelOpen(!isUserPanelOpen)}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
                 padding: '0.5rem 1rem',
                 paddingLeft: '1rem',
                 borderLeft: '1px solid var(--border-primary)',
@@ -551,47 +553,47 @@ export default function Header() {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              <div style={{ 
-                width: '2.5rem', 
+              <div style={{
+                width: '2.5rem',
                 height: '2.5rem',
-                display: 'flex', 
-                alignItems: 'center', 
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <AstronautIcon size={32} color="var(--status-info)" />
+                <User size={24} color="var(--text-primary)" />
               </div>
             </button>
 
             {/* User Panel */}
             <div className={`user-panel ${isUserPanelOpen ? 'open' : ''}`}>
               {/* User Info */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
                 padding: '1rem',
                 borderBottom: '1px solid var(--border-primary)'
               }}>
-                <div style={{ 
-                  width: '3rem', 
+                <div style={{
+                  width: '3rem',
                   height: '3rem',
-                  display: 'flex', 
-                  alignItems: 'center', 
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <AstronautIcon size={48} color="var(--status-info)" />
+                  <User size={32} color="var(--text-primary)" />
                 </div>
                 <div>
-                  <p style={{ 
-                    fontSize: '0.875rem', 
-                    fontWeight: 600, 
+                  <p style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
                     color: 'var(--text-primary)',
                     margin: 0
                   }}>
                     {t('common.testUser')}
                   </p>
-                  <p style={{ 
-                    fontSize: '0.75rem', 
+                  <p style={{
+                    fontSize: '0.75rem',
                     color: 'var(--text-secondary)',
                     margin: 0
                   }}>
@@ -602,20 +604,20 @@ export default function Header() {
 
               {/* Appearance Settings */}
               <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-primary)' }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '0.75rem'
                 }}>
-                  <span style={{ 
-                    fontSize: '0.875rem', 
-                    fontWeight: 500, 
+                  <span style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
                     color: 'var(--text-primary)'
                   }}>
                     {t('common.appearance')}
                   </span>
-                  
+
                   {/* Compact Theme Dropdown */}
                   <div style={{ position: 'relative' }}>
                     <CustomSelect
@@ -625,7 +627,7 @@ export default function Header() {
                         value: option.id,
                         label: option.label
                       }))}
-                      style={{border: 'none'}}
+                      style={{ border: 'none' }}
                     />
                   </div>
                 </div>
@@ -633,7 +635,7 @@ export default function Header() {
 
               {/* Menu Items */}
               <div style={{ padding: '0.5rem' }}>
-                <Button 
+                <Button
                   onClick={() => {
                     openSettingsModal();
                     setIsUserPanelOpen(false);
@@ -649,8 +651,8 @@ export default function Header() {
                 >
                   {t('common.settings')}
                 </Button>
-                
-                <Button 
+
+                <Button
                   variant="ghost"
                   icon={LogOut}
                   size="sm"
