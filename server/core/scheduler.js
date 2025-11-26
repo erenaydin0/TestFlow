@@ -3,6 +3,7 @@ import { Cron } from 'croner';
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import logger from '../utils/logger.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -18,60 +19,60 @@ class TestScheduler {
 
   async initialize() {
     if (this.isInitialized) return;
-    
-    console.log('🕐 Test Scheduler başlatılıyor...');
-    
+
+    logger.info('🕐 Test Scheduler başlatılıyor...');
+
     try {
       // Tüm zamanlanmış testleri yükle ve cron'ları başlat
       const files = await fs.readdir(this.scheduledTestsDir);
-      
+
       for (const file of files) {
         if (file.endsWith('.json')) {
           try {
             const schedulePath = path.join(this.scheduledTestsDir, file);
             const schedule = await fs.readJson(schedulePath);
-            
+
             if (schedule.enabled && schedule.status === 'active') {
               this.scheduleTest(schedule);
             }
           } catch (error) {
-            console.error(`Zamanlama yüklenirken hata (${file}):`, error);
+            logger.error(`Zamanlama yüklenirken hata (${file}):`, { error: error.message });
           }
         }
       }
-      
+
       this.isInitialized = true;
-      console.log(`✅ ${this.activeCrons.size} aktif zamanlama yüklendi`);
+      logger.info(`✅ ${this.activeCrons.size} aktif zamanlama yüklendi`);
     } catch (error) {
-      console.error('Scheduler başlatma hatası:', error);
+      logger.error('Scheduler başlatma hatası:', { error: error.message });
     }
   }
 
   scheduleTest(schedule) {
     // Eğer zaten varsa, önce durdur
     this.unscheduleTest(schedule.id);
-    
+
     // Cron ifadesini validate et
     if (!cron.validate(schedule.schedule)) {
-      console.error(`❌ Geçersiz cron ifadesi: ${schedule.schedule} (${schedule.name})`);
+      logger.error(`❌ Geçersiz cron ifadesi: ${schedule.schedule} (${schedule.name})`);
       return false;
     }
-    
+
     // Yeni cron task oluştur
     const task = cron.schedule(schedule.schedule, async () => {
-      console.log(`⏰ Zamanlanmış test çalıştırılıyor: ${schedule.name}`);
-      
+      logger.info(`⏰ Zamanlanmış test çalıştırılıyor: ${schedule.name}`, { scheduleId: schedule.id });
+
       try {
         // Test'i çalıştır
         await this.executeTest(schedule);
-        
+
         // Son çalışma zamanını güncelle
         await this.updateLastRun(schedule.id);
-        
-        console.log(`✅ Zamanlanmış test tamamlandı: ${schedule.name}`);
+
+        logger.info(`✅ Zamanlanmış test tamamlandı: ${schedule.name}`, { scheduleId: schedule.id });
       } catch (error) {
-        console.error(`❌ Zamanlanmış test hatası (${schedule.name}):`, error);
-        
+        logger.error(`❌ Zamanlanmış test hatası (${schedule.name}):`, { error: error.message, scheduleId: schedule.id });
+
         // Retry mantığı
         if (schedule.retryOnFailure && schedule.maxRetries > 0) {
           await this.retryTest(schedule);
@@ -81,10 +82,10 @@ class TestScheduler {
       scheduled: true,
       timezone: 'Europe/Istanbul' // Türkiye saat dilimi
     });
-    
+
     this.activeCrons.set(schedule.id, task);
-    console.log(`📅 Zamanlama eklendi: ${schedule.name} (${schedule.schedule})`);
-    
+    logger.info(`📅 Zamanlama eklendi: ${schedule.name} (${schedule.schedule})`);
+
     return true;
   }
 
@@ -93,7 +94,7 @@ class TestScheduler {
     if (task) {
       task.stop();
       this.activeCrons.delete(scheduleId);
-      console.log(`🛑 Zamanlama durduruldu: ${scheduleId}`);
+      logger.info(`🛑 Zamanlama durduruldu: ${scheduleId}`);
       return true;
     }
     return false;
@@ -102,18 +103,18 @@ class TestScheduler {
   async updateLastRun(scheduleId) {
     try {
       const schedulePath = path.join(this.scheduledTestsDir, `${scheduleId}.json`);
-      
+
       if (await fs.pathExists(schedulePath)) {
         const schedule = await fs.readJson(schedulePath);
         schedule.lastRun = new Date();
-        
+
         // Sonraki çalışma zamanını hesapla (basit versiyon)
         schedule.nextRun = this.calculateNextRun(schedule.schedule);
-        
+
         await fs.writeJson(schedulePath, schedule);
       }
     } catch (error) {
-      console.error('Son çalışma zamanı güncellenirken hata:', error);
+      logger.error('Son çalışma zamanı güncellenirken hata:', { error: error.message, scheduleId });
     }
   }
 
@@ -121,41 +122,41 @@ class TestScheduler {
     try {
       // Önce cron ifadesini validate et
       if (!cron.validate(cronExpression)) {
-        console.error(`Geçersiz cron ifadesi: ${cronExpression}`);
+        logger.error(`Geçersiz cron ifadesi: ${cronExpression}`);
         return new Date(Date.now() + 60 * 60 * 1000); // 1 saat sonra
       }
-      
+
       // Croner kullanarak sonraki çalışma zamanını hesapla
       const job = new Cron(cronExpression, { timezone: 'Europe/Istanbul' });
       const nextRun = job.nextRun();
-      
+
       if (nextRun) {
         return new Date(nextRun);
       }
-      
+
       // Fallback: 1 saat sonra
       return new Date(Date.now() + 60 * 60 * 1000);
     } catch (error) {
-      console.error('Sonraki çalışma zamanı hesaplanamadı:', error);
+      logger.error('Sonraki çalışma zamanı hesaplanamadı:', { error: error.message });
       return new Date(Date.now() + 60 * 60 * 1000);
     }
   }
 
   async retryTest(schedule, attempt = 1) {
     if (attempt > schedule.maxRetries) {
-      console.log(`❌ Maksimum deneme sayısına ulaşıldı: ${schedule.name}`);
+      logger.warn(`❌ Maksimum deneme sayısına ulaşıldı: ${schedule.name}`, { scheduleId: schedule.id });
       return;
     }
-    
-    console.log(`🔄 Test yeniden deneniyor (${attempt}/${schedule.maxRetries}): ${schedule.name}`);
-    
+
+    logger.info(`🔄 Test yeniden deneniyor (${attempt}/${schedule.maxRetries}): ${schedule.name}`, { scheduleId: schedule.id });
+
     // 30 saniye bekle ve tekrar dene
     setTimeout(async () => {
       try {
         await this.executeTest(schedule);
-        console.log(`✅ Test başarılı (deneme ${attempt}): ${schedule.name}`);
+        logger.info(`✅ Test başarılı (deneme ${attempt}): ${schedule.name}`, { scheduleId: schedule.id });
       } catch (error) {
-        console.error(`❌ Test başarısız (deneme ${attempt}): ${schedule.name}`);
+        logger.error(`❌ Test başarısız (deneme ${attempt}): ${schedule.name}`, { error: error.message, scheduleId: schedule.id });
         await this.retryTest(schedule, attempt + 1);
       }
     }, 30000);
@@ -172,69 +173,69 @@ class TestScheduler {
   async reloadSchedule(scheduleId) {
     try {
       const schedulePath = path.join(this.scheduledTestsDir, `${scheduleId}.json`);
-      
+
       if (await fs.pathExists(schedulePath)) {
         const schedule = await fs.readJson(schedulePath);
-        
+
         // Önce mevcut cron'u durdur
         this.unscheduleTest(scheduleId);
-        
+
         // Eğer aktif ise yeniden başlat
         if (schedule.enabled && schedule.status === 'active') {
           this.scheduleTest(schedule);
         }
-        
+
         return true;
       }
-      
+
       return false;
     } catch (error) {
-      console.error('Zamanlama yeniden yüklenirken hata:', error);
+      logger.error('Zamanlama yeniden yüklenirken hata:', { error: error.message, scheduleId });
       return false;
     }
   }
 
   async fixExistingSchedules() {
     try {
-      console.log('🔧 Mevcut zamanlamaların nextRun değerleri düzeltiliyor...');
-      
+      logger.info('🔧 Mevcut zamanlamaların nextRun değerleri düzeltiliyor...');
+
       const files = await fs.readdir(this.scheduledTestsDir);
-      
+
       for (const file of files) {
         if (file.endsWith('.json')) {
           try {
             const schedulePath = path.join(this.scheduledTestsDir, file);
             const schedule = await fs.readJson(schedulePath);
-            
+
             // nextRun değerini yeniden hesapla
             const newNextRun = this.calculateNextRun(schedule.schedule);
-            
+
             if (newNextRun.getTime() !== new Date(schedule.nextRun).getTime()) {
               schedule.nextRun = newNextRun;
               await fs.writeJson(schedulePath, schedule);
-              console.log(`✅ ${schedule.name} nextRun düzeltildi: ${newNextRun.toISOString()}`);
+              logger.info(`✅ ${schedule.name} nextRun düzeltildi: ${newNextRun.toISOString()}`);
             }
           } catch (error) {
-            console.error(`Hata (${file}):`, error);
+            logger.error(`Hata (${file}):`, { error: error.message });
           }
         }
       }
-      
-      console.log('✅ Tüm zamanlamalar düzeltildi');
+
+      logger.info('✅ Tüm zamanlamalar düzeltildi');
     } catch (error) {
-      console.error('Zamanlamalar düzeltilirken hata:', error);
+      logger.error('Zamanlamalar düzeltilirken hata:', { error: error.message });
     }
   }
 
   stopAll() {
-    console.log('🛑 Tüm zamanlamalar durduruluyor...');
-    
+    logger.info('🛑 Tüm zamanlamalar durduruluyor...');
+
     for (const [scheduleId, task] of this.activeCrons.entries()) {
       task.stop();
     }
-    
+
     this.activeCrons.clear();
-    console.log('✅ Tüm zamanlamalar durduruldu');
+    logger.info('✅ Tüm zamanlamalar durduruldu');
   }
 }
 

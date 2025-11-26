@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 import config from './config.js';
 import TestRunner from './testRunner.js';
-import ScriptGenerator from './scriptGenerator.js';
+
 import TestScheduler from './scheduler.js';
 import errorHandler from '../services/errorHandler.js';
 import healthChecker from '../services/healthChecker.js';
@@ -97,10 +97,10 @@ function broadcast(data) {
 
 // Execute scheduled test function
 async function executeScheduledTest(schedule) {
-  logger.info('Scheduled test starting', { 
-    scheduleId: schedule.id, 
+  logger.info('Scheduled test starting', {
+    scheduleId: schedule.id,
     scheduleName: schedule.name,
-    testId: schedule.testId 
+    testId: schedule.testId
   });
 
   try {
@@ -108,9 +108,9 @@ async function executeScheduledTest(schedule) {
     const testPath = path.join(storageDirs.TESTS_DIR, `${schedule.testId}.json`);
 
     if (!await fs.pathExists(testPath)) {
-      logger.error('Scheduled test: Test not found', { 
-        scheduleId: schedule.id, 
-        testId: schedule.testId 
+      logger.error('Scheduled test: Test not found', {
+        scheduleId: schedule.id,
+        testId: schedule.testId
       });
       return null;
     }
@@ -118,9 +118,9 @@ async function executeScheduledTest(schedule) {
     const testWorkflow = await fs.readJson(testPath);
 
     if (!testWorkflow || !testWorkflow.workflow || testWorkflow.workflow.length === 0) {
-      logger.error('Scheduled test: Test workflow is empty', { 
-        scheduleId: schedule.id, 
-        testId: schedule.testId 
+      logger.error('Scheduled test: Test workflow is empty', {
+        scheduleId: schedule.id,
+        testId: schedule.testId
       });
       return null;
     }
@@ -174,19 +174,19 @@ async function executeScheduledTest(schedule) {
     // Test'i asenkron olarak çalıştır (blocking olmadan)
     setImmediate(() => {
       executeTestWorkflow(executionId, execution).catch(error => {
-        logger.error('Scheduled test execution error', { 
-          executionId, 
+        logger.error('Scheduled test execution error', {
+          executionId,
           scheduleId: schedule.id,
-          error: error.message 
+          error: error.message
         });
       });
     });
 
     return executionId;
   } catch (error) {
-    logger.error('Scheduled test execution failed', { 
+    logger.error('Scheduled test execution failed', {
       scheduleId: schedule.id,
-      error: error.message 
+      error: error.message
     });
     throw error;
   }
@@ -204,10 +204,6 @@ async function executeTestWorkflow(executionId, execution) {
       execution
     });
 
-    // Generate Playwright script
-    const scriptGenerator = new ScriptGenerator();
-    const script = scriptGenerator.generateScript(execution.steps);
-
     // Execute with Playwright
     const testRunner = new TestRunner(storageDirs.SCREENSHOTS_DIR);
 
@@ -220,10 +216,10 @@ async function executeTestWorkflow(executionId, execution) {
     });
 
     // Execute steps sequentially (linear flow)
-    logger.info('Execution starting', { 
-      executionId, 
+    logger.info('Execution starting', {
+      executionId,
       stepCount: execution.steps.length,
-      workflowName: execution.workflowName 
+      workflowName: execution.workflowName
     });
 
     for (let i = 0; i < execution.steps.length; i++) {
@@ -340,21 +336,21 @@ async function executeTestWorkflow(executionId, execution) {
           // Move/rename the file
           await fs.move(originalVideoPath, newVideoPath, { overwrite: true });
           execution.videoPath = `/videos/${executionId}.webm`;
-          logger.debug('Video file renamed', { 
-            executionId, 
-            originalPath: originalVideoPath, 
-            newPath: newVideoPath 
+          logger.debug('Video file renamed', {
+            executionId,
+            originalPath: originalVideoPath,
+            newPath: newVideoPath
           });
         } else {
-          logger.warn('Original video file not found', { 
-            executionId, 
-            originalPath: originalVideoPath 
+          logger.warn('Original video file not found', {
+            executionId,
+            originalPath: originalVideoPath
           });
         }
       } catch (error) {
-        logger.error('Error renaming video file', { 
-          executionId, 
-          error: error.message 
+        logger.error('Error renaming video file', {
+          executionId,
+          error: error.message
         });
       }
     }
@@ -373,18 +369,18 @@ async function executeTestWorkflow(executionId, execution) {
       error: execution.error
     });
 
-    logger.info('Execution completed', { 
-      executionId, 
+    logger.info('Execution completed', {
+      executionId,
       status: execution.status,
       duration: execution.duration,
-      successRate: execution.successRate 
+      successRate: execution.successRate
     });
 
   } catch (error) {
-    logger.error('Execution failed', { 
-      executionId, 
+    logger.error('Execution failed', {
+      executionId,
       error: error.message,
-      stack: error.stack 
+      stack: error.stack
     });
 
     execution.status = 'failed';

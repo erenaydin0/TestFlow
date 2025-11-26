@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs-extra';
 import { fileURLToPath } from 'url';
+import logger from '../utils/logger.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +31,7 @@ class TestRunner {
       browserType = 'chromium'
     } = options;
 
-    console.log('Launching browser:', browserType, 'in headless mode:', headless);
+    logger.info('Launching browser:', { browserType, headless });
 
     // Browser seçimi
     let browserEngine;
@@ -65,10 +66,10 @@ class TestRunner {
     try {
       this.browser = await browserEngine.launch(launchOptions);
       this.currentBrowserType = browserType; // Track current browser type
-      console.log('✅ Browser launched successfully:', browserType);
+      logger.info('✅ Browser launched successfully:', { browserType });
     } catch (error) {
-      console.error('❌ Failed to launch', browserType, '- Error:', error.message);
-      console.log('🔄 Falling back to chromium...');
+      logger.error('❌ Failed to launch browser', { browserType, error: error.message });
+      logger.info('🔄 Falling back to chromium...');
       this.browser = await chromium.launch(launchOptions);
       this.currentBrowserType = 'chromium'; // Track fallback browser type
     }
@@ -83,7 +84,7 @@ class TestRunner {
         dir: path.join(__dirname, 'videos'),
         size: viewport
       };
-      console.log('Video recording enabled for execution:', executionId);
+      logger.info('Video recording enabled for execution:', { executionId });
     }
 
     this.context = await this.browser.newContext(contextOptions);
@@ -94,13 +95,13 @@ class TestRunner {
     const config = (await import('./config.js')).default;
     if (config.enableDebugLogs) {
       this.page.on('console', msg => {
-        console.log(`Browser console: ${msg.text()}`);
+        logger.debug(`Browser console: ${msg.text()}`);
       });
     }
 
     // Add error handling
     this.page.on('pageerror', error => {
-      console.error(`Page error: ${error.message}`);
+      logger.error(`Page error: ${error.message}`);
     });
   }
 
@@ -117,7 +118,7 @@ class TestRunner {
 
         // Close context first to save video
         await this.context.close();
-        console.log('Browser context closed, video saved if recording was enabled');
+        logger.info('Browser context closed, video saved if recording was enabled');
 
         // Wait a bit for video to be written
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -133,7 +134,7 @@ class TestRunner {
 
       return videoPath;
     } catch (error) {
-      console.error('Error closing browser:', error);
+      logger.error('Error closing browser:', { error: error.message });
       return null;
     }
   }
@@ -157,7 +158,7 @@ class TestRunner {
 
         // Close existing browser if it exists
         if (this.browser) {
-          console.log('🔒 Closing existing browser before switching...');
+          logger.info('🔒 Closing existing browser before switching...');
           await this.closeBrowser();
         }
 
@@ -167,10 +168,10 @@ class TestRunner {
           browserType: requestedBrowserType
         });
       } else {
-        console.log(`♻️ Reusing existing browser: ${this.currentBrowserType}`);
+        logger.info(`♻️ Reusing existing browser: ${this.currentBrowserType}`);
       }
 
-      console.log(`Executing step: ${step.type}`);
+      logger.info(`Executing step: ${step.type}`);
       stepResult.logs.push(`Starting step: ${step.type}`);
 
       // Execute the step based on its type
@@ -210,13 +211,13 @@ class TestRunner {
 
       // Take automatic screenshot if enabled
       if (options.enableScreenshots) {
-        console.log('Taking automatic screenshot for step:', step.stepId);
+        logger.debug('Taking automatic screenshot for step:', { stepId: step.stepId });
         try {
           stepResult.screenshot = await this.takeScreenshot(executionId, `${step.stepId}-auto`);
           stepResult.logs.push('Automatic screenshot taken');
-          console.log('Automatic screenshot saved:', stepResult.screenshot);
+          logger.debug('Automatic screenshot saved:', { path: stepResult.screenshot });
         } catch (screenshotError) {
-          console.error('Failed to take automatic screenshot:', screenshotError);
+          logger.error('Failed to take automatic screenshot:', { error: screenshotError.message });
         }
       }
 
@@ -232,7 +233,7 @@ class TestRunner {
       try {
         stepResult.screenshot = await this.takeErrorScreenshot(executionId, step.stepId);
       } catch (screenshotError) {
-        console.error('Failed to take error screenshot:', screenshotError);
+        logger.error('Failed to take error screenshot:', { error: screenshotError.message });
       }
     }
 
@@ -246,26 +247,26 @@ class TestRunner {
     console.log('executeNavigate called with config:', JSON.stringify(config, null, 2));
 
     let url = config.url || config.value || '';
-    console.log('Extracted URL:', url);
+    logger.debug('Extracted URL:', { url });
 
     if (!url) {
-      console.error('No URL found in config:', config);
+      logger.error('No URL found in config:', { config });
       throw new Error('Navigate action requires a URL');
     }
 
     // Yalın URL'leri destekle (örn: google.com -> https://google.com)
     if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
-      console.log('URL normalized to:', url);
+      logger.debug('URL normalized to:', { url });
     }
 
-    console.log(`Navigating to: ${url}`);
+    logger.info(`Navigating to: ${url}`);
 
     try {
       await this.page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-      console.log('Navigation completed successfully');
+      logger.info('Navigation completed successfully');
     } catch (error) {
-      console.error('Navigation failed:', error.message);
+      logger.error('Navigation failed:', { error: error.message });
       throw error;
     }
   }
@@ -275,36 +276,36 @@ class TestRunner {
 
     const rawSelector = config.selector || config.target || '';
     if (!rawSelector) {
-      console.error('No selector found in config:', config);
+      logger.error('No selector found in config:', { config });
       throw new Error('Click action requires a selector');
     }
 
     const selector = this.normalizeSelector(rawSelector);
-    console.log(`Clicking element: ${rawSelector} -> normalized: ${selector}`);
+    logger.debug(`Clicking element: ${rawSelector} -> normalized: ${selector}`);
 
     try {
       // Check if element exists first
       const elementExists = await this.elementExists(rawSelector);
-      console.log(`Element exists: ${elementExists}`);
+      logger.debug(`Element exists: ${elementExists}`);
 
       if (!elementExists) {
         // Try to find similar elements for debugging
         const allElements = await this.page.$$('*');
-        console.log(`Total elements on page: ${allElements.length}`);
+        logger.debug(`Total elements on page: ${allElements.length}`);
 
         throw new Error(`Element not found: ${rawSelector}`);
       }
 
       // Wait for element to be visible and clickable
-      console.log('Waiting for element to be visible...');
+      logger.debug('Waiting for element to be visible...');
       await this.page.waitForSelector(selector, { state: 'visible', timeout: 10000 });
 
-      console.log('Element is visible, clicking...');
+      logger.debug('Element is visible, clicking...');
       await this.page.click(selector);
-      console.log('Click completed successfully');
+      logger.info('Click completed successfully');
 
     } catch (error) {
-      console.error('Click action failed:', error.message);
+      logger.error('Click action failed:', { error: error.message });
       throw error;
     }
   }
@@ -316,40 +317,40 @@ class TestRunner {
     const text = config.text || config.value || '';
 
     if (!rawSelector) {
-      console.error('No selector found in config:', config);
+      logger.error('No selector found in config:', { config });
       throw new Error('Type action requires a selector');
     }
 
     const selector = this.normalizeSelector(rawSelector);
-    console.log(`Typing into element: ${rawSelector} -> normalized: ${selector}, text: "${text}"`);
+    logger.debug(`Typing into element: ${rawSelector} -> normalized: ${selector}, text: "${text}"`);
 
     try {
       // Check if element exists first
       const elementExists = await this.elementExists(rawSelector);
-      console.log(`Element exists: ${elementExists}`);
+      logger.debug(`Element exists: ${elementExists}`);
 
       if (!elementExists) {
         throw new Error(`Element not found: ${rawSelector}`);
       }
 
       // Wait for element to be visible
-      console.log('Waiting for element to be visible...');
+      logger.debug('Waiting for element to be visible...');
       await this.page.waitForSelector(selector, { state: 'visible', timeout: 10000 });
 
       // Clear existing text and type new text
-      console.log('Clearing and filling text...');
+      logger.debug('Clearing and filling text...');
       await this.page.fill(selector, text);
-      console.log('Type completed successfully');
+      logger.info('Type completed successfully');
 
     } catch (error) {
-      console.error('Type action failed:', error.message);
+      logger.error('Type action failed:', { error: error.message });
       throw error;
     }
   }
 
   async executeWait(config) {
     const duration = parseInt(config.duration || config.amount || 1000);
-    console.log(`Waiting for: ${duration}ms`);
+    logger.info(`Waiting for: ${duration}ms`);
     await this.page.waitForTimeout(duration);
   }
 
@@ -357,7 +358,7 @@ class TestRunner {
     const filename = `${executionId}-${stepId}-screenshot.png`;
     const screenshotPath = path.join(this.screenshotsDir, filename);
 
-    console.log(`Taking screenshot: ${filename}`);
+    logger.debug(`Taking screenshot: ${filename}`);
     await this.page.screenshot({
       path: screenshotPath,
       fullPage: fullPage
@@ -379,7 +380,7 @@ class TestRunner {
     // URL kontrolü
     if (verificationType === 'url' || verificationType === 'urlContains') {
       const currentUrl = this.page.url();
-      console.log(`Verifying URL: ${currentUrl} (${verificationType})`);
+      logger.info(`Verifying URL: ${currentUrl} (${verificationType})`);
 
       if (verificationType === 'url') {
         // Tam URL eşleşmesi
@@ -396,7 +397,7 @@ class TestRunner {
     }
 
     const selector = this.normalizeSelector(rawSelector);
-    console.log(`Verifying element: ${rawSelector} -> normalized: ${selector} (${verificationType})`);
+    logger.info(`Verifying element: ${rawSelector} -> normalized: ${selector} (${verificationType})`);
 
     const locator = this.page.locator(selector);
 
@@ -437,7 +438,7 @@ class TestRunner {
     const optionValue = config.optionValue || config.value || '';
 
     if (!rawSelector) {
-      console.error('No selector found in config:', config);
+      logger.error('No selector found in config:', { config });
       throw new Error('Dropdown action requires a selector');
     }
 
@@ -446,23 +447,23 @@ class TestRunner {
     }
 
     const selector = this.normalizeSelector(rawSelector);
-    console.log(`Selecting from dropdown: ${rawSelector} -> normalized: ${selector}, type: ${optionType}, value: "${optionValue}"`);
+    logger.debug(`Selecting from dropdown: ${rawSelector} -> normalized: ${selector}, type: ${optionType}, value: "${optionValue}"`);
 
     try {
       // Check if element exists first
       const elementExists = await this.elementExists(rawSelector);
-      console.log(`Dropdown element exists: ${elementExists}`);
+      logger.debug(`Dropdown element exists: ${elementExists}`);
 
       if (!elementExists) {
         throw new Error(`Dropdown element not found: ${rawSelector}`);
       }
 
       // Wait for element to be visible
-      console.log('Waiting for dropdown element to be visible...');
+      logger.debug('Waiting for dropdown element to be visible...');
       await this.page.waitForSelector(selector, { state: 'visible', timeout: 10000 });
 
       // Select option based on type
-      console.log(`Selecting option by ${optionType}: ${optionValue}`);
+      logger.debug(`Selecting option by ${optionType}: ${optionValue}`);
 
       if (optionType === 'value') {
         // Select by value attribute
@@ -481,16 +482,16 @@ class TestRunner {
         throw new Error(`Unknown option type: ${optionType}`);
       }
 
-      console.log('Dropdown selection completed successfully');
+      logger.info('Dropdown selection completed successfully');
 
     } catch (error) {
-      console.error('Dropdown action failed:', error.message);
+      logger.error('Dropdown action failed:', { error: error.message });
       throw error;
     }
   }
 
   async executeRefresh(config) {
-    console.log('Refreshing page');
+    logger.info('Refreshing page');
     await this.page.reload({ waitUntil: 'networkidle' });
   }
 
@@ -509,7 +510,7 @@ class TestRunner {
         return `/screenshots/${filename}`;
       }
     } catch (error) {
-      console.error('Failed to take error screenshot:', error);
+      logger.error('Failed to take error screenshot:', { error: error.message });
     }
     return null;
   }
@@ -576,7 +577,7 @@ class TestRunner {
       });
       return true;
     } catch (error) {
-      console.error(`Element not found: ${rawSelector}`);
+      logger.error(`Element not found: ${rawSelector}`);
       return false;
     }
   }
@@ -592,7 +593,7 @@ class TestRunner {
         viewport: this.page.viewportSize()
       };
     } catch (error) {
-      console.error('Failed to get page info:', error);
+      logger.error('Failed to get page info:', { error: error.message });
       return null;
     }
   }
