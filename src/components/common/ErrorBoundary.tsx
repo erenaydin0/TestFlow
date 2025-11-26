@@ -2,7 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Button } from './Button';
+import Button from './Button';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -88,7 +88,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <p className="text-text-secondary mb-6">
               Üzgünüz, beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.
             </p>
-            
+
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-6 text-left bg-bg-secondary p-4 rounded border border-border-primary">
                 <summary className="cursor-pointer font-semibold mb-2 text-text-primary">
@@ -105,7 +105,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <Button
                 onClick={this.handleReset}
                 variant="primary"
-                icon={<RefreshCw size={16} />}
               >
                 Tekrar Dene
               </Button>
