@@ -120,6 +120,34 @@ function TestBuilderContent() {
 
   const searchParams = useSearchParams();
 
+  // Auto-add first "Navigate" step for new tests
+  const hasInitializedRef = useRef(false);
+  useEffect(() => {
+    // Only run once on initial mount
+    if (hasInitializedRef.current) return;
+
+    // Don't add if loading an existing workflow
+    const loadWorkflowId = searchParams.get('load');
+    if (loadWorkflowId) return;
+
+    // Don't add if there are already steps
+    if (testSteps.length > 0) return;
+
+    // Add initial navigate step
+    hasInitializedRef.current = true;
+    const initialStep: TestStep = {
+      id: generateId(),
+      type: 'navigate',
+      description: '',
+      url: ''
+    };
+
+    const newSteps = [initialStep];
+    setTestSteps(newSteps);
+    saveToHistory(newSteps);
+    setSelectedStep(initialStep);
+  }, []); // Empty deps - only run on mount
+
   // Handle drop on list
   const handleAddStep = (actionType: string) => {
     const newStep: TestStep = {
