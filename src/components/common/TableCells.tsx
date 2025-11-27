@@ -3,7 +3,7 @@
 import React from 'react';
 import { Trash2, Copy, Download, Play, Edit, Settings, Pause } from 'lucide-react';
 
-import {  BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
+import { BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
 import { formatDuration, formatRelativeTime } from '@/utils/utils';
 import { StatusBadge, IconButton } from './';
 import { useI18n } from '@/hooks';
@@ -55,9 +55,9 @@ const TagsCell: React.FC<TagsCellProps> = ({ tags = [], maxVisible = 2 }) => {
         </span>
       ))}
       {tags.length > maxVisible && (
-        <span style={{ 
-          fontSize: '0.75rem', 
-          color: 'var(--text-tertiary)' 
+        <span style={{
+          fontSize: '0.75rem',
+          color: 'var(--text-tertiary)'
         }}>
           +{tags.length - maxVisible}
         </span>
@@ -81,7 +81,7 @@ interface DateCellProps {
 const DateCell: React.FC<DateCellProps> = ({ date, format = 'relative' }) => {
   const { locale } = useI18n();
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   let displayText = '';
   switch (format) {
     case 'relative':
@@ -96,9 +96,9 @@ const DateCell: React.FC<DateCellProps> = ({ date, format = 'relative' }) => {
   }
 
   return (
-    <span style={{ 
-      color: 'var(--text-secondary)', 
-      fontSize: '0.875rem' 
+    <span style={{
+      color: 'var(--text-secondary)',
+      fontSize: '0.875rem'
     }}>
       {displayText}
     </span>
@@ -118,9 +118,9 @@ const DurationCell: React.FC<DurationCellProps> = ({ duration }) => {
   }
 
   return (
-    <span style={{ 
-      color: 'var(--text-secondary)', 
-      fontSize: '0.875rem' 
+    <span style={{
+      color: 'var(--text-secondary)',
+      fontSize: '0.875rem'
     }}>
       {formatDuration(duration)}
     </span>
@@ -151,30 +151,30 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
 
   return (
     <div>
-      <div style={{ 
-        fontWeight: 500, 
+      <div style={{
+        fontWeight: 500,
         color: 'var(--text-primary)',
         fontSize: '0.875rem',
         marginBottom: description ? '0.25rem' : 0
       }}>
-        {name.slice(0, 40)}
-        {name.length > 40 && '...'}
+        {name.slice(0, 16)}
+        {name.length > 16 && '...'}
       </div>
       {description && (
-        <div style={{ 
-          fontSize: '0.75rem', 
+        <div style={{
+          fontSize: '0.75rem',
           color: 'var(--text-secondary)',
           lineHeight: 1.3
         }}>
-          {description.slice(0, 40)}
-          {description.length > 40 && '...'}
+          {description.slice(0, 16)}
+          {description.length > 16 && '...'}
         </div>
       )}
       {id && (
         <div style={{ position: 'relative' }}>
-          <div 
-            style={{ 
-              fontSize: '0.7rem', 
+          <div
+            style={{
+              fontSize: '0.7rem',
               color: showCopied ? 'var(--status-success)' : 'var(--text-tertiary)',
               fontFamily: 'monospace',
               marginTop: '0.25rem',
@@ -195,8 +195,8 @@ const TestNameCell: React.FC<TestNameCellProps> = ({ name, description, id }) =>
               }
             }}
           >
-            {showCopied ? t('copyFeedback.copied') : `ID: ${id.slice(0, 40)}`}
-            {id.length > 40 && '...'}
+            {showCopied ? t('copyFeedback.copied') : `ID: ${id.slice(0, 16)}`}
+            {id.length > 16 && '...'}
           </div>
         </div>
       )}
@@ -286,9 +286,9 @@ const ActionsCell: React.FC<ActionsCellProps> = ({
   const allActions = [...defaultActions, ...actions];
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
       gap: '0.5rem',
     }}>
       {allActions.map((action, index) => (
@@ -390,13 +390,13 @@ interface ScheduleCellProps {
 
 const ScheduleCell: React.FC<ScheduleCellProps> = ({ schedule, description }) => {
   const { t } = useI18n();
-  
+
   const getScheduleDescription = (cronExpression: string) => {
     // Basit cron ifadesi çevirisi
     const parts = cronExpression.split(' ');
     if (parts.length === 5) {
       const [minute, hour, day, month, dayOfWeek] = parts;
-      
+
       if (minute === '0' && day === '*' && month === '*' && dayOfWeek === '*') {
         return `Her saat ${hour}:00'da`;
       }
@@ -416,7 +416,7 @@ const ScheduleCell: React.FC<ScheduleCellProps> = ({ schedule, description }) =>
   return (
     <div>
       {description && (
-        <div style={{ 
+        <div style={{
           fontSize: '0.875rem',
           color: 'var(--text-primary)',
           fontWeight: 500
@@ -465,14 +465,14 @@ const NextRunCell: React.FC<NextRunCellProps> = ({ nextRun }) => {
 
   return (
     <div>
-      <div style={{ 
+      <div style={{
         fontSize: '0.875rem',
         color: 'var(--text-primary)',
         fontWeight: 500
       }}>
         {displayText}
       </div>
-      <div style={{ 
+      <div style={{
         fontSize: '0.75rem',
         color: 'var(--text-secondary)',
         marginTop: '0.25rem'
@@ -508,9 +508,9 @@ const ScheduledActionsCell: React.FC<ScheduledActionsCellProps> = ({
   const { t } = useI18n();
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
       gap: '0.5rem',
     }}>
       <button
@@ -544,7 +544,7 @@ const ScheduledActionsCell: React.FC<ScheduledActionsCellProps> = ({
       >
         {status === 'active' ? <Pause size={14} /> : <Play size={14} />}
       </button>
-      
+
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -576,7 +576,7 @@ const ScheduledActionsCell: React.FC<ScheduledActionsCellProps> = ({
       >
         <Edit size={14} />
       </button>
-      
+
       <button
         onClick={(e) => {
           e.stopPropagation();

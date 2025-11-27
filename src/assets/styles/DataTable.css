@@ -1,0 +1,59 @@
+/* DataTable Responsive Styles */
+
+/* Base table container */
+.data-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table table {
+  min-width: 1000px; /* Ensure horizontal scroll on very small screens */
+}
+
+/* Responsive column hiding - MacBook Pro 13" and similar (≤1440px) */
+@media (max-width: 1440px) {
+  .hide-on-small-desktop {
+    display: none !important;
+  }
+}
+
+/* Tablet and smaller laptops (≤1024px) */
+@media (max-width: 1024px) {
+  .hide-on-tablet {
+    display: none !important;
+  }
+}
+
+/* Mobile devices (≤768px) */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  /* Reduce padding on mobile */
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem !important;
+    font-size: 0.8125rem !important;
+  }
+}
+
+/* Text truncation for longer content */
+.data-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Allow wrapping for specific columns */
+.data-table .column-workflowName,
+.data-table .column-tags {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Ensure action buttons remain visible and aligned */
+.data-table .column-actions {
+  text-align: center;
+}

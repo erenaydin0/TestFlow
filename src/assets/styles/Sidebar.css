@@ -1,0 +1,28 @@
+/* Sidebar Responsive Styles */
+
+/* Small Desktop and MacBook Pro 13" (≤1440px) */
+/* Note: These styles apply when sidebar is in collapsed state (.sidebar-collapsed class) */
+@media (max-width: 1440px) {
+    /* Sidebar should default to collapsed on small screens but can still be expanded */
+    /* The useSidebar hook should handle the default collapsed state based on screen size */
+
+    /* When collapsed, ensure proper styling */
+    aside[style*="4.5rem"] .sidebar-item span {
+        display: none;
+    }
+
+    aside[style*="4.5rem"] .sidebar-item {
+        justify-content: center;
+        padding: 0.875rem;
+    }
+
+    aside[style*="4.5rem"] nav {
+        padding: 1rem 0.5rem;
+    }
+
+    aside[style*="4.5rem"]>div:last-child {
+        padding: 0.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useSidebar, useSettingsModal, useI18n } from '@/hooks';
 import { IconButton } from '@/components/common';
+import '../../assets/styles/Sidebar.css';
 
 interface SidebarProps {
   onNavigationAttempt?: (href: string) => void;

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import '../../assets/styles/DataTable.css';
 
 export interface Column<T = any> {
   key: string;
@@ -11,6 +12,7 @@ export interface Column<T = any> {
   align?: 'left' | 'center' | 'right';
   render?: (value: any, item: T, index: number) => React.ReactNode;
   className?: string;
+  responsiveClass?: string; // For responsive column hiding
 }
 
 export interface DataTableProps<T = any> {
@@ -80,7 +82,7 @@ const DataTable = <T extends Record<string, any>>({
 
   const handleSelectAll = (checked: boolean) => {
     if (!onSelectionChange) return;
-    
+
     if (checked) {
       // allData varsa tüm filtrelenmiş verileri seç, yoksa sadece mevcut sayfayı seç
       const dataToSelect = allData || data;
@@ -93,7 +95,7 @@ const DataTable = <T extends Record<string, any>>({
 
   const handleItemSelection = (itemId: string, checked: boolean) => {
     if (!onSelectionChange) return;
-    
+
     const newSelection = new Set(selectedItems);
     if (checked) {
       newSelection.add(itemId);
@@ -109,20 +111,20 @@ const DataTable = <T extends Record<string, any>>({
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         padding: '2rem',
         color: 'var(--text-secondary)'
       }}>
-        <div style={{ 
-          width: '20px', 
-          height: '20px', 
-          border: '2px solid var(--border-primary)', 
-          borderTop: '2px solid var(--text-primary)', 
-          borderRadius: '50%', 
-          animation: 'spin 1s linear infinite' 
+        <div style={{
+          width: '20px',
+          height: '20px',
+          border: '2px solid var(--border-primary)',
+          borderTop: '2px solid var(--text-primary)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
         }} />
         <span style={{ marginLeft: '0.5rem' }}>Yükleniyor...</span>
       </div>
@@ -131,10 +133,10 @@ const DataTable = <T extends Record<string, any>>({
 
   if (data.length === 0) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         padding: '2rem',
         color: 'var(--text-secondary)',
         fontSize: '0.875rem'
@@ -146,18 +148,19 @@ const DataTable = <T extends Record<string, any>>({
 
   return (
     <div className={`data-table ${className}`} style={{ overflowX: 'auto' }}>
-      <table style={{ 
-        width: '100%', 
+      <table style={{
+        width: '100%',
         borderCollapse: 'collapse',
         backgroundColor: 'var(--bg-primary)',
-        tableLayout: 'fixed'
+        tableLayout: 'auto',
+        minWidth: '1000px'
       }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
             {selectable && (
-              <th style={{ 
-                padding: '0.75rem', 
-                textAlign: 'left', 
+              <th style={{
+                padding: '0.75rem',
+                textAlign: 'left',
                 width: '50px',
                 minWidth: '50px',
                 maxWidth: '50px',
@@ -175,9 +178,9 @@ const DataTable = <T extends Record<string, any>>({
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  style={{ 
-                    borderRadius: '0.25rem', 
-                    border: '1px solid var(--border-primary)' 
+                  style={{
+                    borderRadius: '0.25rem',
+                    border: '1px solid var(--border-primary)'
                   }}
                 />
               </th>
@@ -197,15 +200,15 @@ const DataTable = <T extends Record<string, any>>({
                   ...(!column.sortable && { cursor: 'default' })
                 }}
                 onClick={() => column.sortable && handleSort(column.key)}
-                className={column.className}
+                className={`column-${column.key} ${column.responsiveClass || ''} ${column.className || ''}`}
               >
                 {column.sortable ? (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '0.25rem',
-                    justifyContent: column.align === 'center' ? 'center' : 
-                                   column.align === 'right' ? 'flex-end' : 'flex-start'
+                    justifyContent: column.align === 'center' ? 'center' :
+                      column.align === 'right' ? 'flex-end' : 'flex-start'
                   }}>
                     {column.label}
                     {getSortIcon(column.key)}
@@ -222,7 +225,7 @@ const DataTable = <T extends Record<string, any>>({
             const itemId = getItemId(item);
             const isSelected = selectedItems.has(itemId);
             const isHighlighted = highlightedItemId === itemId;
-            
+
             return (
               <tr
                 key={itemId}
@@ -247,10 +250,10 @@ const DataTable = <T extends Record<string, any>>({
                 onClick={(e) => {
                   // Checkbox, button veya input elementlerine tıklanırsa modal açma
                   const target = e.target as HTMLElement;
-                  if (target.tagName === 'INPUT' || 
-                      target.tagName === 'BUTTON' ||
-                      target.closest('button') ||
-                      target.closest('input')) {
+                  if (target.tagName === 'INPUT' ||
+                    target.tagName === 'BUTTON' ||
+                    target.closest('button') ||
+                    target.closest('input')) {
                     return;
                   }
                   onRowClick && onRowClick(item);
@@ -258,17 +261,17 @@ const DataTable = <T extends Record<string, any>>({
                 onDoubleClick={(e) => {
                   // Checkbox, button veya input elementlerine çift tıklanırsa modal açma
                   const target = e.target as HTMLElement;
-                  if (target.tagName === 'INPUT' || 
-                      target.tagName === 'BUTTON' ||
-                      target.closest('button') ||
-                      target.closest('input')) {
+                  if (target.tagName === 'INPUT' ||
+                    target.tagName === 'BUTTON' ||
+                    target.closest('button') ||
+                    target.closest('input')) {
                     return;
                   }
                   onRowDoubleClick && onRowDoubleClick(item);
                 }}
               >
                 {selectable && (
-                  <td style={{ 
+                  <td style={{
                     padding: '0.75rem',
                     width: '50px',
                     minWidth: '50px',
@@ -284,16 +287,16 @@ const DataTable = <T extends Record<string, any>>({
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
-                      style={{ 
-                        borderRadius: '0.25rem', 
-                        border: '1px solid var(--border-primary)' 
+                      style={{
+                        borderRadius: '0.25rem',
+                        border: '1px solid var(--border-primary)'
                       }}
                     />
                   </td>
                 )}
                 {columns.map((column) => {
                   const value = item[column.key];
-                  const cellContent = column.render 
+                  const cellContent = column.render
                     ? column.render(value, item, index)
                     : value;
 
@@ -307,7 +310,7 @@ const DataTable = <T extends Record<string, any>>({
                         fontSize: '0.875rem',
                         width: column.width
                       }}
-                      className={column.className}
+                      className={`column-${column.key} ${column.responsiveClass || ''} ${column.className || ''}`}
                     >
                       {cellContent}
                     </td>
