@@ -504,20 +504,38 @@ function TestBuilderContent() {
   }, [searchParams, loadedWorkflowId]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-secondary)', position: 'relative', overflow: 'hidden' }}>
+      {/* Cosmic Background Animations */}
+      <div className="cosmic-background">
+        {/* Floating particles */}
+        <div className="cosmic-particle" style={{ left: '10%', top: '20%', animationDelay: '0s' }} />
+        <div className="cosmic-particle" style={{ left: '80%', top: '40%', animationDelay: '2s' }} />
+        <div className="cosmic-particle" style={{ left: '30%', top: '60%', animationDelay: '4s' }} />
+        <div className="cosmic-particle" style={{ left: '70%', top: '80%', animationDelay: '6s' }} />
+        <div className="cosmic-particle" style={{ left: '50%', top: '30%', animationDelay: '3s' }} />
+        <div className="cosmic-particle" style={{ left: '20%', top: '70%', animationDelay: '5s' }} />
+
+        {/* Nebula clouds */}
+        <div className="nebula-cloud nebula-cloud-1" />
+        <div className="nebula-cloud nebula-cloud-2" />
+        <div className="nebula-cloud nebula-cloud-3" />
+      </div>
+
       <Sidebar onNavigationAttempt={handleNavigation} />
 
       <div style={{
         flex: 1,
         marginLeft: isCollapsed ? '4rem' : '16rem',
         paddingTop: '4rem',
-        transition: 'margin-left 0.3s ease'
+        transition: 'margin-left 0.3s ease',
+        position: 'relative',
+        zIndex: 1
       }}>
         <Header />
 
         <div style={{
           height: 'calc(100vh - 4rem)',
-          backgroundColor: 'var(--bg-secondary)',
+          backgroundColor: 'transparent',
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -526,72 +544,74 @@ function TestBuilderContent() {
           {/* 3-Column Layout */}
           <div className="flex-1 flex overflow-hidden p-4 gap-4">
             {/* Left Sidebar - Actions */}
-            <div className="w-64 flex-shrink-0 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-primary)] overflow-hidden shadow-sm">
+            <div className="test-builder-panel w-64 flex-shrink-0 rounded-xl border border-[var(--border-primary)] overflow-hidden shadow-sm">
               <ActionsSidebar onAddStep={handleAddStep} />
             </div>
 
             {/* Center - Timeline & Toolbar */}
-            <div className="flex-1 flex flex-col min-w-0 gap-4">
-              {/* Toolbar - Centered */}
-              <div className="flex justify-center">
-                <UnifiedToolbar
-                  testStepsCount={testSteps.length}
-                  onUndo={() => undo(() => {
-                    setSelectedSteps(new Set());
-                    setSelectedStep(null);
-                  })}
-                  onRedo={() => redo(() => {
-                    setSelectedSteps(new Set());
-                    setSelectedStep(null);
-                  })}
-                  canUndo={canUndo}
-                  canRedo={canRedo}
-                  onCopy={() => {
-                    const selected = testSteps.filter(s => selectedSteps.has(s.id));
-                    setCopiedSteps(selected);
-                  }}
-                  onPaste={() => {
-                    if (copiedSteps.length === 0) return;
-                    const newSteps = copiedSteps.map(s => ({ ...s, id: generateId() }));
-                    const updatedSteps = [...testSteps, ...newSteps];
-                    setTestSteps(updatedSteps);
-                    saveToHistory(updatedSteps);
-                  }}
-                  onDuplicate={() => {
-                    const selected = testSteps.filter(s => selectedSteps.has(s.id));
-                    if (selected.length === 0) return;
-                    const newSteps = selected.map(s => ({ ...s, id: generateId() }));
-                    const updatedSteps = [...testSteps, ...newSteps];
-                    setTestSteps(updatedSteps);
-                    saveToHistory(updatedSteps);
-                  }}
-                  selectedStepsCount={selectedSteps.size}
-                  copiedStepsCount={copiedSteps.length}
-                  onExport={handleExport}
-                  onImport={handleImport}
-                  onSave={handleSave}
-                  onRun={handleRun}
-                  isRunning={isRunning}
-                  enableScreenshots={enableScreenshots}
-                  enableRecording={enableRecording}
-                  headlessMode={headlessMode}
-                  onToggleScreenshots={() => {
-                    setEnableScreenshots(!enableScreenshots);
-                  }}
-                  onToggleRecording={() => {
-                    setEnableRecording(!enableRecording);
-                  }}
-                  onToggleHeadless={() => {
-                    setHeadlessMode(!headlessMode);
-                  }}
-                  selectedBrowser={selectedBrowser}
-                  onBrowserChange={handleBrowserChange}
-                />
+            <div className="flex-1 flex flex-col min-w-0">
+              {/* Toolbar - Centered and above timeline */}
+              <div className="flex justify-center mb-4">
+                <div className="max-w-3xl w-full">
+                  <UnifiedToolbar
+                    testStepsCount={testSteps.length}
+                    onUndo={() => undo(() => {
+                      setSelectedSteps(new Set());
+                      setSelectedStep(null);
+                    })}
+                    onRedo={() => redo(() => {
+                      setSelectedSteps(new Set());
+                      setSelectedStep(null);
+                    })}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    onCopy={() => {
+                      const selected = testSteps.filter(s => selectedSteps.has(s.id));
+                      setCopiedSteps(selected);
+                    }}
+                    onPaste={() => {
+                      if (copiedSteps.length === 0) return;
+                      const newSteps = copiedSteps.map(s => ({ ...s, id: generateId() }));
+                      const updatedSteps = [...testSteps, ...newSteps];
+                      setTestSteps(updatedSteps);
+                      saveToHistory(updatedSteps);
+                    }}
+                    onDuplicate={() => {
+                      const selected = testSteps.filter(s => selectedSteps.has(s.id));
+                      if (selected.length === 0) return;
+                      const newSteps = selected.map(s => ({ ...s, id: generateId() }));
+                      const updatedSteps = [...testSteps, ...newSteps];
+                      setTestSteps(updatedSteps);
+                      saveToHistory(updatedSteps);
+                    }}
+                    selectedStepsCount={selectedSteps.size}
+                    copiedStepsCount={copiedSteps.length}
+                    onExport={handleExport}
+                    onImport={handleImport}
+                    onSave={handleSave}
+                    onRun={handleRun}
+                    isRunning={isRunning}
+                    enableScreenshots={enableScreenshots}
+                    enableRecording={enableRecording}
+                    headlessMode={headlessMode}
+                    onToggleScreenshots={() => {
+                      setEnableScreenshots(!enableScreenshots);
+                    }}
+                    onToggleRecording={() => {
+                      setEnableRecording(!enableRecording);
+                    }}
+                    onToggleHeadless={() => {
+                      setHeadlessMode(!headlessMode);
+                    }}
+                    selectedBrowser={selectedBrowser}
+                    onBrowserChange={handleBrowserChange}
+                  />
+                </div>
               </div>
 
               {/* Timeline List */}
               <div
-                className="flex-1 overflow-y-auto bg-[var(--bg-primary)] rounded-xl border border-[var(--border-primary)] shadow-sm p-6"
+                className="test-builder-panel flex-1 overflow-y-auto rounded-xl border border-[var(--border-primary)] shadow-sm p-6"
                 onClick={() => setSelectedStep(null)} // Deselect when clicking empty space
               >
                 <div className="max-w-3xl mx-auto pb-20">
@@ -675,7 +695,7 @@ function TestBuilderContent() {
             </div>
 
             {/* Right Sidebar - Configuration */}
-            <div className="w-80 flex-shrink-0 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-primary)] overflow-hidden shadow-xl z-20">
+            <div className="test-builder-panel w-80 flex-shrink-0 rounded-xl border border-[var(--border-primary)] overflow-hidden shadow-xl z-20">
               <StepConfigurationPanel
                 step={selectedStep}
                 onSave={(updatedStep) => {

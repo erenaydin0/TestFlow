@@ -20,6 +20,7 @@ import { BrowserType } from '@/types';
 import BrowserSelector from './BrowserSelector';
 import { IconButton, ButtonGroup } from '@/components';
 import { useI18n } from '@/hooks';
+import '../../assets/styles/TestBuilder.css';
 
 // Ortak toolbar props interface
 interface UnifiedToolbarProps {
@@ -91,7 +92,7 @@ const UnifiedToolbar: React.FC<UnifiedToolbarProps> = ({
   };
 
   return (
-    <div className="absolute top-4 left-4 flex gap-2 p-2 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg shadow-lg z-10">
+    <div className="test-builder-toolbar flex gap-2 p-2 border border-[var(--border-primary)] rounded-lg shadow-lg">
       {/* Browser Selector */}
       {selectedBrowser && onBrowserChange && (
         <>
