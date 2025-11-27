@@ -20,10 +20,12 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+import { WebSocketService } from '../core/websocket.js';
+
 /**
  * Create scheduled test routes instance
  */
-function createScheduledRoutes(storageDirs: any, broadcast: Function, testScheduler: TestScheduler) {
+function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketService, testScheduler: TestScheduler) {
     const { SCHEDULED_TESTS_DIR } = storageDirs;
 
     // Get all scheduled tests
@@ -116,7 +118,7 @@ function createScheduledRoutes(storageDirs: any, broadcast: Function, testSchedu
                 testScheduler.scheduleTest(schedule);
             }
 
-            broadcast({
+            webSocketService.broadcast({
                 type: 'schedule:created',
                 schedule
             });
@@ -157,7 +159,7 @@ function createScheduledRoutes(storageDirs: any, broadcast: Function, testSchedu
                     await testScheduler.reloadSchedule(id);
                 }
 
-                broadcast({
+                webSocketService.broadcast({
                     type: 'schedule:updated',
                     schedule: updatedSchedule
                 });
@@ -186,7 +188,7 @@ function createScheduledRoutes(storageDirs: any, broadcast: Function, testSchedu
 
                 await fs.remove(schedulePath);
 
-                broadcast({
+                webSocketService.broadcast({
                     type: 'schedule:deleted',
                     scheduleId: id
                 });

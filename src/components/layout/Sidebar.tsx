@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   TestTube,
   Workflow,
   AlarmClock,
@@ -32,11 +32,11 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const { isCollapsed, setIsCollapsed, isModalOpen } = useSidebar();
   const { openSettingsModal } = useSettingsModal();
   const { t } = useI18n();
-  
+
   const navigation = getNavigation(t);
 
   return (
-    <aside style={{ 
+    <aside style={{
       position: 'fixed',
       top: '4rem',
       left: 0,
@@ -61,13 +61,13 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
-              
+
               return (
                 <li key={item.name} style={{ marginBottom: '0.375rem' }}>
-                  <Link 
-                    href={item.href} 
+                  <Link
+                    href={item.href}
                     className={`sidebar-item ${isActive ? 'sidebar-item-active' : ''}`}
-                    style={{ 
+                    style={{
                       textDecoration: 'none',
                       justifyContent: isCollapsed ? 'center' : 'flex-start',
                       padding: isCollapsed ? '0.875rem' : '0.875rem 1rem',
@@ -85,11 +85,13 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
                   >
                     <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                     {!isCollapsed && (
-                      <span style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: isActive ? 600 : 500,
-                        letterSpacing: '-0.01em'
-                      }}>
+                      <span
+                        suppressHydrationWarning={true}
+                        style={{
+                          fontSize: '0.875rem',
+                          fontWeight: isActive ? 600 : 500,
+                          letterSpacing: '-0.01em'
+                        }}>
                         {item.name}
                       </span>
                     )}
@@ -102,8 +104,8 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
       </nav>
 
       {/* Alt Kısım - Ayarlar ve Collapse Toggle */}
-      <div style={{ 
-        padding: isCollapsed ? '0.5rem' : '1rem', 
+      <div style={{
+        padding: isCollapsed ? '0.5rem' : '1rem',
         backgroundColor: 'var(--bg-primary)',
         display: 'flex',
         flexDirection: isCollapsed ? 'column' : 'row',

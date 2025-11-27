@@ -1,13 +1,13 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 import config from './config.js';
 import TestRunner from './testRunner.js';
+import webSocketService from './websocket.js';
 
 import TestScheduler from './scheduler.js';
 import errorHandler from '../services/errorHandler.js';
@@ -43,7 +43,9 @@ import {
 
 const app: Express = express();
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
+
+// Initialize WebSocket Service
+webSocketService.initialize(server);
 
 // Middleware
 app.use(cors());
@@ -70,31 +72,8 @@ ensureDirectoriesExist(storageDirs);
 // In-memory storage for active executions
 const activeExecutions = new Map<string, Execution>();
 
-// WebSocket connections
-const clients = new Set<WebSocket>();
-
 // Test Scheduler instance - initialize early
 const testScheduler = new TestScheduler(executeScheduledTest, storageDirs.SCHEDULED_TESTS_DIR);
-
-// WebSocket connection handling
-wss.on('connection', (ws: WebSocket) => {
-    clients.add(ws);
-    logger.info('Client connected', { totalClients: clients.size });
-
-    ws.on('close', () => {
-        clients.delete(ws);
-        logger.info('Client disconnected', { totalClients: clients.size });
-    });
-});
-
-// Broadcast to all connected clients
-function broadcast(data: any) {
-    clients.forEach((client) => {
-        if (client.readyState === client.OPEN) {
-            client.send(JSON.stringify(data));
-        }
-    });
-}
 
 // Execute scheduled test function
 async function executeScheduledTest(schedule: Schedule) {
@@ -163,7 +142,7 @@ async function executeScheduledTest(schedule: Schedule) {
         await fs.writeJson(path.join(storageDirs.EXECUTIONS_DIR, `${executionId}.json`), execution);
 
         // Broadcast başlangıç
-        broadcast({
+        webSocketService.broadcast({
             type: 'execution:scheduled',
             executionId,
             execution,
@@ -199,7 +178,7 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
         execution.status = 'running';
 
         // Broadcast start
-        broadcast({
+        webSocketService.broadcast({
             type: 'execution:started',
             executionId,
             execution
@@ -234,7 +213,7 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
             step.startTime = new Date();
 
             // Broadcast step start
-            broadcast({
+            webSocketService.broadcast({
                 type: 'step:started',
                 executionId,
                 stepIndex: i,
@@ -266,7 +245,7 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
                 execution.progress = Math.round(((i + 1) / execution.steps.length) * 100);
 
                 // Broadcast step completion
-                broadcast({
+                webSocketService.broadcast({
                     type: 'step:completed',
                     executionId,
                     stepIndex: i,
@@ -301,7 +280,7 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
                     stepId: step.stepId
                 });
 
-                broadcast({
+                webSocketService.broadcast({
                     type: 'step:failed',
                     executionId,
                     stepIndex: i,
@@ -364,7 +343,7 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
         activeExecutions.delete(executionId);
 
         // Broadcast completion or failure based on status
-        broadcast({
+        webSocketService.broadcast({
             type: execution.status === 'failed' ? 'execution:failed' : 'execution:completed',
             executionId,
             execution,
@@ -399,7 +378,7 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
         activeExecutions.delete(executionId);
 
         // Broadcast failure
-        broadcast({
+        webSocketService.broadcast({
             type: 'execution:failed',
             executionId,
             execution,
@@ -419,10 +398,10 @@ app.get('/', (req, res) => {
 });
 
 // Setup routes
-app.use('/api/executions', createExecutionRoutes(activeExecutions, clients, broadcast, executeTestWorkflow, storageDirs));
-app.use('/api/tests', createTestRoutes(storageDirs, broadcast));
-app.use('/api/scheduled-tests', createScheduledRoutes(storageDirs, broadcast, testScheduler));
-app.use('/api/health', createHealthRoutes(activeExecutions, clients, testScheduler, healthChecker));
+app.use('/api/executions', createExecutionRoutes(activeExecutions, webSocketService, executeTestWorkflow, storageDirs));
+app.use('/api/tests', createTestRoutes(storageDirs, webSocketService));
+app.use('/api/scheduled-tests', createScheduledRoutes(storageDirs, webSocketService, testScheduler));
+app.use('/api/health', createHealthRoutes(activeExecutions, webSocketService, testScheduler, healthChecker));
 app.use('/api/errors', errorRoutes);
 
 // Serve screenshots and videos
@@ -461,6 +440,9 @@ process.on('SIGTERM', () => {
         testScheduler.stopAll();
     }
 
+    // Close WebSocket server
+    webSocketService.close();
+
     server.close(() => {
         console.log('Server closed');
         process.exit(0);
@@ -474,6 +456,9 @@ process.on('SIGINT', () => {
     if (testScheduler) {
         testScheduler.stopAll();
     }
+
+    // Close WebSocket server
+    webSocketService.close();
 
     server.close(() => {
         console.log('Server closed');

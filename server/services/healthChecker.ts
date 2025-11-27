@@ -3,6 +3,8 @@ import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
 
+import { WebSocketService } from '../core/websocket.js';
+
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -267,16 +269,15 @@ class HealthChecker {
     }
 
     // WebSocket bağlantı durumunu kontrol et
-    public checkWebSocketConnections(clients: Set<unknown>): Record<string, unknown> {
-        const healthyConnections = Array.from(clients).filter(
-            (client: unknown) => (client as any).readyState === (client as any).OPEN
-        ).length;
+    public checkWebSocketConnections(webSocketService: WebSocketService): Record<string, unknown> {
+        const total = webSocketService.getClientCount();
+        const healthy = webSocketService.getHealthyClientCount();
 
         return {
-            status: healthyConnections > 0 ? 'ok' : 'warning',
-            total: clients.size,
-            healthy: healthyConnections,
-            unhealthy: clients.size - healthyConnections
+            status: healthy > 0 || total === 0 ? 'ok' : 'warning',
+            total,
+            healthy,
+            unhealthy: total - healthy
         };
     }
 
@@ -345,7 +346,7 @@ class HealthChecker {
     }
 
     // Tam sağlık raporu oluştur
-    public async generateHealthReport(activeExecutions: Map<unknown, unknown>, clients: Set<unknown>, testScheduler: unknown): Promise<HealthCheckResult> {
+    public async generateHealthReport(activeExecutions: Map<unknown, unknown>, webSocketService: WebSocketService, testScheduler: unknown): Promise<HealthCheckResult> {
         const timestamp = new Date().toISOString();
 
         // Tüm kontrolleri paralel olarak çalıştır
@@ -361,7 +362,7 @@ class HealthChecker {
             this.getSystemMetrics(),
             this.checkFileSystem(),
             this.checkTestRunner(),
-            Promise.resolve(this.checkWebSocketConnections(clients)),
+            Promise.resolve(this.checkWebSocketConnections(webSocketService)),
             Promise.resolve(this.checkScheduler(testScheduler)),
             this.checkDiskSpace(),
             this.checkNetworkConnectivity()
@@ -388,7 +389,7 @@ class HealthChecker {
             },
             metrics: {
                 activeExecutions: activeExecutions.size,
-                connectedClients: clients.size,
+                connectedClients: webSocketService.getClientCount(),
                 ...systemMetrics
             },
             checks,
@@ -399,13 +400,13 @@ class HealthChecker {
     }
 
     // Hızlı sağlık kontrolü (basit endpoint için)
-    public getQuickHealth(activeExecutions: Map<unknown, unknown>, clients: Set<unknown>, testScheduler: unknown): Record<string, unknown> {
+    public getQuickHealth(activeExecutions: Map<unknown, unknown>, webSocketService: WebSocketService, testScheduler: unknown): Record<string, unknown> {
         return {
             status: 'ok',
             timestamp: new Date().toISOString(),
             uptime: Math.round(process.uptime()),
             activeExecutions: activeExecutions.size,
-            connectedClients: clients.size,
+            connectedClients: webSocketService.getClientCount(),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             activeSchedules: testScheduler && typeof testScheduler === 'object' && 'getScheduleCount' in testScheduler ? (testScheduler as any).getScheduleCount() : 0,
             memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'

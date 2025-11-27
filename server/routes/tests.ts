@@ -19,10 +19,12 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+import { WebSocketService } from '../core/websocket.js';
+
 /**
  * Create test routes instance
  */
-function createTestRoutes(storageDirs: any, broadcast: Function) {
+function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) {
     const { TESTS_DIR } = storageDirs;
 
     // Get all tests
@@ -86,7 +88,7 @@ function createTestRoutes(storageDirs: any, broadcast: Function) {
 
             await fs.writeJson(getTestFilePath(TESTS_DIR, testId), test);
 
-            broadcast({
+            webSocketService.broadcast({
                 type: 'test:saved',
                 test
             });
@@ -115,7 +117,7 @@ function createTestRoutes(storageDirs: any, broadcast: Function) {
 
                 await fs.writeJson(testPath, updatedTest);
 
-                broadcast({
+                webSocketService.broadcast({
                     type: 'test:updated',
                     test: updatedTest
                 });
@@ -139,7 +141,7 @@ function createTestRoutes(storageDirs: any, broadcast: Function) {
             if (await fs.pathExists(testPath)) {
                 await fs.remove(testPath);
 
-                broadcast({
+                webSocketService.broadcast({
                     type: 'test:deleted',
                     testId: id
                 });

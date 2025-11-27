@@ -9,16 +9,18 @@ import TestScheduler from '../core/scheduler.js';
 
 const router = express.Router();
 
+import { WebSocketService } from '../core/websocket.js';
+
 /**
  * Create health routes instance
  */
-function createHealthRoutes(activeExecutions: Map<any, any>, clients: Set<any>, testScheduler: TestScheduler, healthChecker: typeof HealthChecker) {
+function createHealthRoutes(activeExecutions: Map<any, any>, webSocketService: WebSocketService, testScheduler: TestScheduler, healthChecker: typeof HealthChecker) {
     // Health check endpoints
     router.get('/', async (req: Request, res: Response) => {
         try {
             const health = await healthChecker.generateHealthReport(
                 activeExecutions,
-                clients,
+                webSocketService,
                 testScheduler
             );
 
@@ -38,7 +40,7 @@ function createHealthRoutes(activeExecutions: Map<any, any>, clients: Set<any>, 
     // Quick health check (lightweight)
     router.get('/quick', (req: Request, res: Response) => {
         try {
-            const health = healthChecker.getQuickHealth(activeExecutions, clients, testScheduler);
+            const health = healthChecker.getQuickHealth(activeExecutions, webSocketService, testScheduler);
             res.json(health);
         } catch (error) {
             res.status(500).json({
@@ -83,15 +85,16 @@ function createHealthRoutes(activeExecutions: Map<any, any>, clients: Set<any>, 
                 healthChecker.checkTestRunner()
             ]);
 
-            // Critical checks must be ok for readiness
-            const isReady = fileSystem.status === 'ok' && testRunner.status === 'ok';
+            // Check if all file system checks are ok
+            const fileSystemOk = Object.values(fileSystem).every(check => check.status === 'ok');
+            const isReady = fileSystemOk && testRunner.status === 'ok';
 
             if (isReady) {
                 res.json({
                     status: 'ready',
                     timestamp: new Date().toISOString(),
                     checks: {
-                        fileSystem: fileSystem.status,
+                        fileSystem: 'ok',
                         testRunner: testRunner.status
                     }
                 });
@@ -100,11 +103,11 @@ function createHealthRoutes(activeExecutions: Map<any, any>, clients: Set<any>, 
                     status: 'not ready',
                     timestamp: new Date().toISOString(),
                     checks: {
-                        fileSystem: fileSystem.status,
+                        fileSystem: fileSystemOk ? 'ok' : 'error',
                         testRunner: testRunner.status
                     },
                     issues: [
-                        fileSystem.status !== 'ok' && `FileSystem: ${fileSystem.error || 'Unknown error'}`,
+                        !fileSystemOk && `FileSystem: ${Object.values(fileSystem).filter(c => c.status !== 'ok').map(c => c.error || c.path).join(', ')}`,
                         testRunner.status !== 'ok' && `TestRunner: ${testRunner.error || testRunner.message}`
                     ].filter(Boolean)
                 });

@@ -35,6 +35,7 @@ export const convertStepsToBackendFormat = (workflow: any[]): BackendStep[] => {
     id: step.id,
     type: step.type,
     config: {
+      type: step.type,
       url: step.url,
       selector: step.selector,
       value: step.value,

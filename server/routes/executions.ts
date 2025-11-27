@@ -26,7 +26,12 @@ import { Execution } from '@shared/types/index.js';
 /**
  * Create execution service instance
  */
-function createExecutionRoutes(activeExecutions: Map<string, Execution>, clients: Set<any>, broadcast: Function, executeTestWorkflow: Function, storageDirs: any) {
+import { WebSocketService } from '../core/websocket.js';
+
+/**
+ * Create execution service instance
+ */
+function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSocketService: WebSocketService, executeTestWorkflow: Function, storageDirs: any) {
     const { EXECUTIONS_DIR, SCREENSHOTS_DIR, VIDEOS_DIR } = storageDirs;
 
     // Execute test workflow
@@ -188,7 +193,7 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, clients
                     activeExecutions.delete(id);
 
                     // Broadcast cancellation
-                    broadcast({
+                    webSocketService.broadcast({
                         type: 'execution:cancelled',
                         executionId: id,
                         execution
@@ -244,7 +249,7 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, clients
                     // Continue even if media deletion fails
                 }
 
-                broadcast({
+                webSocketService.broadcast({
                     type: 'execution:deleted',
                     executionId: id
                 });
