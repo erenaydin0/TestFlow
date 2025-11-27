@@ -9,7 +9,7 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import { TestRunnerOptions, StepConfig, StepResult } from '../types/models.js';
+import { TestRunnerOptions, StepConfig, StepResult } from '@shared/types/index.js';
 
 class TestRunner {
     private browser: Browser | null;

@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 import { ensureDirectoriesExist } from '../utils/fileUtils.js';
 import { generateScheduledExecutionId } from '../utils/timestamp.js';
 import { calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js';
-import { Execution, Schedule, TestStep } from '../types/models.js';
+import { Execution, Schedule, TestStep } from '@shared/types/index.js';
 
 // Routes
 import createExecutionRoutes from '../routes/executions.js';

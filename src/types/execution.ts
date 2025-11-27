@@ -1,43 +1,21 @@
 import { BaseEntity } from './types';
 import { BrowserType } from './browser';
 import { ExecutionStatus, StepStatus } from './types';
+import { Execution as SharedExecution, ExecutionOptions as SharedExecutionOptions, TestStep as SharedTestStep } from '@shared/types/index';
 
-export interface ExecutionResult extends BaseEntity {
-  workflowId: string;
-  workflowName: string;
-  status: ExecutionStatus;
-  startTime: Date;
-  endTime?: Date;
-  duration?: number;
-  progress: number;
+export interface ExecutionResult extends Omit<SharedExecution, 'steps' | 'options'> {
+  // Frontend specific overrides or additions if any
   options: ExecutionOptions;
   steps: ExecutionStepResult[];
-  screenshots: string[];
-  logs: string[];
-  videoPath?: string;
-  successRate?: number;
-  error?: string;
-  suite?: string;
-  tags?: string[];
 }
 
-export interface ExecutionStepResult {
-  stepId: string;
-  type: string;
-  status: StepStatus;
-  startTime?: Date;
-  endTime?: Date;
-  duration?: number;
+export interface ExecutionStepResult extends Omit<SharedTestStep, 'config'> {
+  // Frontend specific overrides
   config: any;
-  error?: string;
-  screenshot?: string;
 }
 
-export interface ExecutionOptions {
-  enableScreenshots: boolean;
-  enableRecording: boolean;
-  headlessMode: boolean;
-  browserType?: BrowserType;
+export interface ExecutionOptions extends SharedExecutionOptions {
+  browserType?: BrowserType; // Override to use frontend BrowserType enum/type if different
 }
 
 export interface ExecutionStats {

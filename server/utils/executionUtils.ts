@@ -2,7 +2,7 @@
  * Execution utility functions for linear workflow execution
  */
 
-import { TestStep } from '../types/models.js';
+import { TestStep } from '@shared/types/index.js';
 
 /**
  * Calculate execution success rate

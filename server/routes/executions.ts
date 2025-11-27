@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-import { Execution } from '../types/models.js';
+import { Execution } from '@shared/types/index.js';
 
 /**
  * Create execution service instance
