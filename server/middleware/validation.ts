@@ -1,8 +1,6 @@
-/**
- * Request validation middleware
- */
-
 import { Request, Response, NextFunction } from 'express';
+import { ZodSchema } from 'zod';
+import { executionRequestSchema, testRequestSchema, scheduledTestRequestSchema } from './validationSchemas.js';
 
 // Extend Request interface to include validatedData
 declare global {
@@ -14,113 +12,25 @@ declare global {
 }
 
 /**
- * Validate execution request body
+ * Generic request validation middleware factory
  */
-function validateExecutionRequest(req: Request, res: Response, next: NextFunction) {
-    const { workflowId, workflowName, steps, suite, tags, options = {} } = req.body;
-
-    // Check required fields
-    if (!steps || !Array.isArray(steps) || steps.length === 0) {
-        return res.status(400).json({
-            error: 'Invalid or empty steps provided',
-            code: 'INVALID_STEPS',
-            details: 'Steps must be a non-empty array'
-        });
-    }
-
-    // Validate steps structure
-    for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        if (!step.id || !step.type) {
+const validateRequest = (schema: ZodSchema) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const validatedData = schema.parse(req.body);
+            req.validatedData = validatedData;
+            next();
+        } catch (error: any) {
             return res.status(400).json({
-                error: 'Invalid step structure',
-                code: 'INVALID_STEP_STRUCTURE',
-                details: `Step at index ${i} must have id and type properties`
+                error: 'Validation Error',
+                code: 'VALIDATION_ERROR',
+                details: error.errors || error.message
             });
         }
-    }
-
-    // Add validated data to request
-    req.validatedData = {
-        workflowId: workflowId || 'manual',
-        workflowName: workflowName || 'Manual Test',
-        steps,
-        suite: suite || 'Default',
-        tags: tags || [],
-        options
     };
-
-    next();
-}
-
-/**
- * Validate test request body
- */
-function validateTestRequest(req: Request, res: Response, next: NextFunction) {
-    const { name, workflow, suite, tags, browserType } = req.body;
-
-    if (!name || !workflow) {
-        return res.status(400).json({
-            error: 'Missing required fields',
-            code: 'MISSING_FIELDS',
-            details: 'Name and workflow are required'
-        });
-    }
-
-    if (!Array.isArray(workflow) || workflow.length === 0) {
-        return res.status(400).json({
-            error: 'Invalid workflow',
-            code: 'INVALID_WORKFLOW',
-            details: 'Workflow must be a non-empty array'
-        });
-    }
-
-    req.validatedData = {
-        name,
-        workflow,
-        suite: suite || 'Default',
-        tags: tags || [],
-        browserType: browserType || 'chromium'
-    };
-
-    next();
-}
-
-/**
- * Validate scheduled test request body
- */
-function validateScheduledTestRequest(req: Request, res: Response, next: NextFunction) {
-    const { name, testId, schedule, environment } = req.body;
-
-    if (!name || !testId || !schedule) {
-        return res.status(400).json({
-            error: 'Missing required fields',
-            code: 'MISSING_FIELDS',
-            details: 'Name, testId, and schedule are required'
-        });
-    }
-
-    // Basic cron validation (simple check)
-    if (typeof schedule !== 'string' || schedule.trim().length === 0) {
-        return res.status(400).json({
-            error: 'Invalid schedule',
-            code: 'INVALID_SCHEDULE',
-            details: 'Schedule must be a valid cron expression'
-        });
-    }
-
-    req.validatedData = {
-        name,
-        testId,
-        schedule,
-        environment: environment || 'default'
-    };
-
-    next();
-}
-
-export {
-    validateExecutionRequest,
-    validateTestRequest,
-    validateScheduledTestRequest
 };
+
+export const validateExecutionRequest = validateRequest(executionRequestSchema);
+export const validateTestRequest = validateRequest(testRequestSchema);
+export const validateScheduledTestRequest = validateRequest(scheduledTestRequestSchema);
+

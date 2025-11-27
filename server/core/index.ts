@@ -20,8 +20,9 @@ const __dirname = path.dirname(__filename);
 
 // Utils
 import { ensureDirectoriesExist } from '../utils/fileUtils.js';
-import { generateScheduledExecutionId } from '../utils/timestamp.js'; // Note: timestamp is now .ts but imported as .js
+import { generateScheduledExecutionId } from '../utils/timestamp.js';
 import { calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js';
+import { Execution, Schedule, TestStep } from '../types/models.js';
 
 // Routes
 import createExecutionRoutes from '../routes/executions.js';
@@ -67,13 +68,12 @@ const storageDirs = {
 ensureDirectoriesExist(storageDirs);
 
 // In-memory storage for active executions
-const activeExecutions = new Map<string, any>();
+const activeExecutions = new Map<string, Execution>();
 
 // WebSocket connections
 const clients = new Set<WebSocket>();
 
 // Test Scheduler instance - initialize early
-// @ts-ignore - TestScheduler is JS
 const testScheduler = new TestScheduler(executeScheduledTest, storageDirs.SCHEDULED_TESTS_DIR);
 
 // WebSocket connection handling
@@ -97,7 +97,7 @@ function broadcast(data: any) {
 }
 
 // Execute scheduled test function
-async function executeScheduledTest(schedule: any) {
+async function executeScheduledTest(schedule: Schedule) {
     logger.info('Scheduled test starting', {
         scheduleId: schedule.id,
         scheduleName: schedule.name,
@@ -131,7 +131,7 @@ async function executeScheduledTest(schedule: any) {
         const executionId = generateScheduledExecutionId(schedule.testId, baseTimestamp);
 
         // Execution objesi oluştur
-        const execution = {
+        const execution: Execution = {
             id: executionId,
             workflowId: schedule.testId,
             workflowName: schedule.name,
@@ -145,7 +145,7 @@ async function executeScheduledTest(schedule: any) {
                 headlessMode: process.env.HEADLESS_MODE === 'true' || true,
                 browserType: process.env.DEFAULT_BROWSER || 'chromium'
             },
-            steps: testWorkflow.workflow.map((step: any) => ({
+            steps: testWorkflow.workflow.map((step: any): TestStep => ({
                 stepId: step.id,
                 type: step.type,
                 status: 'pending',
@@ -194,7 +194,7 @@ async function executeScheduledTest(schedule: any) {
 }
 
 // Test execution function
-async function executeTestWorkflow(executionId: string, execution: any) {
+async function executeTestWorkflow(executionId: string, execution: Execution) {
     try {
         execution.status = 'running';
 
@@ -206,7 +206,6 @@ async function executeTestWorkflow(executionId: string, execution: any) {
         });
 
         // Execute with Playwright
-        // @ts-ignore - TestRunner is JS
         const testRunner = new TestRunner(storageDirs.SCREENSHOTS_DIR);
 
         // Initialize browser with options
@@ -227,7 +226,7 @@ async function executeTestWorkflow(executionId: string, execution: any) {
         for (let i = 0; i < execution.steps.length; i++) {
             const step = execution.steps[i];
 
-            if (execution.status === 'cancelled') {
+            if ((execution.status as string) === 'cancelled') {
                 break;
             }
 
@@ -447,11 +446,9 @@ server.listen(PORT, async () => {
     });
 
     // Initialize Test Scheduler
-    // @ts-ignore
     await testScheduler.initialize();
 
     // Fix existing schedules' nextRun values
-    // @ts-ignore
     await testScheduler.fixExistingSchedules();
 });
 
@@ -461,7 +458,6 @@ process.on('SIGTERM', () => {
 
     // Stop all scheduled tasks
     if (testScheduler) {
-        // @ts-ignore
         testScheduler.stopAll();
     }
 
@@ -476,7 +472,6 @@ process.on('SIGINT', () => {
 
     // Stop all scheduled tasks
     if (testScheduler) {
-        // @ts-ignore
         testScheduler.stopAll();
     }
 

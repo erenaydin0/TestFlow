@@ -9,31 +9,7 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface TestRunnerOptions {
-    headless?: boolean;
-    viewport?: { width: number; height: number };
-    timeout?: number;
-    enableRecording?: boolean;
-    executionId?: string;
-    browserType?: string;
-    enableScreenshots?: boolean;
-}
-
-interface StepConfig {
-    type: string;
-    stepId?: string;
-    [key: string]: any;
-}
-
-interface StepResult {
-    success: boolean;
-    startTime: Date;
-    endTime?: Date;
-    duration?: number;
-    logs: string[];
-    screenshot: string | null;
-    error: string | null;
-}
+import { TestRunnerOptions, StepConfig, StepResult } from '../types/models.js';
 
 class TestRunner {
     private browser: Browser | null;

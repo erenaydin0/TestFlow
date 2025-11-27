@@ -21,26 +21,7 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-interface Execution {
-    id: string;
-    workflowId: string;
-    workflowName: string;
-    status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
-    startTime: Date;
-    endTime?: Date;
-    suite?: string;
-    tags?: string[];
-    options: {
-        enableScreenshots: boolean;
-        enableRecording: boolean;
-        headlessMode: boolean;
-        browserType: string;
-    };
-    steps: any[];
-    screenshots: string[];
-    logs: string[];
-    progress: number;
-}
+import { Execution } from '../types/models.js';
 
 /**
  * Create execution service instance

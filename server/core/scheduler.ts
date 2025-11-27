@@ -9,19 +9,7 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface Schedule {
-    id: string;
-    name: string;
-    schedule: string;
-    testId: string;
-    enabled: boolean;
-    status: string;
-    lastRun?: Date;
-    nextRun?: Date;
-    retryOnFailure?: boolean;
-    maxRetries?: number;
-    [key: string]: any;
-}
+import { Schedule } from '../types/models.js';
 
 type ExecuteTestFunction = (schedule: Schedule) => Promise<any>;
 
