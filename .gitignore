@@ -37,3 +37,4 @@ next-env.d.ts
 /server/logs/
 
 .cursor
+/generated/prisma

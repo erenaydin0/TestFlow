@@ -1,9 +1,9 @@
 import cron from 'node-cron';
 import { Cron } from 'croner';
-import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import logger from '../utils/logger.js';
+import { prisma } from '../lib/prisma.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -13,15 +13,24 @@ import { Schedule } from '@shared/types/index.js';
 
 type ExecuteTestFunction = (schedule: Schedule) => Promise<any>;
 
+// Helper to map DB schedule to API schedule
+const mapScheduleFromDb = (dbSchedule: any): Schedule => {
+    return {
+        ...dbSchedule,
+        lastRun: dbSchedule.lastRun ? new Date(dbSchedule.lastRun) : undefined,
+        nextRun: dbSchedule.nextRun ? new Date(dbSchedule.nextRun) : undefined,
+        createdAt: new Date(dbSchedule.createdAt),
+        updatedAt: new Date(dbSchedule.updatedAt)
+    };
+};
+
 class TestScheduler {
     private executeTest: ExecuteTestFunction;
-    private scheduledTestsDir: string;
     private activeCrons: Map<string, cron.ScheduledTask>;
     private isInitialized: boolean;
 
-    constructor(executeTestFunction: ExecuteTestFunction, scheduledTestsDir: string) {
+    constructor(executeTestFunction: ExecuteTestFunction) {
         this.executeTest = executeTestFunction;
-        this.scheduledTestsDir = scheduledTestsDir;
         this.activeCrons = new Map(); // scheduleId -> cron task
         this.isInitialized = false;
     }
@@ -33,21 +42,18 @@ class TestScheduler {
 
         try {
             // Tüm zamanlanmış testleri yükle ve cron'ları başlat
-            const files = await fs.readdir(this.scheduledTestsDir);
+            const dbSchedules = await prisma.scheduledTest.findMany();
 
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const schedulePath = path.join(this.scheduledTestsDir, file);
-                        const schedule: Schedule = await fs.readJson(schedulePath);
+            for (const dbSchedule of dbSchedules) {
+                try {
+                    const schedule = mapScheduleFromDb(dbSchedule);
 
-                        if (schedule.enabled && schedule.status === 'active') {
-                            this.scheduleTest(schedule);
-                        }
-                    } catch (error: unknown) {
-                        const err = error instanceof Error ? error : new Error(String(error));
-                        logger.error(`Zamanlama yüklenirken hata (${file}):`, { error: err });
+                    if (schedule.enabled && schedule.status === 'active') {
+                        this.scheduleTest(schedule);
                     }
+                } catch (error: unknown) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    logger.error(`Zamanlama yüklenirken hata (${dbSchedule.id}):`, { error: err });
                 }
             }
 
@@ -112,16 +118,18 @@ class TestScheduler {
 
     async updateLastRun(scheduleId: string): Promise<void> {
         try {
-            const schedulePath = path.join(this.scheduledTestsDir, `${scheduleId}.json`);
+            const schedule = await prisma.scheduledTest.findUnique({ where: { id: scheduleId } });
 
-            if (await fs.pathExists(schedulePath)) {
-                const schedule: Schedule = await fs.readJson(schedulePath);
-                schedule.lastRun = new Date();
+            if (schedule) {
+                const nextRun = this.calculateNextRun(schedule.schedule);
 
-                // Sonraki çalışma zamanını hesapla (basit versiyon)
-                schedule.nextRun = this.calculateNextRun(schedule.schedule);
-
-                await fs.writeJson(schedulePath, schedule);
+                await prisma.scheduledTest.update({
+                    where: { id: scheduleId },
+                    data: {
+                        lastRun: new Date(),
+                        nextRun: nextRun
+                    }
+                });
             }
         } catch (error: any) {
             logger.error('Son çalışma zamanı güncellenirken hata:', { error: error.message, scheduleId });
@@ -182,10 +190,10 @@ class TestScheduler {
 
     async reloadSchedule(scheduleId: string): Promise<boolean> {
         try {
-            const schedulePath = path.join(this.scheduledTestsDir, `${scheduleId}.json`);
+            const dbSchedule = await prisma.scheduledTest.findUnique({ where: { id: scheduleId } });
 
-            if (await fs.pathExists(schedulePath)) {
-                const schedule: Schedule = await fs.readJson(schedulePath);
+            if (dbSchedule) {
+                const schedule = mapScheduleFromDb(dbSchedule);
 
                 // Önce mevcut cron'u durdur
                 this.unscheduleTest(scheduleId);
@@ -209,25 +217,24 @@ class TestScheduler {
         try {
             logger.info('🔧 Mevcut zamanlamaların nextRun değerleri düzeltiliyor...');
 
-            const files = await fs.readdir(this.scheduledTestsDir);
+            const dbSchedules = await prisma.scheduledTest.findMany();
 
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const schedulePath = path.join(this.scheduledTestsDir, file);
-                        const schedule: Schedule = await fs.readJson(schedulePath);
+            for (const dbSchedule of dbSchedules) {
+                try {
+                    const schedule = mapScheduleFromDb(dbSchedule);
 
-                        // nextRun değerini yeniden hesapla
-                        const newNextRun = this.calculateNextRun(schedule.schedule);
+                    // nextRun değerini yeniden hesapla
+                    const newNextRun = this.calculateNextRun(schedule.schedule);
 
-                        if (schedule.nextRun && newNextRun.getTime() !== new Date(schedule.nextRun).getTime()) {
-                            schedule.nextRun = newNextRun;
-                            await fs.writeJson(schedulePath, schedule);
-                            logger.info(`✅ ${schedule.name} nextRun düzeltildi: ${newNextRun.toISOString()}`);
-                        }
-                    } catch (error: any) {
-                        logger.error(`Hata (${file}):`, { error: error.message });
+                    if (schedule.nextRun && newNextRun.getTime() !== new Date(schedule.nextRun).getTime()) {
+                        await prisma.scheduledTest.update({
+                            where: { id: schedule.id },
+                            data: { nextRun: newNextRun }
+                        });
+                        logger.info(`✅ ${schedule.name} nextRun düzeltildi: ${newNextRun.toISOString()}`);
                     }
+                } catch (error: any) {
+                    logger.error(`Hata (${dbSchedule.id}):`, { error: error.message });
                 }
             }
 

@@ -13,6 +13,7 @@ import TestScheduler from './scheduler.js';
 import errorHandler from '../services/errorHandler.js';
 import healthChecker from '../services/healthChecker.js';
 import logger from '../utils/logger.js';
+import { prisma } from '../lib/prisma.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -73,7 +74,7 @@ ensureDirectoriesExist(storageDirs);
 const activeExecutions = new Map<string, Execution>();
 
 // Test Scheduler instance - initialize early
-const testScheduler = new TestScheduler(executeScheduledTest, storageDirs.SCHEDULED_TESTS_DIR);
+const testScheduler = new TestScheduler(executeScheduledTest);
 
 // Execute scheduled test function
 async function executeScheduledTest(schedule: Schedule) {
@@ -84,10 +85,12 @@ async function executeScheduledTest(schedule: Schedule) {
     });
 
     try {
-        // Test workflow'unu backend'den yükle
-        const testPath = path.join(storageDirs.TESTS_DIR, `${schedule.testId}.json`);
+        // Test workflow'unu DB'den yükle
+        const test = await prisma.test.findUnique({
+            where: { id: schedule.testId }
+        });
 
-        if (!await fs.pathExists(testPath)) {
+        if (!test) {
             logger.error('Scheduled test: Test not found', {
                 scheduleId: schedule.id,
                 testId: schedule.testId
@@ -95,9 +98,9 @@ async function executeScheduledTest(schedule: Schedule) {
             return null;
         }
 
-        const testWorkflow = await fs.readJson(testPath);
+        const workflow = JSON.parse(test.workflow || '[]');
 
-        if (!testWorkflow || !testWorkflow.workflow || testWorkflow.workflow.length === 0) {
+        if (!workflow || workflow.length === 0) {
             logger.error('Scheduled test: Test workflow is empty', {
                 scheduleId: schedule.id,
                 testId: schedule.testId
@@ -124,7 +127,7 @@ async function executeScheduledTest(schedule: Schedule) {
                 headlessMode: process.env.HEADLESS_MODE === 'true' || true,
                 browserType: process.env.DEFAULT_BROWSER || 'chromium'
             },
-            steps: testWorkflow.workflow.map((step: any): TestStep => ({
+            steps: workflow.map((step: any): TestStep => ({
                 stepId: step.id,
                 type: step.type,
                 status: 'pending',
@@ -138,8 +141,24 @@ async function executeScheduledTest(schedule: Schedule) {
 
         activeExecutions.set(executionId, execution);
 
-        // Execution'ı kaydet
-        await fs.writeJson(path.join(storageDirs.EXECUTIONS_DIR, `${executionId}.json`), execution);
+        // Execution'ı DB'ye kaydet
+        await prisma.execution.create({
+            data: {
+                id: executionId,
+                workflowId: execution.workflowId,
+                workflowName: execution.workflowName,
+                status: execution.status,
+                startTime: execution.startTime,
+                suite: execution.suite,
+                tags: JSON.stringify(execution.tags),
+                options: JSON.stringify(execution.options),
+                steps: JSON.stringify(execution.steps),
+                screenshots: JSON.stringify(execution.screenshots),
+                logs: JSON.stringify(execution.logs),
+                progress: execution.progress,
+                scheduledTestId: execution.scheduledTestId
+            }
+        });
 
         // Broadcast başlangıç
         webSocketService.broadcast({
@@ -336,8 +355,22 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
             }
         }
 
-        // Save final execution state with video path
-        await fs.writeJson(path.join(storageDirs.EXECUTIONS_DIR, `${executionId}.json`), execution);
+        // Save final execution state to DB
+        await prisma.execution.update({
+            where: { id: executionId },
+            data: {
+                status: execution.status,
+                endTime: execution.endTime,
+                duration: execution.duration,
+                steps: JSON.stringify(execution.steps),
+                screenshots: JSON.stringify(execution.screenshots),
+                logs: JSON.stringify(execution.logs),
+                progress: execution.progress,
+                videoPath: execution.videoPath,
+                error: execution.error,
+                successRate: execution.successRate
+            }
+        });
 
         // Clean up from active executions
         activeExecutions.delete(executionId);
@@ -372,8 +405,24 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
         // Log detaylı hata
         await errorHandler.logError(error, { executionId });
 
-        // Save error state
-        await fs.writeJson(path.join(storageDirs.EXECUTIONS_DIR, `${executionId}.json`), execution);
+        // Save error state to DB
+        try {
+            await prisma.execution.update({
+                where: { id: executionId },
+                data: {
+                    status: 'failed',
+                    endTime: execution.endTime,
+                    duration: execution.duration,
+                    steps: JSON.stringify(execution.steps),
+                    screenshots: JSON.stringify(execution.screenshots),
+                    logs: JSON.stringify(execution.logs),
+                    progress: execution.progress,
+                    error: execution.error
+                }
+            });
+        } catch (dbError) {
+            logger.error('Failed to save execution error state to DB', { error: dbError as Error });
+        }
 
         activeExecutions.delete(executionId);
 

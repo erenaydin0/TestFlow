@@ -13,6 +13,7 @@ import { validateScheduledTestRequest } from '../middleware/validation.js';
 import errorHandler from '../services/errorHandler.js';
 import logger from '../utils/logger.js';
 import TestScheduler from '../core/scheduler.js';
+import { prisma } from '../lib/prisma.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -21,6 +22,18 @@ const __dirname = path.dirname(__filename);
 const router = express.Router();
 
 import { WebSocketService } from '../core/websocket.js';
+import { Schedule } from '@shared/types/index.js';
+
+// Helper to map DB schedule to API schedule
+const mapScheduleFromDb = (dbSchedule: any): Schedule => {
+    return {
+        ...dbSchedule,
+        lastRun: dbSchedule.lastRun ? new Date(dbSchedule.lastRun) : undefined,
+        nextRun: dbSchedule.nextRun ? new Date(dbSchedule.nextRun) : undefined,
+        createdAt: new Date(dbSchedule.createdAt),
+        updatedAt: new Date(dbSchedule.updatedAt)
+    };
+};
 
 /**
  * Create scheduled test routes instance
@@ -31,33 +44,21 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
     // Get all scheduled tests
     router.get('/', async (req: Request, res: Response) => {
         try {
-            const files = await fs.readdir(SCHEDULED_TESTS_DIR);
-            const scheduledTests = [];
+            const dbSchedules = await prisma.scheduledTest.findMany({
+                orderBy: { nextRun: 'asc' }
+            });
 
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const schedulePath = getScheduledTestFilePath(SCHEDULED_TESTS_DIR, file.replace('.json', ''));
-                        const schedule = await fs.readJson(schedulePath);
-                        scheduledTests.push(schedule);
-                    } catch (error: any) {
-                        logger.error(`Error reading schedule file ${file}:`, { error: error.message });
-                    }
-                }
-            }
-
-            // Sort by nextRun
-            scheduledTests.sort((a, b) => new Date(a.nextRun).getTime() - new Date(b.nextRun).getTime());
+            const scheduledTests = dbSchedules.map(mapScheduleFromDb);
 
             // Calculate upcoming runs
             const upcomingRuns = scheduledTests
-                .filter(s => s.enabled && s.status === 'active')
+                .filter(s => s.enabled && s.status === 'active' && s.nextRun)
                 .slice(0, 5)
                 .map(s => ({
                     id: uuidv4(),
                     scheduledTestId: s.id,
                     testName: s.name,
-                    scheduledTime: s.nextRun,
+                    scheduledTime: s.nextRun!,
                     estimatedDuration: s.lastDuration || 0,
                     environment: s.environment
                 }));
@@ -73,11 +74,13 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
     router.get('/:id', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const schedulePath = getScheduledTestFilePath(SCHEDULED_TESTS_DIR, id);
 
-            if (await fs.pathExists(schedulePath)) {
-                const schedule = await fs.readJson(schedulePath);
-                res.json(schedule);
+            const schedule = await prisma.scheduledTest.findUnique({
+                where: { id }
+            });
+
+            if (schedule) {
+                res.json(mapScheduleFromDb(schedule));
             } else {
                 res.status(404).json({ error: 'Scheduled test not found' });
             }
@@ -93,25 +96,46 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
             const scheduleData = req.validatedData;
             const scheduleId = uuidv4();
 
-            const schedule = {
-                id: scheduleId,
-                ...scheduleData,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                enabled: true,
-                status: 'active',
-                nextRun: null as Date | null
-            };
-
             // Calculate next run time based on cron expression
+            let nextRun = null;
             if (testScheduler) {
-                schedule.nextRun = testScheduler.calculateNextRun(schedule.schedule);
+                try {
+                    nextRun = testScheduler.calculateNextRun(scheduleData.schedule);
+                } catch (e) {
+                    nextRun = new Date(Date.now() + 60 * 60 * 1000); // Fallback 1 hour
+                }
             } else {
-                // Fallback: 1 saat sonra
-                schedule.nextRun = new Date(Date.now() + 60 * 60 * 1000);
+                nextRun = new Date(Date.now() + 60 * 60 * 1000);
             }
 
-            await fs.writeJson(getScheduledTestFilePath(SCHEDULED_TESTS_DIR, scheduleId), schedule);
+            const dbData = {
+                id: scheduleId,
+                testId: scheduleData.testId,
+                name: scheduleData.name,
+                description: scheduleData.description || '',
+                schedule: scheduleData.schedule,
+                frequency: scheduleData.frequency || 'custom',
+                status: 'active',
+                suite: scheduleData.suite || 'Default',
+                environment: scheduleData.environment || 'development',
+                enabled: true,
+                notifyOnFailure: scheduleData.notifyOnFailure ?? false,
+                notifyOnSuccess: scheduleData.notifyOnSuccess ?? false,
+                retryOnFailure: scheduleData.retryOnFailure ?? false,
+                maxRetries: scheduleData.maxRetries || 0,
+                nextRun: nextRun,
+                lastRun: null,
+                lastDuration: null,
+                successRate: null,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            const savedSchedule = await prisma.scheduledTest.create({
+                data: dbData
+            });
+
+            const schedule = mapScheduleFromDb(savedSchedule);
 
             // Scheduler'a ekle
             if (testScheduler) {
@@ -134,25 +158,36 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
     router.put('/:id', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const schedulePath = getScheduledTestFilePath(SCHEDULED_TESTS_DIR, id);
 
-            if (await fs.pathExists(schedulePath)) {
-                const existingSchedule = await fs.readJson(schedulePath);
-                const updatedSchedule = {
-                    ...existingSchedule,
+            const existingSchedule = await prisma.scheduledTest.findUnique({ where: { id } });
+
+            if (existingSchedule) {
+                const updateData = {
                     ...req.body,
-                    id, // Preserve ID
                     updatedAt: new Date()
                 };
 
                 // Eğer schedule değiştiyse nextRun'ı yeniden hesapla
                 if (req.body.schedule && req.body.schedule !== existingSchedule.schedule) {
                     if (testScheduler) {
-                        updatedSchedule.nextRun = testScheduler.calculateNextRun(updatedSchedule.schedule);
+                        try {
+                            updateData.nextRun = testScheduler.calculateNextRun(req.body.schedule);
+                        } catch (e) {
+                            // Keep existing or set to null?
+                        }
                     }
                 }
 
-                await fs.writeJson(schedulePath, updatedSchedule);
+                // Remove fields that shouldn't be updated directly
+                delete updateData.id;
+                delete updateData.createdAt;
+
+                const updated = await prisma.scheduledTest.update({
+                    where: { id },
+                    data: updateData
+                });
+
+                const schedule = mapScheduleFromDb(updated);
 
                 // Scheduler'ı güncelle
                 if (testScheduler) {
@@ -161,10 +196,10 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
 
                 webSocketService.broadcast({
                     type: 'schedule:updated',
-                    schedule: updatedSchedule
+                    schedule
                 });
 
-                res.json(updatedSchedule);
+                res.json(schedule);
             } else {
                 res.status(404).json({ error: 'Scheduled test not found' });
             }
@@ -178,15 +213,16 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
     router.delete('/:id', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const schedulePath = getScheduledTestFilePath(SCHEDULED_TESTS_DIR, id);
 
-            if (await fs.pathExists(schedulePath)) {
+            try {
                 // Scheduler'dan kaldır
                 if (testScheduler) {
                     testScheduler.unscheduleTest(id);
                 }
 
-                await fs.remove(schedulePath);
+                await prisma.scheduledTest.delete({
+                    where: { id }
+                });
 
                 webSocketService.broadcast({
                     type: 'schedule:deleted',
@@ -194,8 +230,12 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                 });
 
                 res.json({ message: 'Scheduled test deleted successfully' });
-            } else {
-                res.status(404).json({ error: 'Scheduled test not found' });
+            } catch (dbError: any) {
+                if (dbError.code === 'P2025') {
+                    res.status(404).json({ error: 'Scheduled test not found' });
+                } else {
+                    throw dbError;
+                }
             }
         } catch (error: any) {
             logger.error('Error deleting scheduled test:', { error: error.message, scheduleId: req.params.id });

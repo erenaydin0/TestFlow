@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import TestScheduler from '../scheduler.js';
-import fs from 'fs-extra';
 import cron from 'node-cron';
 import { Schedule } from '../../types/models.js';
 
 // Mock dependencies
-vi.mock('fs-extra');
+vi.mock('fs-extra'); // Keep fs-extra mock just in case, but we won't use it for scheduler logic
 vi.mock('node-cron');
 vi.mock('../utils/logger.js', () => ({
     default: {
@@ -16,10 +15,26 @@ vi.mock('../utils/logger.js', () => ({
     },
 }));
 
+// Mock Prisma
+const { mockPrisma } = vi.hoisted(() => {
+    return {
+        mockPrisma: {
+            scheduledTest: {
+                findMany: vi.fn(),
+                findUnique: vi.fn(),
+                update: vi.fn(),
+            }
+        }
+    };
+});
+
+vi.mock('../../lib/prisma.js', () => ({
+    prisma: mockPrisma
+}));
+
 describe('TestScheduler', () => {
     let scheduler: TestScheduler;
     const mockExecuteTest = vi.fn();
-    const mockScheduledTestsDir = '/mock/storage/scheduled-tests';
 
     const mockSchedule: Schedule = {
         id: 'schedule-1',
@@ -28,11 +43,13 @@ describe('TestScheduler', () => {
         testId: 'test-1',
         enabled: true,
         status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date()
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
-        scheduler = new TestScheduler(mockExecuteTest, mockScheduledTestsDir);
+        scheduler = new TestScheduler(mockExecuteTest);
 
         // Mock cron.validate to return true by default
         (cron.validate as any).mockReturnValue(true);
@@ -45,25 +62,20 @@ describe('TestScheduler', () => {
     });
 
     describe('initialize', () => {
-        it('should load active schedules from disk', async () => {
-            // Mock fs.readdir to return a list of files
-            (fs.readdir as any).mockResolvedValue(['schedule-1.json']);
-
-            // Mock fs.readJson to return the schedule object
-            (fs.readJson as any).mockResolvedValue(mockSchedule);
+        it('should load active schedules from DB', async () => {
+            // Mock prisma.scheduledTest.findMany to return schedules
+            mockPrisma.scheduledTest.findMany.mockResolvedValue([mockSchedule]);
 
             await scheduler.initialize();
 
-            expect(fs.readdir).toHaveBeenCalledWith(mockScheduledTestsDir);
-            expect(fs.readJson).toHaveBeenCalledWith(`${mockScheduledTestsDir}/schedule-1.json`);
+            expect(mockPrisma.scheduledTest.findMany).toHaveBeenCalled();
             expect(cron.schedule).toHaveBeenCalledWith(mockSchedule.schedule, expect.any(Function), expect.any(Object));
             expect(scheduler.getScheduleCount()).toBe(1);
         });
 
         it('should skip disabled schedules', async () => {
             const disabledSchedule = { ...mockSchedule, enabled: false };
-            (fs.readdir as any).mockResolvedValue(['schedule-1.json']);
-            (fs.readJson as any).mockResolvedValue(disabledSchedule);
+            mockPrisma.scheduledTest.findMany.mockResolvedValue([disabledSchedule]);
 
             await scheduler.initialize();
 

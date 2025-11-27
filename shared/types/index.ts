@@ -1,6 +1,25 @@
 export type ExecutionStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 export type StepStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
 export type BrowserType = 'chromium' | 'firefox' | 'webkit' | 'msedge';
+export type TestStatus = 'draft' | 'active' | 'archived';
+
+export interface Test {
+    id: string;
+    name: string;
+    description: string;
+    status: TestStatus | string;
+    duration: number;
+    tags: string[];
+    suite: string;
+    workflow?: any[]; // Using any[] for flexibility as steps can be complex
+    isExecutable?: boolean;
+    enableScreenshots?: boolean;
+    enableRecording?: boolean;
+    headlessMode?: boolean;
+    browserType?: BrowserType | string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
 
 export interface Schedule {
     id: string;

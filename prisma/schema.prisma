@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Test {
+  id                String   @id @default(uuid())
+  name              String
+  description       String
+  status            String
+  duration          Int      @default(0)
+  tags              String   // JSON array
+  suite             String
+  workflow          String   // JSON array of steps
+  isExecutable      Boolean  @default(true)
+  enableScreenshots Boolean  @default(false)
+  enableRecording   Boolean  @default(false)
+  headlessMode      Boolean  @default(false)
+  browserType       String   @default("chromium")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  schedules ScheduledTest[]
+}
+
+model ScheduledTest {
+  id              String    @id @default(uuid())
+  testId          String
+  test            Test      @relation(fields: [testId], references: [id], onDelete: Cascade)
+  name            String
+  description     String
+  schedule        String
+  frequency       String
+  status          String
+  lastRun         DateTime?
+  nextRun         DateTime?
+  lastDuration    Int?
+  successRate     Float?
+  suite           String
+  environment     String
+  enabled         Boolean   @default(true)
+  notifyOnFailure Boolean   @default(false)
+  notifyOnSuccess Boolean   @default(false)
+  retryOnFailure  Boolean   @default(false)
+  maxRetries      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Execution {
+  id              String    @id @default(uuid())
+  workflowId      String
+  workflowName    String
+  status          String
+  startTime       DateTime
+  endTime         DateTime?
+  duration        Int?
+  suite           String?
+  tags            String?   // JSON array
+  options         String    // JSON object
+  steps           String    // JSON array of StepResult
+  screenshots     String    // JSON array
+  logs            String    // JSON array
+  progress        Int       @default(0)
+  videoPath       String?
+  error           String?
+  successRate     Float?
+  scheduledTestId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

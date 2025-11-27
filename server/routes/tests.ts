@@ -12,6 +12,7 @@ import { getTestFilePath } from '../utils/fileUtils.js';
 import { validateTestRequest } from '../middleware/validation.js';
 import errorHandler from '../services/errorHandler.js';
 import logger from '../utils/logger.js';
+import { prisma } from '../lib/prisma.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +20,19 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+import { Test } from '@shared/types/index.js';
 import { WebSocketService } from '../core/websocket.js';
+
+// Helper to map DB test to API test
+const mapTestFromDb = (dbTest: any): Test => {
+    return {
+        ...dbTest,
+        tags: JSON.parse(dbTest.tags || '[]'),
+        workflow: JSON.parse(dbTest.workflow || '[]'),
+        createdAt: new Date(dbTest.createdAt),
+        updatedAt: new Date(dbTest.updatedAt)
+    };
+};
 
 /**
  * Create test routes instance
@@ -30,25 +43,11 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
     // Get all tests
     router.get('/', async (req: Request, res: Response) => {
         try {
-            const files = await fs.readdir(TESTS_DIR);
-            const tests = [];
+            const tests = await prisma.test.findMany({
+                orderBy: { updatedAt: 'desc' }
+            });
 
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const testPath = getTestFilePath(TESTS_DIR, file.replace('.json', ''));
-                        const test = await fs.readJson(testPath);
-                        tests.push(test);
-                    } catch (error: any) {
-                        logger.error(`Error reading test file ${file}:`, { error: error.message });
-                    }
-                }
-            }
-
-            // Sort by updatedAt (newest first)
-            tests.sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
-
-            res.json(tests);
+            res.json(tests.map(mapTestFromDb));
         } catch (error: any) {
             logger.error('Error getting tests:', { error: error.message });
             res.status(500).json({ error: 'Failed to get tests' });
@@ -59,11 +58,13 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
     router.get('/:id', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const testPath = getTestFilePath(TESTS_DIR, id);
 
-            if (await fs.pathExists(testPath)) {
-                const test = await fs.readJson(testPath);
-                res.json(test);
+            const test = await prisma.test.findUnique({
+                where: { id }
+            });
+
+            if (test) {
+                res.json(mapTestFromDb(test));
             } else {
                 res.status(404).json({ error: 'Test not found' });
             }
@@ -79,14 +80,34 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
             const testData = req.validatedData;
             const testId = req.body.id || uuidv4();
 
-            const test = {
-                ...testData,
+            const dbData = {
                 id: testId,
-                updatedAt: new Date(),
-                createdAt: req.body.createdAt || new Date()
+                name: testData.name,
+                description: testData.description || '',
+                status: testData.status || 'draft',
+                duration: testData.duration || 0,
+                tags: JSON.stringify(testData.tags || []),
+                suite: testData.suite || 'Default',
+                workflow: JSON.stringify(testData.workflow || []),
+                isExecutable: testData.isExecutable ?? true,
+                enableScreenshots: testData.enableScreenshots ?? false,
+                enableRecording: testData.enableRecording ?? false,
+                headlessMode: testData.headlessMode ?? false,
+                browserType: testData.browserType || 'chromium',
+                createdAt: req.body.createdAt ? new Date(req.body.createdAt) : new Date(),
+                updatedAt: new Date()
             };
 
-            await fs.writeJson(getTestFilePath(TESTS_DIR, testId), test);
+            // Upsert to handle both create and update if ID exists (though POST is usually create)
+            // But frontend might send ID for duplication or specific logic.
+            // Original code just overwrote the file.
+            const savedTest = await prisma.test.upsert({
+                where: { id: testId },
+                update: { ...dbData, createdAt: undefined }, // Don't update createdAt
+                create: dbData
+            });
+
+            const test = mapTestFromDb(savedTest);
 
             webSocketService.broadcast({
                 type: 'test:saved',
@@ -104,25 +125,37 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
     router.put('/:id', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const testPath = getTestFilePath(TESTS_DIR, id);
 
-            if (await fs.pathExists(testPath)) {
-                const existingTest = await fs.readJson(testPath);
-                const updatedTest = {
-                    ...existingTest,
+            // Check if exists
+            const existingTest = await prisma.test.findUnique({ where: { id } });
+
+            if (existingTest) {
+                const updateData = {
                     ...req.body,
-                    id, // Preserve ID
                     updatedAt: new Date()
                 };
 
-                await fs.writeJson(testPath, updatedTest);
+                // Handle JSON fields if they are in the update
+                if (updateData.tags) updateData.tags = JSON.stringify(updateData.tags);
+                if (updateData.workflow) updateData.workflow = JSON.stringify(updateData.workflow);
+
+                // Remove fields that shouldn't be updated directly or need transformation
+                delete updateData.id;
+                delete updateData.createdAt;
+
+                const updated = await prisma.test.update({
+                    where: { id },
+                    data: updateData
+                });
+
+                const test = mapTestFromDb(updated);
 
                 webSocketService.broadcast({
                     type: 'test:updated',
-                    test: updatedTest
+                    test
                 });
 
-                res.json(updatedTest);
+                res.json(test);
             } else {
                 res.status(404).json({ error: 'Test not found' });
             }
@@ -136,10 +169,11 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
     router.delete('/:id', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const testPath = getTestFilePath(TESTS_DIR, id);
 
-            if (await fs.pathExists(testPath)) {
-                await fs.remove(testPath);
+            try {
+                await prisma.test.delete({
+                    where: { id }
+                });
 
                 webSocketService.broadcast({
                     type: 'test:deleted',
@@ -147,8 +181,12 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
                 });
 
                 res.json({ success: true, message: 'Test deleted successfully' });
-            } else {
-                res.status(404).json({ error: 'Test not found' });
+            } catch (dbError: any) {
+                if (dbError.code === 'P2025') {
+                    res.status(404).json({ error: 'Test not found' });
+                } else {
+                    throw dbError;
+                }
             }
         } catch (error: any) {
             logger.error('Error deleting test:', { error: error.message, testId: req.params.id });

@@ -14,6 +14,7 @@ import { calculateSuccessRate, hasFailedSteps } from '../utils/executionUtils.js
 import { validateExecutionRequest } from '../middleware/validation.js';
 import errorHandler from '../services/errorHandler.js';
 import logger from '../utils/logger.js';
+import { prisma } from '../lib/prisma.js';
 
 // ES modules için __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +28,20 @@ import { Execution } from '@shared/types/index.js';
  * Create execution service instance
  */
 import { WebSocketService } from '../core/websocket.js';
+
+// Helper to map DB execution to API execution
+const mapExecutionFromDb = (dbExecution: any): Execution => {
+    return {
+        ...dbExecution,
+        tags: JSON.parse(dbExecution.tags || '[]'),
+        options: JSON.parse(dbExecution.options || '{}'),
+        steps: JSON.parse(dbExecution.steps || '[]'),
+        screenshots: JSON.parse(dbExecution.screenshots || '[]'),
+        logs: JSON.parse(dbExecution.logs || '[]'),
+        startTime: new Date(dbExecution.startTime),
+        endTime: dbExecution.endTime ? new Date(dbExecution.endTime) : undefined
+    };
+};
 
 /**
  * Create execution service instance
@@ -43,35 +58,38 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
             const baseTimestamp = new Date();
             const executionId = generateReadableExecutionId(workflowName, workflowId, baseTimestamp);
 
-            const execution: Execution = {
+            const executionData = {
                 id: executionId,
                 workflowId,
                 workflowName,
                 status: 'queued',
                 startTime: baseTimestamp,
                 suite,
-                tags,
-                options: {
+                tags: JSON.stringify(tags || []),
+                options: JSON.stringify({
                     enableScreenshots: options.enableScreenshots || false,
                     enableRecording: options.enableRecording || false,
                     headlessMode: options.headlessMode || process.env.HEADLESS_MODE === 'true' || false,
                     browserType: options.browserType || process.env.DEFAULT_BROWSER || 'chromium'
-                },
-                steps: steps.map((step: any) => ({
+                }),
+                steps: JSON.stringify(steps.map((step: any) => ({
                     stepId: step.id,
                     type: step.type,
                     status: 'pending',
                     config: step.config
-                })),
-                screenshots: [],
-                logs: [],
+                }))),
+                screenshots: '[]',
+                logs: '[]',
                 progress: 0
             };
 
-            activeExecutions.set(executionId, execution);
+            // Save execution to DB
+            const savedExecution = await prisma.execution.create({
+                data: executionData
+            });
 
-            // Save execution to file
-            await fs.writeJson(getExecutionFilePath(EXECUTIONS_DIR, executionId), execution);
+            const execution = mapExecutionFromDb(savedExecution);
+            activeExecutions.set(executionId, execution);
 
             // Start execution asynchronously
             executeTestWorkflow(executionId, execution);
@@ -100,11 +118,13 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
                 return res.json(activeExecutions.get(id));
             }
 
-            // Check saved executions
-            const executionPath = getExecutionFilePath(EXECUTIONS_DIR, id);
-            if (await fs.pathExists(executionPath)) {
-                const execution = await fs.readJson(executionPath);
-                return res.json(execution);
+            // Check DB
+            const execution = await prisma.execution.findUnique({
+                where: { id }
+            });
+
+            if (execution) {
+                return res.json(mapExecutionFromDb(execution));
             }
 
             res.status(404).json(errorHandler.formatApiError(
@@ -129,10 +149,12 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
         try {
             const { id } = req.params;
 
-            const executionPath = getExecutionFilePath(EXECUTIONS_DIR, id);
-            if (await fs.pathExists(executionPath)) {
-                const execution = await fs.readJson(executionPath);
-                res.json(execution);
+            const execution = await prisma.execution.findUnique({
+                where: { id }
+            });
+
+            if (execution) {
+                res.json(mapExecutionFromDb(execution));
             } else {
                 res.status(404).json({ error: 'Results not found' });
             }
@@ -148,28 +170,11 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
     // Get all execution results
     router.get('/', async (req: Request, res: Response) => {
         try {
-            const files = await fs.readdir(EXECUTIONS_DIR);
-            const executions = [];
+            const executions = await prisma.execution.findMany({
+                orderBy: { startTime: 'desc' }
+            });
 
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const executionPath = getExecutionFilePath(EXECUTIONS_DIR, file.replace('.json', ''));
-                        const execution = await fs.readJson(executionPath);
-                        executions.push(execution);
-                    } catch (error: any) {
-                        logger.error('Error reading execution file', {
-                            file,
-                            error: error.message
-                        });
-                    }
-                }
-            }
-
-            // Sort by startTime (newest first)
-            executions.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
-
-            res.json(executions);
+            res.json(executions.map(mapExecutionFromDb));
         } catch (error: any) {
             logger.error('Error getting executions', { error: error.message });
             res.status(500).json({ error: 'Failed to get executions' });
@@ -187,8 +192,17 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
                     execution.status = 'cancelled';
                     execution.endTime = new Date();
 
-                    // Save final state
-                    await fs.writeJson(getExecutionFilePath(EXECUTIONS_DIR, id), execution);
+                    // Save final state to DB
+                    await prisma.execution.update({
+                        where: { id },
+                        data: {
+                            status: 'cancelled',
+                            endTime: execution.endTime,
+                            steps: JSON.stringify(execution.steps),
+                            logs: JSON.stringify(execution.logs),
+                            screenshots: JSON.stringify(execution.screenshots)
+                        }
+                    });
 
                     activeExecutions.delete(id);
 
@@ -223,10 +237,12 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
                 activeExecutions.delete(id);
             }
 
-            // Delete execution file
-            const executionPath = getExecutionFilePath(EXECUTIONS_DIR, id);
-            if (await fs.pathExists(executionPath)) {
-                await fs.remove(executionPath);
+            // Delete from DB
+            // Prisma will throw if not found, so we check first or handle error
+            try {
+                await prisma.execution.delete({
+                    where: { id }
+                });
 
                 // Also try to delete associated media files
                 try {
@@ -255,8 +271,12 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
                 });
 
                 res.json({ message: 'Execution deleted successfully' });
-            } else {
-                res.status(404).json({ error: 'Execution not found' });
+            } catch (dbError: any) {
+                if (dbError.code === 'P2025') { // Record to delete does not exist
+                    res.status(404).json({ error: 'Execution not found' });
+                } else {
+                    throw dbError;
+                }
             }
         } catch (error: any) {
             logger.error('Error deleting execution', {
