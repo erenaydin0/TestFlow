@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useI18n } from '@/hooks';
-import { useWebSocket } from '@/hooks';
-import { API_URL, config } from '@/utils/config';
+import { useNotificationSocket } from '@/hooks/useNotificationSocket';
+import { config } from '@/utils/config';
+import { getItem, setItem, removeItem } from '@/utils/storage';
 import { Notification } from '@/types/notifications';
 
 // ============================================================================
@@ -14,7 +15,7 @@ interface UseNotificationsReturn {
   // Notification state
   notifications: Notification[];
   toasts: Notification[];
-  
+
   // Core notification functions
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
   showToast: (toast: Omit<Notification, 'id' | 'timestamp' | 'persistent'>) => void;
@@ -22,7 +23,7 @@ interface UseNotificationsReturn {
   clearAllNotifications: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  
+
   // Manual notification functions
   notifyTestStart: (testName: string, testId: string) => void;
   notifyTestSuccess: (testName: string, testId: string, duration?: number, executionId?: string) => void;
@@ -35,7 +36,7 @@ interface UseNotificationsReturn {
   notifyTestDeleted: (testName: string, testId: string) => void;
   notifyTestDuplicated: (testName: string, testId: string) => void;
   notifyWorkflowLoaded: (workflowName: string) => void;
-  
+
   // Real-time notification state
   isConnected: boolean;
   isConnecting: boolean;
@@ -51,60 +52,9 @@ interface UseNotificationsReturn {
 const NOTIFICATIONS_STORAGE_KEY = config.storageKeys.notifications;
 const ID_COUNTER_STORAGE_KEY = config.storageKeys.idCounter;
 
-// Storage helper functions
-const saveNotificationsToStorage = (notifications: Notification[]) => {
-  try {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
-    }
-  } catch (error) {
-    console.warn('Bildirimler localStorage\'a kaydedilemedi:', error);
-  }
-};
-
-const loadNotificationsFromStorage = (): Notification[] => {
-  try {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed.map((notification: any) => ({
-          ...notification,
-          timestamp: new Date(notification.timestamp)
-        }));
-      }
-    }
-  } catch (error) {
-    console.warn('Bildirimler localStorage\'dan yüklenemedi:', error);
-  }
-  return [];
-};
-
-const saveCounterToStorage = (counter: number) => {
-  try {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ID_COUNTER_STORAGE_KEY, counter.toString());
-    }
-  } catch (error) {
-    console.warn('Sayaç localStorage\'a kaydedilemedi:', error);
-  }
-};
-
-const loadCounterFromStorage = (): number => {
-  try {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(ID_COUNTER_STORAGE_KEY);
-      return stored ? parseInt(stored, 10) : 0;
-    }
-  } catch (error) {
-    console.warn('Sayaç localStorage\'dan yüklenemedi:', error);
-  }
-  return 0;
-};
-
-function useNotifications() {
+function useNotifications(): UseNotificationsReturn {
   const { t } = useI18n();
-  
+
   // Notification State
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Notification[]>([]);
@@ -117,10 +67,16 @@ function useNotifications() {
 
   // Initialize notifications from storage
   useEffect(() => {
-    const loadedNotifications = loadNotificationsFromStorage();
-    const loadedCounter = loadCounterFromStorage();
-    
-    setNotifications(loadedNotifications);
+    const loadedNotifications = getItem<Notification[]>(NOTIFICATIONS_STORAGE_KEY, []);
+    // Parse dates from strings
+    const parsedNotifications = loadedNotifications.map(n => ({
+      ...n,
+      timestamp: new Date(n.timestamp)
+    }));
+
+    const loadedCounter = getItem<number>(ID_COUNTER_STORAGE_KEY, 0);
+
+    setNotifications(parsedNotifications);
     idCounterRef.current = loadedCounter;
     setIsInitialized(true);
   }, []);
@@ -128,16 +84,16 @@ function useNotifications() {
   // Save notifications to storage
   useEffect(() => {
     if (isInitialized) {
-      saveNotificationsToStorage(notifications);
+      setItem(NOTIFICATIONS_STORAGE_KEY, notifications);
     }
   }, [notifications, isInitialized]);
 
   // Save counter to storage periodically
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     const interval = setInterval(() => {
-      saveCounterToStorage(idCounterRef.current);
+      setItem(ID_COUNTER_STORAGE_KEY, idCounterRef.current);
     }, config.notification.autoSaveInterval);
 
     return () => clearInterval(interval);
@@ -147,18 +103,18 @@ function useNotifications() {
     const timestamp = Date.now();
     const counter = idCounterRef.current;
     idCounterRef.current = counter + 1;
-    
+
     // Counter'ı localStorage'a kaydet
     if (isInitialized) {
-      saveCounterToStorage(idCounterRef.current);
+      setItem(ID_COUNTER_STORAGE_KEY, idCounterRef.current);
     }
-    
+
     return `${prefix}-${timestamp}-${counter}`;
   }, [isInitialized]);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const now = new Date();
-    const isDuplicate = notifications.some(existing => 
+    const isDuplicate = notifications.some(existing =>
       existing.type === notification.type &&
       existing.title === notification.title &&
       existing.testId === notification.testId &&
@@ -184,7 +140,7 @@ function useNotifications() {
 
   const showToast = useCallback((toast: Omit<Notification, 'id' | 'timestamp' | 'persistent'>) => {
     const now = new Date();
-    const isDuplicate = toasts.some(existing => 
+    const isDuplicate = toasts.some(existing =>
       existing.type === toast.type &&
       existing.title === toast.title &&
       existing.message === toast.message &&
@@ -223,19 +179,13 @@ function useNotifications() {
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
-      }
-    } catch (error) {
-      console.warn('localStorage temizlenemedi:', error);
-    }
+    removeItem(NOTIFICATIONS_STORAGE_KEY);
   }, []);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
+    setNotifications(prev =>
+      prev.map(notification =>
+        notification.id === id
           ? { ...notification, read: true }
           : notification
       )
@@ -243,7 +193,7 @@ function useNotifications() {
   }, []);
 
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(notification => ({ ...notification, read: true }))
     );
   }, []);
@@ -265,7 +215,7 @@ function useNotifications() {
   // Manual Notification Functions
   // ============================================================================
 
-  const notifyTestStart = (testName: string, testId: string) => {
+  const notifyTestStart = useCallback((testName: string, testId: string) => {
     showToast({
       type: 'info',
       title: t('notifications.testStart'),
@@ -282,11 +232,11 @@ function useNotifications() {
       testId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyTestSuccess = (testName: string, testId: string, duration?: number, executionId?: string) => {
+  const notifyTestSuccess = useCallback((testName: string, testId: string, duration?: number, executionId?: string) => {
     const durationText = duration ? t('notifications.withDuration', { duration: (duration / 1000).toFixed(1) }) : '';
-    
+
     showToast({
       type: 'success',
       title: t('notifications.testSuccess'),
@@ -305,12 +255,12 @@ function useNotifications() {
       executionId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyTestFailure = (testName: string, testId: string, error?: string, duration?: number, executionId?: string) => {
+  const notifyTestFailure = useCallback((testName: string, testId: string, error?: string, duration?: number, executionId?: string) => {
     const durationText = duration ? t('notifications.withDuration', { duration: (duration / 1000).toFixed(1) }) : '';
     const errorText = error ? t('notifications.withError', { error }) : '';
-    
+
     showToast({
       type: 'error',
       title: t('notifications.testFailed'),
@@ -329,9 +279,9 @@ function useNotifications() {
       executionId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyTestSaved = (testName: string, testId: string) => {
+  const notifyTestSaved = useCallback((testName: string, testId: string) => {
     showToast({
       type: 'success',
       title: t('notifications.testSaved'),
@@ -340,9 +290,9 @@ function useNotifications() {
       autoClose: true,
       duration: config.notification.shortDuration
     });
-  };
+  }, [showToast, t]);
 
-  const notifyTestScheduled = (testName: string, testId: string, scheduleTime: string) => {
+  const notifyTestScheduled = useCallback((testName: string, testId: string, scheduleTime: string) => {
     showToast({
       type: 'info',
       title: t('notifications.testScheduled'),
@@ -359,9 +309,9 @@ function useNotifications() {
       testId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyTestImported = (testName: string, testId: string) => {
+  const notifyTestImported = useCallback((testName: string, testId: string) => {
     showToast({
       type: 'success',
       title: t('notifications.testImported'),
@@ -370,9 +320,9 @@ function useNotifications() {
       autoClose: true,
       duration: 3000
     });
-  };
+  }, [showToast, t]);
 
-  const notifyExecutionStart = (workflowName: string, executionId: string) => {
+  const notifyExecutionStart = useCallback((workflowName: string, executionId: string) => {
     showToast({
       type: 'info',
       title: t('notifications.executionStarted'),
@@ -389,12 +339,12 @@ function useNotifications() {
       executionId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyExecutionComplete = (workflowName: string, executionId: string, status: 'completed' | 'failed', duration?: number) => {
+  const notifyExecutionComplete = useCallback((workflowName: string, executionId: string, status: 'completed' | 'failed', duration?: number) => {
     const durationText = duration ? t('notifications.withDuration', { duration: (duration / 1000).toFixed(1) }) : '';
     const isSuccess = status === 'completed';
-    
+
     showToast({
       type: isSuccess ? 'success' : 'error',
       title: isSuccess ? t('notifications.executionCompleted') : t('notifications.executionFailed'),
@@ -411,9 +361,9 @@ function useNotifications() {
       executionId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyTestDeleted = (testName: string, testId: string) => {
+  const notifyTestDeleted = useCallback((testName: string, testId: string) => {
     showToast({
       type: 'info',
       title: t('notifications.testDeleted'),
@@ -429,9 +379,9 @@ function useNotifications() {
       testId,
       persistent: true
     });
-  };
+  }, [showToast, addNotification, t]);
 
-  const notifyTestDuplicated = (testName: string, testId: string) => {
+  const notifyTestDuplicated = useCallback((testName: string, testId: string) => {
     showToast({
       type: 'success',
       title: t('notifications.testDuplicated'),
@@ -440,9 +390,9 @@ function useNotifications() {
       autoClose: true,
       duration: config.notification.shortDuration
     });
-  };
+  }, [showToast, t]);
 
-  const notifyWorkflowLoaded = (workflowName: string) => {
+  const notifyWorkflowLoaded = useCallback((workflowName: string) => {
     showToast({
       type: 'success',
       title: t('notifications.workflowLoaded'),
@@ -450,239 +400,18 @@ function useNotifications() {
       autoClose: true,
       duration: config.notification.shortDuration
     });
-  };
+  }, [showToast, t]);
 
   // ============================================================================
   // Real-time Notification Setup
   // ============================================================================
 
-  // WebSocket bağlantısını sadece browser'da dene
-  const wsUrl = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_WS_URL || config.wsUrl) : '';
-  const { isConnected, isConnecting, lastMessage, connect } = useWebSocket(wsUrl, {
-    autoConnect: typeof window !== 'undefined',
-    reconnectAttempts: 5,
-    reconnectInterval: config.wsReconnectInterval
+  const { isConnected, isConnecting, lastMessage, connect } = useNotificationSocket({
+    notifyTestStart,
+    notifyTestSuccess,
+    notifyTestFailure,
+    notifyWorkflowLoaded
   });
-
-  // ============================================================================
-  // Real-time Message Processing
-  // ============================================================================
-
-  // Processed message IDs to prevent duplicates
-  const processedMessageIds = useRef(new Set<string>());
-  
-  // Track execution states to prevent duplicate notifications
-  const executionStates = useRef(new Map<string, Set<string>>());
-  
-  // Track last processed message to prevent rapid duplicates
-  const lastProcessedMessage = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!lastMessage) return;
-
-    // Create a unique ID for this message
-    const messageId = `${lastMessage.type}-${lastMessage.data.executionId}`;
-    
-    // Skip if this is the exact same message as the last one
-    if (lastProcessedMessage.current === messageId) {
-      return;
-    }
-    
-    // Skip if already processed
-    if (processedMessageIds.current.has(messageId)) {
-      return;
-    }
-    
-    // Mark as processed
-    processedMessageIds.current.add(messageId);
-    lastProcessedMessage.current = messageId;
-    
-    // Clean old message IDs (keep only last 20)
-    if (processedMessageIds.current.size > 20) {
-      const idsArray = Array.from(processedMessageIds.current);
-      processedMessageIds.current.clear();
-      idsArray.slice(-10).forEach(id => processedMessageIds.current.add(id));
-    }
-
-    try {
-      switch (lastMessage.type) {
-        case 'execution:started':
-          console.log('Execution started message:', lastMessage.data);
-          
-          const executionId = lastMessage.data.executionId;
-          if (!executionId) break;
-          
-          // Check if already notified for this execution
-          if (!executionStates.current.has(executionId)) {
-            executionStates.current.set(executionId, new Set());
-          }
-          
-          const states = executionStates.current.get(executionId)!;
-          if (states.has('started')) {
-            console.log('Already notified start for execution:', executionId);
-            break;
-          }
-          
-          states.add('started');
-          
-          // Trigger test start notification
-          if (lastMessage.data.execution) {
-            const execution = lastMessage.data.execution;
-            notifyTestStart(execution.workflowName, executionId);
-          } else {
-            notifyTestStart('Test Execution', executionId);
-          }
-          break;
-
-        case 'execution:scheduled':
-          console.log('Execution scheduled message:', lastMessage.data);
-          
-          if (lastMessage.data.execution && lastMessage.data.execution.workflowName) {
-            notifyWorkflowLoaded(lastMessage.data.execution.workflowName);
-          }
-          break;
-
-        case 'step:started':
-          console.log(`Step started: ${lastMessage.data.step?.type} in execution ${lastMessage.data.executionId}`);
-          break;
-
-        case 'step:completed':
-          console.log(`Step completed: Progress ${lastMessage.data.progress}% in execution ${lastMessage.data.executionId}`);
-          break;
-
-        case 'step:failed':
-          console.warn(`Step failed: ${lastMessage.data.error} in execution ${lastMessage.data.executionId}`);
-          break;
-
-        case 'execution:completed':
-          console.log('Execution completed message:', lastMessage.data);
-          
-          const completedExecutionId = lastMessage.data.executionId;
-          if (!completedExecutionId) break;
-          
-          // Check if already notified completion for this execution
-          if (!executionStates.current.has(completedExecutionId)) {
-            executionStates.current.set(completedExecutionId, new Set());
-          }
-          
-          const completedStates = executionStates.current.get(completedExecutionId)!;
-          if (completedStates.has('completed')) {
-            console.log('Already notified completion for execution:', completedExecutionId);
-            break;
-          }
-          
-          completedStates.add('completed');
-          
-          // Clean up all messages for this execution to prevent further duplicates
-          const completedExecutionMessagePrefix = `-${completedExecutionId}`;
-          const completedMessagesToRemove = Array.from(processedMessageIds.current)
-            .filter(id => id.includes(completedExecutionMessagePrefix));
-          completedMessagesToRemove.forEach(id => processedMessageIds.current.delete(id));
-          
-          if (lastMessage.data.execution) {
-            const completedExecution = lastMessage.data.execution;
-            const duration = completedExecution.endTime && completedExecution.startTime 
-              ? new Date(completedExecution.endTime).getTime() - new Date(completedExecution.startTime).getTime()
-              : undefined;
-            
-            notifyTestSuccess(
-              completedExecution.workflowName, 
-              completedExecutionId, 
-              duration
-            );
-          } else {
-            notifyTestSuccess('Test Execution', completedExecutionId);
-          }
-          break;
-
-        case 'execution:failed':
-          console.log('Execution failed message:', lastMessage.data);
-          
-          const failedExecutionId = lastMessage.data.executionId;
-          if (!failedExecutionId) break;
-          
-          // Check if already notified failure for this execution
-          if (!executionStates.current.has(failedExecutionId)) {
-            executionStates.current.set(failedExecutionId, new Set());
-          }
-          
-          const failedStates = executionStates.current.get(failedExecutionId)!;
-          if (failedStates.has('failed')) {
-            console.log('Already notified failure for execution:', failedExecutionId);
-            break;
-          }
-          
-          failedStates.add('failed');
-          
-          // Clean up all messages for this execution to prevent further duplicates
-          const failedExecutionMessagePrefix = `-${failedExecutionId}`;
-          const failedMessagesToRemove = Array.from(processedMessageIds.current)
-            .filter(id => id.includes(failedExecutionMessagePrefix));
-          failedMessagesToRemove.forEach(id => processedMessageIds.current.delete(id));
-          
-          if (lastMessage.data.execution) {
-            const failedExecution = lastMessage.data.execution;
-            const duration = failedExecution.endTime && failedExecution.startTime 
-              ? new Date(failedExecution.endTime).getTime() - new Date(failedExecution.startTime).getTime()
-              : undefined;
-            
-            notifyTestFailure(
-              failedExecution.workflowName, 
-              failedExecutionId, 
-              lastMessage.data.error || failedExecution.error,
-              duration
-            );
-          } else {
-            notifyTestFailure('Test Execution', failedExecutionId, lastMessage.data.error || 'Unknown error');
-          }
-          break;
-
-        case 'execution:cancelled':
-          console.log('Execution cancelled message:', lastMessage.data);
-          
-          if (lastMessage.data.execution) {
-            notifyTestFailure(
-              lastMessage.data.execution.workflowName, 
-              lastMessage.data.executionId, 
-              'Test iptal edildi'
-            );
-          } else if (lastMessage.data.executionId) {
-            notifyTestFailure('Test Execution', lastMessage.data.executionId, 'Test iptal edildi');
-          }
-          break;
-
-        case 'execution:deleted':
-          console.log(`Execution deleted: ${lastMessage.data?.executionId || 'unknown'}`);
-          break;
-
-        default:
-          console.log('Unknown WebSocket message type:', lastMessage.type, lastMessage.data);
-      }
-    } catch (error) {
-      console.error('Error processing WebSocket message:', error);
-      console.error('Message was:', lastMessage);
-    }
-  }, [lastMessage, notifyTestSuccess, notifyTestFailure]);
-
-  // ============================================================================
-  // Cleanup Effects
-  // ============================================================================
-
-  // Clean up old execution states periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (executionStates.current.size > 50) {
-        // Keep only the last 25 executions
-        const entries = Array.from(executionStates.current.entries());
-        executionStates.current.clear();
-        entries.slice(-25).forEach(([key, value]) => {
-          executionStates.current.set(key, value);
-        });
-      }
-    }, 60000); // Every minute
-
-    return () => clearInterval(interval);
-  }, []);
 
   // ============================================================================
   // Return Combined Interface
@@ -692,7 +421,7 @@ function useNotifications() {
     // Notification state
     notifications,
     toasts,
-    
+
     // Core notification functions
     addNotification,
     showToast,
@@ -700,7 +429,7 @@ function useNotifications() {
     clearAllNotifications,
     markAsRead,
     markAllAsRead,
-    
+
     // Manual notification functions
     notifyTestStart,
     notifyTestSuccess,
@@ -713,7 +442,7 @@ function useNotifications() {
     notifyTestDeleted,
     notifyTestDuplicated,
     notifyWorkflowLoaded,
-    
+
     // Real-time notification state
     isConnected,
     isConnecting,
