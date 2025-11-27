@@ -236,7 +236,6 @@
     "selectStepToEdit": "Düzenlemek için bir adım seçin",
     "waitingForKey": "Tuş bekleniyor...",
     "updateTest": "Testi Güncelle",
-    "saveTest": "Testi Kaydet",
     "save": "Kaydet",
     "deleteStepsConfirm": "{{count}} adımı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "import": "İçe Aktar",
