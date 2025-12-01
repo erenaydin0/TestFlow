@@ -61,6 +61,7 @@ function TestBuilderContent() {
   const [draggedAction, setDraggedAction] = useState<string | null>(null);
   const [draggedStep, setDraggedStep] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dropTarget, setDropTarget] = useState<{ index: number; position: 'before' | 'after' } | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -165,9 +166,18 @@ function TestBuilderContent() {
     setSelectedStep(newStep);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent, index?: number) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
+
+    // If no drop target, default to end of list
+    const target = dropTarget || { index: testSteps.length, position: 'before' };
+
+    // Calculate final insertion index
+    let insertIndex = target.index;
+    if (target.position === 'after') {
+      insertIndex += 1;
+    }
 
     if (draggedAction) {
       // Create new step
@@ -179,11 +189,7 @@ function TestBuilderContent() {
         };
 
         const newSteps = [...testSteps];
-        if (typeof index === 'number') {
-          newSteps.splice(index, 0, newStep);
-        } else {
-          newSteps.push(newStep);
-        }
+        newSteps.splice(insertIndex, 0, newStep);
 
         setTestSteps(newSteps);
         saveToHistory(newSteps);
@@ -196,11 +202,13 @@ function TestBuilderContent() {
       const newSteps = [...testSteps];
       const [removed] = newSteps.splice(draggedStepIndex, 1);
 
-      // Adjust index if dragging downwards
-      const targetIndex = typeof index === 'number' ? index : newSteps.length;
-      const adjustedIndex = (draggedStepIndex < targetIndex) ? targetIndex - 1 : targetIndex;
+      // Adjust index if we removed an item before the insertion point
+      let finalIndex = insertIndex;
+      if (draggedStepIndex < insertIndex) {
+        finalIndex -= 1;
+      }
 
-      newSteps.splice(adjustedIndex, 0, removed);
+      newSteps.splice(finalIndex, 0, removed);
 
       setTestSteps(newSteps);
       saveToHistory(newSteps);
@@ -209,7 +217,8 @@ function TestBuilderContent() {
     // Clear drag states
     setDraggedAction(null);
     setDraggedStep(null);
-  }, [draggedAction, draggedStep, testSteps, generateId, setTestSteps, saveToHistory]);
+    setDropTarget(null);
+  }, [draggedAction, draggedStep, testSteps, dropTarget, generateId, setTestSteps, saveToHistory]);
 
   const deleteSelectedSteps = useCallback(() => {
     if (selectedSteps.size === 0) return;
@@ -647,29 +656,52 @@ function TestBuilderContent() {
                     {/* Vertical Line */}
                     <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-[var(--border-primary)] -z-10 transform -translate-x-1/2"></div>
 
-                    <div className="space-y-0">
+                    <div className="space-y-0 relative">
                       {testSteps.map((step, index) => (
                         <div
                           key={step.id}
-                          className="relative pl-16 group"
+                          className="relative pl-16 group transition-all duration-200 ease-in-out"
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+
+                            // Calculate if we are in the top or bottom half
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const midY = rect.top + rect.height / 2;
+                            const position = e.clientY < midY ? 'before' : 'after';
+
+                            // Only update if changed to avoid unnecessary renders
+                            if (!dropTarget || dropTarget.index !== index || dropTarget.position !== position) {
+                              setDropTarget({ index, position });
+                            }
+
+                            setIsDragOver(true);
+                          }}
+                          onDragLeave={(e) => {
+                            // Only clear if we're actually leaving the container, not just entering a child
+                            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                              // Don't clear immediately to prevent flickering when moving between items
+                            }
                           }}
                           onDrop={(e) => {
                             e.stopPropagation();
-                            handleDrop(e, index);
+                            handleDrop(e);
                           }}
                         >
+                          {/* Drop Indicator Line */}
+                          {dropTarget && dropTarget.index === index && dropTarget.position === 'before' && (
+                            <div className="absolute top-0 left-16 right-0 h-0.5 bg-[var(--accent-primary)] z-20 shadow-[0_0_8px_rgba(59,130,246,0.6)] rounded-full transform -translate-y-1/2 pointer-events-none transition-all duration-200" />
+                          )}
+
                           {/* Step Number/Dot */}
-                          <div className={`absolute left-8 top-8 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium transform -translate-x-1/2 -translate-y-1/2 z-10 transition-colors ${selectedSteps.has(step.id)
-                            ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white'
+                          <div className={`absolute left-8 top-8 w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium transform -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-200 ${selectedSteps.has(step.id)
+                            ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white scale-110 shadow-md'
                             : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)]'
                             }`}>
                             {index + 1}
                           </div>
 
-                          <div className="mb-4">
+                          <div className="mb-4 transition-transform duration-200">
                             <TestStepCard
                               step={step}
                               isSelected={selectedSteps.has(step.id)}
@@ -680,6 +712,7 @@ function TestBuilderContent() {
                                 setDraggedAction(null);
                                 setDraggedStep(null);
                                 setIsDragOver(false);
+                                setDropTarget(null);
                               }}
                               onStepClick={(step: TestStep, isMulti: boolean) => handleStepClick(step, isMulti)}
                               onDeleteStep={(id: string) => {
@@ -696,23 +729,40 @@ function TestBuilderContent() {
                               saveToHistory={saveToHistory}
                             />
                           </div>
+
+                          {/* Drop Indicator Line (After) */}
+                          {dropTarget && dropTarget.index === index && dropTarget.position === 'after' && (
+                            <div className="absolute bottom-4 left-16 right-0 h-0.5 bg-[var(--accent-primary)] z-20 shadow-[0_0_8px_rgba(59,130,246,0.6)] rounded-full transform translate-y-1/2 pointer-events-none transition-all duration-200" />
+                          )}
                         </div>
                       ))}
 
                       {/* Drop zone at the end */}
                       <div
-                        className="relative pl-16 mt-4"
+                        className={`relative pl-16 mt-4 transition-all duration-200 ${dropTarget && dropTarget.index === testSteps.length ? 'scale-[1.02]' : ''
+                          }`}
                         onDragOver={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          if (!dropTarget || dropTarget.index !== testSteps.length) {
+                            setDropTarget({ index: testSteps.length, position: 'before' }); // 'before' the end zone means at the end of list
+                          }
                         }}
                         onDrop={(e) => {
                           e.stopPropagation();
                           handleDrop(e);
                         }}
                       >
-                        <div className="absolute left-8 top-1/2 w-3 h-3 rounded-full bg-[var(--border-primary)] transform -translate-x-1/2 -translate-y-1/2"></div>
-                        <div className="h-12 border-2 border-dashed border-[var(--border-primary)] rounded-lg flex items-center justify-center text-[var(--text-tertiary)] text-sm">
+                        {/* Indicator for end zone */}
+                        {dropTarget && dropTarget.index === testSteps.length && (
+                          <div className="absolute top-0 left-16 right-0 h-0.5 bg-[var(--accent-primary)] z-20 shadow-[0_0_8px_rgba(59,130,246,0.6)] rounded-full transform -translate-y-1/2 pointer-events-none" />
+                        )}
+
+                        <div className="absolute left-8 top-1/2 w-3 h-3 rounded-full bg-[var(--border-primary)] transform -translate-x-1/2 -translate-y-1/2 transition-colors duration-200 group-hover:bg-[var(--accent-primary)]"></div>
+                        <div className={`h-12 border-2 border-dashed rounded-lg flex items-center justify-center text-sm transition-all duration-200 ${dropTarget && dropTarget.index === testSteps.length
+                          ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/5 text-[var(--accent-primary)]'
+                          : 'border-[var(--border-primary)] text-[var(--text-tertiary)] hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'
+                          }`}>
                           {t('testBuilder.dropHere')}
                         </div>
                       </div>
