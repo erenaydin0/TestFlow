@@ -297,7 +297,10 @@
     "now": "Now",
     "minutesAgo": "{{count}} minutes ago",
     "hoursAgo": "{{count}} hours ago",
-    "daysAgo": "{{count}} days ago"
+    "daysAgo": "{{count}} days ago",
+    "unsavedChanges": "Unsaved Changes",
+    "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave?",
+    "leave": "Leave"
   },
   "status": {
     "passed": "Passed",

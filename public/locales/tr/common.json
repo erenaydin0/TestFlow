@@ -297,7 +297,10 @@
     "now": "Şimdi",
     "minutesAgo": "{{count}} dakika önce",
     "hoursAgo": "{{count}} saat önce",
-    "daysAgo": "{{count}} gün önce"
+    "daysAgo": "{{count}} gün önce",
+    "unsavedChanges": "Kaydedilmemiş Değişiklikler",
+    "unsavedChangesMessage": "Kaydedilmemiş değişiklikleriniz var. Ayrılmak istediğinizden emin misiniz?",
+    "leave": "Ayrıl"
   },
   "status": {
     "passed": "Başarılı",
