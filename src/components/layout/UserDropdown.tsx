@@ -24,9 +24,9 @@ export default function UserDropdown() {
     return (
         <Menu as="div" className="relative ml-3">
             <div>
-                <Menu.Button className="flex items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--cosmic-orange)] focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)] transition-transform hover:scale-105">
+                <Menu.Button className="flex items-center justify-center">
                     <span className="sr-only">Kullanıcı menüsünü aç</span>
-                    <div className="h-9 w-9 rounded-full bg-[var(--cosmic-orange)] flex items-center justify-center text-white font-medium shadow-md border-2 border-[var(--bg-primary)]">
+                    <div className="h-9 w-9 rounded-full bg-[var(--cosmic-orange)] flex items-center justify-center text-white font-medium shadow-md">
                         {session.user.name?.charAt(0).toUpperCase() || "U"}
                     </div>
                 </Menu.Button>
