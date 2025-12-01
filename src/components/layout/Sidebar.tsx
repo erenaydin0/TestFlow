@@ -37,46 +37,23 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const navigation = getNavigation(t);
 
   return (
-    <aside style={{
-      position: 'fixed',
-      top: '4rem',
-      left: 0,
-      width: isCollapsed ? '4.5rem' : '15rem',
-      height: 'calc(100vh - 4rem)',
-      backgroundColor: 'var(--bg-primary)',
-      borderRight: '1px solid var(--border-primary)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
-      overflowX: 'hidden',
-      zIndex: 100,
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '2px 0 8px rgba(0, 0, 0, 0.05)',
-      pointerEvents: isModalOpen ? 'none' : 'auto',
-      opacity: isModalOpen ? 0.5 : 1
-    }}>
+    <aside
+      className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : ''} ${isModalOpen ? 'sidebar-modal-open' : ''}`}
+    >
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: isCollapsed ? '1rem 0.5rem' : '1rem 0.75rem', overflow: 'auto' }}>
+      <nav className="sidebar-nav">
         <div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul className="sidebar-list">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
 
               return (
-                <li key={item.name} style={{ marginBottom: '0.375rem' }}>
+                <li key={item.name} className="sidebar-list-item">
                   <Link
                     href={item.href}
                     className={`sidebar-item ${isActive ? 'sidebar-item-active' : ''}`}
-                    style={{
-                      textDecoration: 'none',
-                      justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      padding: isCollapsed ? '0.875rem' : '0.875rem 1rem',
-                      borderRadius: '0.5rem',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                    title={isCollapsed ? item.name : undefined}
+                    title={item.name}
                     onClick={(e) => {
                       if (onNavigationAttempt) {
                         e.preventDefault();
@@ -85,17 +62,9 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
                     }}
                   >
                     <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                    {!isCollapsed && (
-                      <span
-                        suppressHydrationWarning={true}
-                        style={{
-                          fontSize: '0.875rem',
-                          fontWeight: isActive ? 600 : 500,
-                          letterSpacing: '-0.01em'
-                        }}>
-                        {item.name}
-                      </span>
-                    )}
+                    <span className="sidebar-item-text">
+                      {item.name}
+                    </span>
                   </Link>
                 </li>
               );
@@ -105,16 +74,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
       </nav>
 
       {/* Alt Kısım - Ayarlar ve Collapse Toggle */}
-      <div style={{
-        padding: isCollapsed ? '0.5rem' : '1rem',
-        backgroundColor: 'var(--bg-primary)',
-        display: 'flex',
-        flexDirection: isCollapsed ? 'column' : 'row',
-        alignItems: 'center',
-        justifyContent: isCollapsed ? 'center' : 'space-between',
-        gap: isCollapsed ? '0.5rem' : '1rem',
-        borderTop: '1px solid var(--border-primary)'
-      }}>
+      <div className="sidebar-footer">
         {/* Ayarlar Butonu - Sol */}
         <IconButton
           icon={Settings}
@@ -126,7 +86,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
         />
 
         {/* Collapse Toggle - Sağ */}
-        {!isCollapsed && (
+        <div className="sidebar-toggle-expanded">
           <IconButton
             icon={ChevronLeft}
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -135,10 +95,10 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
             tooltip={t('sidebar.collapse')}
             style={{ color: 'var(--text-secondary)' }}
           />
-        )}
+        </div>
 
         {/* Collapsed durumda genişlet butonu */}
-        {isCollapsed && (
+        <div className="sidebar-toggle-collapsed">
           <IconButton
             icon={ChevronRight}
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -147,8 +107,8 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
             tooltip={t('sidebar.expand')}
             style={{ color: 'var(--text-secondary)' }}
           />
-        )}
+        </div>
       </div>
     </aside>
   );
-} 
+}

@@ -440,6 +440,18 @@ const NextRunCell: React.FC<NextRunCellProps> = ({ nextRun }) => {
     );
   }
 
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
+    );
+  }
+
   const date = typeof nextRun === 'string' ? new Date(nextRun) : nextRun;
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
