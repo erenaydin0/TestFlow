@@ -76,7 +76,7 @@ export const useDropdown = (options: UseDropdownOptions = {}) => {
     if (useFixedPosition) {
       const left = buttonRect.left;
       const width = buttonRect.width;
-      
+
       if (spaceBelow >= requiredSpace) {
         setDropdownPosition('bottom');
         setFixedPosition({
@@ -132,7 +132,7 @@ export const useDropdown = (options: UseDropdownOptions = {}) => {
         requestAnimationFrame(checkAndCalculate);
       }
     };
-    
+
     requestAnimationFrame(checkAndCalculate);
   }, [isOpen, calculatePosition]);
 
@@ -154,8 +154,8 @@ export const useDropdown = (options: UseDropdownOptions = {}) => {
   }, [isOpen, useFixedPosition, calculatePosition]);
 
   const getAnimationStyle = useCallback((fadeInDuration?: number) => ({
-    animation: isClosing 
-      ? `fadeOut ${animationDuration}ms ease-in forwards` 
+    animation: isClosing
+      ? `fadeOut ${animationDuration}ms ease-in forwards`
       : `fadeInScale ${fadeInDuration || animationDuration}ms ease-out forwards`,
     transformOrigin: dropdownPosition === 'top' ? 'bottom' : 'top'
   }), [isClosing, animationDuration, dropdownPosition]);
@@ -185,7 +185,7 @@ interface UseModalOptions {
 
 export const useModal = (isOpen: boolean, options: UseModalOptions = {}) => {
   const { animationDuration = 200, onClose } = options;
-  
+
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -204,14 +204,14 @@ export const useModal = (isOpen: boolean, options: UseModalOptions = {}) => {
   }, [isOpen, isVisible, animationDuration, onClose]);
 
   const getOverlayStyle = () => ({
-    animation: isClosing 
-      ? `fadeOut ${animationDuration}ms ease-in forwards` 
+    animation: isClosing
+      ? `fadeOut ${animationDuration}ms ease-in forwards`
       : `fadeIn ${animationDuration}ms ease-out forwards`
   });
 
   const getModalStyle = () => ({
-    animation: isClosing 
-      ? `modalSlideOut ${animationDuration}ms ease-in forwards` 
+    animation: isClosing
+      ? `modalSlideOut ${animationDuration}ms ease-in forwards`
       : `modalSlideIn ${animationDuration}ms ease-out forwards`
   });
 
@@ -255,7 +255,7 @@ export const useUnsavedChanges = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
-  
+
   // Başlangıç durumunu kaydet
   const initialStepsRef = useRef<TestStep[]>([]);
   const lastSavedStepsRef = useRef<TestStep[]>([]);
@@ -268,7 +268,7 @@ export const useUnsavedChanges = ({
       initialStepsRef.current = [...testSteps];
       lastSavedStepsRef.current = [...testSteps];
       isInitialized.current = true;
-      
+
       // İlk durumda değişiklik yok
       setHasUnsavedChanges(false);
       return;
@@ -276,8 +276,20 @@ export const useUnsavedChanges = ({
 
     // Değişiklik kontrolü - canUndo false ise değişiklik yok sayılır
     const stepsChanged = JSON.stringify(testSteps) !== JSON.stringify(lastSavedStepsRef.current);
-    const hasRealChanges = stepsChanged && canUndo;
-    
+
+    // Default step kontrolü (Yeni test oluşturulduğunda gelen boş navigate adımı)
+    const isDefaultStep = testSteps.length === 1 &&
+      testSteps[0].type === 'navigate' &&
+      !testSteps[0].url &&
+      !testSteps[0].description;
+
+    const wasEmpty = lastSavedStepsRef.current.length === 0;
+
+    // Eğer önceki durum boşsa ve şu an sadece default step varsa, değişiklik olarak sayma
+    const isIgnoredChange = wasEmpty && isDefaultStep;
+
+    const hasRealChanges = stepsChanged && canUndo && !isIgnoredChange;
+
     // Değişiklik var mı kontrol et
     setHasUnsavedChanges(hasRealChanges);
   }, [testSteps, canUndo]);
