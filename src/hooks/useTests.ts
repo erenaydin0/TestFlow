@@ -16,7 +16,7 @@ interface UseTestsReturn {
   loading: boolean;
   error: string | null;
   filteredTests: Test[];
-  
+
   // Filtering
   filters: TestFilters;
   setFilters: (filters: TestFilters) => void;
@@ -25,7 +25,7 @@ interface UseTestsReturn {
     tags: string[];
     browsers: string[];
   };
-  
+
   // Actions
   loadTests: () => void;
   refresh: () => void;
@@ -34,7 +34,7 @@ interface UseTestsReturn {
   updateTest: (testId: string, updatedTest: Test) => Promise<boolean>;
   bulkDeleteTests: (testIds: string[]) => Promise<number>;
   bulkDuplicateTests: (testIds: string[]) => Promise<number>;
-  
+
   // Loading states
   isDeleting: boolean;
   isDuplicating: boolean;
@@ -45,7 +45,7 @@ interface UseTestsReturn {
 
 const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
   const { autoLoad = true } = options;
-  
+
   const [filters, setFilters] = useState<TestFilters>({
     search: '',
     suite: [],
@@ -96,7 +96,7 @@ const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
 
   // Update test mutation
   const updateTestMutation = useApiMutation(
-    ({ testId, updatedTest }: { testId: string; updatedTest: Test }) => 
+    ({ testId, updatedTest }: { testId: string; updatedTest: Test }) =>
       TestService.updateTest(testId, updatedTest),
     {
       onSuccess: async () => {

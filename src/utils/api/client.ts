@@ -38,15 +38,24 @@ export class ApiClient {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), config?.timeout || this.timeout);
 
+    // Add timestamp to GET requests to prevent caching
+    const finalUrl = method === 'GET'
+      ? `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`
+      : url;
+
     try {
-      const response = await fetch(url, {
+      const response = await fetch(finalUrl, {
         method,
         headers: {
           ...this.defaultHeaders,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
           ...config?.headers,
         },
         body: data ? JSON.stringify(data) : undefined,
         signal: config?.signal || controller.signal,
+        cache: 'no-store',
       });
 
       clearTimeout(timeoutId);
