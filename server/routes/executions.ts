@@ -52,6 +52,12 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
     // Execute test workflow
     router.post('/execute', validateExecutionRequest, async (req: Request, res: Response) => {
         try {
+            const workspaceId = req.headers['x-workspace-id'] as string;
+
+            if (!workspaceId) {
+                return res.status(400).json({ error: 'Workspace ID is required' });
+            }
+
             const { workflowId, workflowName, steps, suite, tags, options } = req.validatedData;
 
             // Generate execution ID and create execution object
@@ -80,7 +86,8 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
                 }))),
                 screenshots: '[]',
                 logs: '[]',
-                progress: 0
+                progress: 0,
+                workspaceId: workspaceId
             };
 
             // Save execution to DB
@@ -170,7 +177,14 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
     // Get all execution results
     router.get('/', async (req: Request, res: Response) => {
         try {
+            const workspaceId = req.headers['x-workspace-id'] as string;
+
+            if (!workspaceId) {
+                return res.status(400).json({ error: 'Workspace ID is required' });
+            }
+
             const executions = await prisma.execution.findMany({
+                where: { workspaceId },
                 orderBy: { startTime: 'desc' }
             });
 

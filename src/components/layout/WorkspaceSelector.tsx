@@ -29,7 +29,11 @@ export default function WorkspaceSelector() {
 
     useEffect(() => {
         if (selected) {
-            localStorage.setItem("selectedWorkspaceId", selected.id);
+            const currentId = localStorage.getItem("selectedWorkspaceId");
+            if (currentId !== selected.id) {
+                localStorage.setItem("selectedWorkspaceId", selected.id);
+                window.location.reload();
+            }
         }
     }, [selected]);
 

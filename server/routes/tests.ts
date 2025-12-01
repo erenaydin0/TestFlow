@@ -43,7 +43,14 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
     // Get all tests
     router.get('/', async (req: Request, res: Response) => {
         try {
+            const workspaceId = req.headers['x-workspace-id'] as string;
+
+            if (!workspaceId) {
+                return res.status(400).json({ error: 'Workspace ID is required' });
+            }
+
             const tests = await prisma.test.findMany({
+                where: { workspaceId },
                 orderBy: { updatedAt: 'desc' }
             });
 
@@ -77,6 +84,12 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
     // Create or update test
     router.post('/', validateTestRequest, async (req: Request, res: Response) => {
         try {
+            const workspaceId = req.headers['x-workspace-id'] as string;
+
+            if (!workspaceId) {
+                return res.status(400).json({ error: 'Workspace ID is required' });
+            }
+
             const testData = req.validatedData;
             const testId = req.body.id || uuidv4();
 
@@ -94,6 +107,7 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
                 enableRecording: testData.enableRecording ?? false,
                 headlessMode: testData.headlessMode ?? false,
                 browserType: testData.browserType || 'chromium',
+                workspaceId: workspaceId,
                 createdAt: req.body.createdAt ? new Date(req.body.createdAt) : new Date(),
                 updatedAt: new Date()
             };

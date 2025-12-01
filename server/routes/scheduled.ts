@@ -44,7 +44,14 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
     // Get all scheduled tests
     router.get('/', async (req: Request, res: Response) => {
         try {
+            const workspaceId = req.headers['x-workspace-id'] as string;
+
+            if (!workspaceId) {
+                return res.status(400).json({ error: 'Workspace ID is required' });
+            }
+
             const dbSchedules = await prisma.scheduledTest.findMany({
+                where: { workspaceId },
                 orderBy: { nextRun: 'asc' }
             });
 
@@ -93,6 +100,12 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
     // Create scheduled test
     router.post('/', validateScheduledTestRequest, async (req: Request, res: Response) => {
         try {
+            const workspaceId = req.headers['x-workspace-id'] as string;
+
+            if (!workspaceId) {
+                return res.status(400).json({ error: 'Workspace ID is required' });
+            }
+
             const scheduleData = req.validatedData;
             const scheduleId = uuidv4();
 
@@ -127,6 +140,7 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                 lastRun: null,
                 lastDuration: null,
                 successRate: null,
+                workspaceId: workspaceId,
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
