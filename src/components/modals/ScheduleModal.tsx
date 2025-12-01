@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Clock, Calendar } from 'lucide-react';
 import { ScheduledTest, Test, ScheduleFrequency } from '@/types/test';
-import { Button,CustomSelect } from '@/components';
+import { Button, CustomSelect } from '@/components';
 import { useI18n, useSidebar } from '@/hooks';
 import { useModal } from '@/hooks';
 import { TestService } from '@/utils/api';
@@ -64,7 +64,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
       onClose();
     }
   };
-  
+
   // Zamanlama detayları
   const [hour, setHour] = useState('09');
   const [minute, setMinute] = useState('00');
@@ -78,7 +78,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
   // Testleri yükle
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const loadTests = async () => {
       try {
         setLoadingTests(true);
@@ -90,37 +90,37 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
         setLoadingTests(false);
       }
     };
-    
+
     loadTests();
   }, [isOpen]);
 
   // Schedule değiştiğinde form'u güncelle
   useEffect(() => {
     if (!isOpen) return;
-    
+
     if (schedule) {
       setSelectedTest(schedule.testId);
       setFrequency(schedule.frequency);
       setCronExpression(schedule.schedule);
-      
+
       // Cron'dan değerleri parse et
       const parts = schedule.schedule.split(' ');
       if (parts.length >= 5) {
         const [min, hr, day, month, weekday] = parts;
-        
+
         if (schedule.frequency === 'daily' || schedule.frequency === 'weekly' || schedule.frequency === 'monthly') {
           setMinute(min);
           setHour(hr);
         }
-        
+
         if (schedule.frequency === 'weekly' && weekday !== '*') {
           setSelectedDays(weekday.split(',').map(d => parseInt(d)));
         }
-        
+
         if (schedule.frequency === 'monthly' && day !== '*') {
           setSelectedMonthDays(day.split(',').map(d => parseInt(d)));
         }
-        
+
         if (schedule.frequency === 'custom') {
           if (hr.includes(',')) {
             setCustomType('hours');
@@ -175,7 +175,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
     }
     setCronExpression(cron);
   }, [frequency, hour, minute, selectedDays, selectedMonthDays, selectedHours, customInterval, customType]);
-  
+
   // Cron ifadesini açıklama olarak göster
   const getCronDescription = () => {
     switch (frequency) {
@@ -208,10 +208,10 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
         return '';
     }
   };
-  
+
   const toggleHour = (hour: number) => {
-    setSelectedHours(prev => 
-      prev.includes(hour) 
+    setSelectedHours(prev =>
+      prev.includes(hour)
         ? prev.filter(h => h !== hour)
         : [...prev, hour]
     );
@@ -219,7 +219,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const test = tests.find(t => t.id === selectedTest);
     if (!test) return;
 
@@ -237,21 +237,21 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
       retryOnFailure: true,
       maxRetries: 3
     });
-    
+
     onClose();
   };
-  
+
   const toggleDay = (day: number) => {
-    setSelectedDays(prev => 
-      prev.includes(day) 
+    setSelectedDays(prev =>
+      prev.includes(day)
         ? prev.filter(d => d !== day)
         : [...prev, day]
     );
   };
-  
+
   const toggleMonthDay = (day: number) => {
-    setSelectedMonthDays(prev => 
-      prev.includes(day) 
+    setSelectedMonthDays(prev =>
+      prev.includes(day)
         ? prev.filter(d => d !== day)
         : [...prev, day]
     );
@@ -260,7 +260,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -282,7 +282,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
         }
       }}
     >
-      <div 
+      <div
         style={{
           backgroundColor: 'var(--bg-primary)',
           border: '1px solid var(--border-primary)',
@@ -332,15 +332,15 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <form onSubmit={handleSubmit} style={{
+          display: 'flex',
+          flexDirection: 'column',
           flex: 1,
           minHeight: 0
         }}>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
             gap: '2rem',
             flex: 1,
             overflow: 'auto',
@@ -379,246 +379,6 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
 
               {/* Frekans Seçimi */}
               <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: '0.75rem'
-            }}>
-              {t('scheduleModal.howOften')}
-            </label>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-              gap: '0.5rem' 
-            }}>
-              {getFrequencyOptions(t).map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setFrequency(opt.value)}
-                  style={{
-                    padding: '0.625rem 0.75rem',
-                    border: `2px solid ${frequency === opt.value ? 'var(--border-secondary)' : 'var(--border-primary)'}`,
-                    borderRadius: '0.375rem',
-                    backgroundColor: frequency === opt.value ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                    color: frequency === opt.value ? 'var(--primary)' : 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    fontSize: '0.875rem'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (frequency !== opt.value) {
-                      e.currentTarget.style.borderColor = 'var(--text-tertiary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (frequency !== opt.value) {
-                      e.currentTarget.style.borderColor = 'var(--border-primary)';
-                    }
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-            </div>
-
-            {/* Sağ Kolon */}
-            <div>
-          {/* Saat Seçimi - Hourly hariç */}
-          {frequency !== 'hourly' && frequency !== 'custom' && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: '0.75rem'
-              }}>
-                <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                {t('scheduleModal.whatTime')}
-              </label>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{ flex: 1 }}>
-                  <input
-                    type="number"
-                    min="0"
-                    max="23"
-                    value={hour}
-                    onChange={(e) => setHour(e.target.value.padStart(2, '0'))}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '2px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '1.25rem',
-                      textAlign: 'center',
-                      outline: 'none'
-                    }}
-                  />
-                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
-                    {t('scheduleModal.hour')}
-                  </div>
-                </div>
-                <span style={{ fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>:</span>
-                <div style={{ flex: 1 }}>
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    value={minute}
-                    onChange={(e) => setMinute(e.target.value.padStart(2, '0'))}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '2px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '1.25rem',
-                      textAlign: 'center',
-                      outline: 'none'
-                    }}
-                  />
-                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
-                    {t('scheduleModal.minute')}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Haftalık - Gün Seçimi */}
-          {frequency === 'weekly' && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: '0.75rem'
-              }}>
-                <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                {t('scheduleModal.whichDays')}
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {/* Hafta içi günler */}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {[
-                    { value: 1, label: t('scheduleModal.days.mondayShort') },
-                    { value: 2, label: t('scheduleModal.days.tuesdayShort') },
-                    { value: 3, label: t('scheduleModal.days.wednesdayShort') },
-                    { value: 4, label: t('scheduleModal.days.thursdayShort') },
-                    { value: 5, label: t('scheduleModal.days.fridayShort') }
-                  ].map(day => (
-                    <button
-                      key={day.value}
-                      type="button"
-                      onClick={() => toggleDay(day.value)}
-                      style={{
-                        flex: 1,
-                        padding: '0.75rem',
-                        border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
-                        borderRadius: '0.5rem',
-                        backgroundColor: selectedDays.includes(day.value) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                        color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
-                </div>
-                {/* Hafta sonu günler */}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {[
-                    { value: 6, label: t('scheduleModal.days.saturdayShort') },
-                    { value: 0, label: t('scheduleModal.days.sundayShort') }
-                  ].map(day => (
-                    <button
-                      key={day.value}
-                      type="button"
-                      onClick={() => toggleDay(day.value)}
-                      style={{
-                        flex: 1,
-                        padding: '0.75rem',
-                        border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
-                        borderRadius: '0.5rem',
-                        backgroundColor: selectedDays.includes(day.value) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                        color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Aylık - Gün Seçimi */}
-          {frequency === 'monthly' && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: '0.75rem'
-              }}>
-                <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                {t('scheduleModal.whichMonthDays')}
-              </label>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '0.35rem',
-                padding: '0.5rem',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.5rem'
-              }}>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleMonthDay(day)}
-                    style={{
-                      padding: '0.25rem',
-                      border: `2px solid ${selectedMonthDays.includes(day) ? 'var(--primary)' : 'var(--border-primary)'}`,
-                      borderRadius: '0.25rem',
-                      backgroundColor: selectedMonthDays.includes(day) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                      color: selectedMonthDays.includes(day) ? 'white' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      transition: 'all 0.2s',
-                      minHeight: '28px'
-                    }}
-                  >
-                    {day}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Özel Zamanlama */}
-          {frequency === 'custom' && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              {/* Özel Tip Seçimi */}
-              <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
                   display: 'block',
                   fontSize: '0.875rem',
@@ -626,49 +386,53 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                   color: 'var(--text-primary)',
                   marginBottom: '0.75rem'
                 }}>
-                  {t('scheduleModal.howToSchedule')}
+                  {t('scheduleModal.howOften')}
                 </label>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setCustomType('hours')}
-                    style={{
-                      flex: 1,
-                      padding: '0.75rem',
-                      border: `2px solid ${customType === 'hours' ? 'var(--primary)' : 'var(--border-primary)'}`,
-                      borderRadius: '0.5rem',
-                      backgroundColor: customType === 'hours' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                      color: customType === 'hours' ? 'var(--primary)' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {t('scheduleModal.specificHours')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCustomType('interval')}
-                    style={{
-                      flex: 1,
-                      padding: '0.75rem',
-                      border: `2px solid ${customType === 'interval' ? 'var(--primary)' : 'var(--border-primary)'}`,
-                      borderRadius: '0.5rem',
-                      backgroundColor: customType === 'interval' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                      color: customType === 'interval' ? 'var(--primary)' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {t('scheduleModal.specificIntervals')}
-                  </button>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+                  gap: '0.5rem'
+                }}>
+                  {getFrequencyOptions(t).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFrequency(opt.value)}
+                      style={{
+                        padding: '0.625rem 0.75rem',
+                        border: `2px solid ${frequency === opt.value ? 'var(--border-secondary)' : 'var(--border-primary)'}`,
+                        borderRadius: '0.375rem',
+                        backgroundColor: frequency === opt.value ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        fontSize: '0.875rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (frequency !== opt.value) {
+                          e.currentTarget.style.borderColor = 'var(--text-tertiary)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (frequency !== opt.value) {
+                          e.currentTarget.style.borderColor = 'var(--border-primary)';
+                        }
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               </div>
+            </div>
 
-              {/* Belirli Saatlerde */}
-              {customType === 'hours' && (
-                <div>
+            {/* Sağ Kolon */}
+            <div>
+              {/* Saat Seçimi - Hourly hariç */}
+              {frequency !== 'hourly' && frequency !== 'custom' && (
+                <div style={{ marginBottom: '1.5rem' }}>
                   <label style={{
                     display: 'block',
                     fontSize: '0.875rem',
@@ -677,90 +441,326 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
                     marginBottom: '0.75rem'
                   }}>
                     <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    {t('scheduleModal.whichHours')}
+                    {t('scheduleModal.whatTime')}
                   </label>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(6, 1fr)',
-                    gap: '0.375rem',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        value={hour}
+                        onChange={(e) => setHour(e.target.value.padStart(2, '0'))}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '2px solid var(--border-primary)',
+                          borderRadius: '0.5rem',
+                          backgroundColor: 'var(--bg-primary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '1.25rem',
+                          textAlign: 'center',
+                          outline: 'none'
+                        }}
+                      />
+                      <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
+                        {t('scheduleModal.hour')}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>:</span>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={minute}
+                        onChange={(e) => setMinute(e.target.value.padStart(2, '0'))}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '2px solid var(--border-primary)',
+                          borderRadius: '0.5rem',
+                          backgroundColor: 'var(--bg-primary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '1.25rem',
+                          textAlign: 'center',
+                          outline: 'none'
+                        }}
+                      />
+                      <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
+                        {t('scheduleModal.minute')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Haftalık - Gün Seçimi */}
+              {frequency === 'weekly' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: '0.75rem'
+                  }}>
+                    <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                    {t('scheduleModal.whichDays')}
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {/* Hafta içi günler */}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {[
+                        { value: 1, label: t('scheduleModal.days.mondayShort') },
+                        { value: 2, label: t('scheduleModal.days.tuesdayShort') },
+                        { value: 3, label: t('scheduleModal.days.wednesdayShort') },
+                        { value: 4, label: t('scheduleModal.days.thursdayShort') },
+                        { value: 5, label: t('scheduleModal.days.fridayShort') }
+                      ].map(day => (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => toggleDay(day.value)}
+                          style={{
+                            flex: 1,
+                            padding: '0.75rem',
+                            border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
+                            borderRadius: '0.5rem',
+                            backgroundColor: selectedDays.includes(day.value) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                            color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Hafta sonu günler */}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {[
+                        { value: 6, label: t('scheduleModal.days.saturdayShort') },
+                        { value: 0, label: t('scheduleModal.days.sundayShort') }
+                      ].map(day => (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => toggleDay(day.value)}
+                          style={{
+                            flex: 1,
+                            padding: '0.75rem',
+                            border: `2px solid ${selectedDays.includes(day.value) ? 'var(--primary)' : 'var(--border-primary)'}`,
+                            borderRadius: '0.5rem',
+                            backgroundColor: selectedDays.includes(day.value) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                            color: selectedDays.includes(day.value) ? 'white' : 'var(--text-primary)',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Aylık - Gün Seçimi */}
+              {frequency === 'monthly' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: '0.75rem'
+                  }}>
+                    <Calendar size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                    {t('scheduleModal.whichMonthDays')}
+                  </label>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(7, 1fr)',
+                    gap: '0.35rem',
                     padding: '0.5rem',
                     border: '1px solid var(--border-primary)',
-                    borderRadius: '0.5rem',
-                    backgroundColor: 'var(--bg-secondary)'
+                    borderRadius: '0.5rem'
                   }}>
-                    {HOUR_OPTIONS.map(({ value, label }) => (
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                       <button
-                        key={value}
+                        key={day}
                         type="button"
-                        onClick={() => toggleHour(value)}
+                        onClick={() => toggleMonthDay(day)}
                         style={{
-                          padding: '0.5rem',
-                          border: `2px solid ${selectedHours.includes(value) ? 'var(--primary)' : 'var(--border-primary)'}`,
+                          padding: '0.25rem',
+                          border: `2px solid ${selectedMonthDays.includes(day) ? 'var(--primary)' : 'var(--border-primary)'}`,
                           borderRadius: '0.25rem',
-                          backgroundColor: selectedHours.includes(value) ? 'var(--accent-primary)' : 'var(--bg-primary)',
-                          color: selectedHours.includes(value) ? 'white' : 'var(--text-primary)',
+                          backgroundColor: selectedMonthDays.includes(day) ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                          color: selectedMonthDays.includes(day) ? 'white' : 'var(--text-primary)',
                           cursor: 'pointer',
                           fontSize: '0.75rem',
                           fontWeight: 600,
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s',
+                          minHeight: '28px'
                         }}
                       >
-                        {label}
+                        {day}
                       </button>
                     ))}
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
-                    {t('scheduleModal.multiSelectHint')}
-                  </p>
                 </div>
               )}
 
-              {/* Belirli Aralıklarla */}
-              {customType === 'interval' && (
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginBottom: '0.75rem'
-                  }}>
-                    <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    {t('scheduleModal.howOftenInterval')}
-                  </label>
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    {[2, 3, 4, 6, 8, 12].map(interval => (
+              {/* Özel Zamanlama */}
+              {frequency === 'custom' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  {/* Özel Tip Seçimi */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginBottom: '0.75rem'
+                    }}>
+                      {t('scheduleModal.howToSchedule')}
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
                       <button
-                        key={interval}
                         type="button"
-                        onClick={() => setCustomInterval(interval)}
+                        onClick={() => setCustomType('hours')}
                         style={{
-                          flex: '1 1 calc(33.333% - 0.5rem)',
-                          minWidth: '100px',
-                          padding: '1rem',
-                          border: `2px solid ${customInterval === interval ? 'var(--primary)' : 'var(--border-primary)'}`,
+                          flex: 1,
+                          padding: '0.75rem',
+                          border: `2px solid ${customType === 'hours' ? 'var(--primary)' : 'var(--border-primary)'}`,
                           borderRadius: '0.5rem',
-                          backgroundColor: customInterval === interval ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                          color: customInterval === interval ? 'white' : 'var(--text-primary)',
+                          backgroundColor: customType === 'hours' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
                           cursor: 'pointer',
                           fontWeight: 600,
-                          fontSize: '1rem',
                           transition: 'all 0.2s'
                         }}
                       >
-                        {t('scheduleModal.hours', { count: interval })}
+                        {t('scheduleModal.specificHours')}
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={() => setCustomType('interval')}
+                        style={{
+                          flex: 1,
+                          padding: '0.75rem',
+                          border: `2px solid ${customType === 'interval' ? 'var(--primary)' : 'var(--border-primary)'}`,
+                          borderRadius: '0.5rem',
+                          backgroundColor: customType === 'interval' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {t('scheduleModal.specificIntervals')}
+                      </button>
+                    </div>
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.75rem' }}>
-                    {t('scheduleModal.willRunEveryInterval', { interval: customInterval })}
-                  </p>
+
+                  {/* Belirli Saatlerde */}
+                  {customType === 'hours' && (
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                        {t('scheduleModal.whichHours')}
+                      </label>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(6, 1fr)',
+                        gap: '0.375rem',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        padding: '0.5rem',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.5rem',
+                        backgroundColor: 'var(--bg-secondary)'
+                      }}>
+                        {HOUR_OPTIONS.map(({ value, label }) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => toggleHour(value)}
+                            style={{
+                              padding: '0.5rem',
+                              border: `2px solid ${selectedHours.includes(value) ? 'var(--primary)' : 'var(--border-primary)'}`,
+                              borderRadius: '0.25rem',
+                              backgroundColor: selectedHours.includes(value) ? 'var(--accent-primary)' : 'var(--bg-primary)',
+                              color: selectedHours.includes(value) ? 'white' : 'var(--text-primary)',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
+                        {t('scheduleModal.multiSelectHint')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Belirli Aralıklarla */}
+                  {customType === 'interval' && (
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                        {t('scheduleModal.howOftenInterval')}
+                      </label>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {[2, 3, 4, 6, 8, 12].map(interval => (
+                          <button
+                            key={interval}
+                            type="button"
+                            onClick={() => setCustomInterval(interval)}
+                            style={{
+                              flex: '1 1 calc(33.333% - 0.5rem)',
+                              minWidth: '100px',
+                              padding: '1rem',
+                              border: `2px solid ${customInterval === interval ? 'var(--primary)' : 'var(--border-primary)'}`,
+                              borderRadius: '0.5rem',
+                              backgroundColor: customInterval === interval ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                              color: customInterval === interval ? 'white' : 'var(--text-primary)',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              fontSize: '1rem',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {t('scheduleModal.hours', { count: interval })}
+                          </button>
+                        ))}
+                      </div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.75rem' }}>
+                        {t('scheduleModal.willRunEveryInterval', { interval: customInterval })}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
             </div>
           </div>
 
@@ -776,8 +776,8 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
             flexShrink: 0
           }}>
             {/* Sol: Zamanlama Özeti */}
-            <div style={{ 
-              fontSize: '0.875rem', 
+            <div style={{
+              fontSize: '0.875rem',
               color: 'var(--text-primary)',
               fontWeight: 500,
               display: 'flex',
@@ -788,7 +788,7 @@ export function ScheduleModal({ isOpen, onClose, onSave, schedule }: ScheduleMod
               <Clock size={16} style={{ color: 'var(--primary)' }} />
               {getCronDescription()}
             </div>
-            
+
             {/* Sağ: Butonlar */}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button variant="secondary" onClick={onClose} type="button">
