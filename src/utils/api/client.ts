@@ -43,16 +43,24 @@ export class ApiClient {
       ? `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`
       : url;
 
+    // Get workspace ID from localStorage if available
+    const workspaceId = typeof window !== 'undefined' ? localStorage.getItem('selectedWorkspaceId') : null;
+    const headers: Record<string, string> = {
+      ...this.defaultHeaders,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      ...config?.headers,
+    };
+
+    if (workspaceId) {
+      headers['x-workspace-id'] = workspaceId;
+    }
+
     try {
       const response = await fetch(finalUrl, {
         method,
-        headers: {
-          ...this.defaultHeaders,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          ...config?.headers,
-        },
+        headers,
         body: data ? JSON.stringify(data) : undefined,
         signal: config?.signal || controller.signal,
         cache: 'no-store',

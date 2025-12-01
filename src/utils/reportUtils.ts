@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { ExecutionResult } from '@/types';
@@ -34,14 +35,14 @@ export const createTestCSVReport = (
     t('reports.longestStepDuration'),
     t('reports.reportingDate')
   ];
-  
+
   const csvRows = executions.map(execution => {
     const stepDurations = execution.steps.filter(s => s.duration).map(s => s.duration!);
     const avgStepDuration = stepDurations.length > 0 ? Math.round(stepDurations.reduce((a, b) => a + b, 0) / stepDurations.length) : 0;
     const maxStepDuration = stepDurations.length > 0 ? Math.max(...stepDurations) : 0;
     const firstError = execution.steps.find(s => s.error)?.error || '';
     const lastStepDuration = execution.steps[execution.steps.length - 1]?.duration || 0;
-    
+
     return [
       execution.workflowName,
       execution.id,
@@ -67,7 +68,7 @@ export const createTestCSVReport = (
       new Date().toLocaleString('tr-TR')
     ];
   });
-  
+
   return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
 };
 
@@ -93,7 +94,7 @@ export const createStepsCSVReport = (
     t('reports.error'),
     t('reports.screenshot')
   ];
-  
+
   const csvRows = execution.steps.map((step, index) => {
     return [
       index + 1,
@@ -111,7 +112,7 @@ export const createStepsCSVReport = (
       step.screenshot ? t('common.yes') : t('common.no')
     ];
   });
-  
+
   return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
 };
 
@@ -139,9 +140,12 @@ export const createBulkStepsCSVReport = (
     t('reports.error'),
     t('reports.screenshot')
   ];
-  
+
+
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const csvRows: any[] = [];
-  
+
   executions.forEach(execution => {
     execution.steps.forEach((step, index) => {
       csvRows.push([
@@ -163,7 +167,7 @@ export const createBulkStepsCSVReport = (
       ]);
     });
   });
-  
+
   return [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
 };
 
@@ -178,14 +182,14 @@ export const downloadExecutionReport = async (
     // Import JSZip dynamically
     const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
-    
+
     // Create CSV reports
     const csvContent = createTestCSVReport([execution], t);
     const stepsCSVContent = createStepsCSVReport(execution, t);
-    
+
     zip.file(`${t('reports.testReport')}.csv`, '\uFEFF' + csvContent);
     zip.file(`${t('reports.stepDetails')}.csv`, '\uFEFF' + stepsCSVContent);
-    
+
     // Add screenshots
     const screenshotsFolder = zip.folder('screenshots');
     for (let i = 0; i < execution.steps.length; i++) {
@@ -203,7 +207,7 @@ export const downloadExecutionReport = async (
         }
       }
     }
-    
+
     // Add video if exists
     if (execution.videoPath) {
       try {
@@ -216,7 +220,7 @@ export const downloadExecutionReport = async (
         console.error('Error downloading video:', error);
       }
     }
-    
+
     // Generate and download ZIP
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(zipBlob);
@@ -227,7 +231,7 @@ export const downloadExecutionReport = async (
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
   } catch (error) {
     console.error('Error creating report package:', error);
     throw new Error(t('reports.reportPackageError') + ': ' + (error instanceof Error ? error.message : t('common.unknownError')));
@@ -245,24 +249,24 @@ export const downloadBulkExecutionReports = async (
     // Import JSZip dynamically
     const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
-    
+
     // Create main CSV report
     const csvContent = createTestCSVReport(executions, t);
     zip.file(`${t('reports.bulkTestReport')}.csv`, '\uFEFF' + csvContent);
-    
+
     // Create consolidated steps CSV
     const allStepsCSV = createBulkStepsCSVReport(executions, t);
     zip.file(`${t('reports.allStepDetails')}.csv`, '\uFEFF' + allStepsCSV);
-    
+
     // Add screenshots and videos for each execution
     for (let execIndex = 0; execIndex < executions.length; execIndex++) {
       const execution = executions[execIndex];
       const executionFolder = zip.folder(`${execIndex + 1}_${execution.workflowName.replace(/[^a-zA-Z0-9]/g, '_')}_${execution.id.slice(0, 8)}`);
-      
+
       // Add individual execution reports
       const stepsCSV = createStepsCSVReport(execution, t);
       executionFolder?.file(`${t('reports.stepDetails')}.csv`, '\uFEFF' + stepsCSV);
-      
+
       // Add screenshots for this execution
       const screenshotsFolder = executionFolder?.folder('screenshots');
       for (let i = 0; i < execution.steps.length; i++) {
@@ -280,7 +284,7 @@ export const downloadBulkExecutionReports = async (
           }
         }
       }
-      
+
       // Add video for this execution
       if (execution.videoPath) {
         try {
@@ -294,7 +298,7 @@ export const downloadBulkExecutionReports = async (
         }
       }
     }
-    
+
     // Generate and download ZIP
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(zipBlob);
@@ -305,7 +309,7 @@ export const downloadBulkExecutionReports = async (
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
   } catch (error) {
     console.error('Error creating bulk report package:', error);
     throw new Error('Toplu rapor paketi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));

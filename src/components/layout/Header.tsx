@@ -25,9 +25,9 @@ import { performGlobalSearch, SearchResult } from '@/utils/globalSearch';
 import { useNotifications } from '@/hooks';
 import { useTheme, useSettingsModal, useI18n } from '@/hooks';
 import { Theme } from '@/types';
+import UserDropdown from './UserDropdown';
 
 export default function Header() {
-  const [isUserPanelOpen, setIsUserPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{
     tests: SearchResult[];
@@ -43,7 +43,6 @@ export default function Header() {
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userPanelRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useRef<HTMLDivElement>(null);
 
   // Real-time notifications hook (destructuring removed as variables are unused)
@@ -60,22 +59,19 @@ export default function Header() {
   // Panel dışına tıklandığında kapat
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (userPanelRef.current && !userPanelRef.current.contains(event.target as Node)) {
-        setIsUserPanelOpen(false);
-      }
       if (searchPanelRef.current && !searchPanelRef.current.contains(event.target as Node)) {
         setShowSearchResults(false);
       }
     }
 
-    if (isUserPanelOpen || showSearchResults) {
+    if (showSearchResults) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isUserPanelOpen, showSearchResults]);
+  }, [showSearchResults]);
 
   const themeOptions = [
     { id: 'light', label: t('common.light'), icon: Sun },
@@ -530,145 +526,9 @@ export default function Header() {
           <NotificationPanel />
 
           {/* User Profile */}
-          <div style={{ position: 'relative' }} ref={userPanelRef}>
-            <button
-              onClick={() => setIsUserPanelOpen(!isUserPanelOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.5rem 1rem',
-                paddingLeft: '1rem',
-                borderLeft: '1px solid var(--border-primary)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <div style={{
-                width: '2.5rem',
-                height: '2.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <User size={24} color="var(--text-primary)" />
-              </div>
-            </button>
-
-            {/* User Panel */}
-            <div className={`user-panel ${isUserPanelOpen ? 'open' : ''}`}>
-              {/* User Info */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '1rem',
-                borderBottom: '1px solid var(--border-primary)'
-              }}>
-                <div style={{
-                  width: '3rem',
-                  height: '3rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <User size={32} color="var(--text-primary)" />
-                </div>
-                <div>
-                  <p style={{
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    margin: 0
-                  }}>
-                    {t('common.testUser')}
-                  </p>
-                  <p style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)',
-                    margin: 0
-                  }}>
-                    test@example.com
-                  </p>
-                </div>
-              </div>
-
-              {/* Appearance Settings */}
-              <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-primary)' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.75rem'
-                }}>
-                  <span style={{
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: 'var(--text-primary)'
-                  }}>
-                    {t('common.appearance')}
-                  </span>
-
-                  {/* Compact Theme Dropdown */}
-                  <div style={{ position: 'relative' }}>
-                    <CustomSelect
-                      value={theme}
-                      onChange={(value) => setTheme(value as Theme)}
-                      options={themeOptions.map((option) => ({
-                        value: option.id,
-                        label: option.label
-                      }))}
-                      style={{ border: 'none' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Menu Items */}
-              <div style={{ padding: '0.5rem' }}>
-                <Button
-                  onClick={() => {
-                    openSettingsModal();
-                    setIsUserPanelOpen(false);
-                  }}
-                  variant="ghost"
-                  icon={Settings}
-                  size="sm"
-                  style={{
-                    width: '100%',
-                    justifyContent: 'flex-start',
-                    color: 'var(--text-secondary)'
-                  }}
-                >
-                  {t('common.settings')}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  icon={LogOut}
-                  size="sm"
-                  style={{
-                    width: '100%',
-                    justifyContent: 'flex-start',
-                    color: 'var(--status-error)'
-                  }}
-                >
-                  {t('common.logout')}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <UserDropdown />
         </div>
       </div>
     </header>
   );
-} 
+}

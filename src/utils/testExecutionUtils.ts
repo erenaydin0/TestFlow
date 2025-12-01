@@ -30,7 +30,12 @@ export interface BackendStep {
 /**
  * Frontend test adımlarını backend formatına dönüştürür
  */
+/**
+ * Frontend test adımlarını backend formatına dönüştürür
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const convertStepsToBackendFormat = (workflow: any[]): BackendStep[] => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return workflow.map((step: any) => ({
     id: step.id,
     type: step.type,
@@ -56,6 +61,7 @@ export const convertStepsToBackendFormat = (workflow: any[]): BackendStep[] => {
 export const executeTest = async (
   test: Test,
   options: TestExecutionOptions = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   browserSettings: any
 ) => {
   if (!test.workflow || test.workflow.length === 0) {
@@ -136,7 +142,12 @@ export const validateTestForExecution = (test: Test): { isValid: boolean; error?
 /**
  * Test çalıştırma sonuçlarını işler
  */
+/**
+ * Test çalıştırma sonuçlarını işler
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const processExecutionResults = (results: any[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const executionIds = results.map((r: any) => r.executionId);
   const successCount = results.filter(r => r.executionId).length;
   const failureCount = results.length - successCount;

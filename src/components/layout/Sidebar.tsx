@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useSidebar, useSettingsModal, useI18n } from '@/hooks';
 import { IconButton } from '@/components/common';
+import WorkspaceSelector from './WorkspaceSelector';
 import '../../assets/styles/Sidebar.css';
 
 interface SidebarProps {
@@ -42,6 +43,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
     >
       {/* Navigation */}
       <nav className="sidebar-nav">
+        {!isCollapsed && <WorkspaceSelector />}
         <div>
           <ul className="sidebar-list">
             {navigation.map((item) => {

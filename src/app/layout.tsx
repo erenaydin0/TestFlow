@@ -5,6 +5,8 @@ import { ToastContainer } from '@/components/notifications';
 import { ErrorBoundary } from '@/components/common';
 import SettingsModalWrapper from '@/components/modals/SettingsModalWrapper';
 
+import AuthProvider from '@/components/providers/AuthProvider';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -23,11 +25,13 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <ErrorBoundary>
-          {children}
-          <ToastContainer />
-          <SettingsModalWrapper />
-        </ErrorBoundary>
+        <AuthProvider>
+          <ErrorBoundary>
+            {children}
+            <ToastContainer />
+            <SettingsModalWrapper />
+          </ErrorBoundary>
+        </AuthProvider>
       </body>
     </html>
   );
