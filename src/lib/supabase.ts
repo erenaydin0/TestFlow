@@ -115,6 +115,38 @@ export const storage = {
       
       if (error) throw error;
     }
+  },
+
+  avatars: {
+    upload: async (filename: string, buffer: Buffer, contentType: string = 'image/jpeg') => {
+      const admin = getSupabaseAdmin();
+      const { data, error } = await admin.storage
+        .from('avatars')
+        .upload(filename, buffer, {
+          contentType,
+          upsert: true
+        });
+      
+      if (error) throw error;
+      return data;
+    },
+    
+    getPublicUrl: (path: string) => {
+      const admin = getSupabaseAdmin();
+      const { data } = admin.storage
+        .from('avatars')
+        .getPublicUrl(path);
+      return data.publicUrl;
+    },
+    
+    delete: async (paths: string[]) => {
+      const admin = getSupabaseAdmin();
+      const { error } = await admin.storage
+        .from('avatars')
+        .remove(paths);
+      
+      if (error) throw error;
+    }
   }
 };
 

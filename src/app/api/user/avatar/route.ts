@@ -1,10 +1,8 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { storage } from "@/lib/supabase";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import sharp from "sharp";
 
 // Avatar settings
@@ -53,26 +51,25 @@ export async function POST(req: Request) {
         // Get current user to find old avatar
         const currentUser = await prisma.user.findUnique({
             where: { email: session.user.email },
-            select: { image: true },
+            select: { id: true, image: true },
         });
 
-        // Create uploads directory if it doesn't exist
-        const uploadsDir = join(process.cwd(), "public", "uploads", "avatars");
-        if (!existsSync(uploadsDir)) {
-            await mkdir(uploadsDir, { recursive: true });
+        if (!currentUser) {
+            return NextResponse.json(
+                { message: "User not found" },
+                { status: 404 }
+            );
         }
 
         // Generate unique filename with timestamp for cache-busting
         const timestamp = Date.now();
-        const sanitizedEmail = session.user.email.replace(/[^a-zA-Z0-9]/g, "_");
-        const filename = `${sanitizedEmail}_${timestamp}.jpg`; // Always save as JPEG for consistency
-        const filepath = join(uploadsDir, filename);
+        const filename = `${currentUser.id}_${timestamp}.jpg`; // Always save as JPEG for consistency
 
         // Process image with sharp: resize and optimize
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        await sharp(buffer)
+        const processedBuffer = await sharp(buffer)
             .resize(AVATAR_SIZE, AVATAR_SIZE, {
                 fit: "cover", // Crop to fill the square
                 position: "center",
@@ -81,14 +78,15 @@ export async function POST(req: Request) {
                 quality: AVATAR_QUALITY,
                 progressive: true,
             })
-            .toFile(filepath);
+            .toBuffer();
 
-        // Delete old avatar file if it exists and is a local file
-        if (currentUser?.image && currentUser.image.startsWith("/uploads/avatars/")) {
-            const oldFilePath = join(process.cwd(), "public", currentUser.image);
+        // Delete old avatar from Supabase Storage if it exists
+        if (currentUser.image && currentUser.image.includes('supabase.co')) {
             try {
-                if (existsSync(oldFilePath)) {
-                    await unlink(oldFilePath);
+                // Extract filename from URL
+                const oldFilename = currentUser.image.split('/').pop()?.split('?')[0];
+                if (oldFilename) {
+                    await storage.avatars.delete([oldFilename]);
                 }
             } catch (deleteError) {
                 // Log but don't fail if old file deletion fails
@@ -96,11 +94,17 @@ export async function POST(req: Request) {
             }
         }
 
+        // Upload to Supabase Storage
+        await storage.avatars.upload(filename, processedBuffer, 'image/jpeg');
+        
+        // Get public URL
+        const publicUrl = storage.avatars.getPublicUrl(filename);
+
         // Update user image in database with cache-busting query param
-        const imagePath = `/uploads/avatars/${filename}?v=${timestamp}`;
+        const imageUrl = `${publicUrl}?v=${timestamp}`;
         const user = await prisma.user.update({
             where: { email: session.user.email },
-            data: { image: imagePath },
+            data: { image: imageUrl },
             select: {
                 id: true,
                 name: true,
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             message: "Avatar uploaded successfully",
-            image: imagePath,
+            image: imageUrl,
             user,
         });
     } catch (error) {
@@ -141,14 +145,13 @@ export async function DELETE() {
             select: { image: true },
         });
 
-        // Delete avatar file if it exists and is a local file
-        if (currentUser?.image && currentUser.image.startsWith("/uploads/avatars/")) {
-            // Remove query params from path
-            const imagePath = currentUser.image.split("?")[0];
-            const filePath = join(process.cwd(), "public", imagePath);
+        // Delete avatar from Supabase Storage if it exists
+        if (currentUser?.image && currentUser.image.includes('supabase.co')) {
             try {
-                if (existsSync(filePath)) {
-                    await unlink(filePath);
+                // Extract filename from URL
+                const filename = currentUser.image.split('/').pop()?.split('?')[0];
+                if (filename) {
+                    await storage.avatars.delete([filename]);
                 }
             } catch (deleteError) {
                 console.warn("Failed to delete avatar file:", deleteError);

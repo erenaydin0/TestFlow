@@ -4,15 +4,42 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { storage } from "@/lib/supabase";
 
-// Helper to map DB execution to API response
+// Helper to map DB execution to API response with full URLs
 const mapExecutionFromDb = (dbExecution: any) => {
+    const screenshots = typeof dbExecution.screenshots === 'string' 
+        ? JSON.parse(dbExecution.screenshots || '[]') 
+        : dbExecution.screenshots;
+    
+    const steps = typeof dbExecution.steps === 'string' 
+        ? JSON.parse(dbExecution.steps || '[]') 
+        : dbExecution.steps;
+
+    // Convert screenshot filenames to full Supabase Storage URLs
+    const screenshotUrls = screenshots.map((filename: string) => {
+        if (filename.startsWith('http')) return filename; // Already a full URL
+        return storage.screenshots.getPublicUrl(`${dbExecution.id}/${filename}`);
+    });
+
+    // Also update step screenshots to full URLs
+    const stepsWithUrls = steps.map((step: any) => {
+        if (step.screenshot && !step.screenshot.startsWith('http')) {
+            return {
+                ...step,
+                screenshot: storage.screenshots.getPublicUrl(`${dbExecution.id}/${step.screenshot}`)
+            };
+        }
+        return step;
+    });
+
     return {
         ...dbExecution,
         tags: typeof dbExecution.tags === 'string' ? JSON.parse(dbExecution.tags || '[]') : dbExecution.tags,
         options: typeof dbExecution.options === 'string' ? JSON.parse(dbExecution.options || '{}') : dbExecution.options,
-        steps: typeof dbExecution.steps === 'string' ? JSON.parse(dbExecution.steps || '[]') : dbExecution.steps,
-        screenshots: typeof dbExecution.screenshots === 'string' ? JSON.parse(dbExecution.screenshots || '[]') : dbExecution.screenshots,
+        steps: stepsWithUrls,
+        screenshots: screenshotUrls,
         logs: typeof dbExecution.logs === 'string' ? JSON.parse(dbExecution.logs || '[]') : dbExecution.logs,
+        // Add video URL if exists
+        videoUrl: dbExecution.videoPath ? storage.videos.getPublicUrl(`${dbExecution.id}/${dbExecution.videoPath}`) : null,
     };
 };
 

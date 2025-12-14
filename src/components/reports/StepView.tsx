@@ -84,7 +84,7 @@ const StepView: React.FC<StepViewProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {step.screenshot && (
               <a
-                href={`${API_URL}${step.screenshot}`}
+                href={step.screenshot.startsWith('http') ? step.screenshot : `${API_URL}${step.screenshot}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
