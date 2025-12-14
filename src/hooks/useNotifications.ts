@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 import { useI18n } from '@/hooks';
 import { useNotificationSocket } from '@/hooks/useNotificationSocket';
 import { config } from '@/utils/config';
@@ -48,69 +49,93 @@ interface UseNotificationsReturn {
 // useNotifications Hook
 // ============================================================================
 
-// Storage keys - use config
-const NOTIFICATIONS_STORAGE_KEY = config.storageKeys.notifications;
-const ID_COUNTER_STORAGE_KEY = config.storageKeys.idCounter;
-
 function useNotifications(): UseNotificationsReturn {
   const { t } = useI18n();
+  const { data: session } = useSession();
+  
+  // Get user ID from session
+  const userId = (session?.user as any)?.id;
+  
+  // Storage keys - user-specific
+  const storageKeys = useMemo(() => ({
+    notifications: userId 
+      ? `${config.storageKeys.notifications}_${userId}` 
+      : config.storageKeys.notifications,
+    idCounter: userId 
+      ? `${config.storageKeys.idCounter}_${userId}` 
+      : config.storageKeys.idCounter
+  }), [userId]);
 
   // Notification State
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Notification[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const idCounterRef = useRef<number>(0);
+  const previousUserIdRef = useRef<string | undefined>(undefined);
 
   // ============================================================================
   // Core Notification Functions
   // ============================================================================
 
-  // Initialize notifications from storage
+  // Initialize notifications from storage (user-specific)
   useEffect(() => {
-    const loadedNotifications = getItem<Notification[]>(NOTIFICATIONS_STORAGE_KEY, []);
-    // Parse dates from strings
-    const parsedNotifications = loadedNotifications.map(n => ({
-      ...n,
-      timestamp: new Date(n.timestamp)
-    }));
-
-    const loadedCounter = getItem<number>(ID_COUNTER_STORAGE_KEY, 0);
-
-    setNotifications(parsedNotifications);
-    idCounterRef.current = loadedCounter;
-    setIsInitialized(true);
-  }, []);
-
-  // Save notifications to storage
-  useEffect(() => {
-    if (isInitialized) {
-      setItem(NOTIFICATIONS_STORAGE_KEY, notifications);
+    // If no user ID, clear notifications and wait for login
+    if (!userId) {
+      setNotifications([]);
+      setIsInitialized(false);
+      previousUserIdRef.current = undefined;
+      return;
     }
-  }, [notifications, isInitialized]);
+    
+    // Check if user changed
+    if (previousUserIdRef.current !== userId) {
+      previousUserIdRef.current = userId;
+      
+      const loadedNotifications = getItem<Notification[]>(storageKeys.notifications, []);
+      // Parse dates from strings
+      const parsedNotifications = loadedNotifications.map(n => ({
+        ...n,
+        timestamp: new Date(n.timestamp)
+      }));
 
-  // Save counter to storage periodically
+      const loadedCounter = getItem<number>(storageKeys.idCounter, 0);
+
+      setNotifications(parsedNotifications);
+      idCounterRef.current = loadedCounter;
+      setIsInitialized(true);
+    }
+  }, [userId, storageKeys]);
+
+  // Save notifications to storage (user-specific)
   useEffect(() => {
-    if (!isInitialized) return;
+    if (isInitialized && userId) {
+      setItem(storageKeys.notifications, notifications);
+    }
+  }, [notifications, isInitialized, userId, storageKeys]);
+
+  // Save counter to storage periodically (user-specific)
+  useEffect(() => {
+    if (!isInitialized || !userId) return;
 
     const interval = setInterval(() => {
-      setItem(ID_COUNTER_STORAGE_KEY, idCounterRef.current);
+      setItem(storageKeys.idCounter, idCounterRef.current);
     }, config.notification.autoSaveInterval);
 
     return () => clearInterval(interval);
-  }, [isInitialized]);
+  }, [isInitialized, userId, storageKeys]);
 
   const generateUniqueId = useCallback((prefix: string) => {
     const timestamp = Date.now();
     const counter = idCounterRef.current;
     idCounterRef.current = counter + 1;
 
-    // Counter'ı localStorage'a kaydet
-    if (isInitialized) {
-      setItem(ID_COUNTER_STORAGE_KEY, idCounterRef.current);
+    // Counter'ı localStorage'a kaydet (user-specific)
+    if (isInitialized && userId) {
+      setItem(storageKeys.idCounter, idCounterRef.current);
     }
 
     return `${prefix}-${timestamp}-${counter}`;
-  }, [isInitialized]);
+  }, [isInitialized, userId, storageKeys]);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const now = new Date();
@@ -179,8 +204,10 @@ function useNotifications(): UseNotificationsReturn {
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
-    removeItem(NOTIFICATIONS_STORAGE_KEY);
-  }, []);
+    if (userId) {
+      removeItem(storageKeys.notifications);
+    }
+  }, [userId, storageKeys]);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev =>

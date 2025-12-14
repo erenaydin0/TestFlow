@@ -205,7 +205,7 @@ export default function ScheduledPage() {
               alignItems: 'start'
             }}>
               {/* Scheduled Tests */}
-              <div className="card">
+              <div className="card" style={{ minWidth: 0, overflow: 'hidden' }}>
                 
                 {filteredTests.length === 0 ? (
                   <EmptyState
@@ -313,22 +313,24 @@ export default function ScheduledPage() {
 
 
                     {/* Data Table */}
-                    <DataTable
-                      data={pagination.currentPageItems}
-                      allData={sorting.sortedData}
-                      columns={columns}
-                      loading={loading}
-                      emptyMessage={t('scheduled.noTestsFound')}
-                      selectable={true}
-                      selectedItems={selectedSchedules}
-                      onSelectionChange={setSelectedSchedules}
-                      getItemId={(schedule) => schedule.id}
-                      onSort={(field: string, order: 'asc' | 'desc') => {
-                        sorting.handleSort(field);
-                      }}
-                      sortField={sorting.sortField}
-                      sortOrder={sorting.sortOrder}
-                    />
+                    <div style={{ overflowX: 'auto' }}>
+                      <DataTable
+                        data={pagination.currentPageItems}
+                        allData={sorting.sortedData}
+                        columns={columns}
+                        loading={loading}
+                        emptyMessage={t('scheduled.noTestsFound')}
+                        selectable={true}
+                        selectedItems={selectedSchedules}
+                        onSelectionChange={setSelectedSchedules}
+                        getItemId={(schedule) => schedule.id}
+                        onSort={(field: string, order: 'asc' | 'desc') => {
+                          sorting.handleSort(field);
+                        }}
+                        sortField={sorting.sortField}
+                        sortOrder={sorting.sortOrder}
+                      />
+                    </div>
 
                     {/* Pagination Controls */}
                     <PaginationControls

@@ -220,12 +220,14 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
 
                     activeExecutions.delete(id);
 
-                    // Broadcast cancellation
-                    webSocketService.broadcast({
-                        type: 'execution:cancelled',
-                        executionId: id,
-                        execution
-                    });
+                    // Send cancellation to specific workspace only
+                    if (execution.workspaceId) {
+                        webSocketService.sendToWorkspace(execution.workspaceId, {
+                            type: 'execution:cancelled',
+                            executionId: id,
+                            execution
+                        });
+                    }
 
                     res.json({ message: 'Execution cancelled' });
                 }
@@ -250,6 +252,12 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
             if (activeExecutions.has(id)) {
                 activeExecutions.delete(id);
             }
+
+            // Get workspaceId before deletion for notification
+            const executionToDelete = await prisma.execution.findUnique({
+                where: { id },
+                select: { workspaceId: true }
+            });
 
             // Delete from DB
             // Prisma will throw if not found, so we check first or handle error
@@ -279,10 +287,13 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
                     // Continue even if media deletion fails
                 }
 
-                webSocketService.broadcast({
-                    type: 'execution:deleted',
-                    executionId: id
-                });
+                // Send deletion notification to specific workspace only
+                if (executionToDelete?.workspaceId) {
+                    webSocketService.sendToWorkspace(executionToDelete.workspaceId, {
+                        type: 'execution:deleted',
+                        executionId: id
+                    });
+                }
 
                 res.json({ message: 'Execution deleted successfully' });
             } catch (dbError: any) {

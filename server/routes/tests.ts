@@ -123,10 +123,13 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
 
             const test = mapTestFromDb(savedTest);
 
-            webSocketService.broadcast({
-                type: 'test:saved',
-                test
-            });
+            // Send to specific workspace only
+            if (test.workspaceId) {
+                webSocketService.sendToWorkspace(test.workspaceId, {
+                    type: 'test:saved',
+                    test
+                });
+            }
 
             res.json(test);
         } catch (error: any) {
@@ -164,10 +167,13 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
 
                 const test = mapTestFromDb(updated);
 
-                webSocketService.broadcast({
-                    type: 'test:updated',
-                    test
-                });
+                // Send to specific workspace only
+                if (test.workspaceId) {
+                    webSocketService.sendToWorkspace(test.workspaceId, {
+                        type: 'test:updated',
+                        test
+                    });
+                }
 
                 res.json(test);
             } else {
@@ -184,15 +190,24 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
         try {
             const { id } = req.params;
 
+            // Get workspaceId before deletion for notification
+            const testToDelete = await prisma.test.findUnique({
+                where: { id },
+                select: { workspaceId: true }
+            });
+
             try {
                 await prisma.test.delete({
                     where: { id }
                 });
 
-                webSocketService.broadcast({
-                    type: 'test:deleted',
-                    testId: id
-                });
+                // Send deletion notification to specific workspace only
+                if (testToDelete?.workspaceId) {
+                    webSocketService.sendToWorkspace(testToDelete.workspaceId, {
+                        type: 'test:deleted',
+                        testId: id
+                    });
+                }
 
                 res.json({ success: true, message: 'Test deleted successfully' });
             } catch (dbError: any) {

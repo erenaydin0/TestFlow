@@ -38,7 +38,7 @@ export function useSidebar() {
   useEffect(() => {
     // Setup listener first
     const listener = (state: { isCollapsed: boolean; isModalOpen: boolean }) => {
-      console.log('[useSidebar] Listener triggered, new state:', state);
+      //console.log('[useSidebar] Listener triggered, new state:', state);
       setIsCollapsed(state.isCollapsed);
       setIsModalOpen(state.isModalOpen);
     };
@@ -52,24 +52,24 @@ export function useSidebar() {
       const savedPreference = localStorage.getItem('sidebar-collapsed');
       const screenWidth = window.innerWidth;
 
-      console.log('[useSidebar] Initializing:', {
-        savedPreference,
-        screenWidth,
-        isSmallScreen: screenWidth <= 1440
-      });
+      //console.log('[useSidebar] Initializing:', {
+      //  savedPreference,
+      //  screenWidth,
+      //  isSmallScreen: screenWidth <= 1440
+      //});
 
       let shouldCollapse = false;
 
       if (savedPreference !== null) {
         shouldCollapse = savedPreference === 'true';
-        console.log('[useSidebar] Using saved preference:', shouldCollapse);
+        //console.log('[useSidebar] Using saved preference:', shouldCollapse);
       } else {
         shouldCollapse = screenWidth <= 1440;
-        console.log('[useSidebar] No saved preference, using screen size:', shouldCollapse);
+        //console.log('[useSidebar] No saved preference, using screen size:', shouldCollapse);
       }
 
       // Always notify to ensure state is set correctly
-      console.log('[useSidebar] Setting initial collapsed state to:', shouldCollapse);
+      //console.log('[useSidebar] Setting initial collapsed state to:', shouldCollapse);
       notifyListeners({ ...globalSidebarState, isCollapsed: shouldCollapse });
     }
 
@@ -83,7 +83,7 @@ export function useSidebar() {
   }, []);
 
   const setCollapsed = useCallback((collapsed: boolean) => {
-    console.log('[useSidebar] User toggled collapsed to:', collapsed);
+    //console.log('[useSidebar] User toggled collapsed to:', collapsed);
     notifyListeners({ ...globalSidebarState, isCollapsed: collapsed });
   }, []);
 

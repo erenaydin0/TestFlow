@@ -19,6 +19,7 @@ export interface Test {
     browserType?: BrowserType | string;
     createdAt?: Date;
     updatedAt?: Date;
+    workspaceId?: string;
 }
 
 export interface Schedule {
@@ -73,6 +74,7 @@ export interface Execution {
     error?: string;
     successRate?: number;
     scheduledTestId?: string;
+    workspaceId?: string;
 }
 
 export interface StepConfig {

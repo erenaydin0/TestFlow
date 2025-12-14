@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -55,6 +56,21 @@ export const authOptions: NextAuthOptions = {
                 // Add name and image from token
                 session.user.name = token.name as string;
                 session.user.image = token.picture as string;
+                
+                // Generate access token for WebSocket authentication
+                const secret = process.env.NEXTAUTH_SECRET;
+                if (secret && token.sub) {
+                    const accessToken = jwt.sign(
+                        { 
+                            userId: token.sub,
+                            email: token.email,
+                            iat: Math.floor(Date.now() / 1000)
+                        },
+                        secret,
+                        { expiresIn: '24h' }
+                    );
+                    (session as any).accessToken = accessToken;
+                }
             }
             
             // If session update is triggered, fetch fresh data from database

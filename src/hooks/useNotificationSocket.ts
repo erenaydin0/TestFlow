@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useWebSocket } from '@/hooks';
 import { config } from '@/utils/config';
+
+// ============================================================================
+// Types and Interfaces
+// ============================================================================
 
 interface UseNotificationSocketProps {
     notifyTestStart: (testName: string, testId: string) => void;
@@ -11,18 +16,89 @@ interface UseNotificationSocketProps {
     notifyWorkflowLoaded: (workflowName: string) => void;
 }
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Get active workspace ID from localStorage
+ */
+const getActiveWorkspaceId = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('selectedWorkspaceId');
+};
+
+// ============================================================================
+// Hook
+// ============================================================================
+
 export function useNotificationSocket({
     notifyTestStart,
     notifyTestSuccess,
     notifyTestFailure,
     notifyWorkflowLoaded
 }: UseNotificationSocketProps) {
-    // WebSocket connection
+    // Get session to check if user is logged in and get accessToken
+    const { data: session, status } = useSession();
+    const isSessionAuthenticated = status === 'authenticated' && !!session?.user;
+    
+    // Get accessToken from session (added in auth.ts callback)
+    const accessToken = (session as any)?.accessToken as string | undefined;
+    
+    // Track auth credentials in state to properly trigger re-renders
+    const [authCredentials, setAuthCredentials] = useState<{ token: string | null; workspaceId: string | null }>({
+        token: null,
+        workspaceId: null
+    });
+    
+    // Effect to update auth credentials when session changes or component mounts
+    useEffect(() => {
+        if (!isSessionAuthenticated || !accessToken) {
+            setAuthCredentials({ token: null, workspaceId: null });
+            return;
+        }
+        
+        const updateCredentials = () => {
+            const workspaceId = getActiveWorkspaceId();
+            
+            console.log('[NotificationSocket] Auth credentials check:', {
+                hasSession: isSessionAuthenticated,
+                hasToken: !!accessToken,
+                hasWorkspaceId: !!workspaceId,
+                tokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : null,
+                workspaceId
+            });
+            
+            // Only update if we have both
+            if (accessToken && workspaceId) {
+                setAuthCredentials({ token: accessToken, workspaceId });
+            }
+        };
+        
+        // Check immediately
+        updateCredentials();
+        
+        // Listen for localStorage changes (workspace switch)
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'selectedWorkspaceId') {
+                updateCredentials();
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, [isSessionAuthenticated, accessToken]);
+    
+    // WebSocket connection with authentication
     const wsUrl = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_WS_URL || config.wsUrl) : '';
-    const { isConnected, isConnecting, lastMessage, connect } = useWebSocket(wsUrl, {
-        autoConnect: typeof window !== 'undefined',
+    const { isConnected, isConnecting, isAuthenticated, lastMessage, connect } = useWebSocket(wsUrl, {
+        autoConnect: true,
         reconnectAttempts: 5,
-        reconnectInterval: config.wsReconnectInterval
+        reconnectInterval: config.wsReconnectInterval,
+        auth: authCredentials
     });
 
     // Processed message IDs to prevent duplicates
@@ -34,11 +110,17 @@ export function useNotificationSocket({
     // Track last processed message to prevent rapid duplicates
     const lastProcessedMessage = useRef<string | null>(null);
 
+    // Process incoming messages
     useEffect(() => {
         if (!lastMessage) return;
+        
+        // Skip if not authenticated (server-side filtering handles workspace isolation)
+        if (!isAuthenticated) {
+            return;
+        }
 
         // Create a unique ID for this message
-        const messageId = `${lastMessage.type}-${lastMessage.data.executionId}`;
+        const messageId = `${lastMessage.type}-${lastMessage.data?.executionId || 'unknown'}`;
 
         // Skip if this is the exact same message as the last one
         if (lastProcessedMessage.current === messageId) {
@@ -66,7 +148,7 @@ export function useNotificationSocket({
                 case 'execution:started':
                     console.log('Execution started message:', lastMessage.data);
 
-                    const executionId = lastMessage.data.executionId;
+                    const executionId = lastMessage.data?.executionId;
                     if (!executionId) break;
 
                     // Check if already notified for this execution
@@ -83,7 +165,7 @@ export function useNotificationSocket({
                     states.add('started');
 
                     // Trigger test start notification
-                    if (lastMessage.data.execution) {
+                    if (lastMessage.data?.execution) {
                         const execution = lastMessage.data.execution;
                         notifyTestStart(execution.workflowName, executionId);
                     } else {
@@ -94,27 +176,27 @@ export function useNotificationSocket({
                 case 'execution:scheduled':
                     console.log('Execution scheduled message:', lastMessage.data);
 
-                    if (lastMessage.data.execution && lastMessage.data.execution.workflowName) {
+                    if (lastMessage.data?.execution?.workflowName) {
                         notifyWorkflowLoaded(lastMessage.data.execution.workflowName);
                     }
                     break;
 
                 case 'step:started':
-                    console.log(`Step started: ${lastMessage.data.step?.type} in execution ${lastMessage.data.executionId}`);
+                    console.log(`Step started: ${lastMessage.data?.step?.type} in execution ${lastMessage.data?.executionId}`);
                     break;
 
                 case 'step:completed':
-                    console.log(`Step completed: Progress ${lastMessage.data.progress}% in execution ${lastMessage.data.executionId}`);
+                    console.log(`Step completed: Progress ${lastMessage.data?.progress}% in execution ${lastMessage.data?.executionId}`);
                     break;
 
                 case 'step:failed':
-                    console.warn(`Step failed: ${lastMessage.data.error} in execution ${lastMessage.data.executionId}`);
+                    console.warn(`Step failed: ${lastMessage.data?.error} in execution ${lastMessage.data?.executionId}`);
                     break;
 
                 case 'execution:completed':
                     console.log('Execution completed message:', lastMessage.data);
 
-                    const completedExecutionId = lastMessage.data.executionId;
+                    const completedExecutionId = lastMessage.data?.executionId;
                     if (!completedExecutionId) break;
 
                     // Check if already notified completion for this execution
@@ -136,7 +218,7 @@ export function useNotificationSocket({
                         .filter(id => id.includes(completedExecutionMessagePrefix));
                     completedMessagesToRemove.forEach(id => processedMessageIds.current.delete(id));
 
-                    if (lastMessage.data.execution) {
+                    if (lastMessage.data?.execution) {
                         const completedExecution = lastMessage.data.execution;
                         const duration = completedExecution.endTime && completedExecution.startTime
                             ? new Date(completedExecution.endTime).getTime() - new Date(completedExecution.startTime).getTime()
@@ -155,7 +237,7 @@ export function useNotificationSocket({
                 case 'execution:failed':
                     console.log('Execution failed message:', lastMessage.data);
 
-                    const failedExecutionId = lastMessage.data.executionId;
+                    const failedExecutionId = lastMessage.data?.executionId;
                     if (!failedExecutionId) break;
 
                     // Check if already notified failure for this execution
@@ -177,7 +259,7 @@ export function useNotificationSocket({
                         .filter(id => id.includes(failedExecutionMessagePrefix));
                     failedMessagesToRemove.forEach(id => processedMessageIds.current.delete(id));
 
-                    if (lastMessage.data.execution) {
+                    if (lastMessage.data?.execution) {
                         const failedExecution = lastMessage.data.execution;
                         const duration = failedExecution.endTime && failedExecution.startTime
                             ? new Date(failedExecution.endTime).getTime() - new Date(failedExecution.startTime).getTime()
@@ -186,24 +268,24 @@ export function useNotificationSocket({
                         notifyTestFailure(
                             failedExecution.workflowName,
                             failedExecutionId,
-                            lastMessage.data.error || failedExecution.error,
+                            lastMessage.data?.error || failedExecution.error,
                             duration
                         );
                     } else {
-                        notifyTestFailure('Test Execution', failedExecutionId, lastMessage.data.error || 'Unknown error');
+                        notifyTestFailure('Test Execution', failedExecutionId, lastMessage.data?.error || 'Unknown error');
                     }
                     break;
 
                 case 'execution:cancelled':
                     console.log('Execution cancelled message:', lastMessage.data);
 
-                    if (lastMessage.data.execution) {
+                    if (lastMessage.data?.execution) {
                         notifyTestFailure(
                             lastMessage.data.execution.workflowName,
                             lastMessage.data.executionId,
                             'Test iptal edildi'
                         );
-                    } else if (lastMessage.data.executionId) {
+                    } else if (lastMessage.data?.executionId) {
                         notifyTestFailure('Test Execution', lastMessage.data.executionId, 'Test iptal edildi');
                     }
                     break;
@@ -213,13 +295,16 @@ export function useNotificationSocket({
                     break;
 
                 default:
-                    console.log('Unknown WebSocket message type:', lastMessage.type, lastMessage.data);
+                    // Ignore auth messages and unknown types silently
+                    if (!lastMessage.type?.startsWith('auth:')) {
+                        console.log('Unknown WebSocket message type:', lastMessage.type);
+                    }
             }
         } catch (error) {
             console.error('Error processing WebSocket message:', error);
             console.error('Message was:', lastMessage);
         }
-    }, [lastMessage, notifyTestSuccess, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded]);
+    }, [lastMessage, notifyTestSuccess, notifyTestFailure, notifyTestStart, notifyWorkflowLoaded, isAuthenticated]);
 
     // Clean up old execution states periodically
     useEffect(() => {
@@ -240,6 +325,7 @@ export function useNotificationSocket({
     return {
         isConnected,
         isConnecting,
+        isAuthenticated,
         lastMessage,
         connect
     };

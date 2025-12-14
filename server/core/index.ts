@@ -136,7 +136,8 @@ async function executeScheduledTest(schedule: Schedule) {
             screenshots: [],
             logs: [],
             progress: 0,
-            scheduledTestId: schedule.id
+            scheduledTestId: schedule.id,
+            workspaceId: schedule.workspaceId
         };
 
         activeExecutions.set(executionId, execution);
@@ -160,13 +161,15 @@ async function executeScheduledTest(schedule: Schedule) {
             }
         });
 
-        // Broadcast başlangıç
-        webSocketService.broadcast({
-            type: 'execution:scheduled',
-            executionId,
-            execution,
-            scheduleName: schedule.name
-        });
+        // Send to specific workspace only
+        if (schedule.workspaceId) {
+            webSocketService.sendToWorkspace(schedule.workspaceId, {
+                type: 'execution:scheduled',
+                executionId,
+                execution,
+                scheduleName: schedule.name
+            });
+        }
 
         console.log(`✅ Zamanlanmış test başlatıldı: ${executionId} (${execution.steps.length} adım)`);
 
@@ -196,12 +199,14 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
     try {
         execution.status = 'running';
 
-        // Broadcast start
-        webSocketService.broadcast({
-            type: 'execution:started',
-            executionId,
-            execution
-        });
+        // Send to specific workspace only
+        if (execution.workspaceId) {
+            webSocketService.sendToWorkspace(execution.workspaceId, {
+                type: 'execution:started',
+                executionId,
+                execution
+            });
+        }
 
         // Execute with Playwright
         const testRunner = new TestRunner(storageDirs.SCREENSHOTS_DIR);
@@ -231,13 +236,15 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
             step.status = 'running';
             step.startTime = new Date();
 
-            // Broadcast step start
-            webSocketService.broadcast({
-                type: 'step:started',
-                executionId,
-                stepIndex: i,
-                step
-            });
+            // Send step start to specific workspace only
+            if (execution.workspaceId) {
+                webSocketService.sendToWorkspace(execution.workspaceId, {
+                    type: 'step:started',
+                    executionId,
+                    stepIndex: i,
+                    step
+                });
+            }
 
             try {
                 // Execute step with options
@@ -263,14 +270,16 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
                 // Update progress
                 execution.progress = Math.round(((i + 1) / execution.steps.length) * 100);
 
-                // Broadcast step completion
-                webSocketService.broadcast({
-                    type: 'step:completed',
-                    executionId,
-                    stepIndex: i,
-                    step,
-                    progress: execution.progress
-                });
+                // Send step completion to specific workspace only
+                if (execution.workspaceId) {
+                    webSocketService.sendToWorkspace(execution.workspaceId, {
+                        type: 'step:completed',
+                        executionId,
+                        stepIndex: i,
+                        step,
+                        progress: execution.progress
+                    });
+                }
 
                 // If step failed and it's critical, stop execution
                 if (!result.success && step.config.critical !== false) {
@@ -299,13 +308,16 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
                     stepId: step.stepId
                 });
 
-                webSocketService.broadcast({
-                    type: 'step:failed',
-                    executionId,
-                    stepIndex: i,
-                    step,
-                    error: errorHandler.createSafeErrorMessage(err, { stepIndex: i })
-                });
+                // Send step failure to specific workspace only
+                if (execution.workspaceId) {
+                    webSocketService.sendToWorkspace(execution.workspaceId, {
+                        type: 'step:failed',
+                        executionId,
+                        stepIndex: i,
+                        step,
+                        error: errorHandler.createSafeErrorMessage(err, { stepIndex: i })
+                    });
+                }
 
                 break;
             }
@@ -375,13 +387,15 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
         // Clean up from active executions
         activeExecutions.delete(executionId);
 
-        // Broadcast completion or failure based on status
-        webSocketService.broadcast({
-            type: execution.status === 'failed' ? 'execution:failed' : 'execution:completed',
-            executionId,
-            execution,
-            error: execution.error
-        });
+        // Send completion or failure to specific workspace only
+        if (execution.workspaceId) {
+            webSocketService.sendToWorkspace(execution.workspaceId, {
+                type: execution.status === 'failed' ? 'execution:failed' : 'execution:completed',
+                executionId,
+                execution,
+                error: execution.error
+            });
+        }
 
         logger.info('Execution completed', {
             executionId,
@@ -426,13 +440,15 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
 
         activeExecutions.delete(executionId);
 
-        // Broadcast failure
-        webSocketService.broadcast({
-            type: 'execution:failed',
-            executionId,
-            execution,
-            error: errorHandler.createSafeErrorMessage(error, { executionId })
-        });
+        // Send failure to specific workspace only
+        if (execution.workspaceId) {
+            webSocketService.sendToWorkspace(execution.workspaceId, {
+                type: 'execution:failed',
+                executionId,
+                execution,
+                error: errorHandler.createSafeErrorMessage(error, { executionId })
+            });
+        }
     }
 }
 

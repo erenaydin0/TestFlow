@@ -156,10 +156,13 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                 testScheduler.scheduleTest(schedule);
             }
 
-            webSocketService.broadcast({
-                type: 'schedule:created',
-                schedule
-            });
+            // Send to specific workspace only
+            if (schedule.workspaceId) {
+                webSocketService.sendToWorkspace(schedule.workspaceId, {
+                    type: 'schedule:created',
+                    schedule
+                });
+            }
 
             res.json(schedule);
         } catch (error: any) {
@@ -208,10 +211,13 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                     await testScheduler.reloadSchedule(id);
                 }
 
-                webSocketService.broadcast({
-                    type: 'schedule:updated',
-                    schedule
-                });
+                // Send to specific workspace only
+                if (schedule.workspaceId) {
+                    webSocketService.sendToWorkspace(schedule.workspaceId, {
+                        type: 'schedule:updated',
+                        schedule
+                    });
+                }
 
                 res.json(schedule);
             } else {
@@ -228,6 +234,12 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
         try {
             const { id } = req.params;
 
+            // Get workspaceId before deletion for notification
+            const scheduleToDelete = await prisma.scheduledTest.findUnique({
+                where: { id },
+                select: { workspaceId: true }
+            });
+
             try {
                 // Scheduler'dan kaldır
                 if (testScheduler) {
@@ -238,10 +250,13 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                     where: { id }
                 });
 
-                webSocketService.broadcast({
-                    type: 'schedule:deleted',
-                    scheduleId: id
-                });
+                // Send deletion notification to specific workspace only
+                if (scheduleToDelete?.workspaceId) {
+                    webSocketService.sendToWorkspace(scheduleToDelete.workspaceId, {
+                        type: 'schedule:deleted',
+                        scheduleId: id
+                    });
+                }
 
                 res.json({ message: 'Scheduled test deleted successfully' });
             } catch (dbError: any) {
