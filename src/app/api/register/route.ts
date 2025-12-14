@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const registerSchema = z.object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    name: z.string().min(2, "İsim en az 2 karakter olmalıdır"),
+    email: z.string().email("Geçerli bir e-posta adresi girin"),
+    password: z.string().min(6, "Şifre en az 6 karakter olmalıdır"),
 });
 
 export async function POST(req: Request) {
@@ -15,12 +15,15 @@ export async function POST(req: Request) {
         const { name, email, password } = registerSchema.parse(body);
 
         const existingUser = await prisma.user.findUnique({
-            where: { email },
+            where: { email: email.toLowerCase() },
         });
 
         if (existingUser) {
             return NextResponse.json(
-                { message: "User already exists" },
+                { 
+                    message: "Bu e-posta adresi zaten kayıtlı",
+                    code: "EMAIL_EXISTS"
+                },
                 { status: 400 }
             );
         }
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
             const user = await tx.user.create({
                 data: {
                     name,
-                    email,
+                    email: email.toLowerCase(),
                     password: hashedPassword,
                 },
             });
@@ -59,19 +62,45 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json(
-            { message: "User created successfully", user: { id: result.id, email: result.email, name: result.name } },
+            { message: "Kayıt başarılı", user: { id: result.id, email: result.email, name: result.name } },
             { status: 201 }
         );
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
+            // Get the first validation error message
+            const firstError = error.issues[0];
             return NextResponse.json(
-                { message: "Validation error", errors: (error as z.ZodError).errors },
+                { 
+                    message: firstError.message,
+                    code: "VALIDATION_ERROR",
+                    field: firstError.path[0]
+                },
                 { status: 400 }
             );
         }
+        
+        // Log the actual error for debugging
         console.error("Registration error:", error);
+        
+        // Check for specific database errors
+        if (error && typeof error === 'object' && 'code' in error) {
+            const dbError = error as { code: string };
+            if (dbError.code === 'P2002') {
+                return NextResponse.json(
+                    { 
+                        message: "Bu e-posta adresi zaten kayıtlı",
+                        code: "EMAIL_EXISTS"
+                    },
+                    { status: 400 }
+                );
+            }
+        }
+        
         return NextResponse.json(
-            { message: "Internal server error" },
+            { 
+                message: "Kayıt işlemi sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+                code: "SERVER_ERROR"
+            },
             { status: 500 }
         );
     }

@@ -24,6 +24,7 @@ export const config = {
         /*
          * Match all request paths except for the ones starting with:
          * - api/auth (auth API routes)
+         * - api/register (registration API)
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
@@ -32,6 +33,6 @@ export const config = {
          * - icon.svg (app icon)
          * - locales (locales)
          */
-        "/((?!api/auth|_next/static|_next/image|favicon.ico|login|register|icon.svg|locales).*)",
+        "/((?!api/auth|api/register|_next/static|_next/image|favicon.ico|login|register|icon.svg|locales).*)",
     ],
 };

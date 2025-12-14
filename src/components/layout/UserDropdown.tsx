@@ -2,13 +2,15 @@
 
 import { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
-import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import clsx from "clsx";
+import { useSettingsModal } from "@/hooks";
 
 export default function UserDropdown() {
     const { data: session } = useSession();
+    const { openSettingsModal } = useSettingsModal();
 
     if (!session?.user) {
         return (
@@ -26,8 +28,16 @@ export default function UserDropdown() {
             <div>
                 <Menu.Button className="flex items-center justify-center">
                     <span className="sr-only">Kullanıcı menüsünü aç</span>
-                    <div className="h-9 w-9 rounded-full bg-[var(--cosmic-orange)] flex items-center justify-center text-white font-medium shadow-md">
-                        {session.user.name?.charAt(0).toUpperCase() || "U"}
+                    <div className="h-9 w-9 rounded-full bg-[var(--cosmic-orange)] flex items-center justify-center text-white font-medium shadow-md overflow-hidden">
+                        {session.user.image ? (
+                            <img 
+                                src={session.user.image} 
+                                alt="Avatar" 
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            session.user.name?.charAt(0).toUpperCase() || "U"
+                        )}
                     </div>
                 </Menu.Button>
             </div>
@@ -49,31 +59,17 @@ export default function UserDropdown() {
                     </div>
                     <div className="p-1">
                         <Menu.Item>
-                            {({ active }) => (
-                                <a
-                                    href="#"
-                                    className={clsx(
-                                        active ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
-                                        "flex items-center px-3 py-2 text-sm rounded-lg transition-colors"
-                                    )}
-                                >
-                                    <User className={clsx("mr-2 h-4 w-4", active ? "text-[var(--cosmic-orange)]" : "text-[var(--text-tertiary)]")} />
-                                    Profilim
-                                </a>
-                            )}
-                        </Menu.Item>
-                        <Menu.Item>
                             {({ active }: { active: boolean }) => (
-                                <a
-                                    href="#"
+                                <button
+                                    onClick={openSettingsModal}
                                     className={clsx(
                                         active ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
-                                        "flex items-center px-3 py-2 text-sm rounded-lg transition-colors"
+                                        "flex w-full items-center px-3 py-2 text-sm rounded-lg transition-colors"
                                     )}
                                 >
                                     <Settings className={clsx("mr-2 h-4 w-4", active ? "text-[var(--cosmic-orange)]" : "text-[var(--text-tertiary)]")} />
                                     Ayarlar
-                                </a>
+                                </button>
                             )}
                         </Menu.Item>
                     </div>

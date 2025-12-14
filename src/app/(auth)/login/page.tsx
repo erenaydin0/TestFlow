@@ -6,17 +6,46 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import { Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { useI18n } from "@/hooks";
 
 export default function LoginPage() {
     const router = useRouter();
+    const { t } = useI18n();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+
+    const validateForm = () => {
+        const errors: { email?: string; password?: string } = {};
+        
+        if (!email.trim()) {
+            errors.email = t('auth.errors.emailRequired');
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errors.email = t('auth.errors.emailInvalid');
+        }
+        
+        if (!password) {
+            errors.password = t('auth.errors.passwordRequired');
+        } else if (password.length < 6) {
+            errors.password = t('auth.errors.passwordTooShort');
+        }
+        
+        setFieldErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
+        
+        if (!validateForm()) {
+            return;
+        }
+        
         setLoading(true);
 
         try {
@@ -27,14 +56,31 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                toast.error("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
+                // NextAuth returns various error formats for auth failures
+                const errorLower = result.error.toLowerCase();
+                if (
+                    result.error === "CredentialsSignin" || 
+                    errorLower.includes("invalid") || 
+                    errorLower.includes("credentials") ||
+                    errorLower.includes("password") ||
+                    errorLower.includes("user")
+                ) {
+                    setError(t('auth.errors.invalidCredentials'));
+                } else {
+                    setError(t('auth.errors.unexpectedError'));
+                }
             } else {
-                toast.success("Giriş başarılı!");
+                toast.success(t('auth.loginSuccess'));
                 router.push("/");
                 router.refresh();
             }
-        } catch (error) {
-            toast.error("Bir hata oluştu.");
+        } catch (err) {
+            console.error("Login error:", err);
+            if (err instanceof TypeError && err.message.includes("fetch")) {
+                setError(t('auth.errors.networkError'));
+            } else {
+                setError(t('auth.errors.unexpectedError'));
+            }
         } finally {
             setLoading(false);
         }
@@ -70,45 +116,82 @@ export default function LoginPage() {
                             <Image src="/icon.svg" alt="CosmicQA Logo" width={40} height={40} className="w-10 h-10" />
                         </motion.div>
                         <h2 className="mt-2 text-center text-3xl font-extrabold text-[var(--text-primary)]">
-                            CosmicQA
+                            {t('auth.loginTitle')}
                         </h2>
                         <p className="mt-2 text-center text-sm text-[var(--text-secondary)]">
-                            Test otomasyonunda yeni bir evren
+                            {t('auth.loginSubtitle')}
                         </p>
                     </div>
+
+                    {/* Global Error Message */}
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-3"
+                        >
+                            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-red-400">{error}</p>
+                        </motion.div>
+                    )}
+
                     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                         <div className="rounded-md shadow-sm -space-y-px">
                             <div className="mb-4">
                                 <label htmlFor="email-address" className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Email Adresi
+                                    {t('auth.email')}
                                 </label>
                                 <input
                                     id="email-address"
                                     name="email"
                                     type="email"
                                     autoComplete="email"
-                                    required
-                                    className="appearance-none relative block w-full px-3 py-3 border border-[var(--border-primary)] placeholder-gray-500 text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--cosmic-purple)] focus:border-[var(--cosmic-purple)] focus:z-10 sm:text-sm bg-[var(--bg-primary)] transition-colors"
-                                    placeholder="ornek@sirket.com"
+                                    className={`appearance-none relative block w-full px-3 py-3 border placeholder-gray-500 text-[var(--text-primary)] rounded-lg focus:outline-none focus:z-10 sm:text-sm bg-[var(--bg-primary)] transition-colors ${
+                                        fieldErrors.email 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-[var(--border-primary)] focus:ring-[var(--cosmic-purple)] focus:border-[var(--cosmic-purple)]'
+                                    }`}
+                                    placeholder={t('auth.emailPlaceholder')}
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (fieldErrors.email) {
+                                            setFieldErrors(prev => ({ ...prev, email: undefined }));
+                                        }
+                                        if (error) setError(null);
+                                    }}
                                 />
+                                {fieldErrors.email && (
+                                    <p className="mt-1 text-sm text-red-400">{fieldErrors.email}</p>
+                                )}
                             </div>
                             <div>
                                 <label htmlFor="password" className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                                    Şifre
+                                    {t('auth.password')}
                                 </label>
                                 <input
                                     id="password"
                                     name="password"
                                     type="password"
                                     autoComplete="current-password"
-                                    required
-                                    className="appearance-none relative block w-full px-3 py-3 border border-[var(--border-primary)] placeholder-gray-500 text-[var(--text-primary)] rounded-lg focus:outline-none focus:ring-[var(--cosmic-purple)] focus:border-[var(--cosmic-purple)] focus:z-10 sm:text-sm bg-[var(--bg-primary)] transition-colors"
-                                    placeholder="••••••••"
+                                    className={`appearance-none relative block w-full px-3 py-3 border placeholder-gray-500 text-[var(--text-primary)] rounded-lg focus:outline-none focus:z-10 sm:text-sm bg-[var(--bg-primary)] transition-colors ${
+                                        fieldErrors.password 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-[var(--border-primary)] focus:ring-[var(--cosmic-purple)] focus:border-[var(--cosmic-purple)]'
+                                    }`}
+                                    placeholder={t('auth.passwordPlaceholder')}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (fieldErrors.password) {
+                                            setFieldErrors(prev => ({ ...prev, password: undefined }));
+                                        }
+                                        if (error) setError(null);
+                                    }}
                                 />
+                                {fieldErrors.password && (
+                                    <p className="mt-1 text-sm text-red-400">{fieldErrors.password}</p>
+                                )}
                             </div>
                         </div>
 
@@ -121,7 +204,7 @@ export default function LoginPage() {
                                 {loading ? (
                                     <Loader2 className="animate-spin h-5 w-5 text-white" />
                                 ) : (
-                                    "Giriş Yap"
+                                    t('auth.login')
                                 )}
                             </button>
                         </div>
@@ -129,7 +212,7 @@ export default function LoginPage() {
                         <div className="flex items-center justify-center mt-4">
                             <div className="text-sm">
                                 <Link href="/register" className="font-medium text-[var(--cosmic-light-purple)] hover:text-[var(--cosmic-purple)] transition-colors">
-                                    Hesabınız yok mu? Kayıt olun
+                                    {t('auth.noAccount')}
                                 </Link>
                             </div>
                         </div>

@@ -6,6 +6,18 @@ import { getItem, setItem } from '@/utils/storage';
 
 const STORAGE_KEY = 'locale';
 const DEFAULT_LOCALE = 'tr';
+const SUPPORTED_LOCALES = ['tr', 'en'];
+
+// Get browser language and map to supported locale
+const getBrowserLocale = (): string => {
+  if (typeof window === 'undefined') return DEFAULT_LOCALE;
+  
+  const browserLang = navigator.language || (navigator as any).userLanguage || '';
+  const langCode = browserLang.split('-')[0].toLowerCase();
+  
+  // If browser language is Turkish, use Turkish. Otherwise, use English.
+  return langCode === 'tr' ? 'tr' : 'en';
+};
 
 // Global state (module-level) - tüm hook instance'ları aynı state'i paylaşır
 let globalI18nState = {
@@ -78,19 +90,27 @@ export function useI18n() {
     };
   }, []);
 
-  // Initialize from localStorage (sadece ilk mount'ta)
+  // Initialize from localStorage or browser language (sadece ilk mount'ta)
   useEffect(() => {
     if (globalI18nState.isInitialized) {
       setMounted(true);
       return;
     }
 
-    const savedLocale = getItem<string>(STORAGE_KEY, DEFAULT_LOCALE);
-    globalI18nState.locale = savedLocale;
+    // Check localStorage first, then fall back to browser language
+    const storedLocale = getItem<string | null>(STORAGE_KEY, null);
+    const initialLocale = storedLocale || getBrowserLocale();
+    
+    // Save the detected locale if not already saved
+    if (!storedLocale) {
+      setItem(STORAGE_KEY, initialLocale);
+    }
+    
+    globalI18nState.locale = initialLocale;
     globalI18nState.isInitialized = true;
 
     // İlk çevirileri yükle
-    loadTranslations(savedLocale).then(loadedTranslations => {
+    loadTranslations(initialLocale).then(loadedTranslations => {
       globalI18nState.translations = loadedTranslations;
       notifyListeners(globalI18nState);
       setMounted(true);
