@@ -320,6 +320,10 @@ export const filterTests = (
     browserType: BrowserType[];
   }
 ): Test[] => {
+  // Ensure tests is an array before filtering
+  if (!Array.isArray(tests)) {
+    return [];
+  }
   return tests.filter(test => {
     const matchesSearch = !filters.search ||
       test.name.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -352,6 +356,10 @@ export const filterExecutions = (
     endDate?: string;
   }
 ): ExecutionResult[] => {
+  // Ensure executions is an array before filtering
+  if (!Array.isArray(executions)) {
+    return [];
+  }
   return executions.filter(execution => {
     const matchesSearch = !filters.search ||
       execution.workflowName.toLowerCase().includes(filters.search.toLowerCase());
@@ -431,18 +439,23 @@ export const getUniqueFilterOptions = (
   const browsers = new Set<BrowserType>();
   const statuses = new Set<string>();
 
-  tests.forEach(test => {
-    if (test.suite) suites.add(test.suite);
-    test.tags?.forEach(tag => tags.add(tag));
-    if (test.browserType) browsers.add(test.browserType);
-  });
+  // Ensure tests is an array before iterating
+  if (Array.isArray(tests)) {
+    tests.forEach(test => {
+      if (test.suite) suites.add(test.suite);
+      test.tags?.forEach(tag => tags.add(tag));
+      if (test.browserType) browsers.add(test.browserType);
+    });
+  }
 
-  executions?.forEach(execution => {
-    if (execution.suite) suites.add(execution.suite);
-    execution.tags?.forEach(tag => tags.add(tag));
-    if (execution.options?.browserType) browsers.add(execution.options.browserType);
-    if (execution.status) statuses.add(execution.status);
-  });
+  if (Array.isArray(executions)) {
+    executions.forEach(execution => {
+      if (execution.suite) suites.add(execution.suite);
+      execution.tags?.forEach(tag => tags.add(tag));
+      if (execution.options?.browserType) browsers.add(execution.options.browserType);
+      if (execution.status) statuses.add(execution.status);
+    });
+  }
 
   return {
     suites: Array.from(suites).sort(),

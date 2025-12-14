@@ -62,7 +62,7 @@ function useWebSocket(url: string, options?: WebSocketHookOptions): WebSocketHoo
 
   const connect = useCallback(() => {
     if (!url || typeof window === 'undefined') {
-      console.log('WebSocket: URL not available or not in browser');
+      // Silently skip when URL is not available (expected in serverless mode)
       return;
     }
 
