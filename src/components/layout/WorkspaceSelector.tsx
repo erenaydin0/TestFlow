@@ -2,11 +2,11 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { Listbox, Transition } from "@headlessui/react";
-import { Check, ChevronsUpDown, Plus, Box } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Box, Settings } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { toast } from "react-toastify";
 
 import CreateWorkspaceModal from "../modals/CreateWorkspaceModal";
+import { useSettingsModal } from "@/hooks";
 
 interface Workspace {
     id: string;
@@ -16,10 +16,17 @@ interface Workspace {
 
 export default function WorkspaceSelector() {
     const { data: session } = useSession();
+    const { openSettingsModal } = useSettingsModal();
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [selected, setSelected] = useState<Workspace | null>(null);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    const handleOpenWorkspaceSettings = (e: React.MouseEvent, workspaceId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openSettingsModal('workspace', workspaceId);
+    };
 
     useEffect(() => {
         if (session?.user) {
@@ -99,20 +106,20 @@ export default function WorkspaceSelector() {
                                     <Listbox.Option
                                         key={workspaceIdx}
                                         className={({ active }) =>
-                                            `relative cursor-default select-none py-2 pl-10 pr-4 transition-colors ${active ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
+                                            `relative cursor-default select-none py-2 pl-10 pr-10 transition-colors ${active ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
                                             }`
                                         }
                                         value={workspace}
                                     >
-                                        {({ selected, active }) => (
+                                        {({ selected: isSelected, active }) => (
                                             <>
                                                 <span
-                                                    className={`block truncate ${selected ? "font-medium text-[var(--text-primary)]" : "font-normal"
+                                                    className={`block truncate ${isSelected ? "font-medium text-[var(--text-primary)]" : "font-normal"
                                                         }`}
                                                 >
                                                     {workspace.name}
                                                 </span>
-                                                {selected ? (
+                                                {isSelected ? (
                                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--cosmic-orange)]">
                                                         <Check className="h-4 w-4" aria-hidden="true" />
                                                     </span>
@@ -120,6 +127,15 @@ export default function WorkspaceSelector() {
                                                     <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
                                                         <Box className="h-4 w-4" aria-hidden="true" />
                                                     </span>
+                                                )}
+                                                {(workspace.role === "OWNER" || workspace.role === "ADMIN") && (
+                                                    <button
+                                                        onClick={(e) => handleOpenWorkspaceSettings(e, workspace.id)}
+                                                        className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active || isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"} hover:text-[var(--cosmic-orange)] transition-colors`}
+                                                        title="Workspace Ayarları"
+                                                    >
+                                                        <Settings className="h-4 w-4" aria-hidden="true" />
+                                                    </button>
                                                 )}
                                             </>
                                         )}

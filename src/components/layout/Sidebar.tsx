@@ -17,6 +17,49 @@ import { IconButton } from '@/components/common';
 import WorkspaceSelector from './WorkspaceSelector';
 import '../../assets/styles/Sidebar.css';
 
+// Sidebar Skeleton Component
+function SidebarSkeleton({ isCollapsed }: { isCollapsed: boolean }) {
+  return (
+    <aside className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <nav className="sidebar-nav">
+        {!isCollapsed && (
+          <div className="skeleton" style={{ height: '2.5rem', marginBottom: '1rem' }} />
+        )}
+        <div>
+          <ul className="sidebar-list">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <li key={i} className="sidebar-list-item">
+                <div 
+                  className="sidebar-item skeleton"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  <div style={{ 
+                    width: 20, 
+                    height: 20, 
+                    borderRadius: '4px',
+                    background: 'var(--bg-secondary)'
+                  }} />
+                  {!isCollapsed && (
+                    <div className="skeleton-text" style={{ 
+                      height: '0.875rem', 
+                      width: '70%',
+                      marginLeft: '0.75rem'
+                    }} />
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+      <div className="sidebar-footer">
+        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '6px' }} />
+        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '6px' }} />
+      </div>
+    </aside>
+  );
+}
+
 interface SidebarProps {
   onNavigationAttempt?: (href: string) => void;
 }
@@ -33,7 +76,12 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
   const pathname = usePathname();
   const { isCollapsed, setIsCollapsed, isModalOpen } = useSidebar();
   const { openSettingsModal } = useSettingsModal();
-  const { t } = useI18n();
+  const { t, isLoaded } = useI18n();
+
+  // Çeviriler yüklenene kadar skeleton göster
+  if (!isLoaded) {
+    return <SidebarSkeleton isCollapsed={isCollapsed} />;
+  }
 
   const navigation = getNavigation(t);
 
@@ -80,7 +128,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
         {/* Ayarlar Butonu - Sol */}
         <IconButton
           icon={Settings}
-          onClick={openSettingsModal}
+          onClick={() => openSettingsModal('app')}
           variant="ghost"
           size="md"
           tooltip="Ayarlar"

@@ -369,7 +369,37 @@
     "selectLanguage": "Dil Seçin",
     "languageDescription": "Uygulama dilini değiştirin. Değişiklikler anında uygulanır.",
     "appSettings": "Uygulama",
-    "accountSettings": "Hesap"
+    "accountSettings": "Hesap",
+    "workspaceSettings": "Workspace"
+  },
+  "workspace": {
+    "noWorkspaceSelected": "Workspace seçilmedi",
+    "noWorkspaces": "Henüz workspace bulunmuyor",
+    "selectWorkspace": "Workspace Seçin",
+    "selectWorkspaceToManage": "Yönetmek için bir workspace seçin",
+    "workspaceInfo": "Workspace Bilgileri",
+    "name": "Workspace Adı",
+    "description": "Açıklama",
+    "nameRequired": "Workspace adı gereklidir",
+    "updated": "Workspace başarıyla güncellendi",
+    "updateWorkspace": "Workspace'i Güncelle",
+    "members": "Üyeler",
+    "owner": "Sahip",
+    "admin": "Yönetici",
+    "member": "Üye",
+    "removeMember": "Üyeyi Kaldır",
+    "memberRemoved": "Üye başarıyla kaldırıldı",
+    "roleUpdated": "Rol başarıyla güncellendi",
+    "inviteMember": "Üye Davet Et",
+    "emailPlaceholder": "E-posta adresi",
+    "emailRequired": "E-posta adresi gereklidir",
+    "invite": "Davet Et",
+    "inviteSent": "Davet başarıyla gönderildi",
+    "inviteCancelled": "Davet iptal edildi",
+    "pendingInvites": "Bekleyen Davetler",
+    "deleteWarning": "Workspace'i sildiğinizde tüm testler, zamanlamalar ve veriler kalıcı olarak silinecektir. Bu işlem geri alınamaz.",
+    "deleteWorkspace": "Workspace'i Sil",
+    "deleteWorkspacePermanently": "Workspace'i Kalıcı Olarak Sil"
   },
   "account": {
     "profileInfo": "Profil Bilgileri",
@@ -712,5 +742,13 @@
   },
   "copyFeedback": {
     "copied": "Kopyalandı! ✓"
+  },
+  "invites": {
+    "pendingInvites": "Bekleyen Davetler",
+    "invitedBy": "Davet eden",
+    "accept": "Kabul Et",
+    "decline": "Reddet",
+    "accepted": "Davet kabul edildi! Artık workspace'e erişebilirsiniz.",
+    "declined": "Davet reddedildi"
   }
 }

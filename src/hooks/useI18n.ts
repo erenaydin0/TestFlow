@@ -70,7 +70,9 @@ export function useI18n() {
   const router = useRouter();
   const [locale, setLocaleState] = useState(globalI18nState.locale);
   const [translations, setTranslations] = useState(globalI18nState.translations);
-  const [mounted, setMounted] = useState(globalI18nState.isInitialized);
+  // Hydration mismatch'i önlemek için her zaman false ile başla
+  // Bu sayede sunucu ve istemci ilk render'da aynı içeriği (key'leri) gösterir
+  const [mounted, setMounted] = useState(false);
 
   // Global state değişikliklerini dinle
   useEffect(() => {
@@ -168,7 +170,8 @@ export function useI18n() {
   return {
     locale,
     setLocale,
-    t
+    t,
+    isLoaded: mounted
   };
 }
 

@@ -146,6 +146,7 @@ model Workspace {
   updatedAt   DateTime @updatedAt
 
   members     WorkspaceMember[]
+  invites     WorkspaceInvite[]
   tests       Test[]
   schedules   ScheduledTest[]
   executions  Execution[]
@@ -162,4 +163,18 @@ model WorkspaceMember {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
+}
+
+model WorkspaceInvite {
+  id          String   @id @default(cuid())
+  email       String
+  workspaceId String
+  role        String   @default("MEMBER") // ADMIN, MEMBER
+  invitedBy   String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([email, workspaceId])
 }

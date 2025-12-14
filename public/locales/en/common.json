@@ -369,7 +369,37 @@
     "selectLanguage": "Select Language",
     "languageDescription": "Change the application language. Changes are applied immediately.",
     "appSettings": "Application",
-    "accountSettings": "Account"
+    "accountSettings": "Account",
+    "workspaceSettings": "Workspace"
+  },
+  "workspace": {
+    "noWorkspaceSelected": "No workspace selected",
+    "noWorkspaces": "No workspaces found",
+    "selectWorkspace": "Select Workspace",
+    "selectWorkspaceToManage": "Select a workspace to manage",
+    "workspaceInfo": "Workspace Information",
+    "name": "Workspace Name",
+    "description": "Description",
+    "nameRequired": "Workspace name is required",
+    "updated": "Workspace updated successfully",
+    "updateWorkspace": "Update Workspace",
+    "members": "Members",
+    "owner": "Owner",
+    "admin": "Admin",
+    "member": "Member",
+    "removeMember": "Remove Member",
+    "memberRemoved": "Member removed successfully",
+    "roleUpdated": "Role updated successfully",
+    "inviteMember": "Invite Member",
+    "emailPlaceholder": "Email address",
+    "emailRequired": "Email address is required",
+    "invite": "Invite",
+    "inviteSent": "Invite sent successfully",
+    "inviteCancelled": "Invite cancelled",
+    "pendingInvites": "Pending Invites",
+    "deleteWarning": "When you delete this workspace, all tests, schedules and data will be permanently removed. This action cannot be undone.",
+    "deleteWorkspace": "Delete Workspace",
+    "deleteWorkspacePermanently": "Delete Workspace Permanently"
   },
   "account": {
     "profileInfo": "Profile Information",
@@ -712,5 +742,13 @@
   },
   "copyFeedback": {
     "copied": "Copied! ✓"
+  },
+  "invites": {
+    "pendingInvites": "Pending Invites",
+    "invitedBy": "Invited by",
+    "accept": "Accept",
+    "decline": "Decline",
+    "accepted": "Invite accepted! You can now access the workspace.",
+    "declined": "Invite declined"
   }
 }
