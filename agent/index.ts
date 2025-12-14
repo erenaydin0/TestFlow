@@ -655,7 +655,7 @@ class CosmicQAAgent {
       .from('Execution')
       .select('*')
       .eq('status', 'queued')
-      .order('createdAt', { ascending: true });
+      .order('startTime', { ascending: true });
 
     if (error) {
       console.error('Error fetching queued executions:', error);
