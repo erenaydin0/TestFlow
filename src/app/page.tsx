@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import PageLayout from '@/components/layout/PageLayout';
 import LoadingErrorState from '@/components/common/LoadingErrorState';
 import { useExecutions, useScheduledTests } from '@/hooks';
-import { getConsistentColorFromString } from '@/utils/utils';
+import { getConsistentColorFromString } from '@/utils/colorUtils';
 import { useI18n } from '@/hooks';
 import { ExecutionResult } from '@/types';
 import { config } from '@/utils/config';

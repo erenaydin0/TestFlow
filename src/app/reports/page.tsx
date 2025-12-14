@@ -30,10 +30,10 @@ const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog'),
 import { Button, IconButton, ButtonGroup, PaginationControls, BulkActionsBar } from '@/components';
 
 import { ExecutionResult, BrowserType } from '@/types';
-import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
+import { formatDuration, formatRelativeTime, formatDateForTooltip } from '@/utils/dateUtils';
 import { useNotifications, useReports, usePagination } from '@/hooks';
 import { useSidebar, useI18n } from '@/hooks';
-import { API_URL } from '@/utils/utils';
+import { API_URL } from '@/utils/config';
 import { downloadExecutionReport, downloadBulkExecutionReports } from '@/utils/reportUtils';
 import { getReportsTableColumns } from '@/config/tableColumns';
 

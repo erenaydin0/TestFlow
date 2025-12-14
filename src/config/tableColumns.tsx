@@ -4,7 +4,7 @@ import React from 'react';
 import { Column } from '@/components/common/DataTable';
 import { TableCells, EditableSuiteCell, EditableTagsCell, EditableBrowserCell } from '@/components/common';
 import { Test, ExecutionResult, ScheduledTest, BrowserType } from '@/types';
-import { formatRelativeTime, formatDateForTooltip } from '@/utils/utils';
+import { formatRelativeTime, formatDateForTooltip } from '@/utils/dateUtils';
 import { useI18n } from '@/hooks';
 
 const { BrowserCell, TagsCell, ActionsCell, StepCountCell, TestNameCell, StatusCell, DurationCell, SuccessRateCell, ScheduleCell, NextRunCell, ScheduledActionsCell } = TableCells;

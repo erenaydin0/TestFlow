@@ -2,19 +2,6 @@ import { type ClassValue, clsx } from 'clsx';
 import { CSSProperties } from 'react';
 
 // ============================================================================
-// CONFIGURATION
-// ============================================================================
-
-// Re-export config from centralized config file
-export { config, API_URL, WS_URL } from './config';
-
-// ============================================================================
-// COLOR UTILITIES
-// ============================================================================
-
-export * from './colorUtils';
-
-// ============================================================================
 // DROPDOWN STYLES
 // ============================================================================
 
@@ -106,9 +93,3 @@ export const getButtonHoverHandlers = (isOpen: boolean) => ({
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
-
-// ============================================================================
-// DATE UTILITIES
-// ============================================================================
-
-export * from './dateUtils';

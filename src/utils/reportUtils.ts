@@ -2,7 +2,7 @@
 'use client';
 
 import { ExecutionResult, Test } from '@/types';
-import { API_URL } from '@/utils/utils';
+import { API_URL } from '@/utils/config';
 import { getBrowserName } from '@/types/browser';
 import { downloadCSV } from '@/utils/fileUtils';
 

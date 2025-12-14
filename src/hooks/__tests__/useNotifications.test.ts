@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useNotifications } from '../useNotifications';
+import useNotifications from '../useNotifications';
 
 // Mock useI18n
 vi.mock('../useI18n', () => ({
@@ -9,15 +9,13 @@ vi.mock('../useI18n', () => ({
   }),
 }));
 
-// Mock useWebSocket
-vi.mock('../useWebSocket', () => ({
-  useWebSocket: () => ({
+// Mock useNotificationSocket
+vi.mock('../useNotificationSocket', () => ({
+  useNotificationSocket: () => ({
     isConnected: false,
     isConnecting: false,
     lastMessage: null,
-    sendMessage: vi.fn(),
-    disconnect: vi.fn(),
-    connect: vi.fn(),
+    reconnect: vi.fn(),
   }),
 }));
 
@@ -28,21 +26,17 @@ describe('useNotifications', () => {
   });
 
   it('should initialize with empty notifications', async () => {
-    const { result, waitFor } = renderHook(() => useNotifications());
+    const { result } = renderHook(() => useNotifications());
     
-    await waitFor(() => {
-      expect(result.current.notifications).toBeDefined();
-    });
+    expect(result.current.notifications).toBeDefined();
     
     expect(Array.isArray(result.current.notifications)).toBe(true);
   });
 
   it('should add notification', async () => {
-    const { result, waitFor } = renderHook(() => useNotifications());
+    const { result } = renderHook(() => useNotifications());
     
-    await waitFor(() => {
-      expect(result.current.addNotification).toBeDefined();
-    });
+    expect(result.current.addNotification).toBeDefined();
 
     act(() => {
       result.current.addNotification({
@@ -57,11 +51,9 @@ describe('useNotifications', () => {
   });
 
   it('should show toast', async () => {
-    const { result, waitFor } = renderHook(() => useNotifications());
+    const { result } = renderHook(() => useNotifications());
     
-    await waitFor(() => {
-      expect(result.current.showToast).toBeDefined();
-    });
+    expect(result.current.showToast).toBeDefined();
 
     act(() => {
       result.current.showToast({
@@ -75,11 +67,9 @@ describe('useNotifications', () => {
   });
 
   it('should remove notification', async () => {
-    const { result, waitFor } = renderHook(() => useNotifications());
+    const { result } = renderHook(() => useNotifications());
     
-    await waitFor(() => {
-      expect(result.current.addNotification).toBeDefined();
-    });
+    expect(result.current.addNotification).toBeDefined();
 
     let notificationId: string;
     
@@ -100,11 +90,9 @@ describe('useNotifications', () => {
   });
 
   it('should mark notification as read', async () => {
-    const { result, waitFor } = renderHook(() => useNotifications());
+    const { result } = renderHook(() => useNotifications());
     
-    await waitFor(() => {
-      expect(result.current.addNotification).toBeDefined();
-    });
+    expect(result.current.addNotification).toBeDefined();
 
     let notificationId: string;
     
@@ -126,11 +114,9 @@ describe('useNotifications', () => {
   });
 
   it('should clear all notifications', async () => {
-    const { result, waitFor } = renderHook(() => useNotifications());
+    const { result } = renderHook(() => useNotifications());
     
-    await waitFor(() => {
-      expect(result.current.addNotification).toBeDefined();
-    });
+    expect(result.current.addNotification).toBeDefined();
 
     act(() => {
       result.current.addNotification({

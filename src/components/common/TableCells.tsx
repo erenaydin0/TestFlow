@@ -4,7 +4,7 @@ import React from 'react';
 import { Trash2, Copy, Download, Play, Edit, Settings, Pause } from 'lucide-react';
 
 import { BrowserCellProps, TagsCellProps, StatusCellProps, TestNameCellProps, ActionsCellProps } from '@/types';
-import { formatDuration, formatRelativeTime } from '@/utils/utils';
+import { formatDuration, formatRelativeTime } from '@/utils/dateUtils';
 import { StatusBadge, IconButton } from './';
 import { useI18n } from '@/hooks';
 import { getBrowserName } from '@/types/browser';

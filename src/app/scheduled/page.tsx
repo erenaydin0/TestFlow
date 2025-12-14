@@ -20,7 +20,7 @@ const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog').
   ssr: false
 });
 import { UpcomingTests } from '@/components/dashboard';
-import { getScheduleDescription } from '@/utils/utils';
+import { getScheduleDescription } from '@/utils/dateUtils';
 import { useScheduledTests, usePagination, useSorting } from '@/hooks';
 import { ScheduledTest } from '@/types/test';
 import { useI18n } from '@/hooks';

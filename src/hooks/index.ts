@@ -3,7 +3,6 @@
 export { default as useExecutions } from './useExecutions';
 export { default as useReports } from './useReports';
 export { useScheduledTests } from './useScheduledTests';
-export { default as useWebSocket } from './useWebSocket';
 export { default as useSupabaseRealtime, useExecutionRealtime, useTestRealtime, useScheduledTestRealtime } from './useSupabaseRealtime';
 // Test hooks
 export { default as useNotifications } from './useNotifications';
