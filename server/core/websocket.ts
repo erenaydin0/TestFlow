@@ -14,6 +14,7 @@ import { Server } from 'http';
 import { IncomingMessage } from 'http';
 import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
+import { prisma } from '../lib/prisma.js';
 
 // ============================================================================
 // Types and Interfaces
@@ -176,6 +177,18 @@ export class WebSocketService {
             return;
         }
 
+        // Verify user is a member of the requested workspace
+        const membership = await this.verifyWorkspaceMembership(userId, workspaceId);
+        if (!membership) {
+            logger.warn('WebSocket auth failed - user not a member of workspace', { 
+                clientId, 
+                userId, 
+                workspaceId 
+            });
+            ws.close(4004, 'Access denied to workspace');
+            return;
+        }
+
         // Create authenticated client
         const client: AuthenticatedClient = {
             ws,
@@ -221,6 +234,31 @@ export class WebSocketService {
         } catch (error: any) {
             logger.debug('Token verification failed', { error: error.message });
             return null;
+        }
+    }
+
+    /**
+     * Verify user is a member of the workspace
+     */
+    private async verifyWorkspaceMembership(userId: string, workspaceId: string): Promise<boolean> {
+        try {
+            const membership = await prisma.workspaceMember.findUnique({
+                where: {
+                    userId_workspaceId: {
+                        userId,
+                        workspaceId,
+                    },
+                },
+            });
+
+            return !!membership;
+        } catch (error: any) {
+            logger.error('Error verifying workspace membership', { 
+                userId, 
+                workspaceId, 
+                error: error.message 
+            });
+            return false;
         }
     }
 

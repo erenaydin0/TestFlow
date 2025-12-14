@@ -49,7 +49,10 @@ export default function AuthLayout({
     const { isLoaded } = useI18n();
 
     return (
-        <div className="flex min-h-screen items-center justify-center var(--bg-secondary) sm:px-6 lg:px-8">
+        <div 
+            className="flex min-h-screen items-center justify-center sm:px-6 lg:px-8"
+            style={{ backgroundColor: 'var(--bg-secondary)' }}
+        >
             <div className="w-full max-w-md space-y-8">
                 {!isLoaded ? <AuthSkeleton /> : children}
             </div>

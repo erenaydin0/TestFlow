@@ -33,6 +33,7 @@ export interface Schedule {
     nextRun?: Date;
     retryOnFailure?: boolean;
     maxRetries?: number;
+    workspaceId?: string;
     [key: string]: any;
 }
 
