@@ -61,11 +61,9 @@ export function useScheduledTests(): UseScheduledTestsReturn {
 
   // Create schedule mutation
   const createScheduleMutation = useApiMutation(
-    (schedule: Partial<ScheduledTest>) => ScheduledTestService.createScheduledTest(schedule as any),
+    (schedule: Partial<ScheduledTest>) => ScheduledTestService.createScheduledTest(schedule as Omit<ScheduledTest, "id" | "createdAt" | "updatedAt">),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -74,9 +72,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
     ({ id, schedule }: { id: string; schedule: Partial<ScheduledTest> }) => 
       ScheduledTestService.updateScheduledTest(id, schedule),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -84,9 +80,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const deleteScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.deleteScheduledTest(id),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -94,9 +88,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const toggleScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.toggleScheduledTest(id),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -104,9 +96,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const pauseScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.pauseScheduledTest(id),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -114,9 +104,7 @@ export function useScheduledTests(): UseScheduledTestsReturn {
   const resumeScheduleMutation = useApiMutation(
     (id: string) => ScheduledTestService.resumeScheduledTest(id),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 

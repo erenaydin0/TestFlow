@@ -137,9 +137,7 @@ const useReports = (options: UseReportsOptions = {}) => {
   const deleteExecutionMutation = useApiMutation(
     (executionId: string) => ExecutionService.deleteExecution(executionId),
     {
-      onSuccess: async () => {
-        await refreshExecutions();
-      },
+      autoRefetch: refreshExecutions,
     }
   );
 
@@ -147,9 +145,7 @@ const useReports = (options: UseReportsOptions = {}) => {
   const bulkDeleteMutation = useApiMutation(
     (executionIds: string[]) => ExecutionService.bulkDeleteExecutions(executionIds),
     {
-      onSuccess: async () => {
-        await refreshExecutions();
-      },
+      autoRefetch: refreshExecutions,
     }
   );
 

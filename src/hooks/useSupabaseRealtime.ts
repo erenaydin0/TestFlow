@@ -75,7 +75,7 @@ function useSupabaseRealtime(options: RealtimeOptions): RealtimeHookReturn {
 
   const connect = useCallback(() => {
     if (!workspaceId || typeof window === 'undefined') {
-      console.log('[Supabase Realtime] No workspaceId or not in browser');
+      // Debug: No workspaceId or not in browser
       return;
     }
 
@@ -91,7 +91,7 @@ function useSupabaseRealtime(options: RealtimeOptions): RealtimeHookReturn {
     });
     channelsRef.current = [];
 
-    console.log('[Supabase Realtime] Connecting for workspace:', workspaceId);
+    // Debug: Connecting for workspace
 
     // Subscribe to Execution changes
     const executionChannel = supabase
@@ -105,14 +105,14 @@ function useSupabaseRealtime(options: RealtimeOptions): RealtimeHookReturn {
           filter: `workspaceId=eq.${workspaceId}`
         },
         (payload) => {
-          console.log('[Supabase Realtime] Execution change:', payload.eventType);
+          // Debug: Execution change
           const message = createMessage(payload.eventType as any, 'Execution', payload);
           setLastMessage(message);
           callbacksRef.current.onExecutionChange?.(message);
         }
       )
       .subscribe((status) => {
-        console.log('[Supabase Realtime] Execution channel status:', status);
+        // Debug: Execution channel status
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
         }
@@ -132,7 +132,7 @@ function useSupabaseRealtime(options: RealtimeOptions): RealtimeHookReturn {
           filter: `workspaceId=eq.${workspaceId}`
         },
         (payload) => {
-          console.log('[Supabase Realtime] Test change:', payload.eventType);
+          // Debug: Test change
           const message = createMessage(payload.eventType as any, 'Test', payload);
           setLastMessage(message);
           callbacksRef.current.onTestChange?.(message);
@@ -154,7 +154,7 @@ function useSupabaseRealtime(options: RealtimeOptions): RealtimeHookReturn {
           filter: `workspaceId=eq.${workspaceId}`
         },
         (payload) => {
-          console.log('[Supabase Realtime] ScheduledTest change:', payload.eventType);
+          // Debug: ScheduledTest change
           const message = createMessage(payload.eventType as any, 'ScheduledTest', payload);
           setLastMessage(message);
           callbacksRef.current.onScheduledTestChange?.(message);
@@ -167,7 +167,7 @@ function useSupabaseRealtime(options: RealtimeOptions): RealtimeHookReturn {
   }, [workspaceId, createMessage]);
 
   const disconnect = useCallback(() => {
-    console.log('[Supabase Realtime] Disconnecting...');
+    // Debug: Disconnecting
     
     const supabase = getSupabaseClient();
     if (supabase) {

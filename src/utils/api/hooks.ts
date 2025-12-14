@@ -4,6 +4,20 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { UseApiQueryReturn, UseApiMutationReturn } from './types';
 import { ApiError } from './client';
 
+/**
+ * Standardized error handling utility
+ * Extracts error message from ApiError or unknown error
+ */
+function handleApiError(err: unknown): string {
+  if (err instanceof ApiError) {
+    return err.message;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return 'An unexpected error occurred';
+}
+
 // Generic API Query Hook
 export function useApiQuery<T>(
   queryFn: () => Promise<T>,
@@ -21,8 +35,9 @@ export function useApiQuery<T>(
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
-  const executeQuery = useCallback(async () => {
-    if (!enabled) return;
+  // Internal helper function to execute query logic
+  const executeQueryInternal = useCallback(async (skipEnabledCheck = false) => {
+    if (!skipEnabledCheck && !enabled) return;
     
     try {
       setLoading(true);
@@ -30,39 +45,31 @@ export function useApiQuery<T>(
       
       const result = await queryFn();
       
-      setData(result);
-      onSuccess?.(result);
+      if (mountedRef.current) {
+        setData(result);
+        onSuccess?.(result);
+      }
     } catch (err) {
       if (mountedRef.current) {
-        const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred';
+        const errorMessage = handleApiError(err);
         setError(errorMessage);
         onError?.(errorMessage);
       }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [queryFn, enabled, onSuccess, onError]);
 
+  const executeQuery = useCallback(async () => {
+    await executeQueryInternal(false);
+  }, [executeQueryInternal]);
+
   const refetch = useCallback(async () => {
     // Force refetch even if enabled is false
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const result = await queryFn();
-      
-      setData(result);
-      onSuccess?.(result);
-    } catch (err) {
-      if (mountedRef.current) {
-        const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred';
-        setError(errorMessage);
-        onError?.(errorMessage);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [queryFn, onSuccess, onError]);
+    await executeQueryInternal(true);
+  }, [executeQueryInternal]);
 
   useEffect(() => {
     if (enabled) {
@@ -91,9 +98,10 @@ export function useApiMutation<T, P = any>(
     onSuccess?: (data: T, params: P) => void | Promise<void>;
     onError?: (error: string, params: P) => void;
     onMutate?: (params: P) => void;
+    autoRefetch?: () => Promise<void> | void;
   } = {}
 ): UseApiMutationReturn<T, P> {
-  const { onSuccess, onError, onMutate } = options;
+  const { onSuccess, onError, onMutate, autoRefetch } = options;
   
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
@@ -111,12 +119,16 @@ export function useApiMutation<T, P = any>(
       if (mountedRef.current) {
         setData(result);
         await onSuccess?.(result, params);
+        // Auto refetch if enabled
+        if (autoRefetch) {
+          await autoRefetch();
+        }
       }
       
       return result;
     } catch (err) {
       if (mountedRef.current) {
-        const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred';
+        const errorMessage = handleApiError(err);
         setError(errorMessage);
         onError?.(errorMessage, params);
       }
@@ -126,7 +138,7 @@ export function useApiMutation<T, P = any>(
         setLoading(false);
       }
     }
-  }, [mutationFn, onSuccess, onError, onMutate]);
+  }, [mutationFn, onSuccess, onError, onMutate, autoRefetch]);
 
   const reset = useCallback(() => {
     setData(null);
@@ -161,7 +173,7 @@ export function useApiQueries<T extends Record<string, () => Promise<unknown>>>(
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<keyof T, string | null>>({} as Record<keyof T, string | null>);
-  const [data, setData] = useState<{ [K in keyof T]: Awaited<ReturnType<T[K]>> | null }>({} as any);
+  const [data, setData] = useState<{ [K in keyof T]: Awaited<ReturnType<T[K]>> | null }>({} as { [K in keyof T]: Awaited<ReturnType<T[K]>> | null });
   const mountedRef = useRef(true);
 
   const executeQueries = useCallback(async () => {
@@ -177,21 +189,21 @@ export function useApiQueries<T extends Record<string, () => Promise<unknown>>>(
             const result = await queryFn();
             return { key, result, error: null };
           } catch (err) {
-            const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred';
+            const errorMessage = handleApiError(err);
             return { key, result: null, error: errorMessage };
           }
         })
       );
       
       if (mountedRef.current) {
-        const newData = {} as any;
-        const newErrors = {} as any;
+        const newData = {} as { [K in keyof T]: Awaited<ReturnType<T[K]>> | null };
+        const newErrors = {} as Record<keyof T, string | null>;
         
         results.forEach((result) => {
           if (result.status === 'fulfilled') {
             const { key, result: data, error } = result.value;
-            newData[key] = data;
-            newErrors[key] = error;
+            (newData as Record<string, unknown>)[key] = data;
+            (newErrors as Record<string, string | null>)[key] = error;
           }
         });
         
@@ -265,7 +277,7 @@ export function useOptimisticMutation<T, P = unknown>(
         // Rollback optimistic update
         rollbackFn(params);
         
-        const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred';
+        const errorMessage = handleApiError(err);
         setError(errorMessage);
         onError?.(errorMessage, params);
       }

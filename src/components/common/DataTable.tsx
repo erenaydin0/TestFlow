@@ -325,4 +325,5 @@ const DataTable = <T extends Record<string, any>>({
   );
 };
 
-export default DataTable;
+// Memoize DataTable to prevent unnecessary re-renders
+export default React.memo(DataTable) as typeof DataTable;

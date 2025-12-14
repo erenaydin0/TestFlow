@@ -174,9 +174,12 @@ class FrontendErrorHandler {
     if (logLevel === 'error') {
       console.error(message, errorInfo);
     } else if (logLevel === 'warn') {
-      console.warn(message, errorInfo);
-    } else {
-      console.log(message, errorInfo);
+      // Error severity determines logging - warnings and errors are always logged
+      if (errorInfo.severity === 'medium') {
+        console.warn(message, errorInfo);
+      } else {
+        console.error(message, errorInfo);
+      }
     }
   }
 

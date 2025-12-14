@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Download,
@@ -194,14 +194,14 @@ function ReportsPageContent() {
   // Helper functions removed - now using utility functions
 
   // Single execution download - now using utility function
-  const downloadSingleExecution = async (execution: ExecutionResult) => {
+  const downloadSingleExecution = useCallback(async (execution: ExecutionResult) => {
     try {
       await downloadExecutionReport(execution, t);
     } catch (error) {
       console.error('Error creating report package:', error);
       notifyTestFailure('Single Download', '', error instanceof Error ? error.message : t('common.unknownError'));
     }
-  };
+  }, [t, notifyTestFailure]);
 
   // Define table columns for DataTable
   const columns: Column<ExecutionResult>[] = getReportsTableColumns(t, locale, {
@@ -209,7 +209,7 @@ function ReportsPageContent() {
   });
 
 
-  const downloadSelectedTests = async () => {
+  const downloadSelectedTests = useCallback(async () => {
     if (selectedExecutions.size === 0) return;
 
     try {
@@ -223,12 +223,12 @@ function ReportsPageContent() {
       console.error('Error creating bulk report package:', error);
       notifyTestFailure('Bulk Download', '', error instanceof Error ? error.message : 'Bilinmeyen hata');
     }
-  };
+  }, [selectedExecutions, sortedExecutions, setSelectedExecutions, t, notifyTestFailure]);
 
-  const deleteSelectedTests = async () => {
+  const deleteSelectedTests = useCallback(async () => {
     if (selectedExecutions.size === 0) return;
     setShowBulkDeleteDialog(true);
-  };
+  }, [selectedExecutions]);
 
   const confirmBulkDelete = async () => {
     try {

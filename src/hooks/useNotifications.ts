@@ -148,7 +148,6 @@ function useNotifications(): UseNotificationsReturn {
     );
 
     if (isDuplicate) {
-      console.log('Skipping duplicate notification:', notification.title);
       return;
     }
 
@@ -175,7 +174,6 @@ function useNotifications(): UseNotificationsReturn {
     );
 
     if (isDuplicate) {
-      console.log('Duplicate toast atlandı:', toast.title, toast.message);
       return;
     }
 

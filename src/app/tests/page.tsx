@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Plus,
@@ -145,20 +145,22 @@ function TestsPageContent() {
   // filterOptions artık useTests hook'undan geliyor
 
   // Handle test selection
-  const handleTestSelection = (testId: string, checked: boolean) => {
-    const newSelection = new Set(selectedTests);
-    if (checked) {
-      newSelection.add(testId);
-    } else {
-      newSelection.delete(testId);
-    }
-    setSelectedTests(newSelection);
-  };
+  const handleTestSelection = useCallback((testId: string, checked: boolean) => {
+    setSelectedTests(prev => {
+      const newSelection = new Set(prev);
+      if (checked) {
+        newSelection.add(testId);
+      } else {
+        newSelection.delete(testId);
+      }
+      return newSelection;
+    });
+  }, []);
 
 
 
   // Handle run test - Updated to use utility functions
-  const handleRunTest = async (testId: string) => {
+  const handleRunTest = useCallback(async (testId: string) => {
     const test = tests?.find((t: any) => t.id === testId);
     if (!test) {
       notifyTestFailure(t('tests.unknownTest'), testId, t('tests.testNotFound'));
@@ -178,17 +180,17 @@ function TestsPageContent() {
       console.error('Test execution error:', error);
       notifyTestFailure(test.name, testId, error instanceof Error ? error.message : t('common.unknownError'));
     }
-  };
+  }, [tests, browserSettings, notifyTestStart, notifyTestFailure, t]);
 
   // Handle edit test workflow
-  const handleEditTest = (testId: string) => {
+  const handleEditTest = useCallback((testId: string) => {
     // Navigate to test builder with the workflow loaded
     router.push(`/test-builder?load=${testId}`);
-  };
+  }, [router]);
 
 
   // Handle duplicate test
-  const handleDuplicateTest = async (testId: string) => {
+  const handleDuplicateTest = useCallback(async (testId: string) => {
     try {
       const test = tests?.find((t: any) => t.id === testId);
       const duplicatedId = await duplicateTest(testId);
@@ -199,10 +201,10 @@ function TestsPageContent() {
       const test = tests?.find((t: any) => t.id === testId);
       notifyTestFailure(test?.name || t('tests.unknownTest'), testId, t('tests.duplicateError'));
     }
-  };
+  }, [tests, duplicateTest, notifyTestDuplicated, notifyTestFailure, t]);
 
   // Handle delete test
-  const handleDeleteTest = (testId: string) => {
+  const handleDeleteTest = useCallback((testId: string) => {
     const test = tests?.find((t: any) => t.id === testId);
     if (test) {
       setSingleDeleteDialog({
@@ -211,7 +213,7 @@ function TestsPageContent() {
         testName: test.name
       });
     }
-  };
+  }, [tests, setSingleDeleteDialog]);
 
   const confirmSingleDelete = async () => {
     try {

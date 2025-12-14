@@ -112,7 +112,6 @@ export function useNotificationSocket({
             // New execution created (queued, pending, or running)
             if (!notifiedStates.has('started') && (status === 'queued' || status === 'running' || status === 'pending')) {
                 notifiedStates.add('started');
-                console.log('[Supabase Realtime] Execution queued/started:', workflowName, status);
                 callbacksRef.current.notifyTestStart(workflowName, executionId);
             }
         } else if (message.type === 'UPDATE') {
@@ -121,14 +120,12 @@ export function useNotificationSocket({
             // Started: status changed to 'running'
             if (status === 'running' && oldStatus !== 'running' && !notifiedStates.has('started')) {
                 notifiedStates.add('started');
-                console.log('[Supabase Realtime] Execution started:', workflowName);
                 callbacksRef.current.notifyTestStart(workflowName, executionId);
             }
             
             // Completed successfully
             if (status === 'completed' && !notifiedStates.has('completed')) {
                 notifiedStates.add('completed');
-                console.log('[Supabase Realtime] Execution completed:', workflowName);
                 callbacksRef.current.notifyTestSuccess(workflowName, executionId, duration, executionId);
             }
             
@@ -148,7 +145,6 @@ export function useNotificationSocket({
             // Cancelled
             if (status === 'cancelled' && !notifiedStates.has('cancelled')) {
                 notifiedStates.add('cancelled');
-                console.log('[Supabase Realtime] Execution cancelled:', workflowName);
                 callbacksRef.current.notifyTestFailure(
                     workflowName, 
                     executionId, 
@@ -174,8 +170,6 @@ export function useNotificationSocket({
         if (message.type === 'INSERT') {
             const test = message.data;
             if (test?.name) {
-                console.log('[Supabase Realtime] New test created:', test.name);
-                // Could add notification here if desired
             }
         }
     }, []);

@@ -78,9 +78,7 @@ const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
   const deleteTestMutation = useApiMutation(
     (testId: string) => TestService.deleteTest(testId),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -88,9 +86,7 @@ const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
   const duplicateTestMutation = useApiMutation(
     (testId: string) => TestService.duplicateTest(testId),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -99,9 +95,7 @@ const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
     ({ testId, updatedTest }: { testId: string; updatedTest: Test }) =>
       TestService.updateTest(testId, updatedTest),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
@@ -109,18 +103,14 @@ const useTests = (options: UseTestsOptions = {}): UseTestsReturn => {
   const bulkDeleteMutation = useApiMutation(
     (testIds: string[]) => TestService.bulkDeleteTests(testIds),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
   const bulkDuplicateMutation = useApiMutation(
     (testIds: string[]) => TestService.bulkDuplicateTests(testIds),
     {
-      onSuccess: async () => {
-        await refetch();
-      },
+      autoRefetch: refetch,
     }
   );
 
