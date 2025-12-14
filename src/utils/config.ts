@@ -13,8 +13,9 @@
  */
 export const config = {
   // API Configuration
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3004',
-  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3004',
+  // Next.js API Routes are on the same domain, so we use relative URLs
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || '',
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL || '',
 
   // App Information
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'CosmicQA',

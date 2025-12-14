@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,120 +9,123 @@ datasource db {
 }
 
 model Test {
-  id                String   @id @default(uuid())
+  id                String          @id @default(dbgenerated("(gen_random_uuid())::text"))
   name              String
   description       String
   status            String
-  duration          Int      @default(0)
-  tags              String   // JSON array
+  duration          Int             @default(0)
+  tags              String
   suite             String
-  workflow          String   // JSON array of steps
-  isExecutable      Boolean  @default(true)
-  enableScreenshots Boolean  @default(false)
-  enableRecording   Boolean  @default(false)
-  headlessMode      Boolean  @default(false)
-  browserType       String   @default("chromium")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  workflow          String
+  isExecutable      Boolean         @default(true)
+  enableScreenshots Boolean         @default(false)
+  enableRecording   Boolean         @default(false)
+  headlessMode      Boolean         @default(false)
+  browserType       String          @default("chromium")
+  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
   workspaceId       String?
-  workspace         Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  schedules         ScheduledTest[]
+  workspace         Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  schedules ScheduledTest[]
+  @@index([workspaceId])
 }
 
 model ScheduledTest {
-  id              String    @id @default(uuid())
+  id              String     @id @default(dbgenerated("(gen_random_uuid())::text"))
   testId          String
-  test            Test      @relation(fields: [testId], references: [id], onDelete: Cascade)
   name            String
   description     String
   schedule        String
   frequency       String
   status          String
-  lastRun         DateTime?
-  nextRun         DateTime?
+  lastRun         DateTime?  @db.Timestamptz(6)
+  nextRun         DateTime?  @db.Timestamptz(6)
   lastDuration    Int?
   successRate     Float?
   suite           String
   environment     String
-  enabled         Boolean   @default(true)
-  notifyOnFailure Boolean   @default(false)
-  notifyOnSuccess Boolean   @default(false)
-  retryOnFailure  Boolean   @default(false)
-  maxRetries      Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
+  enabled         Boolean    @default(true)
+  notifyOnFailure Boolean    @default(false)
+  notifyOnSuccess Boolean    @default(false)
+  retryOnFailure  Boolean    @default(false)
+  maxRetries      Int        @default(0)
+  createdAt       DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
   workspaceId     String?
-  workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  test            Test       @relation(fields: [testId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([testId])
+  @@index([workspaceId])
 }
 
 model Execution {
-  id              String    @id @default(uuid())
+  id              String     @id @default(dbgenerated("(gen_random_uuid())::text"))
   workflowId      String
   workflowName    String
   status          String
-  startTime       DateTime
-  endTime         DateTime?
+  startTime       DateTime   @db.Timestamptz(6)
+  endTime         DateTime?  @db.Timestamptz(6)
   duration        Int?
   suite           String?
-  tags            String?   // JSON array
-  options         String    // JSON object
-  steps           String    // JSON array of StepResult
-  screenshots     String    // JSON array
-  logs            String    // JSON array
-  progress        Int       @default(0)
+  tags            String?
+  options         String
+  steps           String
+  screenshots     String
+  logs            String
+  progress        Int        @default(0)
   videoPath       String?
   error           String?
   successRate     Float?
   scheduledTestId String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
+  createdAt       DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
   workspaceId     String?
-  workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([workflowId])
+  @@index([workspaceId])
 }
 
-// Auth & Workspace Models
-
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(dbgenerated("(gen_random_uuid())::text"))
   sessionToken String   @unique
   userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime @db.Timestamptz(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId])
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String            @id @default(dbgenerated("(gen_random_uuid())::text"))
   name          String?
-  email         String?   @unique
-  emailVerified DateTime?
+  email         String?           @unique
+  emailVerified DateTime?         @db.Timestamptz(6)
   image         String?
-  password      String?   // For credentials provider
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
+  password      String?
+  createdAt     DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
   accounts      Account[]
   sessions      Session[]
   workspaces    WorkspaceMember[]
@@ -134,48 +134,47 @@ model User {
 model VerificationToken {
   identifier String
   token      String   @unique
-  expires    DateTime
+  expires    DateTime @db.Timestamptz(6)
 
   @@unique([identifier, token])
 }
 
 model Workspace {
-  id          String   @id @default(cuid())
+  id          String            @id @default(dbgenerated("(gen_random_uuid())::text"))
   name        String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  members     WorkspaceMember[]
-  invites     WorkspaceInvite[]
-  tests       Test[]
-  schedules   ScheduledTest[]
+  createdAt   DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
   executions  Execution[]
+  schedules   ScheduledTest[]
+  tests       Test[]
+  invites     WorkspaceInvite[]
+  members     WorkspaceMember[]
 }
 
 model WorkspaceMember {
-  id          String   @id @default(cuid())
+  id          String    @id @default(dbgenerated("(gen_random_uuid())::text"))
   userId      String
   workspaceId String
-  role        String   @default("MEMBER") // OWNER, ADMIN, MEMBER
-  joinedAt    DateTime @default(now())
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role        String    @default("MEMBER")
+  joinedAt    DateTime  @default(now()) @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([userId, workspaceId])
+  @@index([userId])
+  @@index([workspaceId])
 }
 
 model WorkspaceInvite {
-  id          String   @id @default(cuid())
+  id          String    @id @default(dbgenerated("(gen_random_uuid())::text"))
   email       String
   workspaceId String
-  role        String   @default("MEMBER") // ADMIN, MEMBER
+  role        String    @default("MEMBER")
   invitedBy   String
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime  @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([email, workspaceId])
 }
