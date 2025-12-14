@@ -2,18 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { 
-  Play, 
   Pause, 
-  Edit, 
   Trash2, 
   Plus,
-  Clock,
-  X
+  Clock
 } from 'lucide-react';
 
 import { PageLayout } from '@/components/layout';
-import { StatusBadge, CustomSelect, LoadingErrorState, Button, IconButton, DataTable, DataFilters, PaginationControls, BulkActionsBar, EmptyState, TableCells } from '@/components/common';
-import { Column } from '@/components/common/DataTable';
+import { CustomSelect, LoadingErrorState, Button, DataTable, PaginationControls, BulkActionsBar, EmptyState } from '@/components/common';
 import dynamic from 'next/dynamic';
 
 // Lazy load modals (heavy components)
@@ -28,8 +24,8 @@ import { getScheduleDescription } from '@/utils/utils';
 import { useScheduledTests, usePagination, useSorting } from '@/hooks';
 import { ScheduledTest } from '@/types/test';
 import { useI18n } from '@/hooks';
-
-const { TestNameCell, StatusCell, ScheduleCell, NextRunCell, ScheduledActionsCell } = TableCells;
+import { getScheduledTableColumns } from '@/config/tableColumns';
+import '@/assets/styles/DataTable.css';
 
 export default function ScheduledPage() {
   const { t, locale } = useI18n();
@@ -78,84 +74,20 @@ export default function ScheduledPage() {
     pagination.resetToFirstPage();
   }, [filters]);
 
-  // Define table columns
-  const columns: Column<ScheduledTest>[] = [
-    {
-      key: 'name',
-      label: t('scheduled.testName'),
-      sortable: true,
-      width: '300px',
-      render: (value: any, schedule: ScheduledTest) => (
-        <TestNameCell 
-          name={schedule.name} 
-          description={schedule.description} 
-          id={schedule.id}
-        />
-      )
+  // Get table columns from central config
+  const columns = getScheduledTableColumns(t, getScheduleDescription, {
+    onToggle: (id) => toggleSchedule(id),
+    onEdit: (schedule) => {
+      setEditingSchedule(schedule);
+      setIsModalOpen(true);
     },
-    {
-      key: 'status',
-      label: t('scheduled.status'),
-      sortable: true,
-      width: '120px',
-      render: (value: any, schedule: ScheduledTest) => (
-        <div style={{ 
-          display: 'inline-flex',
-          alignItems: 'center',
-          padding: '0.25rem 0.75rem',
-          borderRadius: '0.375rem',
-          fontSize: '0.75rem',
-          fontWeight: 500,
-          color: schedule.status === 'active' ? 'var(--status-success)' : 'var(--status-error)',
-        }}>
-          {schedule.status === 'active' ? t('scheduled.active') : t('scheduled.inactive')}
-        </div>
-      )
-    },
-    {
-      key: 'schedule',
-      label: t('scheduled.schedule'),
-      sortable: true,
-      width: '200px',
-      render: (value: any, schedule: ScheduledTest) => (
-        <ScheduleCell 
-          schedule={schedule.schedule}
-          description={getScheduleDescription(schedule.schedule, t)}
-        />
-      )
-    },
-    {
-      key: 'nextRun',
-      label: t('scheduled.nextRun'),
-      sortable: true,
-      width: '200px',
-      render: (value: any, schedule: ScheduledTest) => (
-        <NextRunCell nextRun={schedule.nextRun} />
-      )
-    },
-    {
-      key: 'actions',
-      label: t('scheduled.actions'),
-      sortable: false,
-      width: '150px',
-      render: (value: any, schedule: ScheduledTest) => (
-        <ScheduledActionsCell
-          onToggle={() => toggleSchedule(schedule.id)}
-          onEdit={() => {
-            setEditingSchedule(schedule);
-            setIsModalOpen(true);
-          }}
-          onDelete={() => {
-            setDeleteConfirm({
-              isOpen: true,
-              schedule: schedule
-            });
-          }}
-          status={schedule.status === 'active' ? 'active' : 'inactive'}
-        />
-      )
+    onDelete: (schedule) => {
+      setDeleteConfirm({
+        isOpen: true,
+        schedule: schedule
+      });
     }
-  ];
+  });
 
 
   // Bulk operations
@@ -198,12 +130,7 @@ export default function ScheduledPage() {
               </Button>
             </div>
           ) : (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '2fr 1fr', 
-              gap: '1.5rem',
-              alignItems: 'start'
-            }}>
+            <div className="scheduled-grid">
               {/* Scheduled Tests */}
               <div className="card" style={{ minWidth: 0, overflow: 'hidden' }}>
                 

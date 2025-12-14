@@ -8,7 +8,15 @@
 }
 
 .data-table table {
-  min-width: 1000px; /* Ensure horizontal scroll on very small screens */
+  min-width: 600px; /* Reduced for responsive tables */
+}
+
+/* Scheduled page grid layout */
+.scheduled-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
 /* Responsive column hiding - MacBook Pro 13" and similar (≤1440px) */
@@ -22,6 +30,11 @@
 @media (max-width: 1024px) {
   .hide-on-tablet {
     display: none !important;
+  }
+
+  /* Scheduled grid becomes single column on tablet */
+  .scheduled-grid {
+    grid-template-columns: 1fr;
   }
 }
 

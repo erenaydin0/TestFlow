@@ -30,7 +30,6 @@ export const getTestsTableColumns = (
       key: 'name',
       label: t('tests.testName'),
       sortable: true,
-      width: '300px',
       render: (value, test) => (
         <TestNameCell
           name={test.name}
@@ -43,7 +42,6 @@ export const getTestsTableColumns = (
       key: 'suite',
       label: t('tests.testGroup'),
       sortable: true,
-      width: '150px',
       render: (value, test) => (
         <EditableSuiteCell
           value={value}
@@ -57,7 +55,7 @@ export const getTestsTableColumns = (
       key: 'tags',
       label: t('tests.tags'),
       sortable: true,
-      width: '200px',
+      responsiveClass: 'hide-on-small-desktop',
       render: (value, test) => (
         <EditableTagsCell
           tags={test.tags}
@@ -71,7 +69,6 @@ export const getTestsTableColumns = (
       key: 'browserType',
       label: t('tests.browser'),
       sortable: true,
-      width: '100px',
       render: (value, test) => (
         <EditableBrowserCell
           browserType={test.browserType || 'chromium'}
@@ -84,7 +81,7 @@ export const getTestsTableColumns = (
       key: 'stepCount',
       label: t('tests.stepCount'),
       sortable: true,
-      width: '100px',
+      responsiveClass: 'hide-on-tablet',
       render: (value, test) => (
         <StepCountCell count={test.workflow?.length || 0} />
       )
@@ -93,7 +90,7 @@ export const getTestsTableColumns = (
       key: 'createdAt',
       label: t('tests.createdAt'),
       sortable: true,
-      width: '100px',
+      responsiveClass: 'hide-on-tablet',
       render: (value, test) => (
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           {test.createdAt ? new Date(test.createdAt).toLocaleDateString('tr-TR') : '-'}
@@ -104,7 +101,6 @@ export const getTestsTableColumns = (
       key: 'actions',
       label: t('tests.actions'),
       sortable: false,
-      width: '200px',
       render: (value, test) => (
         <ActionsCell
           onRun={() => handlers.onRun(test.id)}
@@ -142,7 +138,6 @@ export const getReportsTableColumns = (
       key: 'status',
       label: t('reports.status'),
       sortable: true,
-      width: '80px',
       render: (value, execution) => (
         <StatusCell status={execution.status} size="sm" />
       )
@@ -151,7 +146,6 @@ export const getReportsTableColumns = (
       key: 'successRate',
       label: t('reports.success'),
       sortable: true,
-      width: '90px',
       render: (value, execution) => (
         <SuccessRateCell rate={execution.successRate} />
       )
@@ -160,7 +154,6 @@ export const getReportsTableColumns = (
       key: 'startTime',
       label: t('reports.startTime'),
       sortable: true,
-      width: '140px',
       responsiveClass: 'hide-on-tablet',
       render: (value, execution) => {
         const fullDateTime = formatDateForTooltip(execution.startTime, locale);
@@ -180,7 +173,6 @@ export const getReportsTableColumns = (
       label: t('reports.duration'),
       sortable: true,
       align: 'center',
-      width: '90px',
       responsiveClass: 'hide-on-small-desktop',
       render: (value, execution) => (
         <DurationCell duration={execution.duration} />
@@ -189,7 +181,6 @@ export const getReportsTableColumns = (
     {
       key: 'suite',
       label: t('reports.testGroup'),
-      width: '150px',
       sortable: true,
       responsiveClass: 'hide-on-small-desktop',
       render: (value) => (
@@ -202,7 +193,6 @@ export const getReportsTableColumns = (
       key: 'tags',
       label: t('reports.tags'),
       sortable: true,
-      width: '200px',
       responsiveClass: 'hide-on-small-desktop',
       render: (value, execution) => (
         <TagsCell tags={execution.tags || []} maxVisible={2} />
@@ -213,7 +203,6 @@ export const getReportsTableColumns = (
       label: t('reports.browser'),
       sortable: true,
       align: 'center',
-      width: '100px',
       responsiveClass: 'hide-on-small-desktop',
       render: (value, execution) => (
         <BrowserCell browserType={execution.options?.browserType} />
@@ -223,7 +212,6 @@ export const getReportsTableColumns = (
       key: 'actions',
       label: t('reports.downloadReport'),
       sortable: false,
-      width: '80px',
       align: 'center',
       render: (value, execution) => (
         <ActionsCell
@@ -249,7 +237,6 @@ export const getScheduledTableColumns = (
       key: 'name',
       label: t('scheduled.testName'),
       sortable: true,
-      width: '300px',
       render: (value: any, schedule: ScheduledTest) => (
         <TestNameCell
           name={schedule.name}
@@ -262,7 +249,6 @@ export const getScheduledTableColumns = (
       key: 'status',
       label: t('scheduled.status'),
       sortable: true,
-      width: '120px',
       render: (value: any, schedule: ScheduledTest) => (
         <div style={{
           display: 'inline-flex',
@@ -281,7 +267,7 @@ export const getScheduledTableColumns = (
       key: 'schedule',
       label: t('scheduled.schedule'),
       sortable: true,
-      width: '200px',
+      responsiveClass: 'hide-on-tablet',
       render: (value: any, schedule: ScheduledTest) => (
         <ScheduleCell
           schedule={schedule.schedule}
@@ -293,7 +279,7 @@ export const getScheduledTableColumns = (
       key: 'nextRun',
       label: t('scheduled.nextRun'),
       sortable: true,
-      width: '200px',
+      responsiveClass: 'hide-on-small-desktop',
       render: (value: any, schedule: ScheduledTest) => (
         <NextRunCell nextRun={schedule.nextRun} />
       )
@@ -302,7 +288,6 @@ export const getScheduledTableColumns = (
       key: 'actions',
       label: t('scheduled.actions'),
       sortable: false,
-      width: '150px',
       render: (value: any, schedule: ScheduledTest) => (
         <ScheduledActionsCell
           onToggle={() => handlers.onToggle(schedule.id)}
