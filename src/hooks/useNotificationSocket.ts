@@ -109,10 +109,10 @@ export function useNotificationSocket({
 
         // Handle based on event type and status
         if (message.type === 'INSERT') {
-            // New execution created
-            if (!notifiedStates.has('started') && (status === 'running' || status === 'pending')) {
+            // New execution created (queued, pending, or running)
+            if (!notifiedStates.has('started') && (status === 'queued' || status === 'running' || status === 'pending')) {
                 notifiedStates.add('started');
-                console.log('[Supabase Realtime] Execution started:', workflowName);
+                console.log('[Supabase Realtime] Execution queued/started:', workflowName, status);
                 callbacksRef.current.notifyTestStart(workflowName, executionId);
             }
         } else if (message.type === 'UPDATE') {

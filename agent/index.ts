@@ -340,13 +340,15 @@ class LocalTestRunner {
           console.log(`   ❌ Failed: ${result.error}`);
           logs.push(`Step ${i + 1} failed: ${result.error}`);
 
-          // Take screenshot on failure
-          if (options.enableScreenshots) {
-            const screenshot = await this.takeScreenshot(execution.id, i);
-            if (screenshot) {
-              step.screenshot = screenshot;
-              screenshots.push(screenshot);
-            }
+          // ALWAYS take screenshot on failure (regardless of enableScreenshots setting)
+          console.log('📸 Taking failure screenshot...');
+          const screenshot = await this.takeScreenshot(execution.id, i);
+          if (screenshot) {
+            step.screenshot = screenshot;
+            screenshots.push(screenshot);
+            console.log(`   📸 Screenshot saved: ${screenshot}`);
+          } else {
+            console.log('   ⚠️ Failed to take screenshot');
           }
 
           break; // Stop on failure
