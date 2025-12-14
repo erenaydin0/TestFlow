@@ -61,7 +61,7 @@ export default function UserDropdown() {
                         <Menu.Item>
                             {({ active }: { active: boolean }) => (
                                 <button
-                                    onClick={openSettingsModal}
+                                    onClick={() => openSettingsModal()}
                                     className={clsx(
                                         active ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
                                         "flex w-full items-center px-3 py-2 text-sm rounded-lg transition-colors"
