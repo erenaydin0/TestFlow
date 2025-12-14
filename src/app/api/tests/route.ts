@@ -59,7 +59,14 @@ export async function GET(req: Request) {
             },
         });
 
-        return NextResponse.json(tests);
+        // Parse JSON string fields to arrays for client compatibility
+        const parsedTests = tests.map(test => ({
+            ...test,
+            tags: typeof test.tags === 'string' ? JSON.parse(test.tags || '[]') : test.tags,
+            workflow: typeof test.workflow === 'string' ? JSON.parse(test.workflow || '[]') : test.workflow,
+        }));
+
+        return NextResponse.json(parsedTests);
     } catch (error) {
         console.error("Error fetching tests:", error);
         return NextResponse.json(
@@ -122,7 +129,14 @@ export async function POST(req: Request) {
             },
         });
 
-        return NextResponse.json(test, { status: 201 });
+        // Parse JSON string fields for response
+        const parsedTest = {
+            ...test,
+            tags: typeof test.tags === 'string' ? JSON.parse(test.tags || '[]') : test.tags,
+            workflow: typeof test.workflow === 'string' ? JSON.parse(test.workflow || '[]') : test.workflow,
+        };
+
+        return NextResponse.json(parsedTest, { status: 201 });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json(
