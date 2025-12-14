@@ -30,9 +30,6 @@ export interface BackendStep {
 /**
  * Frontend test adımlarını backend formatına dönüştürür
  */
-/**
- * Frontend test adımlarını backend formatına dönüştürür
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const convertStepsToBackendFormat = (workflow: any[]): BackendStep[] => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,9 +136,6 @@ export const validateTestForExecution = (test: Test): { isValid: boolean; error?
   return { isValid: true };
 };
 
-/**
- * Test çalıştırma sonuçlarını işler
- */
 /**
  * Test çalıştırma sonuçlarını işler
  */

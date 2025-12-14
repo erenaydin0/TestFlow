@@ -2,9 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   downloadCSV,
   downloadJSON,
-  exportTestsToCSV,
   validateWorkflow,
-  generateReadableId,
 } from '../fileUtils';
 import { Test, TestStep } from '@/types';
 
@@ -55,53 +53,13 @@ describe('fileUtils', () => {
       
       const hrefCall = mockSetAttribute.mock.calls.find((call: any[]) => call[0] === 'href');
       expect(hrefCall).toBeDefined();
-      expect(hrefCall[1]).toContain('nested');
+      if (hrefCall) {
+        expect(hrefCall[1]).toContain('nested');
+      }
     });
   });
 
-  describe('exportTestsToCSV', () => {
-    it('should export tests to CSV format', () => {
-      const tests: Test[] = [
-        {
-          id: 'test-1',
-          name: 'Test 1',
-          description: 'Description',
-          workflow: [],
-          suite: 'E2E',
-          tags: ['smoke'],
-          browserType: 'chromium',
-          enableScreenshots: true,
-          enableRecording: false,
-          headlessMode: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-02'),
-        },
-      ];
-
-      exportTestsToCSV(tests);
-      
-      expect(mockCreateElement).toHaveBeenCalled();
-      expect(mockSetAttribute).toHaveBeenCalledWith('download', expect.stringContaining('CosmicQA-tests'));
-    });
-
-    it('should handle empty tests array', () => {
-      exportTestsToCSV([]);
-      expect(mockCreateElement).toHaveBeenCalled();
-    });
-
-    it('should escape quotes in test names', () => {
-      const tests: Test[] = [
-        {
-          id: 'test-1',
-          name: 'Test with "quotes"',
-          workflow: [],
-        },
-      ];
-
-      exportTestsToCSV(tests);
-      expect(mockCreateElement).toHaveBeenCalled();
-    });
-  });
+  // exportTestsToCSV tests moved to reportUtils.test.ts (now requires i18n support)
 
   describe('validateWorkflow', () => {
     it('should validate workflow with valid steps', () => {
@@ -145,31 +103,6 @@ describe('fileUtils', () => {
     });
   });
 
-  describe('generateReadableId', () => {
-    it('should generate readable ID from test name', () => {
-      const existingWorkflows: Test[] = [];
-      const id = generateReadableId('My Test Name', existingWorkflows);
-      
-      expect(id).toBeTruthy();
-      expect(typeof id).toBe('string');
-    });
-
-    it('should handle special characters in name', () => {
-      const existingWorkflows: Test[] = [];
-      const id = generateReadableId('Test @#$% Name', existingWorkflows);
-      
-      expect(id).toBeTruthy();
-    });
-
-    it('should generate unique IDs', () => {
-      const existingWorkflows: Test[] = [
-        { id: 'my-test-name', name: 'My Test Name', workflow: [] },
-      ];
-      const id = generateReadableId('My Test Name', existingWorkflows);
-      
-      expect(id).not.toBe('my-test-name');
-      expect(id).toContain('my-test-name');
-    });
-  });
+  // generateReadableId tests removed - function no longer exists in fileUtils
 });
 

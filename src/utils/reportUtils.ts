@@ -1,8 +1,79 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { ExecutionResult } from '@/types';
+import { ExecutionResult, Test } from '@/types';
 import { API_URL } from '@/utils/utils';
+import { getBrowserName } from '@/types/browser';
+import { downloadCSV } from '@/utils/fileUtils';
+
+/**
+ * Test listesi için CSV raporu oluşturur ve indirir
+ */
+export const exportTestsToCSV = (
+  tests: Test[],
+  t: (key: string, params?: any) => string
+): void => {
+  const csvHeaders = [
+    t('tests.testName'),
+    t('tests.description'),
+    t('tests.testGroup'),
+    t('tests.tags'),
+    t('tests.browser'),
+    t('tests.status'),
+    t('tests.stepCount'),
+    t('tests.screenshots'),
+    t('tests.recording'),
+    t('tests.headless'),
+    t('tests.createdAt'),
+    t('tests.updatedAt'),
+    t('tests.testId')
+  ];
+
+  const csvRows = tests.map(test => [
+    `"${test.name.replace(/"/g, '""')}"`,
+    `"${test.description ? test.description.replace(/"/g, '""') : ''}"`,
+    test.suite || '',
+    `"${(test.tags || []).join(', ')}"`,
+    getBrowserName(test.browserType),
+    test.status || '',
+    test.workflow ? test.workflow.length : 0,
+    test.enableScreenshots ? t('common.yes') : t('common.no'),
+    test.enableRecording ? t('common.yes') : t('common.no'),
+    test.headlessMode ? t('common.yes') : t('common.no'),
+    test.createdAt ? new Date(test.createdAt).toLocaleString('tr-TR') : '',
+    test.updatedAt ? new Date(test.updatedAt).toLocaleString('tr-TR') : '',
+    test.id
+  ]);
+
+  const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+  const filename = `CosmicQA-tests-${new Date().toISOString().split('T')[0]}.csv`;
+
+  downloadCSV(csvContent, filename);
+};
+
+/**
+ * Execution listesi için CSV raporu oluşturur ve indirir
+ */
+export const exportExecutionsToCSV = (
+  executions: ExecutionResult[],
+  t: (key: string, params?: any) => string
+): void => {
+  const csvContent = createTestCSVReport(executions, t);
+  const filename = `CosmicQA-executions-${new Date().toISOString().split('T')[0]}.csv`;
+  downloadCSV(csvContent, filename);
+};
+
+/**
+ * Tek execution için adım detayları CSV raporu oluşturur ve indirir
+ */
+export const exportExecutionStepsToCSV = (
+  execution: ExecutionResult,
+  t: (key: string, params?: any) => string
+): void => {
+  const csvContent = createStepsCSVReport(execution, t);
+  const filename = `${execution.workflowName}-steps-${new Date().toISOString().split('T')[0]}.csv`;
+  downloadCSV(csvContent, filename);
+};
 
 /**
  * Tek test execution için CSV raporu oluşturur
@@ -53,14 +124,14 @@ export const createTestCSVReport = (
       execution.successRate || '',
       execution.suite || '',
       (execution.tags || []).join(', '),
-      getBrowserDisplayName(execution.options?.browserType),
+      getBrowserName(execution.options?.browserType),
       execution.steps.length,
       execution.steps.filter(s => s.status === 'passed').length,
       execution.steps.filter(s => s.status === 'failed').length,
       execution.videoPath ? t('common.yes') : t('common.no'),
       execution.steps.filter(s => s.screenshot).length,
-      execution.steps[0]?.type ? getStepTypeText(execution.steps[0].type, t) : '',
-      execution.steps[execution.steps.length - 1]?.type ? getStepTypeText(execution.steps[execution.steps.length - 1].type, t) : '',
+      execution.steps[0]?.type ? getTranslatedStepTypeText(execution.steps[0].type, t) : '',
+      execution.steps[execution.steps.length - 1]?.type ? getTranslatedStepTypeText(execution.steps[execution.steps.length - 1].type, t) : '',
       firstError ? `"${firstError.replace(/"/g, '""')}"` : '',
       lastStepDuration,
       avgStepDuration,
@@ -140,8 +211,6 @@ export const createBulkStepsCSVReport = (
     t('reports.error'),
     t('reports.screenshot')
   ];
-
-
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const csvRows: any[] = [];
@@ -375,16 +444,4 @@ const getTranslatedStepTypeText = (type: string, t: (key: string) => string) => 
   }
 };
 
-const getStepTypeText = (type: string, t: (key: string) => string) => {
-  return getTranslatedStepTypeText(type, t);
-};
 
-const getBrowserDisplayName = (browserType?: string) => {
-  switch (browserType) {
-    case 'chromium': return 'Chrome';
-    case 'firefox': return 'Firefox';
-    case 'webkit': return 'Safari';
-    case 'msedge': return 'Edge';
-    default: return 'Chrome';
-  }
-};

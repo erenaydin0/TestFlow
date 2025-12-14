@@ -3,13 +3,30 @@ import {
   createTestCSVReport,
   createStepsCSVReport,
   downloadExecutionReport,
+  exportTestsToCSV,
 } from '../reportUtils';
-import { ExecutionResult } from '@/types';
+import { ExecutionResult, Test } from '@/types';
 
 // Mock downloadCSV
 const mockDownloadCSV = vi.fn();
+const mockClick = vi.fn();
+const mockSetAttribute = vi.fn();
+const mockCreateElement = vi.fn(() => ({
+  click: mockClick,
+  setAttribute: mockSetAttribute,
+}));
+
 vi.mock('../fileUtils', () => ({
-  downloadCSV: (content: string, filename: string) => mockDownloadCSV(content, filename),
+  downloadCSV: (content: string, filename: string) => {
+    mockDownloadCSV(content, filename);
+    // Simulate downloadCSV behavior
+    if (typeof document !== 'undefined') {
+      const link = mockCreateElement();
+      link.setAttribute('href', `data:text/csv;charset=utf-8,\uFEFF${encodeURIComponent(content)}`);
+      link.setAttribute('download', filename);
+      link.click();
+    }
+  },
 }));
 
 describe('reportUtils', () => {
@@ -59,6 +76,9 @@ describe('reportUtils', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    if (typeof document !== 'undefined') {
+      global.document.createElement = mockCreateElement as any;
+    }
   });
 
   describe('createTestCSVReport', () => {
@@ -122,6 +142,64 @@ describe('reportUtils', () => {
       const call = mockDownloadCSV.mock.calls[0];
       expect(call[1]).toContain('exec-1');
       expect(call[1]).toContain('.csv');
+    });
+  });
+
+  describe('exportTestsToCSV', () => {
+    it('should export tests to CSV format', () => {
+      const tests: Test[] = [
+        {
+          id: 'test-1',
+          name: 'Test 1',
+          description: 'Description',
+          status: 'pending',
+          duration: 0,
+          workflow: [],
+          suite: 'E2E',
+          tags: ['smoke'],
+          browserType: 'chromium',
+          enableScreenshots: true,
+          enableRecording: false,
+          headlessMode: true,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-02'),
+        },
+      ];
+
+      exportTestsToCSV(tests, mockT);
+      
+      expect(mockDownloadCSV).toHaveBeenCalled();
+      const call = mockDownloadCSV.mock.calls[0];
+      expect(call[1]).toContain('CosmicQA-tests');
+    });
+
+    it('should handle empty tests array', () => {
+      exportTestsToCSV([], mockT);
+      expect(mockDownloadCSV).toHaveBeenCalled();
+    });
+
+    it('should escape quotes in test names', () => {
+      const tests: Test[] = [
+        {
+          id: 'test-1',
+          name: 'Test with "quotes"',
+          description: '',
+          status: 'pending',
+          duration: 0,
+          workflow: [],
+          tags: [],
+          suite: '',
+          browserType: 'chromium',
+          enableScreenshots: false,
+          enableRecording: false,
+          headlessMode: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      exportTestsToCSV(tests, mockT);
+      expect(mockDownloadCSV).toHaveBeenCalled();
     });
   });
 });

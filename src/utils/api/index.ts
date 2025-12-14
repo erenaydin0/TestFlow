@@ -11,6 +11,9 @@ export * from './services/scheduledTests';
 export { useApiQuery, useApiMutation, useApiQueries, useOptimisticMutation } from './hooks';
 export type { UseApiQueryReturn, UseApiMutationReturn } from './types';
 
+// Utilities
+export { executeBulkOperation } from './utils';
+
 // Constants
 export { API_ENDPOINTS } from './types';
 

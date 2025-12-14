@@ -1,6 +1,5 @@
 import { BrowserType, Test, ExecutionResult, TestStep } from '@/types';
 import { getBrowserName } from '@/types/browser';
-import { getStatusText } from '@/components/common';
 
 // Re-export for backward compatibility
 export { getBrowserName };
@@ -45,156 +44,7 @@ export const downloadJSON = (content: any, filename: string): void => {
   linkElement.click();
 };
 
-// CSV Export functions
-export const exportTestsToCSV = (tests: Test[]): void => {
-  const csvHeaders = [
-    'Test Adı',
-    'Açıklama',
-    'Test Grubu',
-    'Etiketler',
-    'Tarayıcı',
-    'Durum',
-    'Adım Sayısı',
-    'Screenshots',
-    'Recording',
-    'Headless',
-    'Oluşturma Tarihi',
-    'Güncelleme Tarihi',
-    'Test ID'
-  ];
-
-  const csvRows = tests.map(test => [
-    `"${test.name.replace(/"/g, '""')}"`,
-    `"${test.description ? test.description.replace(/"/g, '""') : ''}"`,
-    test.suite || '',
-    `"${(test.tags || []).join(', ')}"`,
-    getBrowserName(test.browserType),
-    test.status || '',
-    test.workflow ? test.workflow.length : 0,
-    test.enableScreenshots ? 'Evet' : 'Hayır',
-    test.enableRecording ? 'Evet' : 'Hayır',
-    test.headlessMode ? 'Evet' : 'Hayır',
-    test.createdAt ? new Date(test.createdAt).toLocaleString('tr-TR') : '',
-    test.updatedAt ? new Date(test.updatedAt).toLocaleString('tr-TR') : '',
-    test.id
-  ]);
-
-  const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  const filename = `CosmicQA-tests-${new Date().toISOString().split('T')[0]}.csv`;
-
-  downloadCSV(csvContent, filename);
-};
-
-export const exportExecutionsToCSV = (executions: ExecutionResult[]): void => {
-  const csvHeaders = [
-    'Test Adı',
-    'Execution ID',
-    'Durum',
-    'Başlangıç Zamanı',
-    'Bitiş Zamanı',
-    'Toplam Süre (ms)',
-    'Başarı Oranı (%)',
-    'Test Grubu',
-    'Etiketler',
-    'Tarayıcı',
-    'Headless',
-    'Screenshots',
-    'Recording',
-    'Toplam Adım',
-    'Başarılı Adım',
-    'Başarısız Adım',
-    'Video Mevcut',
-    'Ekran Görüntüsü Sayısı',
-    'İlk Adım Türü',
-    'Son Adım Türü',
-    'İlk Hata',
-    'Son Adım Süresi (ms)',
-    'Ortalama Adım Süresi (ms)',
-    'En Uzun Adım (ms)',
-    'Raporlama Tarihi'
-  ];
-
-  const csvRows = executions.map(execution => {
-    const avgStepDuration = execution.steps.length > 0
-      ? Math.round(execution.steps.reduce((sum, step) => sum + (step.duration || 0), 0) / execution.steps.length)
-      : 0;
-    const maxStepDuration = Math.max(...execution.steps.map(step => step.duration || 0));
-    const firstError = execution.steps.find(step => step.error)?.error || '';
-    const lastStepDuration = execution.steps[execution.steps.length - 1]?.duration || 0;
-
-    return [
-      execution.workflowName,
-      execution.id,
-      getStatusText(execution.status),
-      execution.startTime ? new Date(execution.startTime).toLocaleString('tr-TR') : '',
-      execution.endTime ? new Date(execution.endTime).toLocaleString('tr-TR') : '',
-      execution.duration || '',
-      execution.successRate || '',
-      execution.suite || '',
-      (execution.tags || []).join(', '),
-      getBrowserName(execution.options?.browserType),
-      execution.options?.headlessMode ? 'Evet' : 'Hayır',
-      execution.options?.enableScreenshots ? 'Evet' : 'Hayır',
-      execution.options?.enableRecording ? 'Evet' : 'Hayır',
-      execution.steps.length,
-      execution.steps.filter(s => s.status === 'passed').length,
-      execution.steps.filter(s => s.status === 'failed').length,
-      execution.videoPath ? 'Evet' : 'Hayır',
-      execution.steps.filter(s => s.screenshot).length,
-      execution.steps[0]?.type ? getStepTypeText(execution.steps[0].type) : '',
-      execution.steps[execution.steps.length - 1]?.type ? getStepTypeText(execution.steps[execution.steps.length - 1].type) : '',
-      firstError ? `"${firstError.replace(/"/g, '""')}"` : '',
-      lastStepDuration,
-      avgStepDuration,
-      maxStepDuration,
-      new Date().toLocaleString('tr-TR')
-    ];
-  });
-
-  const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  const filename = `CosmicQA-executions-${new Date().toISOString().split('T')[0]}.csv`;
-
-  downloadCSV(csvContent, filename);
-};
-
-export const exportExecutionStepsToCSV = (execution: ExecutionResult): void => {
-  const csvHeaders = [
-    'Adım No',
-    'Adım ID',
-    'Adım Türü',
-    'Durum',
-    'Başlangıç Zamanı',
-    'Bitiş Zamanı',
-    'Süre (ms)',
-    'URL',
-    'Selector',
-    'Girilen Değer',
-    'Beklenen Değer',
-    'Hata Mesajı',
-    'Ekran Görüntüsü'
-  ];
-
-  const csvRows = execution.steps.map((step, index) => [
-    index + 1,
-    step.stepId || '',
-    getStepTypeText(step.type),
-    getStatusText(step.status),
-    step.startTime ? new Date(step.startTime).toLocaleTimeString('tr-TR') : '',
-    step.endTime ? new Date(step.endTime).toLocaleTimeString('tr-TR') : '',
-    step.duration || '',
-    step.config?.url || '',
-    step.config?.selector || '',
-    step.config?.value || step.config?.text || '',
-    step.config?.expectedValue || '',
-    step.error ? `"${step.error.replace(/"/g, '""')}"` : '',
-    step.screenshot ? 'Var' : ''
-  ]);
-
-  const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-  const filename = `${execution.workflowName}-steps-${new Date().toISOString().split('T')[0]}.csv`;
-
-  downloadCSV(csvContent, filename);
-};
+// CSV Export functions moved to reportUtils.ts for i18n support
 
 // JSON Import/Export functions
 export const exportTestWorkflow = (
@@ -275,22 +125,7 @@ export const importTestWorkflow = (file: File): Promise<{
   });
 };
 
-// Helper functions
-const getStepTypeText = (type: string): string => {
-  const typeMap: { [key: string]: string } = {
-    'navigate': 'Sayfaya Git',
-    'click': 'Tıkla',
-    'type': 'Metin Gir',
-    'wait': 'Bekle',
-    'scroll': 'Kaydır',
-    'screenshot': 'Ekran Görüntüsü',
-    'verify': 'Doğrula',
-    'condition': 'Koşul',
-    'keypress': 'Tuş Bas',
-    'dropdown': 'Açılır Menü'
-  };
-  return typeMap[type.toLowerCase()] || type;
-};
+// Helper functions moved to reportUtils.ts for i18n support
 
 // Workflow validation
 export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors: string[] } => {

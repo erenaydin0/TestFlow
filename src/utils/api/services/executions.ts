@@ -1,6 +1,7 @@
 import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../types';
 import { ExecutionResult, ExecutionStats } from '@/types';
+import { executeBulkOperation } from '../utils';
 
 // Execution API Service
 export class ExecutionService {
@@ -21,11 +22,7 @@ export class ExecutionService {
 
   // Bulk delete executions
   static async bulkDeleteExecutions(ids: string[]): Promise<{ deletedCount: number }> {
-    const deletePromises = ids.map(id => this.deleteExecution(id));
-    const results = await Promise.allSettled(deletePromises);
-    
-    const deletedCount = results.filter(result => result.status === 'fulfilled').length;
-    return { deletedCount };
+    return executeBulkOperation(ids, (id) => this.deleteExecution(id), 'deletedCount');
   }
 
   // Execute workflow

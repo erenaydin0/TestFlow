@@ -1,6 +1,7 @@
 import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../types';
 import { Test } from '@/types';
+import { executeBulkOperation } from '../utils';
 
 // Test API Service
 export class TestService {
@@ -31,11 +32,7 @@ export class TestService {
 
   // Bulk delete tests
   static async bulkDeleteTests(ids: string[]): Promise<{ deletedCount: number }> {
-    const deletePromises = ids.map(id => this.deleteTest(id));
-    const results = await Promise.allSettled(deletePromises);
-    
-    const deletedCount = results.filter(result => result.status === 'fulfilled').length;
-    return { deletedCount };
+    return executeBulkOperation(ids, (id) => this.deleteTest(id), 'deletedCount');
   }
 
   // Duplicate test
@@ -54,11 +51,7 @@ export class TestService {
 
   // Bulk duplicate tests
   static async bulkDuplicateTests(ids: string[]): Promise<{ duplicatedCount: number }> {
-    const duplicatePromises = ids.map(id => this.duplicateTest(id));
-    const results = await Promise.allSettled(duplicatePromises);
-    
-    const duplicatedCount = results.filter(result => result.status === 'fulfilled').length;
-    return { duplicatedCount };
+    return executeBulkOperation(ids, (id) => this.duplicateTest(id), 'duplicatedCount');
   }
 
   // Execute test

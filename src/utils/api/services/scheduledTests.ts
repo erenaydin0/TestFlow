@@ -1,6 +1,7 @@
 import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../types';
 import { ScheduledTest, UpcomingRun } from '@/types';
+import { executeBulkOperation } from '../utils';
 
 // Scheduled Test API Service
 export class ScheduledTestService {
@@ -62,11 +63,7 @@ export class ScheduledTestService {
 
   // Bulk delete scheduled tests
   static async bulkDeleteScheduledTests(ids: string[]): Promise<{ deletedCount: number }> {
-    const deletePromises = ids.map(id => this.deleteScheduledTest(id));
-    const results = await Promise.allSettled(deletePromises);
-    
-    const deletedCount = results.filter(result => result.status === 'fulfilled').length;
-    return { deletedCount };
+    return executeBulkOperation(ids, (id) => this.deleteScheduledTest(id), 'deletedCount');
   }
 
   // Duplicate scheduled test
