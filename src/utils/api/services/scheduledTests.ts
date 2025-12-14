@@ -80,19 +80,3 @@ export class ScheduledTestService {
     return this.createScheduledTest(duplicatedSchedule);
   }
 }
-
-// Export individual functions for convenience
-export const {
-  fetchScheduledTests,
-  fetchScheduledTestById,
-  createScheduledTest,
-  updateScheduledTest,
-  deleteScheduledTest,
-  toggleScheduledTest,
-  pauseScheduledTest,
-  resumeScheduledTest,
-  getUpcomingRuns,
-  getScheduledTestHistory,
-  bulkDeleteScheduledTests,
-  duplicateScheduledTest,
-} = ScheduledTestService;

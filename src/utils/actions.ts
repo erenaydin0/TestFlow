@@ -251,7 +251,10 @@ export const getTranslatedActions = (t: TranslationFunction): ActionType[] => {
   return baseActionsConfig.map(translateAction);
 };
 
-// Default actions (for backward compatibility)
+/**
+ * @deprecated This export is primarily used in tests. For production code, use getTranslatedActions or getTranslatedActionByType instead.
+ * This will be removed in a future version.
+ */
 export const availableActions: ActionType[] = baseActionsConfig.map(action => ({
   ...action,
   title: action.titleKey || action.title || action.type,

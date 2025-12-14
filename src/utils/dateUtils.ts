@@ -1,3 +1,22 @@
+/**
+ * Parse date from various formats (Date, string, null, undefined)
+ * @param date Date value to parse
+ * @returns Parsed Date object or null if invalid
+ */
+function parseDate(date: Date | string | null | undefined): Date | null {
+    if (!date) {
+        return null;
+    }
+
+    const parsedDate = typeof date === 'string' ? new Date(date) : date;
+
+    if (isNaN(parsedDate.getTime())) {
+        return null;
+    }
+
+    return parsedDate;
+}
+
 export function formatDuration(ms: number): string {
     if (ms < 1000) {
         return `${ms}ms`;
@@ -104,14 +123,10 @@ export function getScheduleDescription(schedule: string, t?: (key: string, param
 }
 
 export function formatRelativeTime(date: Date | string | null | undefined, t?: (key: string, params?: Record<string, any>) => string, locale?: string): string {
-    if (!date) {
+    const parsedDate = parseDate(date);
+
+    if (!parsedDate) {
         return t ? t('common.unknown') : 'Bilinmiyor';
-    }
-
-    const parsedDate = typeof date === 'string' ? new Date(date) : date;
-
-    if (isNaN(parsedDate.getTime())) {
-        return t ? t('common.invalidDate') : 'Geçersiz tarih';
     }
 
     const now = new Date();
@@ -135,11 +150,9 @@ export function formatRelativeTime(date: Date | string | null | undefined, t?: (
 
 // Format date for tooltip with locale support
 export function formatDateForTooltip(date: Date | string | null | undefined, locale: string = 'tr'): string {
-    if (!date) return '';
+    const dateObj = parseDate(date);
 
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-    if (isNaN(dateObj.getTime())) return '';
+    if (!dateObj) return '';
 
     const isTurkish = locale === 'tr';
 

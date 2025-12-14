@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  getExecutionPath,
-  getConditionResults,
   calculateFlowMetrics,
   analyzeExecutionSuccess,
 } from '../executionFlowUtils';
@@ -35,32 +33,8 @@ describe('executionFlowUtils', () => {
     successRate: 100,
   });
 
-  describe('getExecutionPath', () => {
-    it('should return step IDs in order', () => {
-      const execution = createMockExecution([
-        { type: 'navigate' },
-        { type: 'click' },
-        { type: 'input' },
-      ]);
-
-      const path = getExecutionPath(execution);
-      expect(path).toEqual(['step-1', 'step-2', 'step-3']);
-    });
-
-    it('should handle empty steps', () => {
-      const execution = createMockExecution([]);
-      const path = getExecutionPath(execution);
-      expect(path).toEqual([]);
-    });
-  });
-
-  describe('getConditionResults', () => {
-    it('should return empty map for linear flow', () => {
-      const results = getConditionResults();
-      expect(results).toBeInstanceOf(Map);
-      expect(results.size).toBe(0);
-    });
-  });
+  // getExecutionPath and getConditionResults tests removed - functions no longer exist
+  // These functions were unused in production code
 
   describe('calculateFlowMetrics', () => {
     it('should calculate metrics correctly', () => {

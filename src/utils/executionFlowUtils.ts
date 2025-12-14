@@ -9,25 +9,6 @@ import { ExecutionResult } from '@/types';
  */
 
 /**
- * Get execution path - in linear flow, all steps are in the path
- * @param execution ExecutionResult object
- * @returns Array of step IDs in execution order
- */
-export const getExecutionPath = (execution: ExecutionResult): string[] => {
-  // In linear flow, all steps are executed sequentially
-  return execution.steps.map(step => step.stepId);
-};
-
-/**
- * Get condition results - no longer applicable in linear flow
- * @returns Empty map (no IF steps in linear flow)
- */
-export const getConditionResults = (): Map<string, boolean> => {
-  // No IF steps or conditional branching in linear flow
-  return new Map();
-};
-
-/**
  * Calculate basic execution metrics for linear flow
  */
 export const calculateFlowMetrics = (execution: ExecutionResult) => {

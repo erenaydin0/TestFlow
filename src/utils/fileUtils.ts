@@ -5,19 +5,7 @@ import { getBrowserName } from '@/types/browser';
 export { getBrowserName };
 
 // Types
-export interface TestFormData {
-  name: string;
-  description: string;
-  steps: TestStep[];
-  tags?: string[];
-  suite?: string;
-  browserType?: BrowserType;
-  enableScreenshots?: boolean;
-  enableRecording?: boolean;
-  headlessMode?: boolean;
-}
-
-export interface WorkflowMetadata {
+interface WorkflowMetadata {
   description?: string;
   tags?: string[];
   suite?: string;
@@ -136,8 +124,6 @@ export const validateWorkflow = (steps: TestStep[]): { isValid: boolean; errors:
   if (duplicateIds.length > 0) {
     errors.push(`Duplicate step IDs found: ${duplicateIds.join(', ')}`);
   }
-
-  // Canvas connections are no longer used - steps are executed in linear order
 
   return {
     isValid: errors.length === 0,

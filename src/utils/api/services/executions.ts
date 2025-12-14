@@ -62,16 +62,3 @@ export class ExecutionService {
     return apiClient.get<string | null>(`${API_ENDPOINTS.EXECUTIONS}/${executionId}/video`);
   }
 }
-
-// Export individual functions for convenience
-export const {
-  fetchExecutions,
-  fetchExecutionById,
-  deleteExecution,
-  bulkDeleteExecutions,
-  executeWorkflow,
-  getExecutionStats,
-  getExecutionLogs,
-  getExecutionScreenshots,
-  getExecutionVideo,
-} = ExecutionService;

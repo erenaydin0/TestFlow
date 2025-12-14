@@ -64,16 +64,3 @@ export class TestService {
     return apiClient.post<{ executionId: string }>(`${API_ENDPOINTS.TESTS}/${testId}/execute`, options);
   }
 }
-
-// Export individual functions for convenience
-export const {
-  fetchTests,
-  fetchTestById,
-  createTest,
-  updateTest,
-  deleteTest,
-  bulkDeleteTests,
-  duplicateTest,
-  bulkDuplicateTests,
-  executeTest,
-} = TestService;
