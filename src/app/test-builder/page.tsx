@@ -23,7 +23,7 @@ const ConfirmDialog = dynamic(() => import('@/components/modals/ConfirmDialog').
 });
 
 import { TestStep, BrowserType } from '@/types';
-import { getActionByType } from '@/utils/actions';
+import { getTranslatedActionByType } from '@/utils/actions';
 import { exportTestWorkflow, importTestWorkflow, validateWorkflow } from '@/utils/fileUtils';
 import {
   useTestSteps,
@@ -181,7 +181,7 @@ function TestBuilderContent() {
 
     if (draggedAction) {
       // Create new step
-      const action = getActionByType(draggedAction);
+      const action = getTranslatedActionByType(draggedAction, t);
       if (action) {
         const newStep: TestStep = {
           id: generateId(),

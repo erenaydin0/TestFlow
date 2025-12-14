@@ -1,5 +1,7 @@
 'use client';
 
+import { config } from './config';
+
 /**
  * Basitleştirilmiş frontend error handling utilities
  */
@@ -25,7 +27,7 @@ export interface ErrorContext {
 
 class FrontendErrorHandler {
   private errorLog: ErrorInfo[] = [];
-  private maxLogSize = 50; // Reduced from 100
+  private maxLogSize = config.error.maxLogSize;
 
   /**
    * Handle and log frontend errors
@@ -59,7 +61,7 @@ class FrontendErrorHandler {
     const errorInfo: ErrorInfo = {
       code: response.code || 500,
       category: response.category || 'api',
-      severity: this.mapSeverity(response.severity),
+      severity: (response.severity || 'medium') as 'low' | 'medium' | 'high' | 'critical',
       message: response.error || 'API hatası',
       details: response.details,
       errorId: response.errorId,
@@ -140,19 +142,6 @@ class FrontendErrorHandler {
     }
 
     return error.message || 'Bilinmeyen hata';
-  }
-
-  /**
-   * Map severity from string
-   */
-  private mapSeverity(severity: string): 'low' | 'medium' | 'high' | 'critical' {
-    switch (severity) {
-      case 'low': return 'low';
-      case 'medium': return 'medium';
-      case 'high': return 'high';
-      case 'critical': return 'critical';
-      default: return 'medium';
-    }
   }
 
   /**
@@ -286,109 +275,3 @@ if (typeof window !== 'undefined') {
 }
 
 export default frontendErrorHandler;
-
-// ============================================================================
-// ERROR HANDLER HOOK
-// ============================================================================
-
-import { useCallback, useRef } from 'react';
-
-export interface UseErrorHandlerOptions {
-  component?: string;
-  onError?: (error: Error, errorInfo: any) => void;
-  fallbackMessage?: string;
-}
-
-export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
-  const { component = 'unknown', onError, fallbackMessage } = options;
-  const errorCountRef = useRef(0);
-
-  const handleError = useCallback((error: Error, context: ErrorContext = {}) => {
-    errorCountRef.current += 1;
-    
-    const errorContext: ErrorContext = {
-      ...context,
-      component,
-      sessionId: sessionStorage.getItem('sessionId') || undefined,
-      userId: localStorage.getItem('userId') || undefined
-    };
-
-    const errorInfo = frontendErrorHandler.handleError(error, errorContext);
-    
-    // Call custom error handler if provided
-    if (onError) {
-      onError(error, errorInfo);
-    }
-
-    return errorInfo;
-  }, [component, onError]);
-
-  const handleApiError = useCallback((response: any, context: ErrorContext = {}) => {
-    const errorContext: ErrorContext = {
-      ...context,
-      component,
-      sessionId: sessionStorage.getItem('sessionId') || undefined,
-      userId: localStorage.getItem('userId') || undefined
-    };
-
-    const errorInfo = frontendErrorHandler.handleApiError(response, errorContext);
-    
-    if (onError) {
-      onError(new Error(response.error || 'API Error'), errorInfo);
-    }
-
-    return errorInfo;
-  }, [component, onError]);
-
-  const handleWebSocketError = useCallback((error: any, context: ErrorContext = {}) => {
-    const errorContext: ErrorContext = {
-      ...context,
-      component,
-      sessionId: sessionStorage.getItem('sessionId') || undefined,
-      userId: localStorage.getItem('userId') || undefined
-    };
-
-    const errorInfo = frontendErrorHandler.handleWebSocketError(error, errorContext);
-    
-    if (onError) {
-      onError(new Error(error.message || 'WebSocket Error'), errorInfo);
-    }
-
-    return errorInfo;
-  }, [component, onError]);
-
-  const handleAsyncError = useCallback(async <T>(
-    asyncFn: () => Promise<T>,
-    context: ErrorContext = {}
-  ): Promise<T | null> => {
-    try {
-      return await asyncFn();
-    } catch (error) {
-      handleError(error as Error, context);
-      return null;
-    }
-  }, [handleError]);
-
-  const getErrorStats = useCallback(() => {
-    return frontendErrorHandler.getErrorStats();
-  }, []);
-
-  const getRecentErrors = useCallback((limit?: number) => {
-    return frontendErrorHandler.getRecentErrors(limit);
-  }, []);
-
-  const clearErrorLog = useCallback(() => {
-    frontendErrorHandler.clearErrorLog();
-  }, []);
-
-  return {
-    handleError,
-    handleApiError,
-    handleWebSocketError,
-    handleAsyncError,
-    getErrorStats,
-    getRecentErrors,
-    clearErrorLog,
-    errorCount: errorCountRef.current
-  };
-}

@@ -268,6 +268,10 @@ export const availableActions: ActionType[] = baseActionsConfig.map(action => ({
 }));
 
 // Helper functions
+/**
+ * @deprecated Use getTranslatedActionByType instead for i18n support
+ * This function is kept for backward compatibility but will be removed in future versions
+ */
 export const getActionByType = (type: string): ActionType | undefined => {
   return availableActions.find(action => action.type === type);
 };

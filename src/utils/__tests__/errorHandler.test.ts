@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import {
   frontendErrorHandler,
-  useErrorHandler,
   ErrorInfo,
   ErrorContext,
 } from '../errorHandler';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 
 describe('FrontendErrorHandler', () => {
   beforeEach(() => {
