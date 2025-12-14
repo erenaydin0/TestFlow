@@ -6,7 +6,6 @@ import { Save, X, AlertCircle, Tag, FolderOpen, Globe, Edit } from 'lucide-react
 import AutocompleteInput from '@/components/common/AutocompleteInput';
 import { Button, ButtonGroup } from '@/components/common';
 import { BrowserType, TestModalProps } from '@/types';
-import { getExistingTags, getExistingSuites } from '@/utils/fileUtils';
 import { useModal } from '@/hooks';
 import { useI18n } from '@/hooks';
 import { TestService } from '@/utils/api';
@@ -40,7 +39,6 @@ const TestModal: React.FC<TestModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const fetchExistingData = async () => {
-        // First try backend API
         try {
           const tests = await TestService.fetchTests();
           const allTags = new Set<string>();
@@ -69,20 +67,9 @@ const TestModal: React.FC<TestModalProps> = ({
           
           setExistingTags(Array.from(allTags).sort());
           setExistingSuites(Array.from(allSuites).sort());
-          return; // Success, exit early
-        } catch (apiError) {
-          console.warn('Backend API not available, falling back to local storage:', apiError);
-        }
-        
-        // Fallback to local storage
-        try {
-          const tags = getExistingTags();
-          const suites = getExistingSuites();
-          setExistingTags(tags);
-          setExistingSuites(suites);
-        } catch (localError) {
-          console.warn('Local storage not available, using minimal defaults:', localError);
-          // Final fallback - minimal defaults
+        } catch (error) {
+          console.warn('Could not fetch existing tests:', error);
+          // Use minimal defaults
           setExistingTags([]);
           setExistingSuites(['Default']);
         }

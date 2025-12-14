@@ -50,7 +50,6 @@ export const config = {
 
   // Storage Keys
   storageKeys: {
-    workflows: 'CosmicQA_saved_workflows',
     notifications: 'testflow_notifications',
     idCounter: 'testflow_notification_counter',
     browserSettings: 'browserSettings',

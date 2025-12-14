@@ -1,5 +1,5 @@
-import { getSavedWorkflows } from './fileUtils';
-import { API_URL } from './utils';
+import { TestService, ExecutionService } from './api';
+import { Test } from '@/types';
 
 export interface SearchResult {
   id: string;
@@ -13,60 +13,65 @@ export interface SearchResult {
   matchedIn?: string[];
 }
 
-// Test verilerinde arama yap
-export const searchInTests = (query: string): SearchResult[] => {
+// Helper function to search within tests array
+const filterTestsByQuery = (tests: Test[], query: string): SearchResult[] => {
+  const results: SearchResult[] = [];
+  const searchTerm = query.toLowerCase();
+  
+  tests.forEach(test => {
+    const matchedIn: string[] = [];
+    let matches = false;
+    
+    // Test adında ara
+    if (test.name.toLowerCase().includes(searchTerm)) {
+      matchedIn.push('İsim');
+      matches = true;
+    }
+    
+    // Açıklamada ara
+    if (test.description?.toLowerCase().includes(searchTerm)) {
+      matchedIn.push('Açıklama');
+      matches = true;
+    }
+    
+    // Test grubunda ara
+    if (test.suite?.toLowerCase().includes(searchTerm)) {
+      matchedIn.push('Test Grubu');
+      matches = true;
+    }
+    
+    // Etiketlerde ara
+    if (test.tags?.some(tag => tag.toLowerCase().includes(searchTerm))) {
+      matchedIn.push('Etiketler');
+      matches = true;
+    }
+    
+    if (matches) {
+      results.push({
+        id: test.id,
+        title: test.name,
+        description: test.description || 'Açıklama yok',
+        type: 'test',
+        url: `/tests?testId=${test.id}`,
+        status: test.status,
+        suite: test.suite,
+        tags: test.tags,
+        matchedIn
+      });
+    }
+  });
+  
+  return results;
+};
+
+// Test verilerinde arama yap - API'den veri çeker
+export const searchInTests = async (query: string): Promise<SearchResult[]> => {
   if (!query.trim()) return [];
   
   try {
-    const tests = getSavedWorkflows();
-    const results: SearchResult[] = [];
-    
-    const searchTerm = query.toLowerCase();
-    
-    tests.forEach(test => {
-      const matchedIn: string[] = [];
-      let matches = false;
-      
-      // Test adında ara
-      if (test.name.toLowerCase().includes(searchTerm)) {
-        matchedIn.push('İsim');
-        matches = true;
-      }
-      
-      // Açıklamada ara
-      if (test.description?.toLowerCase().includes(searchTerm)) {
-        matchedIn.push('Açıklama');
-        matches = true;
-      }
-      
-      // Test grubunda ara
-      if (test.suite?.toLowerCase().includes(searchTerm)) {
-        matchedIn.push('Test Grubu');
-        matches = true;
-      }
-      
-      // Etiketlerde ara
-      if (test.tags?.some(tag => tag.toLowerCase().includes(searchTerm))) {
-        matchedIn.push('Etiketler');
-        matches = true;
-      }
-      
-      if (matches) {
-        results.push({
-          id: test.id,
-          title: test.name,
-          description: test.description || 'Açıklama yok',
-          type: 'test',
-          url: `/tests?testId=${test.id}`,
-          status: test.status,
-          suite: test.suite,
-          tags: test.tags,
-          matchedIn
-        });
-      }
-    });
-    
-    return results;
+    // API'den testleri çek
+    const tests = await TestService.fetchTests();
+    return filterTestsByQuery(tests, query);
   } catch (error) {
     console.error('Error searching in tests:', error);
     return [];
@@ -78,12 +83,8 @@ export const searchInReports = async (query: string): Promise<SearchResult[]> =>
   if (!query.trim()) return [];
   
   try {
-    const response = await fetch(`${API_URL}/api/executions`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const executions = await response.json();
+    // API client kullanarak workspace ID header'ı otomatik eklenir
+    const executions = await ExecutionService.fetchExecutions();
     const results: SearchResult[] = [];
     
     const searchTerm = query.toLowerCase();
@@ -152,7 +153,7 @@ export const performGlobalSearch = async (query: string): Promise<{
   
   try {
     const [testResults, reportResults] = await Promise.all([
-      Promise.resolve(searchInTests(query)),
+      searchInTests(query),
       searchInReports(query)
     ]);
     

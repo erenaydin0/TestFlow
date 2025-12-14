@@ -151,9 +151,17 @@ class LocalTestRunner {
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
+    if (!this.browser) {
+      throw new Error(`Failed to launch ${browserType} browser`);
+    }
+
     this.context = await this.browser.newContext({
       viewport: { width: 1280, height: 720 }
     });
+
+    if (!this.context) {
+      throw new Error('Failed to create browser context');
+    }
 
     this.page = await this.context.newPage();
     console.log('✅ Browser initialized');

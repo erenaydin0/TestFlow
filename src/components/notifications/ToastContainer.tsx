@@ -182,7 +182,14 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
 }
 
 function ToastContainer() {
-  const { toasts, removeNotification } = useNotifications();
+  const notificationState = useNotifications();
+  
+  // Guard against undefined state during initialization
+  if (!notificationState || !notificationState.toasts) {
+    return null;
+  }
+  
+  const { toasts, removeNotification } = notificationState;
 
   if (toasts.length === 0) return null;
 

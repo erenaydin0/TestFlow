@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, X, AlertCircle, FileText, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Info, Globe, Chrome } from 'lucide-react';
 import { importTestWorkflow } from '@/utils/fileUtils';
-import { saveWorkflowToStorage } from '@/utils/fileUtils';
 import { Button, ButtonGroup, IconButton } from '@/components';
 import { useNotifications } from '@/hooks';
-import { BrowserType, TestFormData } from '@/types';
+import { BrowserType } from '@/types';
 import { TestService } from '@/utils/api';
-import { config } from '@/utils/config';
 
 interface ImportDialogProps {
   isOpen: boolean;
@@ -46,13 +44,25 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     skipped: number;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [existingTestNames, setExistingTestNames] = useState<string[]>([]);
 
-  // Reset state when dialog opens/closes
+  // Fetch existing tests when dialog opens
   useEffect(() => {
     if (isOpen) {
       setPreviews([]);
       setImportResults(null);
       setImporting(false);
+      
+      // Fetch existing test names from API
+      TestService.fetchTests()
+        .then(tests => {
+          const names = tests.map(t => t.name.toLowerCase());
+          setExistingTestNames(names);
+        })
+        .catch(err => {
+          console.warn('Could not fetch existing tests:', err);
+          setExistingTestNames([]);
+        });
     }
   }, [isOpen]);
 
@@ -215,12 +225,12 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       errors.push('En az bir test adımı gereklidir');
     }
 
-    // Check if workflow with same name exists
-    const existingWorkflows = JSON.parse(localStorage.getItem(config.storageKeys.workflows) || '[]');
-    const willOverwrite = existingWorkflows.some((w: any) => w.name === workflow.name);
+    // Check if workflow with same name exists (using API-fetched test names)
+    const workflowName = workflow.name || fileName.replace('.json', '');
+    const willOverwrite = existingTestNames.includes(workflowName.toLowerCase());
 
     return {
-      name: workflow.name || fileName.replace('.json', ''),
+      name: workflowName,
       description: workflow.description || '',
       stepCount: workflow.steps ? workflow.steps.length : 0,
       tags: workflow.tags || [],

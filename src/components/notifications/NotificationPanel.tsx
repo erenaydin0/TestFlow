@@ -38,10 +38,35 @@ const getColorStyle = (type: 'success' | 'error' | 'warning' | 'info') => {
 
 function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = useNotifications();
+  const notificationState = useNotifications();
   const { theme } = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
+
+  // Guard against undefined state during initialization
+  if (!notificationState || !notificationState.notifications) {
+    return (
+      <button
+        style={{
+          position: 'relative',
+          padding: '0.5rem',
+          borderRadius: '0.375rem',
+          color: 'var(--text-secondary)',
+          backgroundColor: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <Bell size={20} />
+      </button>
+    );
+  }
+
+  const { notifications, removeNotification, clearAllNotifications, markAsRead, markAllAsRead } = notificationState;
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
