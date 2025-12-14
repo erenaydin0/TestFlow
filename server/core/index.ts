@@ -157,7 +157,8 @@ async function executeScheduledTest(schedule: Schedule) {
                 screenshots: JSON.stringify(execution.screenshots),
                 logs: JSON.stringify(execution.logs),
                 progress: execution.progress,
-                scheduledTestId: execution.scheduledTestId
+                scheduledTestId: execution.scheduledTestId,
+                workspaceId: execution.workspaceId
             }
         });
 

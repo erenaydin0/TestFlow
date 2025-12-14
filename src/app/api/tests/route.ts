@@ -108,11 +108,17 @@ export async function POST(req: Request) {
 
         const test = await prisma.test.create({
             data: {
-                ...validatedData,
-                workspaceId: workspaceId,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                userId: (session.user as any).id,
+                name: validatedData.name,
+                description: validatedData.description || "",
+                status: "draft",
+                tags: validatedData.tags ? JSON.stringify(validatedData.tags) : "[]",
+                suite: validatedData.suite || "default",
+                browserType: validatedData.browserType || "chromium",
+                headlessMode: validatedData.headlessMode ?? false,
+                enableScreenshots: validatedData.enableScreenshots ?? false,
+                enableRecording: validatedData.enableRecording ?? false,
                 workflow: validatedData.workflow ? JSON.stringify(validatedData.workflow) : "[]",
+                workspaceId: workspaceId,
             },
         });
 
@@ -120,7 +126,7 @@ export async function POST(req: Request) {
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json(
-                { message: "Validation error", errors: error.errors },
+                { message: "Validation error", errors: error.issues },
                 { status: 400 }
             );
         }
