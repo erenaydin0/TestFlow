@@ -123,9 +123,15 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
 
             const test = mapTestFromDb(savedTest);
 
-            // Send to specific workspace only
+            // Send to specific workspace or broadcast for legacy data
             if (test.workspaceId) {
                 webSocketService.sendToWorkspace(test.workspaceId, {
+                    type: 'test:saved',
+                    test
+                });
+            } else {
+                // Fallback for legacy data without workspaceId
+                webSocketService.broadcast({
                     type: 'test:saved',
                     test
                 });
@@ -167,9 +173,15 @@ function createTestRoutes(storageDirs: any, webSocketService: WebSocketService) 
 
                 const test = mapTestFromDb(updated);
 
-                // Send to specific workspace only
+                // Send to specific workspace or broadcast for legacy data
                 if (test.workspaceId) {
                     webSocketService.sendToWorkspace(test.workspaceId, {
+                        type: 'test:updated',
+                        test
+                    });
+                } else {
+                    // Fallback for legacy data without workspaceId
+                    webSocketService.broadcast({
                         type: 'test:updated',
                         test
                     });

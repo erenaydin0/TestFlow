@@ -162,9 +162,17 @@ async function executeScheduledTest(schedule: Schedule) {
             }
         });
 
-        // Send to specific workspace only
+        // Send to specific workspace or broadcast for legacy data
         if (schedule.workspaceId) {
             webSocketService.sendToWorkspace(schedule.workspaceId, {
+                type: 'execution:scheduled',
+                executionId,
+                execution,
+                scheduleName: schedule.name
+            });
+        } else {
+            // Fallback for legacy data without workspaceId
+            webSocketService.broadcast({
                 type: 'execution:scheduled',
                 executionId,
                 execution,
@@ -200,9 +208,16 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
     try {
         execution.status = 'running';
 
-        // Send to specific workspace only
+        // Send to specific workspace or broadcast for legacy data
         if (execution.workspaceId) {
             webSocketService.sendToWorkspace(execution.workspaceId, {
+                type: 'execution:started',
+                executionId,
+                execution
+            });
+        } else {
+            // Fallback for legacy data without workspaceId
+            webSocketService.broadcast({
                 type: 'execution:started',
                 executionId,
                 execution
@@ -237,15 +252,23 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
             step.status = 'running';
             step.startTime = new Date();
 
-            // Send step start to specific workspace only
-            if (execution.workspaceId) {
-                webSocketService.sendToWorkspace(execution.workspaceId, {
-                    type: 'step:started',
-                    executionId,
-                    stepIndex: i,
-                    step
-                });
-            }
+                // Send step start to specific workspace or broadcast for legacy data
+                if (execution.workspaceId) {
+                    webSocketService.sendToWorkspace(execution.workspaceId, {
+                        type: 'step:started',
+                        executionId,
+                        stepIndex: i,
+                        step
+                    });
+                } else {
+                    // Fallback for legacy data without workspaceId
+                    webSocketService.broadcast({
+                        type: 'step:started',
+                        executionId,
+                        stepIndex: i,
+                        step
+                    });
+                }
 
             try {
                 // Execute step with options
@@ -271,9 +294,18 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
                 // Update progress
                 execution.progress = Math.round(((i + 1) / execution.steps.length) * 100);
 
-                // Send step completion to specific workspace only
+                // Send step completion to specific workspace or broadcast for legacy data
                 if (execution.workspaceId) {
                     webSocketService.sendToWorkspace(execution.workspaceId, {
+                        type: 'step:completed',
+                        executionId,
+                        stepIndex: i,
+                        step,
+                        progress: execution.progress
+                    });
+                } else {
+                    // Fallback for legacy data without workspaceId
+                    webSocketService.broadcast({
                         type: 'step:completed',
                         executionId,
                         stepIndex: i,
@@ -309,9 +341,18 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
                     stepId: step.stepId
                 });
 
-                // Send step failure to specific workspace only
+                // Send step failure to specific workspace or broadcast for legacy data
                 if (execution.workspaceId) {
                     webSocketService.sendToWorkspace(execution.workspaceId, {
+                        type: 'step:failed',
+                        executionId,
+                        stepIndex: i,
+                        step,
+                        error: errorHandler.createSafeErrorMessage(err, { stepIndex: i })
+                    });
+                } else {
+                    // Fallback for legacy data without workspaceId
+                    webSocketService.broadcast({
                         type: 'step:failed',
                         executionId,
                         stepIndex: i,
@@ -388,9 +429,17 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
         // Clean up from active executions
         activeExecutions.delete(executionId);
 
-        // Send completion or failure to specific workspace only
+        // Send completion or failure to specific workspace or broadcast for legacy data
         if (execution.workspaceId) {
             webSocketService.sendToWorkspace(execution.workspaceId, {
+                type: execution.status === 'failed' ? 'execution:failed' : 'execution:completed',
+                executionId,
+                execution,
+                error: execution.error
+            });
+        } else {
+            // Fallback for legacy data without workspaceId
+            webSocketService.broadcast({
                 type: execution.status === 'failed' ? 'execution:failed' : 'execution:completed',
                 executionId,
                 execution,
@@ -441,9 +490,17 @@ async function executeTestWorkflow(executionId: string, execution: Execution) {
 
         activeExecutions.delete(executionId);
 
-        // Send failure to specific workspace only
+        // Send failure to specific workspace or broadcast for legacy data
         if (execution.workspaceId) {
             webSocketService.sendToWorkspace(execution.workspaceId, {
+                type: 'execution:failed',
+                executionId,
+                execution,
+                error: errorHandler.createSafeErrorMessage(error, { executionId })
+            });
+        } else {
+            // Fallback for legacy data without workspaceId
+            webSocketService.broadcast({
                 type: 'execution:failed',
                 executionId,
                 execution,

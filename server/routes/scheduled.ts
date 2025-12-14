@@ -156,9 +156,15 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                 testScheduler.scheduleTest(schedule);
             }
 
-            // Send to specific workspace only
+            // Send to specific workspace or broadcast for legacy data
             if (schedule.workspaceId) {
                 webSocketService.sendToWorkspace(schedule.workspaceId, {
+                    type: 'schedule:created',
+                    schedule
+                });
+            } else {
+                // Fallback for legacy data without workspaceId
+                webSocketService.broadcast({
                     type: 'schedule:created',
                     schedule
                 });
@@ -211,9 +217,15 @@ function createScheduledRoutes(storageDirs: any, webSocketService: WebSocketServ
                     await testScheduler.reloadSchedule(id);
                 }
 
-                // Send to specific workspace only
+                // Send to specific workspace or broadcast for legacy data
                 if (schedule.workspaceId) {
                     webSocketService.sendToWorkspace(schedule.workspaceId, {
+                        type: 'schedule:updated',
+                        schedule
+                    });
+                } else {
+                    // Fallback for legacy data without workspaceId
+                    webSocketService.broadcast({
                         type: 'schedule:updated',
                         schedule
                     });

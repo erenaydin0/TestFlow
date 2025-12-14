@@ -220,9 +220,16 @@ function createExecutionRoutes(activeExecutions: Map<string, Execution>, webSock
 
                     activeExecutions.delete(id);
 
-                    // Send cancellation to specific workspace only
+                    // Send cancellation to specific workspace or broadcast for legacy data
                     if (execution.workspaceId) {
                         webSocketService.sendToWorkspace(execution.workspaceId, {
+                            type: 'execution:cancelled',
+                            executionId: id,
+                            execution
+                        });
+                    } else {
+                        // Fallback for legacy data without workspaceId
+                        webSocketService.broadcast({
                             type: 'execution:cancelled',
                             executionId: id,
                             execution

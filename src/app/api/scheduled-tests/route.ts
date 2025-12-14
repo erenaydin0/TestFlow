@@ -127,6 +127,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Test not found" }, { status: 404 });
         }
 
+        // Verify test belongs to the same workspace (prevent cross-workspace access)
+        if (test.workspaceId !== workspaceId) {
+            return NextResponse.json(
+                { message: "Test does not belong to this workspace" },
+                { status: 403 }
+            );
+        }
+
         const scheduledTest = await prisma.scheduledTest.create({
             data: {
                 ...validatedData,
