@@ -13,7 +13,7 @@ interface SettingsModalState {
 // Global state (module-level) - tüm hook instance'ları aynı state'i paylaşır
 let globalSettingsModalState: SettingsModalState = {
   isOpen: false,
-  initialTab: 'app',
+  initialTab: 'account',
   selectedWorkspaceId: null,
 };
 
@@ -38,18 +38,18 @@ export function useSettingsModal() {
     const listener = (value: SettingsModalState) => {
       setState(value);
     };
-    
+
     listeners.add(listener);
-    
+
     // İlk değeri set et
     setState(globalSettingsModalState);
-    
+
     return () => {
       listeners.delete(listener);
     };
   }, []);
 
-  const openSettingsModal = useCallback((tab: SettingsTab = 'app', workspaceId: string | null = null) => {
+  const openSettingsModal = useCallback((tab: SettingsTab = 'account', workspaceId: string | null = null) => {
     notifyListeners({
       isOpen: true,
       initialTab: tab,
@@ -60,7 +60,7 @@ export function useSettingsModal() {
   const closeSettingsModal = useCallback(() => {
     notifyListeners({
       isOpen: false,
-      initialTab: 'app',
+      initialTab: 'account',
       selectedWorkspaceId: null,
     });
   }, []);

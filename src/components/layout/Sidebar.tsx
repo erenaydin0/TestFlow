@@ -29,19 +29,19 @@ function SidebarSkeleton({ isCollapsed }: { isCollapsed: boolean }) {
           <ul className="sidebar-list">
             {[1, 2, 3, 4, 5].map((i) => (
               <li key={i} className="sidebar-list-item">
-                <div 
+                <div
                   className="sidebar-item skeleton"
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
-                  <div style={{ 
-                    width: 20, 
-                    height: 20, 
+                  <div style={{
+                    width: 20,
+                    height: 20,
                     borderRadius: '4px',
                     background: 'var(--bg-secondary)'
                   }} />
                   {!isCollapsed && (
-                    <div className="skeleton-text" style={{ 
-                      height: '0.875rem', 
+                    <div className="skeleton-text" style={{
+                      height: '0.875rem',
                       width: '70%',
                       marginLeft: '0.75rem'
                     }} />
@@ -128,7 +128,7 @@ export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {
         {/* Ayarlar Butonu - Sol */}
         <IconButton
           icon={Settings}
-          onClick={() => openSettingsModal('app')}
+          onClick={() => openSettingsModal('account')}
           variant="ghost"
           size="md"
           tooltip="Ayarlar"

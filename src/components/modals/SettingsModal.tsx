@@ -62,7 +62,7 @@ export default function SettingsModal() {
   const { t, locale, setLocale } = useI18n();
   const { setIsModalOpen } = useSidebar();
   const { data: session, update: updateSession } = useSession();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('app');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('account');
 
   // Account settings state
   const [name, setName] = useState('');
@@ -2050,29 +2050,6 @@ export default function SettingsModal() {
             gap: '0.25rem'
           }}>
             <button
-              onClick={() => setActiveTab('app')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.625rem',
-                padding: '0.75rem 1rem',
-                backgroundColor: activeTab === 'app' ? 'var(--bg-tertiary)' : 'transparent',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: activeTab === 'app' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                fontSize: '0.875rem',
-                fontWeight: activeTab === 'app' ? '600' : '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textAlign: 'left',
-                width: '100%',
-                borderLeft: activeTab === 'app' ? '3px solid var(--cosmic-orange)' : '3px solid transparent'
-              }}
-            >
-              <Settings size={18} style={{ flexShrink: 0 }} />
-              {t('settings.appSettings')}
-            </button>
-            <button
               onClick={() => setActiveTab('account')}
               style={{
                 display: 'flex',
@@ -2094,6 +2071,29 @@ export default function SettingsModal() {
             >
               <User size={18} style={{ flexShrink: 0 }} />
               {t('settings.accountSettings')}
+            </button>
+            <button
+              onClick={() => setActiveTab('app')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: activeTab === 'app' ? 'var(--bg-tertiary)' : 'transparent',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: activeTab === 'app' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontSize: '0.875rem',
+                fontWeight: activeTab === 'app' ? '600' : '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textAlign: 'left',
+                width: '100%',
+                borderLeft: activeTab === 'app' ? '3px solid var(--cosmic-orange)' : '3px solid transparent'
+              }}
+            >
+              <Settings size={18} style={{ flexShrink: 0 }} />
+              {t('settings.appSettings')}
             </button>
             <button
               onClick={() => setActiveTab('workspace')}
