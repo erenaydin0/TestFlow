@@ -1,0 +1,17 @@
+services:
+  cosmic-agent:
+    build: .
+    container_name: cosmic-agent
+    restart: unless-stopped
+    # Mount the screenshots directory to persist them locally if needed
+    # though the agent uploads them to Supabase.
+    volumes:
+      - ./agent/screenshots:/app/agent/screenshots
+    # Load environment variables from .env.local or .env
+    env_file:
+      - .env.local
+      - .env
+    # Or explicitly map them if you prefer not to map the whole file
+    # environment:
+    #   - NEXT_PUBLIC_SUPABASE_URL
+    #   - SUPABASE_SERVICE_KEY
