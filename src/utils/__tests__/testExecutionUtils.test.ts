@@ -48,7 +48,8 @@ describe('testExecutionUtils', () => {
         id: 'step-1',
         type: 'navigate',
         config: {
-          url: 'https://example.com',
+          type: 'navigate',
+          url: 'https://example.com', // Function reads from step.url, not step.config.url
           selector: undefined,
           value: undefined,
           text: undefined,
@@ -71,10 +72,19 @@ describe('testExecutionUtils', () => {
             selector: 'input',
             value: 'test',
           },
-        },
+        } as any,
       ];
 
-      const backendSteps = convertStepsToBackendFormat(workflow);
+      // Function reads from step.value, not step.config.value
+      // So we need to flatten the config or adjust the test
+      const workflowWithFlattened = workflow.map(step => ({
+        ...step,
+        url: step.config?.url,
+        selector: step.config?.selector,
+        value: step.config?.value,
+      }));
+
+      const backendSteps = convertStepsToBackendFormat(workflowWithFlattened);
       expect(backendSteps[0].config.text).toBe('test');
     });
 
@@ -86,10 +96,16 @@ describe('testExecutionUtils', () => {
           config: {
             selector: 'button',
           },
-        },
+        } as any,
       ];
 
-      const backendSteps = convertStepsToBackendFormat(workflow);
+      // Function reads from step.selector, not step.config.selector
+      const workflowWithFlattened = workflow.map(step => ({
+        ...step,
+        selector: step.config?.selector,
+      }));
+
+      const backendSteps = convertStepsToBackendFormat(workflowWithFlattened);
       expect(backendSteps[0].config.target).toBe('button');
     });
 

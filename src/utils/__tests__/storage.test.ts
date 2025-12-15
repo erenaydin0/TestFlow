@@ -1,11 +1,57 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { getItem, setItem, removeItem, onStorageChange } from '../storage';
 
 describe('storage utilities', () => {
+  // Store original localStorage before tests
+  const originalLocalStorage = window.localStorage;
+
   beforeEach(() => {
-    // Clear localStorage before each test
+    // Create a fresh localStorage-like object using Map
+    const storage = new Map<string, string>();
+    
+    const localStorageMock = {
+      getItem: (key: string) => {
+        return storage.get(key) || null;
+      },
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+      get length() {
+        return storage.size;
+      },
+      key: (index: number) => {
+        const keys = Array.from(storage.keys());
+        return keys[index] || null;
+      },
+    };
+
+    // Set the mock localStorage
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true,
+      configurable: true,
+    });
+    
+    // Clear before each test
     localStorage.clear();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore original localStorage after tests
+    if (originalLocalStorage) {
+      Object.defineProperty(window, 'localStorage', {
+        value: originalLocalStorage,
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 
   describe('getItem', () => {
@@ -25,8 +71,8 @@ describe('storage utilities', () => {
       localStorage.setItem('test-key', JSON.stringify(testValue));
       const result = getItem('test-key', {});
       expect(result).toEqual(testValue);
-      expect(result.name).toBe('test');
-      expect(result.count).toBe(42);
+      expect((result as any).name).toBe('test');
+      expect((result as any).count).toBe(42);
     });
 
     it('should return default value for null string', () => {
@@ -46,6 +92,7 @@ describe('storage utilities', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const result = getItem('test-key', 'default');
       expect(result).toBe('default');
+      // console.error should be called when JSON parsing fails
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

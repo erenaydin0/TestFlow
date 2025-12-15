@@ -1,10 +1,61 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useBrowserSettings } from '../useBrowserSettings';
 
 describe('useBrowserSettings', () => {
+  // Store original localStorage before tests
+  const originalLocalStorage = window.localStorage;
+
   beforeEach(() => {
+    // Restore real localStorage for these tests by removing the mock
+    // Delete the mock property first
+    delete (window as any).localStorage;
+    
+    // Create a fresh localStorage-like object using Storage API
+    const storage = new Map<string, string>();
+    
+    const localStorageMock = {
+      getItem: (key: string) => {
+        return storage.get(key) || null;
+      },
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+      get length() {
+        return storage.size;
+      },
+      key: (index: number) => {
+        const keys = Array.from(storage.keys());
+        return keys[index] || null;
+      },
+    };
+
+    // Set the mock localStorage
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true,
+      configurable: true,
+    });
+    
+    // Clear before each test
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    // Restore original localStorage after tests
+    if (originalLocalStorage) {
+      Object.defineProperty(window, 'localStorage', {
+        value: originalLocalStorage,
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 
   it('should initialize with default settings', () => {
@@ -57,25 +108,28 @@ describe('useBrowserSettings', () => {
   });
 
   it('should persist settings to localStorage', async () => {
-    const { result, waitFor } = renderHook(() => useBrowserSettings());
+    const { result } = renderHook(() => useBrowserSettings());
     
     // Wait for mount
     await waitFor(() => {
       expect(result.current.defaultBrowser).toBeDefined();
     });
     
-    act(() => {
+    await act(async () => {
       result.current.setDefaultBrowser('firefox');
       result.current.setDefaultHeadless(true);
     });
 
-    // Wait for effect to run
+    // Wait for state update and effect to run
     await waitFor(() => {
-      const stored = localStorage.getItem('browserSettings');
-      expect(stored).toBeTruthy();
+      expect(result.current.defaultBrowser).toBe('firefox');
     });
+
+    // Wait a bit more for localStorage to be updated
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     const stored = localStorage.getItem('browserSettings');
+    expect(stored).toBeTruthy();
     if (stored) {
       const parsed = JSON.parse(stored);
       expect(parsed.defaultBrowser).toBe('firefox');
@@ -91,12 +145,12 @@ describe('useBrowserSettings', () => {
       defaultScreenshots: true,
     }));
 
-    const { result, waitFor } = renderHook(() => useBrowserSettings());
+    const { result } = renderHook(() => useBrowserSettings());
     
-    // Wait for initialization
+    // Wait for initialization - hook reads from localStorage in useEffect
     await waitFor(() => {
       expect(result.current.defaultBrowser).toBe('firefox');
-    });
+    }, { timeout: 3000 });
     
     expect(result.current.defaultBrowser).toBe('firefox');
     expect(result.current.defaultHeadless).toBe(true);

@@ -1,8 +1,26 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button, { IconButton, ButtonGroup } from '../Button';
 import { Play } from 'lucide-react';
+
+// Suppress jsx attribute warning from styled-jsx
+const originalError = console.error;
+beforeEach(() => {
+  console.error = (...args: any[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Received `true` for a non-boolean attribute `jsx`')
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
+
+afterEach(() => {
+  console.error = originalError;
+});
 
 describe('Button', () => {
   it('should render button with text', () => {

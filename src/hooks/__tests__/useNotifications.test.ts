@@ -9,6 +9,14 @@ vi.mock('../useI18n', () => ({
   }),
 }));
 
+// Mock next-auth useSession
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: { user: { id: 'test-user-id' } },
+    status: 'authenticated',
+  }),
+}));
+
 // Mock useNotificationSocket
 vi.mock('../useNotificationSocket', () => ({
   useNotificationSocket: () => ({
@@ -73,20 +81,27 @@ describe('useNotifications', () => {
 
     let notificationId: string;
     
-    act(() => {
+    await act(async () => {
       result.current.addNotification({
         type: 'info',
         title: 'Test',
         message: 'Test',
       });
-      notificationId = result.current.notifications[0].id;
     });
 
-    act(() => {
-      result.current.removeNotification(notificationId!);
+    await waitFor(() => {
+      expect(result.current.notifications.length).toBeGreaterThan(0);
     });
 
-    expect(result.current.notifications.find(n => n.id === notificationId)).toBeUndefined();
+    notificationId = result.current.notifications[0].id;
+
+    await act(async () => {
+      result.current.removeNotification(notificationId);
+    });
+
+    await waitFor(() => {
+      expect(result.current.notifications.find(n => n.id === notificationId)).toBeUndefined();
+    });
   });
 
   it('should mark notification as read', async () => {
@@ -96,21 +111,28 @@ describe('useNotifications', () => {
 
     let notificationId: string;
     
-    act(() => {
+    await act(async () => {
       result.current.addNotification({
         type: 'info',
         title: 'Test',
         message: 'Test',
       });
-      notificationId = result.current.notifications[0].id;
     });
 
-    act(() => {
-      result.current.markAsRead(notificationId!);
+    await waitFor(() => {
+      expect(result.current.notifications.length).toBeGreaterThan(0);
     });
 
-    const notification = result.current.notifications.find(n => n.id === notificationId);
-    expect(notification?.read).toBe(true);
+    notificationId = result.current.notifications[0].id;
+
+    await act(async () => {
+      result.current.markAsRead(notificationId);
+    });
+
+    await waitFor(() => {
+      const notification = result.current.notifications.find(n => n.id === notificationId);
+      expect(notification?.read).toBe(true);
+    });
   });
 
   it('should clear all notifications', async () => {

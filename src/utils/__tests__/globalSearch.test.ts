@@ -1,10 +1,66 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { searchInTests, performGlobalSearch } from '../globalSearch';
+import { Test } from '@/types';
 
+// Mock API services
+const mockTests: Test[] = [
+  {
+    id: 'test-1',
+    name: 'Login Test',
+    description: 'Tests login functionality',
+    status: 'pending',
+    duration: 0,
+    workflow: [],
+    suite: 'E2E',
+    tags: ['smoke', 'login'],
+    browserType: 'chromium',
+    enableScreenshots: false,
+    enableRecording: false,
+    headlessMode: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 'test-2',
+    name: 'Dashboard Test',
+    description: 'Tests dashboard features',
+    status: 'pending',
+    duration: 0,
+    workflow: [],
+    suite: 'Integration',
+    tags: ['dashboard'],
+    browserType: 'chromium',
+    enableScreenshots: false,
+    enableRecording: false,
+    headlessMode: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
+// Mock API services - must define mocks before mockTests to avoid hoisting issues
+const mockFetchTests = vi.fn();
+const mockFetchExecutions = vi.fn();
+
+vi.mock('../api', () => ({
+  TestService: {
+    get fetchTests() {
+      return mockFetchTests;
+    },
+  },
+  ExecutionService: {
+    get fetchExecutions() {
+      return mockFetchExecutions;
+    },
+  },
+}));
 
 describe('globalSearch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock implementations
+    mockFetchTests.mockResolvedValue(mockTests);
+    mockFetchExecutions.mockResolvedValue([]);
   });
 
   describe('searchInTests', () => {

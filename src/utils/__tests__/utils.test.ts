@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatDuration, formatDate, getConsistentColorFromString } from '../utils';
+import { formatDuration, formatDate } from '../dateUtils';
+import { getConsistentColorFromString } from '../colorUtils';
 
 describe('formatDuration', () => {
   it('should format milliseconds correctly', () => {

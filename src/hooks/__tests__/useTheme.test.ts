@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import useTheme from '../useTheme';
+import { useTheme } from '../useTheme';
 
 describe('useTheme', () => {
   beforeEach(() => {
@@ -21,7 +21,8 @@ describe('useTheme', () => {
     const { result } = renderHook(() => useTheme());
     
     expect(result.current.theme).toBeDefined();
-    expect(['light', 'dark', 'cosmic']).toContain(result.current.theme);
+    // Default theme is 'system', but actual theme can be 'light' or 'dark'
+    expect(['light', 'dark', 'cosmic', 'system']).toContain(result.current.theme);
   });
 
   it('should set theme', () => {
@@ -47,12 +48,15 @@ describe('useTheme', () => {
     expect(result.current.theme).not.toBe(initialTheme);
   });
 
-  it('should persist theme to localStorage', () => {
+  it('should persist theme to localStorage', async () => {
     const { result } = renderHook(() => useTheme());
     
-    act(() => {
+    await act(async () => {
       result.current.setTheme('dark');
     });
+
+    // Wait for effect to run and save to localStorage
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('theme');

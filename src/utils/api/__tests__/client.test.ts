@@ -55,7 +55,7 @@ describe('ApiClient', () => {
       const result = await apiClient.get('/api/test');
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/test',
+        expect.stringMatching(/^http:\/\/localhost:3001\/api\/test\?t=\d+$/),
         expect.objectContaining({
           method: 'GET',
         })

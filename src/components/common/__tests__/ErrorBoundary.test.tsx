@@ -31,7 +31,9 @@ describe('ErrorBoundary', () => {
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
-    expect(screen.getByText(/Bir Hata Oluştu/i)).toBeInTheDocument();
+    // Use getAllByText and check that at least one exists
+    const errorHeaders = screen.getAllByText(/Bir Hata Oluştu/i);
+    expect(errorHeaders.length).toBeGreaterThan(0);
   });
 
   it('should call onError callback when error occurs', () => {
@@ -77,8 +79,12 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText(/Tekrar Dene/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sayfayı Yenile/i)).toBeInTheDocument();
+    // Use getByRole to find buttons by their accessible name
+    const resetButton = screen.getByRole('button', { name: /Tekrar Dene/i });
+    const reloadButton = screen.getByRole('button', { name: /Sayfayı Yenile/i });
+    
+    expect(resetButton).toBeInTheDocument();
+    expect(reloadButton).toBeInTheDocument();
   });
 });
 

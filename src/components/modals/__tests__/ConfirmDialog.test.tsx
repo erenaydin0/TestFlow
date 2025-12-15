@@ -1,9 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ConfirmDialog from '../ConfirmDialog';
 
+// Mock useI18n
+vi.mock('@/hooks/useI18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'confirmDialog.confirm': 'confirmDialog.confirm',
+        'confirmDialog.cancel': 'confirmDialog.cancel',
+        'unsavedChanges.dontSave': 'unsavedChanges.dontSave',
+        'unsavedChanges.save': 'unsavedChanges.save',
+        'unsavedChanges.saving': 'unsavedChanges.saving',
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
+// Mock useModal
+vi.mock('@/hooks/useModal', () => ({
+  useModal: () => ({
+    isVisible: true,
+    getOverlayStyle: () => ({}),
+    getModalStyle: () => ({}),
+  }),
+}));
+
 describe('ConfirmDialog', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
@@ -31,7 +60,10 @@ describe('ConfirmDialog', () => {
     
     render(<ConfirmDialog {...defaultProps} onConfirm={onConfirm} />);
     
-    const confirmButton = screen.getByText(/confirm|yes|ok/i);
+    // Use getByRole to find the confirm button
+    const buttons = screen.getAllByRole('button');
+    // The confirm button is the last one (after cancel button)
+    const confirmButton = buttons[buttons.length - 1];
     await user.click(confirmButton);
     
     expect(onConfirm).toHaveBeenCalled();
@@ -43,7 +75,9 @@ describe('ConfirmDialog', () => {
     
     render(<ConfirmDialog {...defaultProps} onClose={onClose} />);
     
-    const cancelButton = screen.getByText(/cancel|no/i);
+    // Use getByRole to find the cancel button (first button)
+    const buttons = screen.getAllByRole('button');
+    const cancelButton = buttons[0];
     await user.click(cancelButton);
     
     expect(onClose).toHaveBeenCalled();

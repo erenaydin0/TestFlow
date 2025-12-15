@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import useReports from '../useReports';
 import { ExecutionResult } from '@/types';
 
@@ -7,7 +7,22 @@ import { ExecutionResult } from '@/types';
 const mockUseExecutions = vi.fn();
 const mockUseSorting = vi.fn();
 const mockUseApiMutation = vi.fn();
+const mockUseApiQuery = vi.fn();
 
+// Mock API utilities FIRST (before useExecutions which depends on it)
+vi.mock('@/utils/api', async () => {
+  const actual = await vi.importActual('@/utils/api');
+  return {
+    ...actual,
+    useApiQuery: (queryFn: any, options: any) => mockUseApiQuery(queryFn, options),
+    useApiMutation: (mutationFn: any, options: any) => {
+      return mockUseApiMutation(mutationFn, options);
+    },
+  };
+});
+
+// Mock useExecutions - IMPORTANT: This must be mocked AFTER api mock
+// because useExecutions internally uses useApiQuery
 vi.mock('./useExecutions', () => ({
   default: (options: any) => mockUseExecutions(options),
 }));
@@ -16,17 +31,25 @@ vi.mock('./useSorting', () => ({
   default: (options: any) => mockUseSorting(options),
 }));
 
-vi.mock('@/utils/api', async () => {
-  const actual = await vi.importActual('@/utils/api');
-  return {
-    ...actual,
-    useApiMutation: (mutationFn: any, options: any) => {
-      return mockUseApiMutation(mutationFn, options);
-    },
-  };
-});
+vi.mock('@/utils/fileUtils', () => ({
+  filterExecutions: (executions: ExecutionResult[], filters: any) => {
+    // Simple filter implementation for tests
+    if (!filters.search) return executions;
+    return executions.filter(e => 
+      e.workflowName.toLowerCase().includes(filters.search.toLowerCase())
+    );
+  },
+  getUniqueFilterOptions: () => ({
+    suites: [],
+    tags: [],
+    browserTypes: [],
+  }),
+}));
 
 describe('useReports', () => {
+  // Create a shared mock handleSort function that can be tracked
+  let sharedMockHandleSort: ReturnType<typeof vi.fn>;
+
   const mockExecutions: ExecutionResult[] = [
     {
       id: 'exec-1',
@@ -70,10 +93,25 @@ describe('useReports', () => {
     },
   ];
 
+  // Create a stable mock return object that can be reused
+  let mockSortingReturn: ReturnType<typeof mockUseSorting>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     
-    mockUseExecutions.mockReturnValue({
+    // Create a new mock function for each test
+    sharedMockHandleSort = vi.fn();
+    
+    // Create a stable return object
+    mockSortingReturn = {
+      sortedData: mockExecutions,
+      sortField: 'startTime' as const,
+      sortOrder: 'desc' as const,
+      handleSort: sharedMockHandleSort,
+    };
+    
+    // Setup default mock return values - use mockImplementation to ensure it's called
+    mockUseExecutions.mockImplementation(() => ({
       executions: mockExecutions,
       loading: false,
       error: null,
@@ -85,105 +123,136 @@ describe('useReports', () => {
         successRate: 50,
       },
       refresh: vi.fn(),
-    });
+      fetchExecutions: vi.fn(),
+    }));
 
-    mockUseSorting.mockReturnValue({
-      sortedData: mockExecutions,
-      sortField: 'startTime',
-      sortOrder: 'desc',
-      handleSort: vi.fn(),
-    });
+    // Always return the same object reference so handleSort is the same function
+    // Use mockReturnValue to ensure the same reference is returned
+    mockUseSorting.mockReturnValue(mockSortingReturn);
 
     mockUseApiMutation.mockReturnValue({
       mutate: vi.fn().mockResolvedValue({}),
       loading: false,
+    });
+
+    // Mock useApiQuery to return proper structure (used by useExecutions internally)
+    // This is a fallback in case useExecutions mock doesn't work
+    mockUseApiQuery.mockReturnValue({
+      data: mockExecutions,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
     });
   });
 
   it('should return executions data', () => {
     const { result } = renderHook(() => useReports());
     
+    // Mock should return mockExecutions
     expect(result.current.executions).toEqual(mockExecutions);
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
-  it('should filter executions', () => {
+  it('should filter executions', async () => {
     const { result } = renderHook(() => useReports());
     
-    act(() => {
+    await act(async () => {
       result.current.setFilters({
         ...result.current.filters,
         search: 'Test 1',
       });
     });
 
-    expect(result.current.filteredExecutions).toBeDefined();
+    await waitFor(() => {
+      expect(result.current.filteredExecutions).toBeDefined();
+    });
   });
 
-  it('should detect active filters', () => {
+  it('should detect active filters', async () => {
     const { result } = renderHook(() => useReports());
     
     expect(result.current.hasActiveFilters).toBe(false);
     
-    act(() => {
+    await act(async () => {
       result.current.setFilters({
         ...result.current.filters,
         search: 'test',
       });
     });
 
-    expect(result.current.hasActiveFilters).toBe(true);
+    await waitFor(() => {
+      expect(result.current.hasActiveFilters).toBe(true);
+    });
   });
 
-  it('should clear filters', () => {
+  it('should clear filters', async () => {
     const { result } = renderHook(() => useReports());
     
-    act(() => {
+    await act(async () => {
       result.current.setFilters({
         ...result.current.filters,
         search: 'test',
         suite: ['E2E'],
       });
+    });
+
+    await act(async () => {
       result.current.clearFilters();
     });
 
-    expect(result.current.filters.search).toBe('');
-    expect(result.current.filters.suite).toEqual([]);
+    await waitFor(() => {
+      expect(result.current.filters.search).toBe('');
+      expect(result.current.filters.suite).toEqual([]);
+    });
   });
 
   it('should handle sort', () => {
+    // Clear any previous calls
+    sharedMockHandleSort.mockClear();
+    
     const { result } = renderHook(() => useReports());
-    const mockHandleSort = vi.fn();
-    mockUseSorting.mockReturnValue({
-      sortedData: mockExecutions,
-      sortField: 'startTime',
-      sortOrder: 'desc',
-      handleSort: mockHandleSort,
-    });
+
+    // Verify handleSort exists and can be called
+    expect(result.current.handleSort).toBeDefined();
+    expect(typeof result.current.handleSort).toBe('function');
 
     act(() => {
       result.current.handleSort('workflowName');
     });
 
-    expect(mockHandleSort).toHaveBeenCalledWith('workflowName');
+    // The handleSort function should call the sorting hook's handleSort
+    // Since we're mocking useSorting, verify that our mock handleSort was called
+    expect(sharedMockHandleSort).toHaveBeenCalledWith('workflowName');
   });
 
   it('should calculate filtered stats', () => {
+    // Ensure mock is set up correctly
+    mockUseSorting.mockReturnValue({
+      sortedData: mockExecutions,
+      sortField: 'startTime' as const,
+      sortOrder: 'desc' as const,
+      handleSort: vi.fn(),
+    });
+
     const { result } = renderHook(() => useReports());
     
     expect(result.current.filteredStats).toBeDefined();
-    expect(result.current.filteredStats.totalExecutions).toBe(2);
+    // filteredStats depends on sortedExecutions which comes from useSorting mock
+    // The mock returns mockExecutions, so totalExecutions should be 2
+    expect(result.current.filteredStats.totalExecutions).toBe(mockExecutions.length);
   });
 
-  it('should manage selected executions', () => {
+  it('should manage selected executions', async () => {
     const { result } = renderHook(() => useReports());
     
-    act(() => {
+    await act(async () => {
       result.current.setSelectedExecutions(new Set(['exec-1']));
     });
 
-    expect(result.current.selectedExecutions.has('exec-1')).toBe(true);
+    await waitFor(() => {
+      expect(result.current.selectedExecutions.has('exec-1')).toBe(true);
+    });
   });
 });
 

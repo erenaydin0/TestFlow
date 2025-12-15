@@ -67,29 +67,32 @@ describe('useDropdown', () => {
 
 describe('useModal', () => {
   it('should initialize with closed state', () => {
-    const { result } = renderHook(() => useModal());
+    const { result } = renderHook(() => useModal(false));
     
     expect(result.current.isVisible).toBe(false);
     expect(result.current.isClosing).toBe(false);
   });
 
   it('should open modal', () => {
-    const { result } = renderHook(() => useModal());
-    
-    act(() => {
-      result.current.openModal();
+    const { result, rerender } = renderHook(({ isOpen }) => useModal(isOpen), {
+      initialProps: { isOpen: false },
     });
+    
+    expect(result.current.isVisible).toBe(false);
+
+    rerender({ isOpen: true });
 
     expect(result.current.isVisible).toBe(true);
   });
 
   it('should close modal', () => {
-    const { result } = renderHook(() => useModal());
-    
-    act(() => {
-      result.current.openModal();
-      result.current.closeModal();
+    const { result, rerender } = renderHook(({ isOpen }) => useModal(isOpen), {
+      initialProps: { isOpen: true },
     });
+
+    expect(result.current.isVisible).toBe(true);
+
+    rerender({ isOpen: false });
 
     expect(result.current.isClosing).toBe(true);
   });

@@ -19,15 +19,21 @@ describe('executionFlowUtils', () => {
       headlessMode: true,
       browserType: 'chromium',
     },
-    steps: steps.map((step, index) => ({
-      stepId: `step-${index + 1}`,
-      type: step.type || 'navigate',
-      status: step.status || 'passed',
-      config: step.config || {},
-      duration: step.duration || 1000,
-      startTime: new Date('2024-01-01'),
-      endTime: new Date('2024-01-01'),
-    })),
+    steps: steps.map((step, index) => {
+      const stepObj: any = {
+        stepId: `step-${index + 1}`,
+        type: step.type || 'navigate',
+        status: step.status || 'passed',
+        config: step.config || {},
+        startTime: new Date('2024-01-01'),
+        endTime: new Date('2024-01-01'),
+      };
+      // Only add duration if it's explicitly provided (including 0)
+      if (step.duration !== undefined) {
+        stepObj.duration = step.duration;
+      }
+      return stepObj;
+    }),
     screenshots: [],
     logs: [],
     successRate: 100,
@@ -65,12 +71,13 @@ describe('executionFlowUtils', () => {
 
     it('should handle steps without duration', () => {
       const execution = createMockExecution([
-        { type: 'navigate', status: 'passed', duration: 0 },
+        { type: 'navigate', status: 'passed', duration: undefined }, // No duration
         { type: 'click', duration: 500, status: 'passed' },
       ]);
 
       const metrics = calculateFlowMetrics(execution);
-      // Only step with duration should be counted
+      // Only step with duration should be counted (duration: 0 is falsy but still a number)
+      // The function filters out steps without duration property
       expect(metrics.avgStepDuration).toBe(500);
     });
 
