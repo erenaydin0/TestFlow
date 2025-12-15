@@ -63,7 +63,7 @@ export default function SettingsModal() {
   const { setIsModalOpen } = useSidebar();
   const { data: session, update: updateSession } = useSession();
   const [activeTab, setActiveTab] = useState<SettingsTab>('app');
-  
+
   // Account settings state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,7 +77,7 @@ export default function SettingsModal() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   // Pending invites state
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [isLoadingInvites, setIsLoadingInvites] = useState(false);
@@ -101,11 +101,11 @@ export default function SettingsModal() {
   const [inviteRole, setInviteRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER');
   const [isInviting, setIsInviting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
-  
-  const { 
-    defaultBrowser, 
-    setDefaultBrowser, 
-    defaultHeadless, 
+
+  const {
+    defaultBrowser,
+    setDefaultBrowser,
+    defaultHeadless,
     setDefaultHeadless,
     defaultRecording,
     setDefaultRecording,
@@ -179,7 +179,7 @@ export default function SettingsModal() {
       if (res.ok) {
         const data = await res.json();
         setWorkspaces(data);
-        
+
         // If no active workspace, select the first one (or from localStorage)
         if (!activeWorkspaceId && data.length > 0) {
           const storedId = localStorage.getItem('selectedWorkspaceId');
@@ -258,7 +258,7 @@ export default function SettingsModal() {
 
   const fetchWorkspaceData = async () => {
     if (!activeWorkspaceId) return;
-    
+
     setIsLoadingWorkspace(true);
     try {
       const res = await fetch(`/api/workspaces/${activeWorkspaceId}`);
@@ -267,7 +267,7 @@ export default function SettingsModal() {
         setWorkspaceData(data);
         setWorkspaceName(data.name);
         setWorkspaceDescription(data.description || '');
-        
+
         // Find current user's role
         const currentMember = data.members?.find(
           (m: WorkspaceMember) => m.user.email === session?.user?.email
@@ -283,7 +283,7 @@ export default function SettingsModal() {
 
   const fetchWorkspaceInvites = async () => {
     if (!activeWorkspaceId) return;
-    
+
     try {
       const res = await fetch(`/api/workspaces/${activeWorkspaceId}/invite`);
       if (res.ok) {
@@ -308,7 +308,7 @@ export default function SettingsModal() {
       const res = await fetch(`/api/workspaces/${activeWorkspaceId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name: workspaceName.trim(),
           description: workspaceDescription.trim() || null
         }),
@@ -318,7 +318,7 @@ export default function SettingsModal() {
         setWorkspaceMessage({ type: 'success', text: t('workspace.updated') });
         fetchWorkspaceData();
         // Update workspace name in list
-        setWorkspaces(prev => prev.map(w => 
+        setWorkspaces(prev => prev.map(w =>
           w.id === activeWorkspaceId ? { ...w, name: workspaceName.trim() } : w
         ));
       } else {
@@ -438,13 +438,13 @@ export default function SettingsModal() {
       if (res.ok) {
         // Remove from list
         setWorkspaces(prev => prev.filter(w => w.id !== activeWorkspaceId));
-        
+
         // If deleted workspace was the selected one, clear it
         const storedId = localStorage.getItem('selectedWorkspaceId');
         if (storedId === activeWorkspaceId) {
           localStorage.removeItem('selectedWorkspaceId');
         }
-        
+
         // Select another workspace or close
         const remainingWorkspaces = workspaces.filter(w => w.id !== activeWorkspaceId);
         if (remainingWorkspaces.length > 0) {
@@ -486,7 +486,7 @@ export default function SettingsModal() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isSettingsOpen) return;
-      
+
       if (e.key === 'Escape') {
         closeSettingsModal();
       }
@@ -707,35 +707,7 @@ export default function SettingsModal() {
           </h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <label style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            cursor: 'pointer',
-            padding: '0.75rem',
-            backgroundColor: 'var(--bg-tertiary)',
-            borderRadius: '0.5rem',
-            border: '1px solid var(--border-primary)',
-            transition: 'all 0.2s ease'
-          }}>
-            <input
-              type="checkbox"
-              checked={defaultHeadless}
-              onChange={(e) => setDefaultHeadless(e.target.checked)}
-              style={{
-                width: '1.125rem',
-                height: '1.125rem',
-                accentColor: '#3b82f6',
-                cursor: 'pointer'
-              }}
-            />
-            <span style={{
-              fontSize: '0.875rem',
-              color: 'var(--text-primary)'
-            }}>
-              {t('settings.headlessMode')}
-            </span>
-          </label>
+
 
           <label style={{
             display: 'flex',
@@ -816,12 +788,12 @@ export default function SettingsModal() {
             {t('account.profileInfo')}
           </h3>
         </div>
-        
+
         {/* Avatar */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '1rem', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
           marginBottom: '1rem',
           padding: '1rem',
           backgroundColor: 'var(--bg-tertiary)',
@@ -842,9 +814,9 @@ export default function SettingsModal() {
             position: 'relative'
           }}>
             {session?.user?.image ? (
-              <img 
-                src={session.user.image} 
-                alt="Avatar" 
+              <img
+                src={session.user.image}
+                alt="Avatar"
                 style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
               />
             ) : (
@@ -852,16 +824,16 @@ export default function SettingsModal() {
             )}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ 
-              color: 'var(--text-primary)', 
+            <p style={{
+              color: 'var(--text-primary)',
               fontWeight: '500',
               margin: 0,
               marginBottom: '0.25rem'
             }}>
               {session?.user?.name || t('account.noName')}
             </p>
-            <p style={{ 
-              color: 'var(--text-secondary)', 
+            <p style={{
+              color: 'var(--text-secondary)',
               fontSize: '0.875rem',
               margin: 0
             }}>
@@ -1195,7 +1167,7 @@ export default function SettingsModal() {
           </div>
 
           {isLoadingInvites ? (
-            <div style={{ 
+            <div style={{
               padding: '1rem',
               color: 'var(--text-secondary)',
               fontSize: '0.875rem'
@@ -1218,8 +1190,8 @@ export default function SettingsModal() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         <Building2 size={16} color="var(--cosmic-orange)" />
-                        <span style={{ 
-                          fontWeight: '600', 
+                        <span style={{
+                          fontWeight: '600',
                           color: 'var(--text-primary)',
                           fontSize: '0.9375rem'
                         }}>
@@ -1227,9 +1199,9 @@ export default function SettingsModal() {
                         </span>
                       </div>
                       {invite.workspace.description && (
-                        <p style={{ 
-                          margin: '0.25rem 0 0.5rem 0', 
-                          color: 'var(--text-secondary)', 
+                        <p style={{
+                          margin: '0.25rem 0 0.5rem 0',
+                          color: 'var(--text-secondary)',
                           fontSize: '0.8125rem',
                           lineHeight: 1.4
                         }}>
@@ -1237,13 +1209,13 @@ export default function SettingsModal() {
                         </p>
                       )}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-                        <span style={{ 
-                          fontSize: '0.75rem', 
+                        <span style={{
+                          fontSize: '0.75rem',
                           color: 'var(--text-tertiary)'
                         }}>
                           {t('invites.invitedBy')}: {invite.inviterName}
                         </span>
-                        <span style={{ 
+                        <span style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.25rem',
@@ -1302,8 +1274,8 @@ export default function SettingsModal() {
       )}
 
       {/* Hesap Silme */}
-      <div style={{ 
-        borderTop: '1px solid var(--border-primary)', 
+      <div style={{
+        borderTop: '1px solid var(--border-primary)',
         paddingTop: '1.5rem',
         marginTop: '0.5rem'
       }}>
@@ -1412,9 +1384,9 @@ export default function SettingsModal() {
   const renderWorkspaceSettings = () => {
     if (isLoadingWorkspaces) {
       return (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           padding: '3rem',
           color: 'var(--text-secondary)'
@@ -1426,10 +1398,10 @@ export default function SettingsModal() {
 
     if (workspaces.length === 0) {
       return (
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'center',
           padding: '3rem',
           color: 'var(--text-secondary)'
@@ -1458,8 +1430,8 @@ export default function SettingsModal() {
               {t('workspace.selectWorkspace')}
             </h3>
           </div>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             flexWrap: 'wrap',
             gap: '0.5rem',
             marginBottom: '1rem'
@@ -1496,9 +1468,9 @@ export default function SettingsModal() {
         </div>
 
         {isLoadingWorkspace ? (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
             color: 'var(--text-secondary)'
@@ -1506,10 +1478,10 @@ export default function SettingsModal() {
             {t('common.loading')}
           </div>
         ) : !activeWorkspaceId ? (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
             color: 'var(--text-secondary)'
@@ -1518,472 +1490,472 @@ export default function SettingsModal() {
           </div>
         ) : (
           <>
-        {/* Workspace Bilgileri */}
-        <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <Settings size={18} color="var(--text-secondary)" />
-            <h3 style={{
-              fontSize: '1rem',
-              fontWeight: '600',
-              color: 'var(--text-primary)',
-              margin: 0
-            }}>
-              {t('workspace.workspaceInfo')}
-            </h3>
-          </div>
+            {/* Workspace Bilgileri */}
+            <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <Settings size={18} color="var(--text-secondary)" />
+                <h3 style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  margin: 0
+                }}>
+                  {t('workspace.workspaceInfo')}
+                </h3>
+              </div>
 
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '0.375rem'
-            }}>
-              {t('workspace.name')}
-            </label>
-            <input
-              type="text"
-              value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
-              disabled={!canEdit}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.75rem',
-                backgroundColor: canEdit ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.375rem',
-                color: canEdit ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-                cursor: canEdit ? 'text' : 'not-allowed'
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '0.375rem'
-            }}>
-              {t('workspace.description')}
-            </label>
-            <textarea
-              value={workspaceDescription}
-              onChange={(e) => setWorkspaceDescription(e.target.value)}
-              disabled={!canEdit}
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.75rem',
-                backgroundColor: canEdit ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: '0.375rem',
-                color: canEdit ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-                resize: 'vertical',
-                cursor: canEdit ? 'text' : 'not-allowed'
-              }}
-            />
-          </div>
-
-          {workspaceMessage && (
-            <div style={{
-              padding: '0.75rem',
-              borderRadius: '0.375rem',
-              backgroundColor: workspaceMessage.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-              border: `1px solid ${workspaceMessage.type === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-              color: workspaceMessage.type === 'success' ? '#22c55e' : '#ef4444',
-              fontSize: '0.875rem',
-              marginBottom: '0.75rem'
-            }}>
-              {workspaceMessage.text}
-            </div>
-          )}
-
-          {canEdit && (
-            <button
-              onClick={handleUpdateWorkspace}
-              disabled={isUpdatingWorkspace}
-              style={{
-                padding: '0.625rem 1rem',
-                backgroundColor: 'var(--cosmic-orange)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                cursor: isUpdatingWorkspace ? 'not-allowed' : 'pointer',
-                opacity: isUpdatingWorkspace ? 0.7 : 1,
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {isUpdatingWorkspace ? t('common.loading') : t('workspace.updateWorkspace')}
-            </button>
-          )}
-        </div>
-
-        {/* Üyeler */}
-        <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <Users size={18} color="var(--text-secondary)" />
-            <h3 style={{
-              fontSize: '1rem',
-              fontWeight: '600',
-              color: 'var(--text-primary)',
-              margin: 0
-            }}>
-              {t('workspace.members')} ({workspaceData?.members?.length || 0})
-            </h3>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {workspaceData?.members?.map((member) => (
-              <div
-                key={member.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  borderRadius: '0.5rem',
-                  border: '1px solid var(--border-primary)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--cosmic-orange)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '0.375rem'
+                }}>
+                  {t('workspace.name')}
+                </label>
+                <input
+                  type="text"
+                  value={workspaceName}
+                  onChange={(e) => setWorkspaceName(e.target.value)}
+                  disabled={!canEdit}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    backgroundColor: canEdit ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    color: canEdit ? 'var(--text-primary)' : 'var(--text-tertiary)',
                     fontSize: '0.875rem',
-                    fontWeight: '600'
-                  }}>
-                    {member.user.image ? (
-                      <img 
-                        src={member.user.image} 
-                        alt="" 
-                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      member.user.name?.charAt(0)?.toUpperCase() || member.user.email?.charAt(0)?.toUpperCase() || 'U'
-                    )}
-                  </div>
-                  <div>
-                    <p style={{ 
-                      margin: 0, 
-                      color: 'var(--text-primary)', 
-                      fontWeight: '500',
-                      fontSize: '0.875rem'
-                    }}>
-                      {member.user.name || t('account.noName')}
-                    </p>
-                    <p style={{ 
-                      margin: 0, 
-                      color: 'var(--text-secondary)', 
-                      fontSize: '0.75rem'
-                    }}>
-                      {member.user.email}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.375rem',
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderRadius: '0.25rem',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    {getRoleIcon(member.role)}
-                    {getRoleLabel(member.role)}
-                  </div>
-                  {canEdit && member.role !== 'OWNER' && member.user.email !== session?.user?.email && (
-                    <>
-                      <select
-                        value={member.role}
-                        onChange={(e) => handleUpdateMemberRole(member.id, e.target.value)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          backgroundColor: 'var(--bg-secondary)',
-                          border: '1px solid var(--border-primary)',
-                          borderRadius: '0.25rem',
-                          color: 'var(--text-primary)',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <option value="ADMIN">{t('workspace.admin')}</option>
-                        <option value="MEMBER">{t('workspace.member')}</option>
-                      </select>
-                      <button
-                        onClick={() => handleRemoveMember(member.id)}
-                        style={{
-                          padding: '0.375rem',
-                          backgroundColor: 'transparent',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '0.25rem',
-                          color: '#ef4444',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title={t('workspace.removeMember')}
-                      >
-                        <UserMinus size={14} />
-                      </button>
-                    </>
-                  )}
-                </div>
+                    outline: 'none',
+                    cursor: canEdit ? 'text' : 'not-allowed'
+                  }}
+                />
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Üye Davet Et */}
-        {canEdit && (
-          <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <UserPlus size={18} color="var(--text-secondary)" />
-              <h3 style={{
-                fontSize: '1rem',
-                fontWeight: '600',
-                color: 'var(--text-primary)',
-                margin: 0
-              }}>
-                {t('workspace.inviteMember')}
-              </h3>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder={t('workspace.emailPlaceholder')}
-                style={{
-                  flex: 1,
-                  padding: '0.625rem 0.75rem',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.375rem',
-                  color: 'var(--text-primary)',
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
                   fontSize: '0.875rem',
-                  outline: 'none'
-                }}
-              />
-              <select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as 'ADMIN' | 'MEMBER')}
-                style={{
-                  padding: '0.625rem 0.75rem',
-                  backgroundColor: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '0.375rem',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="MEMBER">{t('workspace.member')}</option>
-                <option value="ADMIN">{t('workspace.admin')}</option>
-              </select>
-              <button
-                onClick={handleInviteMember}
-                disabled={isInviting}
-                style={{
-                  padding: '0.625rem 1rem',
-                  backgroundColor: 'var(--cosmic-orange)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  cursor: isInviting ? 'not-allowed' : 'pointer',
-                  opacity: isInviting ? 0.7 : 1,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {isInviting ? t('common.loading') : t('workspace.invite')}
-              </button>
-            </div>
-
-            {/* Bekleyen Davetler */}
-            {workspaceInvites.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Mail size={14} color="var(--text-secondary)" />
-                  <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                    {t('workspace.pendingInvites')} ({workspaceInvites.length})
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                  {workspaceInvites.map((invite) => (
-                    <div
-                      key={invite.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.5rem 0.75rem',
-                        backgroundColor: 'var(--bg-secondary)',
-                        borderRadius: '0.375rem',
-                        border: '1px dashed var(--border-primary)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
-                          {invite.email}
-                        </span>
-                        <span style={{ 
-                          fontSize: '0.75rem', 
-                          color: 'var(--text-tertiary)',
-                          padding: '0.125rem 0.375rem',
-                          backgroundColor: 'var(--bg-tertiary)',
-                          borderRadius: '0.25rem'
-                        }}>
-                          {getRoleLabel(invite.role)}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleCancelInvite(invite.id)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          backgroundColor: 'transparent',
-                          border: '1px solid var(--border-primary)',
-                          borderRadius: '0.25rem',
-                          color: 'var(--text-secondary)',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {t('common.cancel')}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                  color: 'var(--text-secondary)',
+                  marginBottom: '0.375rem'
+                }}>
+                  {t('workspace.description')}
+                </label>
+                <textarea
+                  value={workspaceDescription}
+                  onChange={(e) => setWorkspaceDescription(e.target.value)}
+                  disabled={!canEdit}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    backgroundColor: canEdit ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                    border: '1px solid var(--border-primary)',
+                    borderRadius: '0.375rem',
+                    color: canEdit ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    resize: 'vertical',
+                    cursor: canEdit ? 'text' : 'not-allowed'
+                  }}
+                />
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Workspace Silme */}
-        {isOwner && (
-          <div style={{ 
-            borderTop: '1px solid var(--border-primary)', 
-            paddingTop: '1.5rem',
-            marginTop: '0.5rem'
-          }}>
-            <div style={{
-              padding: '1rem',
-              backgroundColor: 'rgba(239, 68, 68, 0.05)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '0.5rem'
-            }}>
-              <p style={{
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)',
-                margin: 0,
-                marginBottom: '1rem'
-              }}>
-                {t('workspace.deleteWarning')}
-              </p>
+              {workspaceMessage && (
+                <div style={{
+                  padding: '0.75rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: workspaceMessage.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  border: `1px solid ${workspaceMessage.type === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  color: workspaceMessage.type === 'success' ? '#22c55e' : '#ef4444',
+                  fontSize: '0.875rem',
+                  marginBottom: '0.75rem'
+                }}>
+                  {workspaceMessage.text}
+                </div>
+              )}
 
-              {!showDeleteWorkspaceConfirm ? (
+              {canEdit && (
                 <button
-                  onClick={() => setShowDeleteWorkspaceConfirm(true)}
+                  onClick={handleUpdateWorkspace}
+                  disabled={isUpdatingWorkspace}
                   style={{
                     padding: '0.625rem 1rem',
-                    backgroundColor: 'transparent',
-                    color: '#ef4444',
-                    border: '1px solid #ef4444',
+                    backgroundColor: 'var(--cosmic-orange)',
+                    color: 'white',
+                    border: 'none',
                     borderRadius: '0.375rem',
                     fontSize: '0.875rem',
                     fontWeight: '500',
-                    cursor: 'pointer',
+                    cursor: isUpdatingWorkspace ? 'not-allowed' : 'pointer',
+                    opacity: isUpdatingWorkspace ? 0.7 : 1,
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  {t('workspace.deleteWorkspace')}
+                  {isUpdatingWorkspace ? t('common.loading') : t('workspace.updateWorkspace')}
                 </button>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <p style={{
-                    fontSize: '0.875rem',
-                    color: '#ef4444',
+              )}
+            </div>
+
+            {/* Üyeler */}
+            <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <Users size={18} color="var(--text-secondary)" />
+                <h3 style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  margin: 0
+                }}>
+                  {t('workspace.members')} ({workspaceData?.members?.length || 0})
+                </h3>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {workspaceData?.members?.map((member) => (
+                  <div
+                    key={member.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem',
+                      backgroundColor: 'var(--bg-tertiary)',
+                      borderRadius: '0.5rem',
+                      border: '1px solid var(--border-primary)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--cosmic-orange)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '0.875rem',
+                        fontWeight: '600'
+                      }}>
+                        {member.user.image ? (
+                          <img
+                            src={member.user.image}
+                            alt=""
+                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          member.user.name?.charAt(0)?.toUpperCase() || member.user.email?.charAt(0)?.toUpperCase() || 'U'
+                        )}
+                      </div>
+                      <div>
+                        <p style={{
+                          margin: 0,
+                          color: 'var(--text-primary)',
+                          fontWeight: '500',
+                          fontSize: '0.875rem'
+                        }}>
+                          {member.user.name || t('account.noName')}
+                        </p>
+                        <p style={{
+                          margin: 0,
+                          color: 'var(--text-secondary)',
+                          fontSize: '0.75rem'
+                        }}>
+                          {member.user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.375rem',
+                        padding: '0.25rem 0.5rem',
+                        backgroundColor: 'var(--bg-secondary)',
+                        borderRadius: '0.25rem',
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        {getRoleIcon(member.role)}
+                        {getRoleLabel(member.role)}
+                      </div>
+                      {canEdit && member.role !== 'OWNER' && member.user.email !== session?.user?.email && (
+                        <>
+                          <select
+                            value={member.role}
+                            onChange={(e) => handleUpdateMemberRole(member.id, e.target.value)}
+                            style={{
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'var(--bg-secondary)',
+                              border: '1px solid var(--border-primary)',
+                              borderRadius: '0.25rem',
+                              color: 'var(--text-primary)',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="ADMIN">{t('workspace.admin')}</option>
+                            <option value="MEMBER">{t('workspace.member')}</option>
+                          </select>
+                          <button
+                            onClick={() => handleRemoveMember(member.id)}
+                            style={{
+                              padding: '0.375rem',
+                              backgroundColor: 'transparent',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              borderRadius: '0.25rem',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title={t('workspace.removeMember')}
+                          >
+                            <UserMinus size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Üye Davet Et */}
+            {canEdit && (
+              <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <UserPlus size={18} color="var(--text-secondary)" />
+                  <h3 style={{
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    color: 'var(--text-primary)',
                     margin: 0
                   }}>
-                    {t('account.typeDeleteToConfirm')}
-                  </p>
+                    {t('workspace.inviteMember')}
+                  </h3>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                   <input
-                    type="text"
-                    value={deleteWorkspaceConfirmText}
-                    onChange={(e) => setDeleteWorkspaceConfirmText(e.target.value)}
-                    placeholder="DELETE"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder={t('workspace.emailPlaceholder')}
                     style={{
-                      width: '100%',
+                      flex: 1,
                       padding: '0.625rem 0.75rem',
                       backgroundColor: 'var(--bg-tertiary)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      border: '1px solid var(--border-primary)',
                       borderRadius: '0.375rem',
                       color: 'var(--text-primary)',
                       fontSize: '0.875rem',
                       outline: 'none'
                     }}
                   />
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => {
-                        setShowDeleteWorkspaceConfirm(false);
-                        setDeleteWorkspaceConfirmText('');
-                      }}
-                      style={{
-                        padding: '0.625rem 1rem',
-                        backgroundColor: 'var(--bg-tertiary)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '0.375rem',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {t('common.cancel')}
-                    </button>
-                    <button
-                      onClick={handleDeleteWorkspace}
-                      disabled={deleteWorkspaceConfirmText !== 'DELETE' || isDeletingWorkspace}
-                      style={{
-                        padding: '0.625rem 1rem',
-                        backgroundColor: deleteWorkspaceConfirmText === 'DELETE' ? '#ef4444' : 'rgba(239, 68, 68, 0.3)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.375rem',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        cursor: deleteWorkspaceConfirmText === 'DELETE' && !isDeletingWorkspace ? 'pointer' : 'not-allowed',
-                        opacity: isDeletingWorkspace ? 0.7 : 1
-                      }}
-                    >
-                      {isDeletingWorkspace ? t('common.loading') : t('workspace.deleteWorkspacePermanently')}
-                    </button>
-                  </div>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as 'ADMIN' | 'MEMBER')}
+                    style={{
+                      padding: '0.625rem 0.75rem',
+                      backgroundColor: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.375rem',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.875rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="MEMBER">{t('workspace.member')}</option>
+                    <option value="ADMIN">{t('workspace.admin')}</option>
+                  </select>
+                  <button
+                    onClick={handleInviteMember}
+                    disabled={isInviting}
+                    style={{
+                      padding: '0.625rem 1rem',
+                      backgroundColor: 'var(--cosmic-orange)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      cursor: isInviting ? 'not-allowed' : 'pointer',
+                      opacity: isInviting ? 0.7 : 1,
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {isInviting ? t('common.loading') : t('workspace.invite')}
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+
+                {/* Bekleyen Davetler */}
+                {workspaceInvites.length > 0 && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <Mail size={14} color="var(--text-secondary)" />
+                      <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        {t('workspace.pendingInvites')} ({workspaceInvites.length})
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                      {workspaceInvites.map((invite) => (
+                        <div
+                          key={invite.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.5rem 0.75rem',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderRadius: '0.375rem',
+                            border: '1px dashed var(--border-primary)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                              {invite.email}
+                            </span>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--text-tertiary)',
+                              padding: '0.125rem 0.375rem',
+                              backgroundColor: 'var(--bg-tertiary)',
+                              borderRadius: '0.25rem'
+                            }}>
+                              {getRoleLabel(invite.role)}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleCancelInvite(invite.id)}
+                            style={{
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'transparent',
+                              border: '1px solid var(--border-primary)',
+                              borderRadius: '0.25rem',
+                              color: 'var(--text-secondary)',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {t('common.cancel')}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Workspace Silme */}
+            {isOwner && (
+              <div style={{
+                borderTop: '1px solid var(--border-primary)',
+                paddingTop: '1.5rem',
+                marginTop: '0.5rem'
+              }}>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: '0.5rem'
+                }}>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    color: 'var(--text-secondary)',
+                    margin: 0,
+                    marginBottom: '1rem'
+                  }}>
+                    {t('workspace.deleteWarning')}
+                  </p>
+
+                  {!showDeleteWorkspaceConfirm ? (
+                    <button
+                      onClick={() => setShowDeleteWorkspaceConfirm(true)}
+                      style={{
+                        padding: '0.625rem 1rem',
+                        backgroundColor: 'transparent',
+                        color: '#ef4444',
+                        border: '1px solid #ef4444',
+                        borderRadius: '0.375rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {t('workspace.deleteWorkspace')}
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <p style={{
+                        fontSize: '0.875rem',
+                        color: '#ef4444',
+                        margin: 0
+                      }}>
+                        {t('account.typeDeleteToConfirm')}
+                      </p>
+                      <input
+                        type="text"
+                        value={deleteWorkspaceConfirmText}
+                        onChange={(e) => setDeleteWorkspaceConfirmText(e.target.value)}
+                        placeholder="DELETE"
+                        style={{
+                          width: '100%',
+                          padding: '0.625rem 0.75rem',
+                          backgroundColor: 'var(--bg-tertiary)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '0.375rem',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.875rem',
+                          outline: 'none'
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => {
+                            setShowDeleteWorkspaceConfirm(false);
+                            setDeleteWorkspaceConfirmText('');
+                          }}
+                          style={{
+                            padding: '0.625rem 1rem',
+                            backgroundColor: 'var(--bg-tertiary)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--border-primary)',
+                            borderRadius: '0.375rem',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {t('common.cancel')}
+                        </button>
+                        <button
+                          onClick={handleDeleteWorkspace}
+                          disabled={deleteWorkspaceConfirmText !== 'DELETE' || isDeletingWorkspace}
+                          style={{
+                            padding: '0.625rem 1rem',
+                            backgroundColor: deleteWorkspaceConfirmText === 'DELETE' ? '#ef4444' : 'rgba(239, 68, 68, 0.3)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '0.375rem',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: deleteWorkspaceConfirmText === 'DELETE' && !isDeletingWorkspace ? 'pointer' : 'not-allowed',
+                            opacity: isDeletingWorkspace ? 0.7 : 1
+                          }}
+                        >
+                          {isDeletingWorkspace ? t('common.loading') : t('workspace.deleteWorkspacePermanently')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -1993,7 +1965,7 @@ export default function SettingsModal() {
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -2014,7 +1986,7 @@ export default function SettingsModal() {
         }
       }}
     >
-      <div 
+      <div
         style={{
           backgroundColor: 'var(--bg-primary)',
           borderRadius: '0.75rem',
@@ -2149,7 +2121,7 @@ export default function SettingsModal() {
           </div>
 
           {/* Content */}
-          <div style={{ 
+          <div style={{
             flex: 1,
             padding: '1.5rem',
             overflow: 'auto'

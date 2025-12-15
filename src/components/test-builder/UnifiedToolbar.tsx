@@ -44,8 +44,6 @@ interface UnifiedToolbarProps {
   enableRecording?: boolean;
   onToggleScreenshots?: () => void;
   onToggleRecording?: () => void;
-  headlessMode?: boolean;
-  onToggleHeadless?: () => void;
   selectedBrowser?: BrowserType;
   onBrowserChange?: (browser: string) => void;
 }
@@ -71,8 +69,6 @@ const UnifiedToolbar: React.FC<UnifiedToolbarProps> = ({
   enableRecording = false,
   onToggleScreenshots,
   onToggleRecording,
-  headlessMode = false,
-  onToggleHeadless,
   selectedBrowser,
   onBrowserChange
 }) => {
@@ -177,14 +173,6 @@ const UnifiedToolbar: React.FC<UnifiedToolbarProps> = ({
           tooltip={enableRecording ? t('testBuilder.disableRecording') : t('testBuilder.enableRecording')}
           onClick={() => onToggleRecording?.()}
           className={enableRecording ? "bg-[var(--status-error)] text-white border-2 border-red-500 shadow-[0_0_0_2px_rgba(239,68,68,0.2)] animate-pulse" : ""}
-        />
-        <IconButton
-          icon={headlessMode ? EyeOff : Eye}
-          variant={headlessMode ? "success" : "ghost"}
-          size="sm"
-          tooltip={headlessMode ? t('testBuilder.visibleMode') : t('testBuilder.headlessMode')}
-          onClick={() => onToggleHeadless?.()}
-          className={headlessMode ? "bg-[var(--status-success)] text-white border-2 border-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)] animate-pulse" : ""}
         />
       </ButtonGroup>
 

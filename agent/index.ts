@@ -131,9 +131,12 @@ class LocalTestRunner {
 
   async initializeBrowser(options: ExecutionOptions): Promise<void> {
     const { headlessMode, browserType } = options;
-    
-    console.log(`🌐 Launching ${browserType} browser (headless: ${headlessMode})...`);
-    
+
+    // Always force headless mode
+    const effectiveHeadlessMode = true;
+
+    console.log(`🌐 Launching ${browserType} browser (headless: ${effectiveHeadlessMode})...`);
+
     let browserEngine;
     switch (browserType) {
       case 'firefox':
@@ -147,7 +150,7 @@ class LocalTestRunner {
     }
 
     this.browser = await browserEngine.launch({
-      headless: headlessMode,
+      headless: effectiveHeadlessMode,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -168,10 +171,10 @@ class LocalTestRunner {
   }
 
   async closeBrowser(): Promise<void> {
-    if (this.page) await this.page.close().catch(() => {});
-    if (this.context) await this.context.close().catch(() => {});
-    if (this.browser) await this.browser.close().catch(() => {});
-    
+    if (this.page) await this.page.close().catch(() => { });
+    if (this.context) await this.context.close().catch(() => { });
+    if (this.browser) await this.browser.close().catch(() => { });
+
     this.page = null;
     this.context = null;
     this.browser = null;
@@ -264,9 +267,9 @@ class LocalTestRunner {
 
       const filename = `${executionId}_step${stepIndex}.png`;
       const filepath = path.join(screenshotDir, filename);
-      
+
       await this.page.screenshot({ path: filepath, fullPage: false });
-      
+
       // Upload to Supabase Storage
       const buffer = fs.readFileSync(filepath);
       const { error } = await supabase.storage
@@ -433,7 +436,7 @@ class LocalTestRunner {
 
       // Create execution record
       const executionId = `sched-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      
+
       await supabase.from('Execution').insert({
         id: executionId,
         workflowId: test.id,
@@ -544,7 +547,7 @@ class LocalTestRunner {
 
     } catch (error: any) {
       console.error('❌ Scheduled test error:', error);
-      
+
       await supabase.from('ScheduledTest').update({
         lastRun: startTime.toISOString(),
         status: 'failed'
@@ -674,7 +677,7 @@ class CosmicQAAgent {
 
     if (executions && executions.length > 0) {
       console.log(`📋 Found ${executions.length} queued execution(s)`);
-      
+
       for (const execution of executions) {
         await this.runner.runExecution(execution);
       }
@@ -726,7 +729,7 @@ class CosmicQAAgent {
 
   private startScheduledTestChecker(): void {
     console.log(`⏰ Starting scheduled test checker (every ${SCHEDULED_CHECK_INTERVAL / 1000}s)`);
-    
+
     this.scheduledCheckInterval = setInterval(async () => {
       await this.processScheduledTests();
     }, SCHEDULED_CHECK_INTERVAL);
@@ -734,7 +737,7 @@ class CosmicQAAgent {
 
   async stop(): Promise<void> {
     console.log('\n👋 Shutting down agent...');
-    
+
     if (this.channel) {
       await supabase.removeChannel(this.channel);
     }
@@ -742,7 +745,7 @@ class CosmicQAAgent {
     if (this.scheduledCheckInterval) {
       clearInterval(this.scheduledCheckInterval);
     }
-    
+
     console.log('✅ Agent stopped');
     process.exit(0);
   }
