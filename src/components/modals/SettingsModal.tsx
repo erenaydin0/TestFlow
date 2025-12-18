@@ -52,6 +52,8 @@ interface WorkspaceData {
   id: string;
   name: string;
   description: string | null;
+  googleApiKey?: string | null;
+  openaiApiKey?: string | null;
   createdAt: string;
   members: WorkspaceMember[];
 }
@@ -90,6 +92,8 @@ export default function SettingsModal() {
   const [workspaceInvites, setWorkspaceInvites] = useState<WorkspaceInvite[]>([]);
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceDescription, setWorkspaceDescription] = useState('');
+  const [googleApiKey, setGoogleApiKey] = useState('');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
   const [isUpdatingWorkspace, setIsUpdatingWorkspace] = useState(false);
@@ -267,6 +271,10 @@ export default function SettingsModal() {
         setWorkspaceData(data);
         setWorkspaceName(data.name);
         setWorkspaceDescription(data.description || '');
+        // API keys are masked, so we don't set them from the response
+        // Users need to enter them fresh if they want to update
+        setGoogleApiKey('');
+        setOpenaiApiKey('');
 
         // Find current user's role
         const currentMember = data.members?.find(
@@ -310,7 +318,10 @@ export default function SettingsModal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: workspaceName.trim(),
-          description: workspaceDescription.trim() || null
+          description: workspaceDescription.trim() || null,
+          // Only send API keys if they are provided (not empty)
+          ...(googleApiKey.trim() && { googleApiKey: googleApiKey.trim() }),
+          ...(openaiApiKey.trim() && { openaiApiKey: openaiApiKey.trim() }),
         }),
       });
 
@@ -1559,6 +1570,99 @@ export default function SettingsModal() {
                     cursor: canEdit ? 'text' : 'not-allowed'
                   }}
                 />
+              </div>
+
+              {/* AI API Keys */}
+              <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '1.5rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <Code size={18} color="var(--text-secondary)" />
+                  <h3 style={{
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    color: 'var(--text-primary)',
+                    margin: 0
+                  }}>
+                    AI API Keys
+                  </h3>
+                </div>
+
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.375rem'
+                  }}>
+                    Google Gemini API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={googleApiKey}
+                    onChange={(e) => setGoogleApiKey(e.target.value)}
+                    disabled={!canEdit}
+                    placeholder={workspaceData?.googleApiKey ? 'Enter new key to update' : 'Enter Google API key'}
+                    style={{
+                      width: '100%',
+                      padding: '0.625rem 0.75rem',
+                      backgroundColor: canEdit ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.375rem',
+                      color: canEdit ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      cursor: canEdit ? 'text' : 'not-allowed',
+                      fontFamily: 'monospace'
+                    }}
+                  />
+                  {workspaceData?.googleApiKey && (
+                    <p style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-tertiary)',
+                      margin: '0.25rem 0 0 0'
+                    }}>
+                      Current: {workspaceData.googleApiKey}
+                    </p>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.375rem'
+                  }}>
+                    OpenAI API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={openaiApiKey}
+                    onChange={(e) => setOpenaiApiKey(e.target.value)}
+                    disabled={!canEdit}
+                    placeholder={workspaceData?.openaiApiKey ? 'Enter new key to update' : 'Enter OpenAI API key'}
+                    style={{
+                      width: '100%',
+                      padding: '0.625rem 0.75rem',
+                      backgroundColor: canEdit ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.375rem',
+                      color: canEdit ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      cursor: canEdit ? 'text' : 'not-allowed',
+                      fontFamily: 'monospace'
+                    }}
+                  />
+                  {workspaceData?.openaiApiKey && (
+                    <p style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-tertiary)',
+                      margin: '0.25rem 0 0 0'
+                    }}>
+                      Current: {workspaceData.openaiApiKey}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {workspaceMessage && (

@@ -143,6 +143,8 @@ model Workspace {
   id          String            @id @default(dbgenerated("(gen_random_uuid())::text"))
   name        String
   description String?
+  googleApiKey String?
+  openaiApiKey String?
   createdAt   DateTime          @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
   executions  Execution[]

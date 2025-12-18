@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  FileText
+  FileText,
+  Bot
 } from 'lucide-react';
 import { useSidebar, useSettingsModal, useI18n } from '@/hooks';
 import { IconButton } from '@/components/common';
@@ -70,6 +71,7 @@ const getNavigation = (t: (key: string) => string) => [
   { name: t('navigation.tests'), href: '/tests', icon: TestTube },
   { name: t('navigation.scheduled'), href: '/scheduled', icon: AlarmClock },
   { name: t('navigation.reports'), href: '/reports', icon: FileText },
+  { name: t('navigation.aiAutomation'), href: '/ai-automation', icon: Bot },
 ];
 
 export default function Sidebar({ onNavigationAttempt }: SidebarProps = {}) {

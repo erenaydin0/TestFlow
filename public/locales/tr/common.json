@@ -46,7 +46,8 @@
     "tests": "Testler",
     "reports": "Raporlar",
     "scheduled": "Zamanlanmış",
-    "testBuilder": "Test Oluşturucu"
+    "testBuilder": "Test Oluşturucu",
+    "aiAutomation": "AI Otomasyonu"
   },
   "scheduled": {
     "title": "Zamanlanmış Testler",

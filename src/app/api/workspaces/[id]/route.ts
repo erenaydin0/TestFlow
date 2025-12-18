@@ -78,10 +78,19 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
+    // Mask API keys for security (only show last 4 characters)
+    const maskedWorkspace = {
       ...workspace,
+      googleApiKey: workspace.googleApiKey 
+        ? `****${workspace.googleApiKey.slice(-4)}` 
+        : null,
+      openaiApiKey: workspace.openaiApiKey 
+        ? `****${workspace.openaiApiKey.slice(-4)}` 
+        : null,
       currentUserRole: userRole,
-    });
+    };
+
+    return NextResponse.json(maskedWorkspace);
   } catch (error) {
     console.error("Error fetching workspace:", error);
     return NextResponse.json(
@@ -105,7 +114,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { name, description } = body;
+    const { name, description, googleApiKey, openaiApiKey } = body;
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -124,22 +133,54 @@ export async function PUT(
       );
     }
 
-    if (!name?.trim()) {
-      return NextResponse.json(
-        { message: "Workspace name is required" },
-        { status: 400 }
-      );
+    // Build update data object
+    const updateData: {
+      name?: string;
+      description?: string | null;
+      googleApiKey?: string | null;
+      openaiApiKey?: string | null;
+    } = {};
+
+    if (name !== undefined) {
+      if (!name?.trim()) {
+        return NextResponse.json(
+          { message: "Workspace name is required" },
+          { status: 400 }
+        );
+      }
+      updateData.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      updateData.description = description?.trim() || null;
+    }
+
+    // Handle API keys - if provided, update; if empty string, clear
+    if (googleApiKey !== undefined) {
+      updateData.googleApiKey = googleApiKey?.trim() || null;
+    }
+
+    if (openaiApiKey !== undefined) {
+      updateData.openaiApiKey = openaiApiKey?.trim() || null;
     }
 
     const workspace = await prisma.workspace.update({
       where: { id },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-      },
+      data: updateData,
     });
 
-    return NextResponse.json(workspace);
+    // Return masked API keys
+    const maskedWorkspace = {
+      ...workspace,
+      googleApiKey: workspace.googleApiKey 
+        ? `****${workspace.googleApiKey.slice(-4)}` 
+        : null,
+      openaiApiKey: workspace.openaiApiKey 
+        ? `****${workspace.openaiApiKey.slice(-4)}` 
+        : null,
+    };
+
+    return NextResponse.json(maskedWorkspace);
   } catch (error) {
     console.error("Error updating workspace:", error);
     return NextResponse.json(
@@ -193,6 +234,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 
