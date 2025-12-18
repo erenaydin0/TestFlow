@@ -5,7 +5,7 @@ export { default as useReports } from './useReports';
 export { useScheduledTests } from './useScheduledTests';
 export { default as useSupabaseRealtime, useExecutionRealtime, useTestRealtime, useScheduledTestRealtime } from './useSupabaseRealtime';
 // Test hooks
-export { default as useNotifications } from './useNotifications';
+export { useNotifications } from '@/context/NotificationContext';
 export { default as useTests } from './useTests';
 export { default as useTestSteps } from './useTestSteps';
 // UI hooks

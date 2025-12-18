@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
-import { useNotifications } from '@/hooks';
-import { Notification } from '@/types/notifications';
+import { useNotifications } from '@/context/NotificationContext';
+import { Notification } from '@/context/NotificationContext';
 
 interface ToastProps {
   notification: Notification;
@@ -47,7 +47,7 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, index * 100);
-    
+
     return () => clearTimeout(timer);
   }, [index]);
 
@@ -79,21 +79,21 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
         <div style={{ padding: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
             <div style={{ flexShrink: 0, marginTop: '0.125rem' }}>
-              <Icon 
-                size={20} 
-                style={{ 
-                  color: 'white', 
-                  borderRadius: '9999px', 
+              <Icon
+                size={20}
+                style={{
+                  color: 'white',
+                  borderRadius: '9999px',
                   padding: '0.125rem',
                   ...getIconStyle(notification.type)
-                }} 
+                }}
               />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ 
-                fontSize: '0.875rem', 
-                fontWeight: 600, 
-                color: 'var(--text-primary)', 
+              <p style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -101,9 +101,9 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
               }}>
                 {notification.title}
               </p>
-              <p style={{ 
-                marginTop: '0.25rem', 
-                fontSize: '0.875rem', 
+              <p style={{
+                marginTop: '0.25rem',
+                fontSize: '0.875rem',
                 color: 'var(--text-primary)',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -142,16 +142,16 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Progress bar */}
         {notification.autoClose && notification.duration && (
-          <div style={{ 
-            position: 'absolute', 
-            bottom: 0, 
-            left: 0, 
-            right: 0, 
-            height: '0.25rem', 
-            backgroundColor: 'var(--bg-tertiary)' 
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '0.25rem',
+            backgroundColor: 'var(--bg-tertiary)'
           }}>
             <div
               style={{
@@ -166,7 +166,7 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
           </div>
         )}
       </div>
-      
+
       <style jsx>{`
         @keyframes shrink {
           from {
@@ -183,12 +183,12 @@ function Toast({ notification, onRemove, index = 0 }: ToastProps) {
 
 function ToastContainer() {
   const notificationState = useNotifications();
-  
+
   // Guard against undefined state during initialization
   if (!notificationState || !notificationState.toasts) {
     return null;
   }
-  
+
   const { toasts, removeNotification } = notificationState;
 
   if (toasts.length === 0) return null;

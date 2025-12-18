@@ -40,13 +40,13 @@ export function useNotificationSocket({
     // Get session to check if user is logged in
     const { data: session, status } = useSession();
     const isSessionAuthenticated = status === 'authenticated' && !!session?.user;
-    
+
     // Track workspace ID in state
     const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-    
+
     // Track notified executions to prevent duplicates
     const notifiedExecutions = useRef(new Map<string, Set<string>>());
-    
+
     // Store callbacks in ref to avoid stale closures
     const callbacksRef = useRef({ notifyTestStart, notifyTestSuccess, notifyTestFailure, notifyWorkflowLoaded });
     callbacksRef.current = { notifyTestStart, notifyTestSuccess, notifyTestFailure, notifyWorkflowLoaded };
@@ -57,29 +57,32 @@ export function useNotificationSocket({
             setWorkspaceId(null);
             return;
         }
-        
+
         const updateWorkspaceId = () => {
             const wsId = getActiveWorkspaceId();
             if (wsId) {
+                console.log('[NotificationSocket] Setting workspace ID:', wsId);
                 setWorkspaceId(wsId);
+            } else {
+                console.log('[NotificationSocket] No active workspace ID found');
             }
         };
-        
+
         // Check immediately
         updateWorkspaceId();
-        
+
         // Listen for localStorage changes (workspace switch)
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === 'selectedWorkspaceId') {
                 updateWorkspaceId();
             }
         };
-        
+
         window.addEventListener('storage', handleStorageChange);
-        
+
         // Also poll periodically for workspace changes (same-tab changes don't trigger storage events)
         const pollInterval = setInterval(updateWorkspaceId, 2000);
-        
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             clearInterval(pollInterval);
@@ -88,20 +91,25 @@ export function useNotificationSocket({
 
     // Handle execution changes from Supabase Realtime
     const handleExecutionChange = useCallback((message: RealtimeMessage) => {
+        console.log('[NotificationSocket] Received execution message:', message);
         const execution = message.data;
         const executionId = execution?.id;
-        
-        if (!executionId) return;
-        
+
+        if (!executionId) {
+            console.log('[NotificationSocket] No execution ID in message');
+            return;
+        }
+
         // Initialize tracking for this execution
         if (!notifiedExecutions.current.has(executionId)) {
             notifiedExecutions.current.set(executionId, new Set());
         }
         const notifiedStates = notifiedExecutions.current.get(executionId)!;
-        
+
         const workflowName = execution.workflowName || 'Test Execution';
         const status = execution.status;
-        
+        console.log(`[NotificationSocket] Execution ${executionId} status: ${status}`, { notifiedStates: Array.from(notifiedStates) });
+
         // Calculate duration if available
         const duration = execution.endTime && execution.startTime
             ? new Date(execution.endTime).getTime() - new Date(execution.startTime).getTime()
@@ -112,42 +120,47 @@ export function useNotificationSocket({
             // New execution created (queued, pending, or running)
             if (!notifiedStates.has('started') && (status === 'queued' || status === 'running' || status === 'pending')) {
                 notifiedStates.add('started');
+                console.log('[NotificationSocket] Notifying start');
                 callbacksRef.current.notifyTestStart(workflowName, executionId);
             }
         } else if (message.type === 'UPDATE') {
             const oldStatus = message.oldData?.status;
-            
+
             // Started: status changed to 'running'
             if (status === 'running' && oldStatus !== 'running' && !notifiedStates.has('started')) {
                 notifiedStates.add('started');
+                console.log('[NotificationSocket] Notifying start (update)');
                 callbacksRef.current.notifyTestStart(workflowName, executionId);
             }
-            
+
             // Completed successfully
             if (status === 'completed' && !notifiedStates.has('completed')) {
                 notifiedStates.add('completed');
+                console.log('[NotificationSocket] Notifying success');
                 callbacksRef.current.notifyTestSuccess(workflowName, executionId, duration, executionId);
             }
-            
+
             // Failed
             if (status === 'failed' && !notifiedStates.has('failed')) {
                 notifiedStates.add('failed');
+                console.log('[NotificationSocket] Notifying failure');
                 console.log('[Supabase Realtime] Execution failed:', workflowName);
                 callbacksRef.current.notifyTestFailure(
-                    workflowName, 
-                    executionId, 
+                    workflowName,
+                    executionId,
                     execution.error || 'Test failed',
                     duration,
                     executionId
                 );
             }
-            
+
             // Cancelled
             if (status === 'cancelled' && !notifiedStates.has('cancelled')) {
                 notifiedStates.add('cancelled');
+                console.log('[NotificationSocket] Notifying failure (cancelled)');
                 callbacksRef.current.notifyTestFailure(
-                    workflowName, 
-                    executionId, 
+                    workflowName,
+                    executionId,
                     'Test iptal edildi',
                     duration,
                     executionId
@@ -178,7 +191,8 @@ export function useNotificationSocket({
     const { isConnected, lastMessage, connect } = useSupabaseRealtime({
         workspaceId,
         onExecutionChange: handleExecutionChange,
-        onTestChange: handleTestChange
+        onTestChange: handleTestChange,
+        accessToken: (session as any)?.accessToken
     });
 
     return {

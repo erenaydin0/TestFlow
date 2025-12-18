@@ -4,6 +4,7 @@ import '@/assets/styles/globals.css';
 import { ToastContainer } from '@/components/notifications';
 import { ErrorBoundary } from '@/components/common';
 import SettingsModalWrapper from '@/components/modals/SettingsModalWrapper';
+import { NotificationProvider } from '@/context/NotificationContext';
 
 import AuthProvider from '@/components/providers/AuthProvider';
 
@@ -26,11 +27,13 @@ export default function RootLayout({
     <html lang="tr">
       <body className={inter.className}>
         <AuthProvider>
-          <ErrorBoundary>
-            {children}
-            <ToastContainer />
-            <SettingsModalWrapper />
-          </ErrorBoundary>
+          <NotificationProvider>
+            <ErrorBoundary>
+              {children}
+              <ToastContainer />
+              <SettingsModalWrapper />
+            </ErrorBoundary>
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

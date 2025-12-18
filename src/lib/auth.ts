@@ -56,23 +56,40 @@ export const authOptions: NextAuthOptions = {
                 // Add name and image from token
                 session.user.name = token.name as string;
                 session.user.image = token.picture as string;
-                
-                // Generate access token for WebSocket authentication
-                const secret = process.env.NEXTAUTH_SECRET;
+
+                // Generate access token for WebSocket authentication (Supabase compatible)
+                const supabaseSecret = process.env.SUPABASE_JWT_SECRET;
+                const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+
+                if (supabaseSecret) {
+                    console.log('[Auth] using SUPABASE_JWT_SECRET (Length: ' + supabaseSecret.length + ')');
+                } else if (nextAuthSecret) {
+                    console.warn('[Auth] WARNING: SUPABASE_JWT_SECRET is missing. Falling back to NEXTAUTH_SECRET. Realtime will likely fail.');
+                } else {
+                    console.error('[Auth] ERROR: No secrets available for JWT signing');
+                }
+
+                const secret = supabaseSecret || nextAuthSecret;
                 if (secret && token.sub) {
+                    console.log('[Auth] Generating Supabase JWT with secret length:', secret.length);
                     const accessToken = jwt.sign(
-                        { 
-                            userId: token.sub,
+                        {
+                            sub: token.sub, // 'sub' is standard for user ID
+                            userId: token.sub, // keep for backward compatibility if needed
                             email: token.email,
+                            role: 'authenticated', // Required for Supabase RLS
+                            aud: 'authenticated',  // Required for Supabase RLS
                             iat: Math.floor(Date.now() / 1000)
                         },
                         secret,
                         { expiresIn: '24h' }
                     );
                     (session as any).accessToken = accessToken;
+                } else {
+                    console.warn('[Auth] No secret found for JWT generation');
                 }
             }
-            
+
             // If session update is triggered, fetch fresh data from database
             if (trigger === "update" && session.user?.email) {
                 const freshUser = await prisma.user.findUnique({
@@ -84,7 +101,7 @@ export const authOptions: NextAuthOptions = {
                     session.user.image = freshUser.image;
                 }
             }
-            
+
             return session;
         },
         async jwt({ token, user, trigger, session }) {
@@ -93,7 +110,7 @@ export const authOptions: NextAuthOptions = {
                 token.name = user.name;
                 token.picture = user.image;
             }
-            
+
             // Handle session update - update token with new values
             if (trigger === "update" && session) {
                 // Fetch fresh data from database
@@ -106,7 +123,7 @@ export const authOptions: NextAuthOptions = {
                     token.picture = freshUser.image;
                 }
             }
-            
+
             return token;
         },
     },
